@@ -253,3 +253,4 @@ export type PolicyAction =
   | { type: 'SEND_ATN_TO_PROVINCE'; provinceId: string; amountPctGdp: number }
   | { type: 'OPERATE_COMODORO_PY_CASE'; caseId: string; operation: 'PUSH' | 'FREEZE' }
   | { type: 'UPDATE_TAX_RATE'; taxId: string; newRatePct: number };
+

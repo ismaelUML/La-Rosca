@@ -138,3 +138,4 @@ if (allViolations.length > 0) {
 }
 
 console.log(`Auditoria de complejidad superada en ${files.length} archivos (CC <= ${MAX_CC}, MI >= ${MIN_MI}).`);
+

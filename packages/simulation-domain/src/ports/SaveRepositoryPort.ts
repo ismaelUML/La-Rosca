@@ -15,3 +15,4 @@ export interface SaveRepositoryPort {
   exportPortableCode(state: SimulationState): string;
   importPortableCode(code: string): SimulationState;
 }
+

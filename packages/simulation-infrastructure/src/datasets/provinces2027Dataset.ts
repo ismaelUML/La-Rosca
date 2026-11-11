@@ -342,3 +342,4 @@ export const PROVINCES_2027_DATASET: ProvinceSummary[] = [
     keyEconomicDriver: 'Regimen Industrial Ley 19.640 (Ensamblaje Electronico), Gas Offshore y Base Antartica'
   }
 ];
+

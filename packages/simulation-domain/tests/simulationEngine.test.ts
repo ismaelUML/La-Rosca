@@ -68,3 +68,4 @@ describe('Motor Macroeconomico, Judicial y Laboral Argentino 2027', () => {
     expect(logisticCurve(0, 0, 1)).toBeCloseTo(0.5, 2);
   });
 });
+

@@ -115,3 +115,4 @@ export function computeNextInflationBreakdown(
     giniCoefficient: round2(clamp(current.giniCoefficient + (povertyCbtPct - 32) * 0.02, 36, 54))
   };
 }
+

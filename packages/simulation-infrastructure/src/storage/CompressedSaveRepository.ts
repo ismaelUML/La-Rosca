@@ -72,3 +72,4 @@ export class CompressedSaveRepository implements SaveRepositoryPort {
     return parsed;
   }
 }
+

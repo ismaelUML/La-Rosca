@@ -13,3 +13,4 @@ export function logisticCurve(x: number, midpoint: number, steepness: number): n
   const exponent = clamp(-steepness * (x - midpoint), -20, 20);
   return 1 / (1 + Math.exp(exponent));
 }
+

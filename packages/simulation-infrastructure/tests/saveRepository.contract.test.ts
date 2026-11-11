@@ -62,3 +62,4 @@ describe('BoundedSimulationQueue (Backpressure Worker Queue)', () => {
     expect(nextState.centralBank.policyRateAnnualPct).toBe(28);
   });
 });
+

@@ -149,3 +149,4 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
     structural: nextStructural
   };
 }
+
