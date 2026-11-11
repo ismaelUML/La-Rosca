@@ -183,3 +183,4 @@ export function CampaignGobernantesView({ state: _state }: CampaignGobernantesVi
     </div>
   );
 }
+

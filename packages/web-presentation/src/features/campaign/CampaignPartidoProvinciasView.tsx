@@ -117,3 +117,4 @@ export function CampaignPartidoProvinciasView({ state: _state }: CampaignPartido
     </div>
   );
 }
+

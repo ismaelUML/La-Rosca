@@ -117,9 +117,9 @@ function CampaignActivePanel({
     PARTIDO_PROVINCIAS: <CampaignPartidoProvinciasView state={state} />,
     APOYO_PROVINCIAS: <CampaignApoyoProvinciasView state={state} />,
     GOBERNANTES: <CampaignGobernantesView state={state} />,
-    POBLACION: <CampaignDemografiaPaisView initialTab="POBLACION" />,
-    INMIGRACION: <CampaignDemografiaPaisView initialTab="INMIGRACION" />,
-    EMIGRACION: <CampaignDemografiaPaisView initialTab="EMIGRACION" />,
+    POBLACION: <CampaignDemografiaPaisView key="POBLACION" initialTab="POBLACION" />,
+    INMIGRACION: <CampaignDemografiaPaisView key="INMIGRACION" initialTab="INMIGRACION" />,
+    EMIGRACION: <CampaignDemografiaPaisView key="EMIGRACION" initialTab="EMIGRACION" />,
     REGISTRO_DIARIO: <RegistroHistoryView historyLog={state.historyLog} />
   };
 

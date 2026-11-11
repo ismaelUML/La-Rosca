@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 // Vista de PAÍS -> Población, Inmigración y Emigración (capturas de referencia del usuario):
 // estadísticas demográficas nacionales, padrón electoral, saldos migratorios y tablas por país.
@@ -197,6 +197,10 @@ interface CampaignDemografiaPaisViewProps {
 
 export function CampaignDemografiaPaisView({ initialTab = 'POBLACION' }: CampaignDemografiaPaisViewProps) {
   const [activeTab, setActiveTab] = useState<DemografiaCountryTab>(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   return (
     <div className="space-y-6">
