@@ -18,6 +18,7 @@ export type InGameSidebarSection =
   | 'IMPUESTOS'
   | 'IMPUESTOS_PROPIOS'
   | 'RIGI'
+  | 'CAMARAS'
   | 'CONGRESO_Y_JUSTICIA'
   | 'PROVINCIAS_Y_DEFENSA';
 
@@ -52,8 +53,11 @@ const SIDEBAR_GROUPS: Array<{
     ]
   },
   {
-    groupTitle: 'CONGRESO Y JUSTICIA',
-    items: [{ id: 'CONGRESO_Y_JUSTICIA', label: 'Votaciones y Corte Suprema' }]
+    groupTitle: 'POLÍTICA Y CONGRESO',
+    items: [
+      { id: 'CAMARAS', label: 'Cámaras (Diputados y Senado)' },
+      { id: 'CONGRESO_Y_JUSTICIA', label: 'Votaciones y Corte Suprema' }
+    ]
   },
   {
     groupTitle: 'TERRITORIO Y DEFENSA',

@@ -63,6 +63,7 @@ import {
 } from './features/game-shell/DespachoAndRegistroView.js';
 import { EnergyAndLaborView } from './features/energia-y-trabajo/EnergyAndLaborView.js';
 import { JudicialAndProvincesView } from './features/justicia-y-provincias/JudicialAndProvincesView.js';
+import { CamarasLegislativasView } from './features/game-shell/CamarasLegislativasView.js';
 
 // Flujo electoral y gubernamental completo:
 // 1) LandingScreen -> 2) NewGameSetupScreen -> 3) Campaña Electoral 2027 -> 4) Asunción y Gobierno.
@@ -207,6 +208,9 @@ function ActiveSectionRenderer(props: ActiveSectionRendererProps) {
         onAddCustomTax={props.onAddCustomTax}
         onToggleRigi={props.onToggleRigi}
       />
+    ),
+    CAMARAS: (
+      <CamarasLegislativasView state={props.state} onDispatch={props.onDispatch} />
     ),
     CONGRESO_Y_JUSTICIA: (
       <JudicialAndProvincesView state={props.state} onDispatch={props.onDispatch} />
