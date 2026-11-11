@@ -156,3 +156,4 @@ export function PartyEmblemSvg({ config, size = 96, className }: PartyEmblemSvgP
     </svg>
   );
 }
+

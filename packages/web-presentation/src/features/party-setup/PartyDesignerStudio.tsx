@@ -296,3 +296,4 @@ export function PartyDesignerStudio({ emblem, onChange }: PartyDesignerStudioPro
     </div>
   );
 }
+
