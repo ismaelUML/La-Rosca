@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import type {
   CampaignSimulationState,
-  DemographicSegmentItem,
-  ProvinceCampaignInfo
+  DemographicSegmentItem
 } from '@argentina-sim/domain';
+import { ArgentinaRealVectorMap } from './ArgentinaRealVectorMap.js';
 
 // Vista de SITUACIÓN -> Imagen y mapa (capturas 4 y 5):
 // desgloses de imagen por ideologia, edad y poder adquisitivo,
-// y mapa interactivo provincial de la Republica Argentina.
+// y mapa cartografico vectorial autentico de Argentina por provincia y por departamento.
 
 interface DemographicColumnProps {
   title: string;
@@ -42,115 +42,6 @@ function DemographicColumn({ title, items }: DemographicColumnProps) {
             </div>
           </div>
         ))}
-      </div>
-    </div>
-  );
-}
-
-const NODE_VISUAL_STYLES = {
-  active: { radius: 16, stroke: '#ffffff', strokeWidth: 3, opacity: 1, textClass: 'fill-white font-bold' },
-  idle: { radius: 12, stroke: '#0f172a', strokeWidth: 1.5, opacity: 0.85, textClass: 'fill-slate-400' }
-};
-
-interface MapProvinceNodeProps {
-  province: ProvinceCampaignInfo;
-  index: number;
-  isSelected: boolean;
-  onSelect: (id: string) => void;
-}
-
-function MapProvinceNode({ province, index, isSelected, onSelect }: MapProvinceNodeProps) {
-  const yOffset = 40 + index * 22;
-  const xOffset = 90 + Math.sin(index * 0.4) * 35;
-  const style = isSelected ? NODE_VISUAL_STYLES.active : NODE_VISUAL_STYLES.idle;
-
-  return (
-    <g
-      onClick={() => onSelect(province.provinceId)}
-      className="cursor-pointer transition-transform hover:scale-105"
-    >
-      <circle
-        cx={xOffset}
-        cy={yOffset}
-        r={style.radius}
-        fill={province.leadingPartyColor}
-        stroke={style.stroke}
-        strokeWidth={style.strokeWidth}
-        opacity={style.opacity}
-      />
-      <text
-        x={xOffset + 20}
-        y={yOffset + 4}
-        className={`text-[9px] ${style.textClass}`}
-      >
-        {province.provinceName.slice(0, 12)}
-      </text>
-    </g>
-  );
-}
-
-interface ArgentinaProvinceMapSvgProps {
-  provinces: ProvinceCampaignInfo[];
-  selectedProvinceId: string;
-  onSelectProvince: (id: string) => void;
-}
-
-function ArgentinaProvinceMapSvg({
-  provinces,
-  selectedProvinceId,
-  onSelectProvince
-}: ArgentinaProvinceMapSvgProps) {
-  return (
-    <div className="rounded-2xl bg-[#0b0e15] border border-slate-800/90 p-4 flex flex-col md:flex-row items-center justify-center gap-6">
-      <div className="relative w-72 h-[420px] select-none">
-        <svg viewBox="0 0 300 600" className="w-full h-full filter drop-shadow-xl">
-          {provinces.map((p, idx) => (
-            <MapProvinceNode
-              key={p.provinceId}
-              province={p}
-              index={idx}
-              isSelected={p.provinceId === selectedProvinceId}
-              onSelect={onSelectProvince}
-            />
-          ))}
-        </svg>
-      </div>
-
-      <div className="flex-1 max-w-sm space-y-3 text-xs">
-        <div className="text-xs font-bold text-white uppercase tracking-wider">
-          Jurisdicciones (24 Distritos)
-        </div>
-        <div className="max-h-80 overflow-y-auto space-y-1.5 pr-2">
-          {provinces.map((p) => {
-            const isSelected = p.provinceId === selectedProvinceId;
-            return (
-              <button
-                key={p.provinceId}
-                type="button"
-                onClick={() => onSelectProvince(p.provinceId)}
-                className={`w-full text-left px-3 py-2 rounded-xl border transition flex items-center justify-between ${
-                  isSelected
-                    ? 'bg-[#181d2c] border-white text-white font-bold'
-                    : 'bg-[#10131b] border-slate-800 text-slate-300 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    style={{ backgroundColor: p.leadingPartyColor }}
-                    className="w-2.5 h-2.5 rounded-full inline-block"
-                  />
-                  <span>{p.provinceName}</span>
-                </div>
-                <div className="text-right">
-                  <span className="font-mono text-emerald-400">{p.playerVotePct.toFixed(1)}%</span>
-                  <span className="text-[10px] text-slate-500 ml-1.5">
-                    ({p.visitsCount} {p.visitsCount === 1 ? 'visita' : 'visitas'})
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
       </div>
     </div>
   );
@@ -235,7 +126,8 @@ export function CampaignImageAndMapView({ state }: CampaignImageAndMapViewProps)
           </div>
         </div>
 
-        <ArgentinaProvinceMapSvg
+        <ArgentinaRealVectorMap
+          mode={mapDivision}
           provinces={state.provinces}
           selectedProvinceId={selectedProvinceId}
           onSelectProvince={setSelectedProvinceId}

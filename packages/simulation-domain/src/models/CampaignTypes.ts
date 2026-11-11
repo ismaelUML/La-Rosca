@@ -139,3 +139,4 @@ export interface CampaignSimulationState {
 export type CampaignExecutePayload =
   | { actionId: 'RECORRIDA'; selectedProvinceId: string }
   | { actionId: Exclude<CampaignActionId, 'RECORRIDA'> };
+
