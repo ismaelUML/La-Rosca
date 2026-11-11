@@ -12,200 +12,218 @@ import {
 } from '@argentina-sim/domain';
 import { REAL_POLITICIANS_2027 } from '@argentina-sim/infrastructure';
 
-// Vista de ESTRATEGIA -> Apoyos:
-// Cada figura evalúa el momento del país, la distancia ideológica y tu caudal de votos
-// antes de darte aval o cruzarse de vereda. Nada de switches automáticos: hay rosca real.
+// Vista de Apoyos y Figuras Politicas:
+// Cada figura es dialoguista o dogmatica. El carrusel de figuras permite pedir apoyo
+// o seducir para el pase de partido (con 20 puntos menos de probabilidad).
 
-interface CampaignApoyosViewProps {
-  state: CampaignSimulationState;
-  onAdvanceMonth?: () => void;
+const PARTY_FILTER_BUTTONS = ['LLA', 'PRO', 'UCR', 'UxP', 'PF', 'FIT'] as const;
+
+const PARTY_FILTER_CLASSES: Record<string, { active: string; idle: string }> = {
+  LLA: {
+    active: 'bg-purple-950 border-purple-500 text-white shadow-md',
+    idle: 'bg-[#10131b] border-purple-900/60 text-purple-300 hover:border-purple-600'
+  },
+  PRO: {
+    active: 'bg-amber-950 border-yellow-500 text-white shadow-md',
+    idle: 'bg-[#10131b] border-yellow-900/60 text-yellow-300 hover:border-yellow-600'
+  },
+  UCR: {
+    active: 'bg-red-950 border-red-500 text-white shadow-md',
+    idle: 'bg-[#10131b] border-red-900/60 text-red-300 hover:border-red-600'
+  },
+  UxP: {
+    active: 'bg-sky-950 border-sky-500 text-white shadow-md',
+    idle: 'bg-[#10131b] border-sky-900/60 text-sky-300 hover:border-sky-600'
+  },
+  PF: {
+    active: 'bg-blue-950 border-blue-500 text-white shadow-md',
+    idle: 'bg-[#10131b] border-blue-900/60 text-blue-300 hover:border-blue-600'
+  },
+  FIT: {
+    active: 'bg-rose-950 border-rose-600 text-white shadow-md',
+    idle: 'bg-[#10131b] border-rose-900/60 text-rose-300 hover:border-rose-600'
+  }
+};
+
+function resolvePartyFilterClass(sigla: string, isSelected: boolean): string {
+  const conf = PARTY_FILTER_CLASSES[sigla];
+  if (!conf) return isSelected ? 'bg-white text-slate-950' : 'bg-[#10131b] text-slate-400';
+  return isSelected ? conf.active : conf.idle;
 }
 
-const PARTY_FILTER_BUTTONS = ['PRO', 'LLA', 'UCR', 'UxP', 'PF', 'FIT'];
+function getPoliticianRelevance(polId: string): number {
+  let hash = 0;
+  for (let i = 0; i < polId.length; i++) hash = (hash * 31 + polId.charCodeAt(i)) % 1000;
+  return 55 + (hash % 15);
+}
 
-function AssessmentPill({ assessment }: { assessment: NegotiationAssessment }) {
-  if (assessment.blockedReason) {
-    return (
-      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950/70 text-rose-300 border border-rose-800/60">
-        Bloqueado
-      </span>
-    );
-  }
-  const color = assessment.probabilityPct >= 60 ? 'text-emerald-400' : assessment.probabilityPct >= 35 ? 'text-amber-400' : 'text-rose-400';
+function getPoliticianInfluence(polId: string): number {
+  let hash = 0;
+  for (let i = 0; i < polId.length; i++) hash = (hash * 17 + polId.charCodeAt(i)) % 1000;
+  return 60 + (hash % 12);
+}
+
+function isPoliticianFuncionario(roleDescription: string): boolean {
+  const lower = roleDescription.toLowerCase();
   return (
-    <span className={`text-[11px] font-mono font-bold ${color}`}>
-      {assessment.probabilityPct} % prob.
-    </span>
+    lower.includes('gobernador') ||
+    lower.includes('intendente') ||
+    lower.includes('ministro') ||
+    lower.includes('diputado') ||
+    lower.includes('senador')
   );
 }
 
-function EndorsementActionSlot({
-  record,
-  assessment,
-  onRequest
+function PoliticianToggleSwitch({
+  blocked,
+  probSupport
 }: {
-  record?: NegotiationRecord;
-  assessment: NegotiationAssessment;
-  onRequest: () => void;
+  blocked: boolean;
+  probSupport: number;
 }) {
-  if (record?.verdict === 'ACEPTO') {
+  if (blocked) {
     return (
-      <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-        ✓ Apoyo sellado
-      </span>
+      <div className="flex items-center gap-2.5 text-xs text-slate-400 py-1">
+        <div className="w-8 h-4 rounded-full bg-slate-800 flex items-center p-0.5 opacity-60">
+          <div className="w-3 h-3 rounded-full bg-slate-600" />
+        </div>
+        <span className="text-slate-400">Es candidato de otra fuerza.</span>
+      </div>
     );
   }
-  if (record?.verdict === 'RECHAZO') {
-    return (
-      <span className="text-xs font-semibold text-rose-400">
-        ✗ Rechazó este mes
-      </span>
-    );
-  }
+
   return (
-    <button
-      type="button"
-      disabled={Boolean(assessment.blockedReason)}
-      onClick={onRequest}
-      className="px-3 py-1 rounded-lg text-xs font-bold bg-white hover:bg-slate-200 text-slate-950 disabled:opacity-40 disabled:cursor-not-allowed transition"
-    >
-      Pedir apoyo
-    </button>
+    <div className="flex items-center gap-2.5 text-xs py-1">
+      <div className="w-8 h-4 rounded-full bg-slate-600 flex items-center justify-end p-0.5">
+        <div className="w-3 h-3 rounded-full bg-white shadow-sm" />
+      </div>
+      <span className="text-slate-200 font-medium">Probabilidad ≈ {probSupport} %</span>
+    </div>
   );
 }
 
-function DefectionActionSlot({
-  record,
-  assessment,
-  isOwnParty,
-  onInvite
+function PoliticianActionButtons({
+  blocked,
+  endorsementRecord,
+  onRequestEndorsement,
+  onInviteDefection
 }: {
-  record?: NegotiationRecord;
-  assessment: NegotiationAssessment;
-  isOwnParty: boolean;
-  onInvite: () => void;
-}) {
-  if (isOwnParty) {
-    return (
-      <div className="w-full py-1 text-center text-[11px] text-slate-500 bg-slate-900/60 rounded-lg">
-        Es de tu propio partido
-      </div>
-    );
-  }
-  if (record?.verdict === 'ACEPTO') {
-    return (
-      <div className="w-full py-1 text-center text-xs font-bold text-emerald-300 bg-emerald-950 border border-emerald-700 rounded-lg">
-        ✓ Se incorporó a tu partido
-      </div>
-    );
-  }
-  if (record?.verdict === 'RECHAZO') {
-    return (
-      <div className="w-full py-1 text-center text-xs font-semibold text-rose-400 bg-rose-950/40 border border-rose-900/60 rounded-lg">
-        ✗ Rechazó el pase de partido
-      </div>
-    );
-  }
-  return (
-    <button
-      type="button"
-      disabled={Boolean(assessment.blockedReason)}
-      onClick={onInvite}
-      className="w-full py-1.5 rounded-xl text-xs font-semibold bg-[#181d2c] hover:bg-[#20273a] text-sky-300 border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
-    >
-      Invitar a pasarse a tus filas ({assessment.probabilityPct} %)
-    </button>
-  );
-}
-
-interface PoliticianCardProps {
-  pol: (typeof REAL_POLITICIANS_2027)[number];
-  endorsementEval: NegotiationAssessment;
-  defectionEval: NegotiationAssessment;
+  blocked: boolean;
   endorsementRecord?: NegotiationRecord;
-  defectionRecord?: NegotiationRecord;
-  isOwnParty: boolean;
   onRequestEndorsement: () => void;
   onInviteDefection: () => void;
+}) {
+  const isAccepted = endorsementRecord?.verdict === 'ACEPTO';
+
+  return (
+    <div className="flex gap-2 pt-2">
+      <button
+        type="button"
+        disabled={blocked || isAccepted}
+        onClick={onRequestEndorsement}
+        className="px-4 py-2 rounded-xl text-xs font-bold bg-[#141926] border border-slate-700 hover:bg-slate-800 text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition"
+      >
+        {isAccepted ? '✓ Te apoya' : 'Pedir apoyo'}
+      </button>
+
+      <button
+        type="button"
+        disabled={blocked}
+        onClick={onInviteDefection}
+        className="px-4 py-2 rounded-xl text-xs font-bold bg-white hover:bg-slate-200 text-slate-950 disabled:opacity-40 disabled:cursor-not-allowed transition shadow"
+      >
+        Invitar a tu partido
+      </button>
+    </div>
+  );
 }
 
 function PoliticianCard({
   pol,
   endorsementEval,
-  defectionEval,
   endorsementRecord,
-  defectionRecord,
-  isOwnParty,
   onRequestEndorsement,
   onInviteDefection
-}: PoliticianCardProps) {
-  const topFactor = endorsementEval.factors[0]?.label;
+}: {
+  pol: (typeof REAL_POLITICIANS_2027)[number];
+  endorsementEval: NegotiationAssessment;
+  endorsementRecord?: NegotiationRecord;
+  onRequestEndorsement: () => void;
+  onInviteDefection: () => void;
+}) {
+  const isBlocked = Boolean(endorsementEval.blockedReason);
+  const relevance = getPoliticianRelevance(pol.id);
+  const influence = getPoliticianInfluence(pol.id);
+  const isFuncionario = isPoliticianFuncionario(pol.roleDescription);
+  const probSupport = endorsementEval.probabilityPct;
+  const probDefection = Math.max(5, probSupport - 20);
+
+  const defectionText = isBlocked
+    ? 'Que se pase a tu partido: Es candidato de otra fuerza. (20 puntos menos que el apoyo)'
+    : `Que se pase a tu partido: ≈ ${probDefection} % (20 puntos menos que el apoyo)`;
 
   return (
-    <div className="rounded-2xl bg-[#10131b] border border-slate-800/90 p-4 flex flex-col justify-between space-y-3">
-      <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center font-bold text-xs text-white">
-              {pol.name.slice(0, 2).toUpperCase()}
-            </div>
-            <div>
-              <div className="font-bold text-white text-sm leading-tight">{pol.name}</div>
-              <div className="text-[11px] text-slate-400 mt-0.5">
-                {pol.partySigla} · {pol.ideology}
-              </div>
+    <div className="rounded-2xl bg-[#0b0e15] border border-slate-800/90 p-5 flex flex-col justify-between gap-4 shadow-lg">
+      <div className="space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center font-bold text-xs text-white shrink-0">
+            {pol.partySigla}
+          </div>
+          <div>
+            <h3 className="text-base font-extrabold text-white leading-tight">{pol.name}</h3>
+            <div className="text-xs text-slate-400 mt-0.5">
+              {pol.partySigla} · {pol.partySigla === 'UCR' ? 'Rojo y blanco' : pol.ideology}
             </div>
           </div>
-          <AssessmentPill assessment={endorsementEval} />
         </div>
 
-        <div className="flex flex-wrap gap-1 mb-2">
-          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-800 text-slate-300">
+        <div className="flex flex-wrap gap-1.5">
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-900 text-slate-300 border border-slate-800">
             {pol.styleTrait.toUpperCase()}
           </span>
-          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-950/70 border border-purple-800/60 text-purple-300">
-            {pol.difficulty}
-          </span>
+          {isFuncionario && (
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-900 text-slate-300 border border-slate-800">
+              FUNCIONARIO
+            </span>
+          )}
         </div>
 
-        <p className="text-xs text-slate-300 line-clamp-2">{pol.roleDescription}</p>
+        <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">{pol.roleDescription}</p>
+        <div className="text-xs text-slate-400 font-mono">
+          Relevancia {relevance} · Influencia {influence}
+        </div>
 
-        {endorsementEval.blockedReason ? (
-          <div className="text-[11px] text-rose-300 mt-2 bg-rose-950/30 p-2 rounded-lg border border-rose-900/60">
-            {endorsementEval.blockedReason}
-          </div>
-        ) : topFactor ? (
-          <div className="text-[11px] text-slate-400 mt-2 font-mono">
-            Factor clave: <span className="text-slate-300">{topFactor}</span>
-          </div>
-        ) : null}
+        <PoliticianToggleSwitch blocked={isBlocked} probSupport={probSupport} />
       </div>
 
-      <div className="pt-2 border-t border-slate-800/70 space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-slate-300">Aval electoral</span>
-          <EndorsementActionSlot
-            record={endorsementRecord}
-            assessment={endorsementEval}
-            onRequest={onRequestEndorsement}
-          />
-        </div>
-
-        <DefectionActionSlot
-          record={defectionRecord}
-          assessment={defectionEval}
-          isOwnParty={isOwnParty}
-          onInvite={onInviteDefection}
+      <div className="space-y-2 border-t border-slate-800/70 pt-3">
+        <PoliticianActionButtons
+          blocked={isBlocked}
+          endorsementRecord={endorsementRecord}
+          onRequestEndorsement={onRequestEndorsement}
+          onInviteDefection={onInviteDefection}
         />
+        <div className="text-[11px] text-slate-400 leading-normal">{defectionText}</div>
       </div>
     </div>
   );
 }
 
+export interface CampaignApoyosViewProps {
+  state: CampaignSimulationState;
+  onAdvanceMonth?: () => void;
+}
+
 export function CampaignApoyosView({ state }: CampaignApoyosViewProps) {
-  const [selectedPartyFilter, setSelectedPartyFilter] = useState('LLA');
-  const [endorsementLedger, setEndorsementLedger] = useState<Record<string, NegotiationRecord>>(() => state.diplomacy?.endorsements ?? {});
-  const [defectionLedger, setDefectionLedger] = useState<Record<string, NegotiationRecord>>(() => state.diplomacy?.defections ?? {});
+  const [selectedPartyFilter, setSelectedPartyFilter] = useState('UCR');
+  const [carouselIndex, setCarouselIndex] = useState(0);
+
+  const [endorsementLedger, setEndorsementLedger] = useState<Record<string, NegotiationRecord>>(
+    () => state.diplomacy?.endorsements ?? {}
+  );
+  const [defectionLedger, setDefectionLedger] = useState<Record<string, NegotiationRecord>>(
+    () => state.diplomacy?.defections ?? {}
+  );
 
   const player = useMemo(() => buildPlayerStanding(state), [state]);
   const mood = state.countryMood ?? createInitialCountryMood();
@@ -215,9 +233,26 @@ export function CampaignApoyosView({ state }: CampaignApoyosViewProps) {
     [selectedPartyFilter]
   );
 
+  const pageSize = 3;
+  const maxIndex = Math.max(0, filteredPoliticians.length - pageSize);
+  const visiblePoliticians = filteredPoliticians.slice(carouselIndex, carouselIndex + pageSize);
+
   const acceptedEndorsementsCount = Object.values(endorsementLedger).filter(
     (r) => r.verdict === 'ACEPTO'
-  ).length;
+  ).length + 70; // Base inicial de apoyos de aliados y legisladores afines
+
+  const handleSelectParty = (sigla: string) => {
+    setSelectedPartyFilter(sigla);
+    setCarouselIndex(0);
+  };
+
+  const handlePrevPage = () => {
+    setCarouselIndex((prev) => Math.max(0, prev - pageSize));
+  };
+
+  const handleNextPage = () => {
+    setCarouselIndex((prev) => Math.min(maxIndex, prev + pageSize));
+  };
 
   const handleRequestEndorsement = (pol: (typeof REAL_POLITICIANS_2027)[number]) => {
     const profile = buildPoliticianProfile(pol);
@@ -247,64 +282,73 @@ export function CampaignApoyosView({ state }: CampaignApoyosViewProps) {
     }));
   };
 
+  const currentRangeLabel = `${carouselIndex + 1}-${Math.min(
+    carouselIndex + pageSize,
+    filteredPoliticians.length
+  )} de ${filteredPoliticians.length}`;
+
   return (
     <div className="space-y-6">
-      <div className="border-b border-slate-800/80 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
-            ESTRATEGIA
-          </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white mt-0.5">Apoyos</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800/80 pb-4 gap-2">
+        <h1 className="text-2xl md:text-3xl font-extrabold text-white">| Apoyos</h1>
+        <div className="text-sm font-bold text-slate-300">
+          Te apoyan <strong className="text-white font-mono text-base">{acceptedEndorsementsCount}</strong>
         </div>
-        <div className="text-xs text-slate-400 font-mono">
-          Avales confirmados: <strong className="text-emerald-400">{acceptedEndorsementsCount}</strong> dirigentes
-        </div>
-      </div>
-
-      <div className="p-3.5 rounded-xl bg-[#0f1420] border border-slate-800 flex items-center justify-between text-xs text-slate-300">
-        <span>
-          Momento nacional: <strong className="text-sky-400">{mood.phaseLabel}</strong>
-        </span>
-        <span className="font-mono text-slate-400">
-          Aprobación Rosada: {mood.governmentApprovalPct} % · Inflación: {mood.inflationMonthlyPct} %
-        </span>
       </div>
 
       <p className="text-xs text-slate-400 leading-relaxed max-w-4xl">
-        Cada figura tiene ideología, lealtad y ambición propia. Los <strong>dialoguistas</strong> negocian con cualquiera si les conviene; los <strong>dogmáticos</strong> jamás avalan a fuerzas lejanas. El humor social y tu caudal de votos mueven la probabilidad cada mes.
+        Cada figura es <strong>dialoguista</strong> (puede apoyar a cualquiera) o <strong>dogmática</strong> (solo apoya a ideologías relativamente cercanas). Si el pedido no es posible, el interruptor aparece apagado y se indica el motivo. Quien apoya sube tu imagen y tus votos.
       </p>
 
-      <div className="flex flex-wrap gap-2">
-        {PARTY_FILTER_BUTTONS.map((sigla) => (
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2">
+          {PARTY_FILTER_BUTTONS.map((sigla) => {
+            const isSelected = selectedPartyFilter === sigla;
+            const btnClass = resolvePartyFilterClass(sigla, isSelected);
+            return (
+              <button
+                key={sigla}
+                type="button"
+                onClick={() => handleSelectParty(sigla)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition border ${btnClass}`}
+              >
+                {sigla}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
           <button
-            key={sigla}
             type="button"
-            onClick={() => setSelectedPartyFilter(sigla)}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition border ${
-              selectedPartyFilter === sigla
-                ? 'bg-white text-slate-950 border-white shadow'
-                : 'bg-[#10131b] text-slate-300 border-slate-800 hover:border-slate-700'
-            }`}
+            disabled={carouselIndex === 0}
+            onClick={handlePrevPage}
+            className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed text-white"
           >
-            {sigla}
+            ◀
           </button>
-        ))}
+          <span>{currentRangeLabel}</span>
+          <button
+            type="button"
+            disabled={carouselIndex >= maxIndex}
+            onClick={handleNextPage}
+            className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed text-white"
+          >
+            ▶
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-        {filteredPoliticians.map((pol) => {
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {visiblePoliticians.map((pol) => {
           const profile = buildPoliticianProfile(pol);
           const endorsementEval = assessEndorsement(profile, player, mood);
-          const defectionEval = assessDefection(profile, player, mood);
           return (
             <PoliticianCard
               key={pol.id}
               pol={pol}
               endorsementEval={endorsementEval}
-              defectionEval={defectionEval}
               endorsementRecord={endorsementLedger[pol.id]}
-              defectionRecord={defectionLedger[pol.id]}
-              isOwnParty={pol.partySigla === state.partySigla}
               onRequestEndorsement={() => handleRequestEndorsement(pol)}
               onInviteDefection={() => handleInviteDefection(pol)}
             />

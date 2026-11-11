@@ -19,6 +19,7 @@ export type InGameSidebarSection =
   | 'IMPUESTOS_PROPIOS'
   | 'RIGI'
   | 'CAMARAS'
+  | 'APOYOS'
   | 'CONGRESO_Y_JUSTICIA'
   | 'PROVINCIAS_Y_DEFENSA';
 
@@ -56,6 +57,7 @@ const SIDEBAR_GROUPS: Array<{
     groupTitle: 'POLÍTICA Y CONGRESO',
     items: [
       { id: 'CAMARAS', label: 'Cámaras (Diputados y Senado)' },
+      { id: 'APOYOS', label: 'Apoyos y Figuras' },
       { id: 'CONGRESO_Y_JUSTICIA', label: 'Votaciones y Corte Suprema' }
     ]
   },

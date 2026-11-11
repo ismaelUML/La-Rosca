@@ -131,6 +131,7 @@ interface ActiveSectionRendererProps {
   section: InGameSidebarSection;
   setup: GameSetupConfiguration;
   state: SimulationState;
+  campaignState: CampaignSimulationState;
   ministers: CabinetMinister[];
   levers: EconomicLeverItem[];
   measures: SectorMeasureCard[];
@@ -211,6 +212,9 @@ function ActiveSectionRenderer(props: ActiveSectionRendererProps) {
     ),
     CAMARAS: (
       <CamarasLegislativasView state={props.state} onDispatch={props.onDispatch} />
+    ),
+    APOYOS: (
+      <CampaignApoyosView state={props.campaignState} />
     ),
     CONGRESO_Y_JUSTICIA: (
       <JudicialAndProvincesView state={props.state} onDispatch={props.onDispatch} />
@@ -369,6 +373,7 @@ export function App() {
         section={activeSection}
         setup={setup}
         state={state}
+        campaignState={campaignState}
         ministers={ministers}
         levers={levers}
         measures={measures}
