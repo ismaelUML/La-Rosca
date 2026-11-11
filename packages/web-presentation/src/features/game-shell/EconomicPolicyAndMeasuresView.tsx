@@ -90,7 +90,7 @@ function FineTuningCard({
           {positiveBadges.map((b) => (
             <span
               key={b}
-              className="font-mono text-[10px] font-bold px-2 py-0.5 rounded border bg-[#10231c] border-emerald-700/60 text-emerald-400 shadow-sm"
+              className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-[#0f241a] border-emerald-800/80 text-emerald-400 shadow-sm"
             >
               {b}
             </span>
@@ -98,7 +98,7 @@ function FineTuningCard({
           {negativeBadges.map((b) => (
             <span
               key={b}
-              className="font-mono text-[10px] font-bold px-2 py-0.5 rounded border bg-[#29131a] border-rose-800/60 text-rose-400 shadow-sm"
+              className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-[#2b1218] border-rose-900/80 text-rose-400 shadow-sm"
             >
               {b}
             </span>
@@ -347,37 +347,48 @@ function SectorCategoryItem({
   );
 }
 
+function resolveFiscalBadgeClass(cost: number): string {
+  return cost <= 0
+    ? 'bg-[#0f241a] border-emerald-800/80 text-emerald-400'
+    : 'bg-[#2b1218] border-rose-900/80 text-rose-400';
+}
+
+function formatFiscalResultText(cost: number): string {
+  const sign = cost <= 0 ? '+' : '-';
+  return `RESULTADO FISCAL: ${sign}${Math.abs(cost)} % DEL PBI POR AÑO`;
+}
+
 function MeasureEffectsList({ m }: { m: SectorMeasureCard }) {
-  if (m.effectsBadges && m.effectsBadges.length > 0) {
-    return (
-      <div className="flex flex-wrap gap-1.5 pt-1">
-        {m.effectsBadges.map((b) => (
+  const fiscalClass = resolveFiscalBadgeClass(m.fiscalCostPctGdp);
+  const fiscalText = formatFiscalResultText(m.fiscalCostPctGdp);
+
+  return (
+    <div className="space-y-1.5 pt-1">
+      <div className="flex flex-wrap gap-1.5">
+        {m.effectsBadges?.map((b) => (
           <span
             key={b.label}
-            className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded border ${
+            className={`font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
               b.isPositive
-                ? 'bg-[#10231c] border-emerald-700/60 text-emerald-400'
-                : 'bg-[#29131a] border-rose-800/60 text-rose-400'
+                ? 'bg-[#0f241a] border-emerald-800/80 text-emerald-400'
+                : 'bg-[#2b1218] border-rose-900/80 text-rose-400'
             }`}
           >
             {b.label} {b.rangeText}
           </span>
         ))}
       </div>
-    );
-  }
 
-  return (
-    <div className="flex flex-wrap gap-1.5 pt-1">
-      <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded border bg-[#10231c] border-emerald-700/60 text-emerald-400">
-        IPC {m.inflationEffectPp} pp
-      </span>
-      <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded border bg-[#29131a] border-rose-800/60 text-rose-400">
-        COSTO {m.fiscalCostPctGdp}% PIB
-      </span>
-      <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded border bg-[#10231c] border-emerald-700/60 text-emerald-400">
-        APROBACIÓN +{m.approvalEffectPp}%
-      </span>
+      <div className="flex flex-wrap gap-1.5">
+        <span className={`font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${fiscalClass}`}>
+          {fiscalText}
+        </span>
+        {m.ideologyTag ? (
+          <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-[#0f241a] border-emerald-800/80 text-emerald-400">
+            ACORDE A TU ESPACIO
+          </span>
+        ) : null}
+      </div>
     </div>
   );
 }
