@@ -103,12 +103,18 @@ function convertGeoFeature(feat: any, pathGen: (f: any) => string | null): GeoFe
 
 function sanitizeDeptFeature(feat: any): any | null {
   const id = Number(feat.properties?.id);
-  // Feature 488 es el sector antartico con latitudes hasta -90 que hace divergir geoMercator a -infinito
+  // Feature 488 en el dataset crudo del IGN tiene el id y nombre de "Islas Malvinas",
+  // pero sus coordenadas son el cono antartico hasta los -90 de latitud.
+  // En geoMercator, tan(pi/4 + phi/2) con phi=-pi/2 se va a infinito y genera un
+  // polígono deforme de 5000x5000 px que pinta todo el SVG de violeta y rompe el mapa.
   if (id === 488) {
     return null;
   }
-  // Feature 489 contiene las Islas Malvinas y Georgias/Sandwich.
-  // Filtramos para incluir las Islas Malvinas (lon < -56) dentro de la proyeccion continental.
+  // Feature 489 agrupa en el IGN tanto a las Islas Malvinas como a las Georgias y Sandwich del Sur.
+  // Las Georgias estan en longitud -36 y Sandwich en -26: si las dejamos adentro,
+  // el mapa estira el bounding box 3000 km al este y la Argentina continental queda
+  // convertida en un fideo vertical ilegible. Filtramos los poligonos a lon < -56
+  // para conservar exclusivamente las Malvinas en escala y posicion real.
   if (id === 489 && feat.geometry?.type === 'MultiPolygon') {
     const malvinasPolys = feat.geometry.coordinates.filter((poly: any) => {
       let minLon = 999;
@@ -138,6 +144,10 @@ function sanitizeDeptFeature(feat: any): any | null {
   return feat;
 }
 
+// Los 24 partidos del Gran Buenos Aires concentran 11 millones de habitantes pero en
+// una proyeccion nacional son manchitas de 2x2 pixeles imposibles de clickear con mouse.
+// Metemos una segunda proyeccion Mercator recortada a escala 11500 (lente de aumento)
+// para que el jugador pueda interactuar comodamente con la Primera y Tercera Seccion electoral.
 const CONURBANO_NAMES = new Set([
   'ALMIRANTE BROWN',
   'AVELLANEDA',

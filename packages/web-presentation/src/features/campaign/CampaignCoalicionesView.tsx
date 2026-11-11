@@ -14,8 +14,11 @@ import {
 import { REAL_POLITICIANS_2027 } from '@argentina-sim/infrastructure';
 
 // Vista de POLÍTICO -> Candidatura y coaliciones:
-// Selección entre postulación personal o designación de un delfín partidario (con riesgo de traición
-// y requisito de estatura nacional), más acuerdos electorales calculados contra el contexto del país.
+// Selección entre postulación personal o designación de un delfín partidario.
+// Si ponés a un delegado con menos de 55 de relevancia nacional, el espacio pierde
+// tracción en provincias y el electorado lo percibe como un candidato testimonial.
+// Además, si el delegado gana las elecciones generales, la partida concluye con tu legado
+// como conductor del espacio en lugar de gobernar directamente el Estado.
 
 interface CampaignCoalicionesViewProps {
   state: CampaignSimulationState;
