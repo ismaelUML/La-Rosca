@@ -6,6 +6,52 @@ Acá tenés el plan maestro completo. Nada de humo de asistente virtual ni frase
 
 ---
 
+## 0. Aclaración Fundamental: NADA se quita de lo existente, TODO se potencia
+
+Que quede clarísimo desde el arranque porque ni en pedo vamos a tirar a la basura el laburo que ya hicimos:
+- **La sección "Medidas" NO se quita:** Sigue estando 100% activa con sus 12 sectores (precios, empleo, industria, agro, etc.), sus decretos temporales y permanentes, y sus efectos directos en el motor de simulación.
+- **La sección "Política económica" NO se quita:** Sigue con sus palancas macro (-2 a +2) y la calibración fina de la Mesa de Dinero del BCRA y CAMMESA.
+- **"Despacho", "Gabinete", "Registro", "Indicadores", "Financiamiento" y "Territorio y Defensa":** Todo eso se MANTIENE.
+- Lo que se agrega son las capas que faltaban de la política y la economía real que me pediste:
+  1. La sección **RIGI** ahora pasa a tener los **29 sectores oficiales** (en vez de ser genérico).
+  2. La sección **Impuestos** ahora pasa a tener los **17 tributos reales** clasificados por Decreto vs Ley.
+  3. La sección **Cámaras** (en el grupo Político / Congreso) suma los dos **Hemiciclos interactivos de 257 Diputados y 72 Senadores**, con quórum y rosca de bloques.
+  4. Se incorpora la pestaña **Apoyos** (con el carrusel de dirigentes y los pases de partido).
+  5. Se incorpora la pestaña **Partido en las provincias** (con los 4 turnos desdoblados y los donuts electorales).
+
+Acá tenés el mapa completo del Menú Lateral (Sidebar) para que veas cómo conviven todas las secciones:
+
+```
++----------------------------------------------------------------------------------------------------+
+|                                    MAPA GENERAL DEL MENÚ LATERAL (SIDEBAR)                         |
++----------------------+---------------------------------+-------------------------------------------+
+| GRUPO                | SECCIÓN                         | ESTADO Y CONTENIDO                        |
++----------------------+---------------------------------+-------------------------------------------+
+| DESPACHO             | · Despacho                      | Existente: Resumen del mandato y alertas  |
+|                      | · Gabinete                      | Existente: Ministerios y secretarías      |
+|                      | · Registro                      | Existente: Historial de decretos y leyes  |
++----------------------+---------------------------------+-------------------------------------------+
+| ECONOMÍA             | · Indicadores                   | Mejorado: 38+ variables con colores vivos |
+|                      | · Política económica            | Mejorado: Palancas y calibración BCRA     |
+|                      | · Medidas                       | SE CONSERVA: 12 sectores y decretos       |
+|                      | · CAMMESA y Paritarias          | Existente: Subsidios y salarios           |
++----------------------+---------------------------------+-------------------------------------------+
+| PRESUPUESTO          | · Financiamiento                | Existente: Deuda, letras y FMI            |
+|                      | · Impuestos                     | NUEVO: Los 17 tributos (Decreto vs Ley)   |
+|                      | · Impuestos propios             | Existente / Provincial según rol          |
+|                      | · RIGI                          | NUEVO: Grilla completa de los 29 sectores |
++----------------------+---------------------------------+-------------------------------------------+
+| POLÍTICA Y CONGRESO  | · Cámaras (Diputados y Senado)  | NUEVO: Hemiciclos 257 y 72 + Gobernabilidad|
+|                      | · Apoyos y Figuras              | NUEVO: Carrusel de dirigentes y pases     |
+|                      | · Votaciones y Corte Suprema    | Existente: Pliegos y proyectos            |
++----------------------+---------------------------------+-------------------------------------------+
+| FEDERALISMO Y DEF.   | · Partido en las Provincias     | NUEVO: Turnos 2030-2033 y donuts elect.   |
+|                      | · 24 Provincias y FF.AA.        | Existente: Recursos provinciales y defensa|
++----------------------+---------------------------------+-------------------------------------------+
+```
+
+---
+
 ## 1. La Filosofía de los Cuatro Roles: Qué ve y qué juega cada uno
 
 En la mayoría de los juegos te ponen un cartel que dice "Elegí tu cargo" pero después todas las pantallas son idénticas y solo te cambia el título arriba a la izquierda. Eso es una estafa. Si elegís ser Presidente no podés estar decidiendo si arreglás la vereda de un hospital en Formosa; y si sos Gobernador, no podés tener un botón para devaluar el tipo de cambio oficial o subir la tasa de política monetaria del BCRA porque te van a meter un cachetazo judicial y una intervención federal al segundo día..
@@ -390,3 +436,4 @@ Resumen:
 - Cero código de producción fue modificado en este turno, cumpliendo a rajatabla tu instrucción de planificar primero para tu aprobación.
 
 Saludos! Quedo a la espera de tu visto bueno sobre este plan maestro para arrancar con la Fase 1 cuando me des luz verde.
+
