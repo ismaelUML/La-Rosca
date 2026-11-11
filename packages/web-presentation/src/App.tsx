@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   advanceCampaignMonth,
   advanceSimulationMonth,
@@ -10,6 +10,7 @@ import {
   type CustomTaxProposal,
   type EconomicLeverItem,
   type GameSetupConfiguration,
+  type PersistedGameSession,
   type PolicyAction,
   type RigisectorItem,
   type SectorMeasureCard,
@@ -24,8 +25,10 @@ import {
   INITIAL_ECONOMIC_LEVERS,
   INITIAL_RIGI_SECTORS,
   INITIAL_SECTOR_MEASURES,
+  loadSessionFromStorage,
   POLITICAL_PARTIES_2027,
-  REAL_POLITICIANS_2027
+  REAL_POLITICIANS_2027,
+  saveSessionToStorage
 } from '@argentina-sim/infrastructure';
 import { LandingScreen } from './features/party-setup/LandingScreen.js';
 import { NewGameSetupScreen } from './features/party-setup/NewGameSetupScreen.js';
@@ -244,31 +247,169 @@ function applyLeverToMacroEngine(
   actionsByLever[id]?.();
 }
 
+function buildSessionPayload(
+  screenMode: ScreenMode,
+  setup: GameSetupConfiguration,
+  campaignState: CampaignSimulationState,
+  campaignNavSection: CampaignNavSection,
+  governmentState: SimulationState,
+  activeSection: InGameSidebarSection,
+  ministers: CabinetMinister[],
+  levers: EconomicLeverItem[],
+  measures: SectorMeasureCard[],
+  rigiSectors: RigisectorItem[],
+  customTaxes: CustomTaxProposal[]
+): PersistedGameSession {
+  return {
+    version: 1,
+    savedAtIso: new Date().toISOString(),
+    screenMode,
+    setup,
+    campaignState,
+    campaignNavSection,
+    governmentState,
+    activeSection,
+    ministers,
+    levers,
+    measures,
+    rigiSectors,
+    customTaxes
+  };
+}
+
+function shouldSkipAutoSave(
+  screenMode: ScreenMode,
+  turnMonth: number,
+  campaignMonth: number,
+  hasInitialSave: boolean
+): boolean {
+  if (hasInitialSave) {
+    return false;
+  }
+  if (screenMode !== 'LANDING') {
+    return false;
+  }
+  return turnMonth === 1 && campaignMonth === 1;
+}
+
+function resolveContinueScreenMode(
+  savedSession: PersistedGameSession | null,
+  govTurn: number,
+  campaignStage: string
+): ScreenMode {
+  if (govTurn > 1 || campaignStage === 'GOBIERNO') {
+    return 'GOVERNMENT';
+  }
+  if (savedSession?.screenMode && savedSession.screenMode !== 'LANDING') {
+    return savedSession.screenMode;
+  }
+  return 'CAMPAIGN';
+}
+
+function computeHasActiveSave(
+  savedSession: PersistedGameSession | null,
+  turnMonth: number,
+  campaignMonth: number
+): boolean {
+  if (savedSession) {
+    return true;
+  }
+  return turnMonth > 1 || campaignMonth > 1;
+}
+
 export function App() {
   const saveRepo = useMemo(() => new CompressedSaveRepository(), []);
-  const [screenMode, setScreenMode] = useState<ScreenMode>('LANDING');
-  const [setup, setSetup] = useState<GameSetupConfiguration>(DEFAULT_SETUP);
-  const [campaignState, setCampaignState] = useState<CampaignSimulationState>(() =>
-    createInitialCampaignState(
-      { id: 'MAURICIO_MACRI', name: 'Mauricio Macri' },
-      POLITICAL_PARTIES_2027[1]!,
-      'PRESIDENTE',
-      'CABA'
-    )
-  );
-  const [campaignNavSection, setCampaignNavSection] = useState<CampaignNavSection>('RESUMEN');
+  const savedSession = useMemo(() => loadSessionFromStorage(), []);
 
-  const [state, setState] = useState<SimulationState>(() =>
-    createInitialSimulationState2027('PRESIDENTE', 'ESTANDAR_2027', 'CABA')
-  );
-  const [activeSection, setActiveSection] = useState<InGameSidebarSection>('INDICADORES');
+  const [screenMode, setScreenMode] = useState<ScreenMode>(() => {
+    return savedSession?.screenMode ?? 'LANDING';
+  });
+  const [setup, setSetup] = useState<GameSetupConfiguration>(() => {
+    return savedSession?.setup ?? DEFAULT_SETUP;
+  });
+  const [campaignState, setCampaignState] = useState<CampaignSimulationState>(() => {
+    return (
+      savedSession?.campaignState ??
+      createInitialCampaignState(
+        { id: 'MAURICIO_MACRI', name: 'Mauricio Macri' },
+        POLITICAL_PARTIES_2027[1]!,
+        'PRESIDENTE',
+        'CABA'
+      )
+    );
+  });
+  const [campaignNavSection, setCampaignNavSection] = useState<CampaignNavSection>(() => {
+    return (savedSession?.campaignNavSection as CampaignNavSection) ?? 'RESUMEN';
+  });
+
+  const [state, setState] = useState<SimulationState>(() => {
+    return (
+      savedSession?.governmentState ??
+      createInitialSimulationState2027('PRESIDENTE', 'ESTANDAR_2027', 'CABA')
+    );
+  });
+  const [activeSection, setActiveSection] = useState<InGameSidebarSection>(() => {
+    return (savedSession?.activeSection as InGameSidebarSection) ?? 'INDICADORES';
+  });
   const [portableSaveBanner, setPortableSaveBanner] = useState<string | null>(null);
 
-  const [ministers, setMinisters] = useState<CabinetMinister[]>(INITIAL_CABINET_2027);
-  const [levers, setLevers] = useState<EconomicLeverItem[]>(INITIAL_ECONOMIC_LEVERS);
-  const [measures, setMeasures] = useState<SectorMeasureCard[]>(INITIAL_SECTOR_MEASURES);
-  const [rigiSectors, setRigiSectors] = useState<RigisectorItem[]>(INITIAL_RIGI_SECTORS);
-  const [customTaxes, setCustomTaxes] = useState<CustomTaxProposal[]>([]);
+  const [ministers, setMinisters] = useState<CabinetMinister[]>(() => {
+    return savedSession?.ministers ?? INITIAL_CABINET_2027;
+  });
+  const [levers, setLevers] = useState<EconomicLeverItem[]>(() => {
+    return savedSession?.levers ?? INITIAL_ECONOMIC_LEVERS;
+  });
+  const [measures, setMeasures] = useState<SectorMeasureCard[]>(() => {
+    return savedSession?.measures ?? INITIAL_SECTOR_MEASURES;
+  });
+  const [rigiSectors, setRigiSectors] = useState<RigisectorItem[]>(() => {
+    return savedSession?.rigiSectors ?? INITIAL_RIGI_SECTORS;
+  });
+  const [customTaxes, setCustomTaxes] = useState<CustomTaxProposal[]>(() => {
+    return savedSession?.customTaxes ?? [];
+  });
+
+  useEffect(() => {
+    if (
+      shouldSkipAutoSave(
+        screenMode,
+        state.turnMonth,
+        campaignState.stage.currentMonthIndex,
+        Boolean(savedSession)
+      )
+    ) {
+      return;
+    }
+
+    saveSessionToStorage(
+      buildSessionPayload(
+        screenMode,
+        setup,
+        campaignState,
+        campaignNavSection,
+        state,
+        activeSection,
+        ministers,
+        levers,
+        measures,
+        rigiSectors,
+        customTaxes
+      )
+    );
+  }, [
+    screenMode,
+    setup,
+    campaignState,
+    campaignNavSection,
+    state,
+    activeSection,
+    ministers,
+    levers,
+    measures,
+    rigiSectors,
+    customTaxes,
+    savedSession
+  ]);
 
   const handleStartConfiguredGame = (nextSetup: GameSetupConfiguration) => {
     setSetup(nextSetup);
@@ -308,16 +449,54 @@ export function App() {
     setCampaignState((prev) => executeCampaignAction(prev, card, payload));
   };
 
+  const handleExportSaveCode = () => {
+    saveSessionToStorage(
+      buildSessionPayload(
+        screenMode,
+        setup,
+        campaignState,
+        campaignNavSection,
+        state,
+        activeSection,
+        ministers,
+        levers,
+        measures,
+        rigiSectors,
+        customTaxes
+      )
+    );
+    setPortableSaveBanner(saveRepo.exportPortableCode(state));
+  };
+
+  const handleContinueGame = () => {
+    const nextMode = resolveContinueScreenMode(
+      savedSession,
+      state.turnMonth,
+      campaignState.stage.stage
+    );
+    setScreenMode(nextMode);
+  };
+
+  const handleImportPortableCode = (code: string) => {
+    const imported = saveRepo.importPortableCode(code);
+    setState(imported);
+    setScreenMode('GOVERNMENT');
+    setActiveSection('INDICADORES');
+  };
+
+  const hasActiveSave = computeHasActiveSave(
+    savedSession,
+    state.turnMonth,
+    campaignState.stage.currentMonthIndex
+  );
+
   if (screenMode === 'LANDING') {
     return (
       <LandingScreen
-        hasSavedSession={state.turnMonth > 1}
+        hasSavedSession={hasActiveSave}
         onStartNewGame={() => setScreenMode('NEW_GAME_SETUP')}
-        onContinueGame={() => setScreenMode('CAMPAIGN')}
-        onImportPortableCode={(code) => {
-          setState(saveRepo.importPortableCode(code));
-          setScreenMode('GOVERNMENT');
-        }}
+        onContinueGame={handleContinueGame}
+        onImportPortableCode={handleImportPortableCode}
       />
     );
   }
@@ -345,7 +524,7 @@ export function App() {
           setState(createInitialSimulationState2027(setup.role, setup.difficulty, setup.provinceId));
           setScreenMode('GOVERNMENT');
         }}
-        onExportSaveCode={() => setPortableSaveBanner(saveRepo.exportPortableCode(state))}
+        onExportSaveCode={handleExportSaveCode}
         onCloseSaveBanner={() => setPortableSaveBanner(null)}
         onExitToMenu={() => setScreenMode('LANDING')}
       >
@@ -368,7 +547,7 @@ export function App() {
       portableSaveBanner={portableSaveBanner}
       onSelectSection={setActiveSection}
       onAdvanceTurn={() => setState((prev) => advanceSimulationMonth(prev))}
-      onExportSaveCode={() => setPortableSaveBanner(saveRepo.exportPortableCode(state))}
+      onExportSaveCode={handleExportSaveCode}
       onCloseSaveBanner={() => setPortableSaveBanner(null)}
       onExitToMenu={() => setScreenMode('LANDING')}
     >

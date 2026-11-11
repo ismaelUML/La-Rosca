@@ -4,5 +4,6 @@ export * from './datasets/partiesAndPoliticians2027.js';
 export * from './datasets/indicatorsSeriesBuilder.js';
 export * from './datasets/campaignPresets2027.js';
 export * from './storage/CompressedSaveRepository.js';
+export * from './storage/SessionPersistence.js';
 export * from './worker/BoundedSimulationQueue.js';
 

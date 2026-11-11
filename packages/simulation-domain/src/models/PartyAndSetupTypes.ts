@@ -1,4 +1,5 @@
-import type { DifficultyLevel, PlayableRole } from './SimulationTypes.js';
+import type { DifficultyLevel, PlayableRole, SimulationState } from './SimulationTypes.js';
+import type { CampaignSimulationState } from './CampaignTypes.js';
 
 // Tipos para el creador de partida, politicos reales, espectro ideologico,
 // generador vectorial de insignias partidarias, gabinete y series de tiempo.
@@ -211,4 +212,23 @@ export interface GameSetupConfiguration {
   party: PoliticalPartyPreset;
   difficulty: DifficultyLevel;
 }
+
+export type PlayableScreenMode = 'LANDING' | 'NEW_GAME_SETUP' | 'CAMPAIGN' | 'GOVERNMENT';
+
+export interface PersistedGameSession {
+  version: 1;
+  savedAtIso: string;
+  screenMode: PlayableScreenMode;
+  setup: GameSetupConfiguration;
+  campaignState: CampaignSimulationState;
+  campaignNavSection: string;
+  governmentState: SimulationState;
+  activeSection: string;
+  ministers: CabinetMinister[];
+  levers: EconomicLeverItem[];
+  measures: SectorMeasureCard[];
+  rigiSectors: RigisectorItem[];
+  customTaxes: CustomTaxProposal[];
+}
+
 
