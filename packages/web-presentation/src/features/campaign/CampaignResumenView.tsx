@@ -11,6 +11,18 @@ interface CampaignResumenViewProps {
   onNavigateActions: () => void;
 }
 
+function CandidatePartyBadge({ partySigla, color }: { partySigla: string; color: string }) {
+  return (
+    <span
+      style={{ backgroundColor: color }}
+      className="px-1 py-0.5 rounded text-[9px] font-black text-slate-950 flex items-center gap-0.5 leading-none shrink-0"
+    >
+      <span className="text-[7px]">▶</span>
+      <span>{partySigla.toLowerCase()}</span>
+    </span>
+  );
+}
+
 function CandidatePollBar({
   name,
   partySigla,
@@ -28,16 +40,13 @@ function CandidatePollBar({
     <div>
       <div className="flex justify-between items-center text-xs mb-1">
         <span className="flex items-center gap-2 text-slate-200">
-          <span
-            style={{ backgroundColor: color }}
-            className="w-2.5 h-2.5 rounded-sm inline-block"
-          />
+          <CandidatePartyBadge partySigla={partySigla} color={color} />
           <strong className={isPlayer ? 'text-white' : 'text-slate-300'}>{name}</strong>
           <span className="text-slate-500 font-mono">· {partySigla}</span>
         </span>
         <span className="font-mono font-bold text-white text-xs">{voteSharePct.toFixed(1)} %</span>
       </div>
-      <div className="w-full h-2 rounded-full bg-slate-800/80 overflow-hidden">
+      <div className="w-full h-1.5 rounded-full bg-slate-800/80 overflow-hidden">
         <div
           style={{ width: `${Math.min(100, voteSharePct)}%`, backgroundColor: color }}
           className="h-full rounded-full transition-all duration-300"
@@ -229,30 +238,35 @@ export function CampaignResumenView({
         </p>
       </section>
 
-      <div className="rounded-2xl bg-[#10131b] border border-slate-800 p-5 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div>
-          <div className="text-sm font-bold text-white">
-            Acciones este mes: {state.actionsRemainingThisMonth} de {state.actionsTotalThisMonth}
+      <div className="rounded-2xl bg-[#10131b] border border-slate-800 p-5 space-y-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-bold text-white">
+              Acciones este mes: {state.actionsRemainingThisMonth} de {state.actionsTotalThisMonth}
+            </div>
+            <div className="text-xs text-slate-400 mt-0.5">
+              Presupuesto: <strong className="text-emerald-400 font-mono">{state.budgetArgentums.toFixed(1)} ¥</strong>
+            </div>
           </div>
-          <div className="text-xs text-slate-400 mt-0.5">
-            Presupuesto de campaña disponible: <strong className="text-emerald-400">{state.budgetArgentums.toFixed(1)} ¥</strong>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onNavigateActions}
-            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition"
+            className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition"
           >
-            Ver Acciones de Campaña ({state.actionsRemainingThisMonth} disponibles)
+            Ver acciones de campaña →
           </button>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2 border-t border-slate-800/70">
+          <div className="flex-1 rounded-xl bg-[#181612] border border-amber-800/50 px-3.5 py-2 text-xs text-amber-200/90">
+            Usá al menos una acción antes de avanzar (o quedate sin presupuesto).
+          </div>
           <button
             type="button"
             onClick={onAdvanceMonth}
-            className="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-200 text-slate-950 font-extrabold text-xs transition shadow-lg"
+            className="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-white text-slate-950 font-bold text-xs transition shadow shrink-0"
           >
-            Avanzar al mes siguiente →
+            Avanzar al mes siguiente
           </button>
         </div>
       </div>

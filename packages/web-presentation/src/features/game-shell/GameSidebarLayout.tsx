@@ -147,6 +147,7 @@ export function GameSidebarLayout({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <span className="text-amber-400 text-xs px-1 select-none hidden sm:inline">★</span>
           <button
             type="button"
             onClick={onAdvanceTurn}

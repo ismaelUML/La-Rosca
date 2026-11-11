@@ -38,8 +38,39 @@ const PROVINCE_NAME_TO_ID: Record<string, string> = {
   'Santa Fe': 'SANTA_FE',
   'Santiago del Estero': 'SANTIAGO_ESTERO',
   'Tierra del Fuego': 'TIERRA_DEL_FUEGO',
-  Tucumán: 'TUCUMAN'
+  Tucumán: 'TUCUMAN',
+  'BUENOS AIRES': 'PBA',
+  'CIUDAD AUTONOMA DE BUENOS AIRES': 'CABA',
+  CATAMARCA: 'CATAMARCA',
+  CHACO: 'CHACO',
+  CHUBUT: 'CHUBUT',
+  CORRIENTES: 'CORRIENTES',
+  CORDOBA: 'CORDOBA',
+  'ENTRE RIOS': 'ENTRE_RIOS',
+  FORMOSA: 'FORMOSA',
+  JUJUY: 'JUJUY',
+  'LA PAMPA': 'LA_PAMPA',
+  'LA RIOJA': 'LA_RIOJA',
+  MENDOZA: 'MENDOZA',
+  MISIONES: 'MISIONES',
+  NEUQUEN: 'NEUQUEN',
+  'RIO NEGRO': 'RIO_NEGRO',
+  SALTA: 'SALTA',
+  'SAN JUAN': 'SAN_JUAN',
+  'SAN LUIS': 'SAN_LUIS',
+  'SANTA CRUZ': 'SANTA_CRUZ',
+  'SANTA FE': 'SANTA_FE',
+  'SANTIAGO DEL ESTERO': 'SANTIAGO_ESTERO',
+  'TIERRA DEL FUEGO': 'TIERRA_DEL_FUEGO',
+  TUCUMAN: 'TUCUMAN'
 };
+
+function resolveFeatureProvinceId(feat: GeoFeatureItem): string {
+  if (feat.subRegion && PROVINCE_NAME_TO_ID[feat.subRegion]) {
+    return PROVINCE_NAME_TO_ID[feat.subRegion]!;
+  }
+  return PROVINCE_NAME_TO_ID[feat.name] ?? feat.id;
+}
 
 function buildPathGenerator() {
   const projection = geoMercator()
@@ -137,7 +168,7 @@ export function ArgentinaRealVectorMap({
           aria-label="Mapa cartográfico oficial de la República Argentina"
         >
           {activeFeatures.map((feat) => {
-            const mappedProvId = PROVINCE_NAME_TO_ID[feat.name] ?? feat.id;
+            const mappedProvId = resolveFeatureProvinceId(feat);
             const isSelected = mappedProvId === selectedProvinceId;
             const fillColor = provinceColorMap[mappedProvId] ?? '#ca8a04';
 

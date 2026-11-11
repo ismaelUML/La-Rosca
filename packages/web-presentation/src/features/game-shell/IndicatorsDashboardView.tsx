@@ -35,12 +35,17 @@ export function IndicatorsDashboardView({ state }: IndicatorsDashboardViewProps)
 
   return (
     <div className="space-y-5">
-      <div className="border-b border-slate-800/80 pb-4">
-        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-emerald-400">
-          <span className="w-2 h-2 rounded-sm bg-emerald-400" />
-          ECONOMÍA
+      <div className="border-b border-slate-800/80 pb-4 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-emerald-400">
+            <span className="w-2 h-2 rounded-sm bg-emerald-400" />
+            ECONOMÍA
+          </div>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-white mt-0.5">Indicadores</h1>
         </div>
-        <h1 className="text-2xl md:text-3xl font-extrabold text-white mt-0.5">Indicadores</h1>
+        <div className="text-[11px] text-slate-400 text-left sm:text-right max-w-md">
+          Guardada en este dispositivo · no se pudo subir la copia por código (el servidor respondió 500: Error del servidor... Unexpected token &apos;&lt;&apos; ... is not valid JSON)
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">

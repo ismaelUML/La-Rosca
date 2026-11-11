@@ -42,7 +42,7 @@ const LANDING_MENU_CARDS: Array<{ id: string; icon: string; label: string; detai
   { id: 'LOGROS', icon: '★', label: 'Logros (41/122)', detail: 'Hitos desbloqueados: Plan Austral, Pacto de Mayo, 2001' },
   { id: 'HISTORIAL', icon: '↺', label: 'Historial', detail: 'Crónicas presidenciales y autopsias macroeconómicas' },
   { id: 'COMO_JUGAR', icon: '?', label: 'Cómo se juega', detail: 'Guía de BCRA, CAMMESA, Paritarias, Congreso y Corte' },
-  { id: 'MODOS', icon: '✦', label: 'Modos de juego', detail: 'Viento de Cola, Estándar 2027, Herencia Maldita, 2001' },
+  { id: 'MODOS', icon: '✦', label: 'Modos de pago', detail: 'Mecenazgo, aportes de campaña, pauta y bonos militantes' },
   { id: 'AJUSTES', icon: '⚙', label: 'Ajustes', detail: 'Velocidad de simulación, semillas PRNG y accesibilidad' },
   { id: 'CONTACTO', icon: '✉', label: 'Contacto', detail: 'Comunidad de modding y reporte de escenarios históricos' },
   { id: 'ONLINE', icon: '●', label: 'Jugadores conectados: 182', detail: 'Simulando campañas y presupuestos en simultáneo' }
