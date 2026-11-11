@@ -145,12 +145,22 @@ export interface EconomicLeverItem {
   levelLabels: [string, string, string, string, string];
 }
 
+export interface MeasureEffectBadge {
+  label: string;
+  rangeText: string;
+  isPositive: boolean;
+}
+
 export interface SectorMeasureCard {
   id: string;
   sectorId: string;
   title: string;
   description: string;
   durationType: 'TEMPORAL' | 'PERMANENTE';
+  frequencyLabel?: string;
+  cooldownMonths?: number;
+  ideologyTag?: 'IZQUIERDA' | 'CENTRO' | 'DERECHA';
+  effectsBadges?: MeasureEffectBadge[];
   active: boolean;
   fiscalCostPctGdp: number;
   inflationEffectPp: number;

@@ -127,6 +127,41 @@ export interface CampaignStage {
   formattedDate: string;
 }
 
+// El "momento del país" que leen las IAs de los dirigentes antes de decirte que sí o que no.
+// Sin esto, la alianza con un gobierno al 30 % de aprobación vale lo mismo que con uno al 60 %,
+// y eso en Argentina es mentira: nadie se sube a un barco que se está hundiendo.
+export interface CountryMoodSnapshot {
+  inflationMonthlyPct: number;
+  povertyPct: number;
+  unemploymentPct: number;
+  governmentApprovalPct: number;
+  riskPremiumBps: number;
+  polarizationIndex: number; // 0-100
+  incumbentPartySigla: string;
+  partyPolling: Record<string, number>; // intención nacional por fuerza
+  phaseLabel: string;
+}
+
+export interface IdeologicalAxisPosition {
+  economic: number; // 1 izquierda - 100 derecha
+  cultural: number; // 1 progresista - 100 conservador
+}
+
+export type NegotiationVerdict = 'ACEPTO' | 'RECHAZO';
+
+export interface NegotiationRecord {
+  verdict: NegotiationVerdict;
+  monthIndex: number;
+  probabilityPct: number;
+}
+
+export interface CampaignDiplomacyLedger {
+  endorsements: Record<string, NegotiationRecord>;
+  defections: Record<string, NegotiationRecord>;
+  coalitions: Record<string, NegotiationRecord>;
+  delegateId: string | null;
+}
+
 export interface CampaignSimulationState {
   stage: CampaignStage;
   candidateId: string;
@@ -143,6 +178,11 @@ export interface CampaignSimulationState {
   demographics: CandidateDemographics;
   provinces: ProvinceCampaignInfo[];
   localZones?: LocalJurisdictionZone[];
+  // Opcionales a propósito: las partidas guardadas antes de este cambio no los traen
+  // y no queremos romperle el save a nadie por agregar rosca.
+  partyAxis?: IdeologicalAxisPosition;
+  countryMood?: CountryMoodSnapshot;
+  diplomacy?: CampaignDiplomacyLedger;
   budgetArgentums: number;
   actionsRemainingThisMonth: number;
   actionsTotalThisMonth: number;

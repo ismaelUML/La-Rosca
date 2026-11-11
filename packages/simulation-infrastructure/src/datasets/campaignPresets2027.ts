@@ -1,15 +1,17 @@
-import type {
-  CampaignActionCard,
-  CampaignSimulationState,
-  CandidateDemographics,
-  CandidatePersonalAttributes,
-  CandidatePublicImage,
-  CandidateVotingIntention,
-  InternalPoll,
-  PlayableRole,
-  PoliticalPartyPreset,
-  ProvinceCampaignInfo,
-  RealPoliticianPreset
+import {
+  createInitialCountryMood,
+  resolvePartyAxis,
+  type CampaignActionCard,
+  type CampaignSimulationState,
+  type CandidateDemographics,
+  type CandidatePersonalAttributes,
+  type CandidatePublicImage,
+  type CandidateVotingIntention,
+  type InternalPoll,
+  type PlayableRole,
+  type PoliticalPartyPreset,
+  type ProvinceCampaignInfo,
+  type RealPoliticianPreset
 } from '@argentina-sim/domain';
 
 // Catalogo completo de las 9 acciones de campana y fabrica de estados
@@ -427,6 +429,14 @@ export function createInitialCampaignState(
     partyId: party.id,
     partySigla: party.sigla,
     partyColor: party.primaryColor,
+    partyAxis: resolvePartyAxis(party.sigla),
+    countryMood: createInitialCountryMood(),
+    diplomacy: {
+      endorsements: {},
+      defections: {},
+      coalitions: {},
+      delegateId: null
+    },
     targetRole: role,
     targetProvinceId: provinceId,
     attributes: presets.attributes,

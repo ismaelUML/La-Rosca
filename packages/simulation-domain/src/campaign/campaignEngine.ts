@@ -6,6 +6,7 @@ import type {
   LocalJurisdictionZone
 } from '../models/CampaignTypes.js';
 import { clamp, round2 } from '../economy/mathUtils.js';
+import { evolveCountryMood } from './countryMoodEngine.js';
 
 // Motor puro de campana electoral: ejecucion de las 9 acciones,
 // actualizacion de imagen y transicion de etapas (Interna -> PASO -> General -> Balotaje -> Gobierno).
@@ -250,6 +251,7 @@ export function advanceCampaignMonth(state: CampaignSimulationState): CampaignSi
     `Mes ${nextMonthIndex} (${milestone.date}): Se asignaron 4 nuevas acciones y presupuesto de campaña.`,
     ...state.historyLog
   ];
+  const nextMood = state.countryMood ? evolveCountryMood(state.countryMood, nextMonthIndex) : undefined;
 
   return {
     ...state,
@@ -260,6 +262,7 @@ export function advanceCampaignMonth(state: CampaignSimulationState): CampaignSi
       currentMonthIndex: nextMonthIndex,
       formattedDate: milestone.date
     },
+    countryMood: nextMood,
     budgetArgentums: replenishedBudget,
     actionsRemainingThisMonth: 4,
     historyLog: nextHistory

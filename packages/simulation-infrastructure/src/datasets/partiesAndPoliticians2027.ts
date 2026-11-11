@@ -335,11 +335,191 @@ export const SECTOR_CATEGORIES_SUMMARY: Array<{
 ];
 
 export const INITIAL_SECTOR_MEASURES: SectorMeasureCard[] = [
-  { id: 'M_PRECIOS_IMPORT', sectorId: 'PRECIOS', title: 'Apertura de Importación de Alimentos de la Canasta Básica', description: 'Elimina trabas de ANMAT y baja aranceles a alimentos importados para disciplinar precios locales.', durationType: 'TEMPORAL', active: false, fiscalCostPctGdp: 0.12, inflationEffectPp: -0.45, approvalEffectPp: 1.8 },
-  { id: 'M_AGRO_DOLAR_BLEND', sectorId: 'AGRO', title: 'Programa Dólar Exportador Blend (80% Oficial + 20% CCL)', description: 'Acelera la liquidación de silobolsas en el corto plazo pero resta acumulación de reservas al BCRA.', durationType: 'TEMPORAL', active: false, fiscalCostPctGdp: 0.2, inflationEffectPp: 0.3, approvalEffectPp: 1.1 },
-  { id: 'M_TRABAJO_FONDO_CESE', sectorId: 'TRABAJO', title: 'Ley de Fondo de Cese Laboral y Derogación de Multas Ley 24.013', description: 'Desarma la industria del juicio laboral y reduce la informalidad estructural en PyMEs.', durationType: 'PERMANENTE', active: false, fiscalCostPctGdp: 0.05, inflationEffectPp: -0.1, approvalEffectPp: 2.2 },
-  { id: 'M_ENERGIA_REVERSION_NORTE', sectorId: 'ENERGIA', title: 'Reversión del Gasoducto Norte y Plantas Compresoras', description: 'Reemplaza el gas importado de Bolivia y barcos de GNL en invierno con gas de Vaca Muerta.', durationType: 'PERMANENTE', active: true, fiscalCostPctGdp: 0.35, inflationEffectPp: -0.25, approvalEffectPp: 2.5 },
-  { id: 'M_SEGURIDAD_ANTIMAFIA', sectorId: 'SEGURIDAD', title: 'Ley Antimafia y Despliegue Conjunto en Rosario y Frontera Norte', description: 'Aplica penas de asociación ilícita a bandas narco e instala radares INVAP.', durationType: 'PERMANENTE', active: true, fiscalCostPctGdp: 0.18, inflationEffectPp: 0.0, approvalEffectPp: 3.4 },
-  { id: 'M_DEUDA_DESARME_PUTS', sectorId: 'DEUDA', title: 'Recompra de PUTs Bancarios y Saneamiento de LEFIs del BCRA', description: 'Elimina el seguro de emisión endógena en manos de los bancos privados.', durationType: 'PERMANENTE', active: false, fiscalCostPctGdp: 0.4, inflationEffectPp: -0.6, approvalEffectPp: 1.5 }
+  {
+    id: 'LEY_GONDOLAS',
+    sectorId: 'PRECIOS',
+    title: 'Ley de góndolas',
+    description: 'Espacio obligatorio para pymes y marcas alternativas en supermercados.',
+    durationType: 'PERMANENTE',
+    ideologyTag: 'CENTRO',
+    effectsBadges: [
+      { label: 'INFLACIÓN MENSUAL', rangeText: '-0,5/-0,3', isPositive: true },
+      { label: 'ACTIVIDAD INDUSTRIAL', rangeText: '+0,9/+1,5', isPositive: true }
+    ],
+    active: false,
+    fiscalCostPctGdp: 0.0,
+    inflationEffectPp: -0.4,
+    approvalEffectPp: 0.8
+  },
+  {
+    id: 'OBSERVATORIO_PRECIOS',
+    sectorId: 'PRECIOS',
+    title: 'Observatorio de precios con sanciones',
+    description: 'Monitoreo permanente de márgenes y multas por abusos.',
+    durationType: 'PERMANENTE',
+    ideologyTag: 'IZQUIERDA',
+    effectsBadges: [
+      { label: 'INFLACIÓN MENSUAL', rangeText: '-0,6/-0,4', isPositive: true },
+      { label: 'CONFIANZA ECONÓMICA', rangeText: '-1,3/-0,8', isPositive: false },
+      { label: 'APROBACIÓN', rangeText: '+0,5/+0,8', isPositive: true }
+    ],
+    active: false,
+    fiscalCostPctGdp: 0.05,
+    inflationEffectPp: -0.5,
+    approvalEffectPp: 0.65
+  },
+  {
+    id: 'LIBRE_IMPORTACION_INSUMOS',
+    sectorId: 'PRECIOS',
+    title: 'Libre importación de insumos',
+    description: 'Arancel cero para insumos sin producción local.',
+    durationType: 'PERMANENTE',
+    ideologyTag: 'DERECHA',
+    effectsBadges: [
+      { label: 'INFLACIÓN MENSUAL', rangeText: '-0,5/-0,3', isPositive: true },
+      { label: 'ACTIVIDAD INDUSTRIAL', rangeText: '+0,9/+1,5', isPositive: true },
+      { label: 'IMPORTACIONES', rangeText: '+1,8/+3', isPositive: true },
+      { label: 'RECAUDACIÓN', rangeText: '-0,2/-0,1', isPositive: false }
+    ],
+    active: false,
+    fiscalCostPctGdp: 0.15,
+    inflationEffectPp: -0.4,
+    approvalEffectPp: 0.5
+  },
+  {
+    id: 'METAS_INFLACION_BCRA',
+    sectorId: 'PRECIOS',
+    title: 'Régimen de metas de inflación',
+    description: 'El Banco Central fija y comunica metas con tasa de interés como herramienta.',
+    durationType: 'PERMANENTE',
+    ideologyTag: 'CENTRO',
+    effectsBadges: [
+      { label: 'INFLACIÓN MENSUAL', rangeText: '-0,9/-0,5', isPositive: true },
+      { label: 'TASA DE INTERÉS', rangeText: '+2,3/+3,8', isPositive: true }
+    ],
+    active: false,
+    fiscalCostPctGdp: 0.1,
+    inflationEffectPp: -0.7,
+    approvalEffectPp: 1.1
+  },
+  {
+    id: 'DEFENSA_COMPETENCIA',
+    sectorId: 'PRECIOS',
+    title: 'Mesa de defensa de la competencia',
+    description: 'Investigación de cartelización en cadenas de alimentos y medicamentos.',
+    durationType: 'TEMPORAL',
+    frequencyLabel: 'CADA 6 M.',
+    cooldownMonths: 3,
+    ideologyTag: 'CENTRO',
+    effectsBadges: [
+      { label: 'INFLACIÓN MENSUAL', rangeText: '-0,3/0', isPositive: true },
+      { label: 'APROBACIÓN', rangeText: '+0,3/+1,1', isPositive: true },
+      { label: 'CONFIANZA ECONÓMICA', rangeText: '-0,4/+0,6', isPositive: false }
+    ],
+    active: false,
+    fiscalCostPctGdp: 0.02,
+    inflationEffectPp: -0.15,
+    approvalEffectPp: 0.7
+  },
+  {
+    id: 'FERIAS_PRODUCTOR_CONSUMIDOR',
+    sectorId: 'PRECIOS',
+    title: 'Ferias del productor al consumidor',
+    description: 'Mercados itinerantes sin intermediarios en barrios populares.',
+    durationType: 'TEMPORAL',
+    frequencyLabel: 'CADA 6 M.',
+    cooldownMonths: 3,
+    ideologyTag: 'IZQUIERDA',
+    effectsBadges: [
+      { label: 'INFLACIÓN MENSUAL', rangeText: '-0,1/0', isPositive: true },
+      { label: 'POBREZA', rangeText: '-0,2/0', isPositive: true },
+      { label: 'APROBACIÓN', rangeText: '+0,3/+1', isPositive: true }
+    ],
+    active: false,
+    fiscalCostPctGdp: 0.04,
+    inflationEffectPp: -0.05,
+    approvalEffectPp: 0.65
+  },
+  {
+    id: 'DESREGULACION_MERCADOS',
+    sectorId: 'PRECIOS',
+    title: 'Desregulación de mercados regulados',
+    description: 'Elimina restricciones en mercados de alquileres, medicamentos y transporte.',
+    durationType: 'TEMPORAL',
+    frequencyLabel: 'CADA 6 M.',
+    cooldownMonths: 3,
+    ideologyTag: 'DERECHA',
+    effectsBadges: [
+      { label: 'INFLACIÓN MENSUAL', rangeText: '-0,2/+0,1', isPositive: true },
+      { label: 'INVERSIÓN', rangeText: '+0,3/+0,8', isPositive: true },
+      { label: 'APROBACIÓN', rangeText: '-0,7/+0,4', isPositive: false },
+      { label: 'CONFIANZA ECONÓMICA', rangeText: '+1,3/+3,8', isPositive: true }
+    ],
+    active: false,
+    fiscalCostPctGdp: 0.0,
+    inflationEffectPp: -0.1,
+    approvalEffectPp: 0.2
+  },
+  {
+    id: 'ACUERDO_PRECIOS_CADENAS',
+    sectorId: 'PRECIOS',
+    title: 'Acuerdo de precios con cadenas',
+    description: 'Pacto voluntario con supermercados y productores.',
+    durationType: 'TEMPORAL',
+    frequencyLabel: 'CADA 6 M.',
+    cooldownMonths: 3,
+    ideologyTag: 'CENTRO',
+    effectsBadges: [
+      { label: 'INFLACIÓN MENSUAL', rangeText: '-0,4/-0,1', isPositive: true },
+      { label: 'APROBACIÓN', rangeText: '+0,2/+0,6', isPositive: true }
+    ],
+    active: false,
+    fiscalCostPctGdp: 0.0,
+    inflationEffectPp: -0.25,
+    approvalEffectPp: 0.4
+  },
+  {
+    id: 'CONGELAMIENTO_TARIFAS',
+    sectorId: 'PRECIOS',
+    title: 'Congelamiento de tarifas por 6 meses',
+    description: 'Posterga aumentos de energía y transporte.',
+    durationType: 'TEMPORAL',
+    frequencyLabel: 'CADA 6 M.',
+    cooldownMonths: 3,
+    ideologyTag: 'IZQUIERDA',
+    effectsBadges: [
+      { label: 'INFLACIÓN MENSUAL', rangeText: '-0,7/-0,3', isPositive: true },
+      { label: 'GASTO PRIMARIO', rangeText: '+0,8/+1,2', isPositive: false },
+      { label: 'APROBACIÓN', rangeText: '+1,2/+2,5', isPositive: true }
+    ],
+    active: false,
+    fiscalCostPctGdp: 0.8,
+    inflationEffectPp: -0.5,
+    approvalEffectPp: 1.8
+  },
+  {
+    id: 'PACTO_SOCIAL_PRECIOS_SALARIOS',
+    sectorId: 'PRECIOS',
+    title: 'Pacto social de precios y salarios',
+    description: 'Acuerdo tripartito: gobierno, empresas y sindicatos.',
+    durationType: 'TEMPORAL',
+    frequencyLabel: 'CADA 6 M.',
+    cooldownMonths: 3,
+    ideologyTag: 'CENTRO',
+    effectsBadges: [
+      { label: 'INFLACIÓN MENSUAL', rangeText: '-0,5/-0,2', isPositive: true },
+      { label: 'CONFLICTIVIDAD', rangeText: '-1,5/-0,8', isPositive: true }
+    ],
+    active: false,
+    fiscalCostPctGdp: 0.0,
+    inflationEffectPp: -0.35,
+    approvalEffectPp: 1.0
+  },
+  { id: 'M_PRECIOS_IMPORT', sectorId: 'PRECIOS', title: 'Apertura de Importación de Alimentos Canasta Básica', description: 'Elimina trabas de ANMAT y baja aranceles a alimentos importados.', durationType: 'TEMPORAL', active: false, fiscalCostPctGdp: 0.12, inflationEffectPp: -0.45, approvalEffectPp: 1.8 },
+  { id: 'M_AGRO_DOLAR_BLEND', sectorId: 'AGRO', title: 'Programa Dólar Exportador Blend (80/20)', description: 'Acelera la liquidación de silobolsas en el corto plazo.', durationType: 'TEMPORAL', active: false, fiscalCostPctGdp: 0.2, inflationEffectPp: 0.3, approvalEffectPp: 1.1 },
+  { id: 'M_TRABAJO_FONDO_CESE', sectorId: 'TRABAJO', title: 'Ley de Fondo de Cese Laboral y Fin de Multas 24.013', description: 'Desarma la industria del juicio laboral y reduce informalidad.', durationType: 'PERMANENTE', active: false, fiscalCostPctGdp: 0.05, inflationEffectPp: -0.1, approvalEffectPp: 2.2 },
+  { id: 'M_ENERGIA_REVERSION_NORTE', sectorId: 'ENERGIA', title: 'Reversión del Gasoducto Norte', description: 'Reemplaza el gas importado de Bolivia con gas de Vaca Muerta.', durationType: 'PERMANENTE', active: true, fiscalCostPctGdp: 0.35, inflationEffectPp: -0.25, approvalEffectPp: 2.5 },
+  { id: 'M_SEGURIDAD_ANTIMAFIA', sectorId: 'SEGURIDAD', title: 'Ley Antimafia y Despliegue en Rosario', description: 'Aplica penas de asociación ilícita a bandas narco.', durationType: 'PERMANENTE', active: true, fiscalCostPctGdp: 0.18, inflationEffectPp: 0.0, approvalEffectPp: 3.4 },
+  { id: 'M_DEUDA_DESARME_PUTS', sectorId: 'DEUDA', title: 'Recompra de PUTs Bancarios y LEFIs', description: 'Elimina el seguro de emisión endógena bancaria.', durationType: 'PERMANENTE', active: false, fiscalCostPctGdp: 0.4, inflationEffectPp: -0.6, approvalEffectPp: 1.5 }
 ];
 

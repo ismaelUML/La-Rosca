@@ -3,6 +3,8 @@ export * from './models/CongressAndGeopoliticsTypes.js';
 export * from './models/PartyAndSetupTypes.js';
 export * from './models/CampaignTypes.js';
 export * from './campaign/campaignEngine.js';
+export * from './campaign/countryMoodEngine.js';
+export * from './campaign/politicalAffinityEngine.js';
 export * from './economy/mathUtils.js';
 export * from './economy/inflationEngine.js';
 export * from './economy/centralBankAndBankingEngine.js';
