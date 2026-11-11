@@ -96,3 +96,4 @@ describe('SessionPersistence (Auto-guardado y persistencia en recarga F5)', () =
     expect(loadSessionFromStorage(storage)).toBeNull();
   });
 });
+
