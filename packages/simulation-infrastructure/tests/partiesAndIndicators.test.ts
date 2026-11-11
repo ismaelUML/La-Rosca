@@ -33,3 +33,4 @@ describe('Datasets de Partidos, Políticos Reales y Series de Indicadores 2027',
     expect(infMensual?.points[0]?.label).toBe('dic 26');
   });
 });
+

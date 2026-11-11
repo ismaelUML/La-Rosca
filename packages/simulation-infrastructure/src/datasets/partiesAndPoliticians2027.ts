@@ -546,16 +546,16 @@ export const INITIAL_CABINET_2027: CabinetMinister[] = [
 ];
 
 export const INITIAL_ECONOMIC_LEVERS: EconomicLeverItem[] = [
-  { id: 'GASTO_PUBLICO', title: 'Gasto público', description: 'Nivel del gasto primario del Estado.', level: -1, levelLabels: ['Motosierra', 'Ajuste', 'Neutral', 'Expansivo', 'Plan Platita'] },
+  { id: 'GASTO_PUBLICO', title: 'Gasto público', description: 'Nivel del gasto primario del Estado.', level: 0, levelLabels: ['Motosierra', 'Ajuste', 'Neutral', 'Expansivo', 'Plan Platita'] },
   { id: 'TIPO_CAMBIO', title: 'Tipo de cambio', description: 'Ritmo de ajuste del dólar oficial (Crawling Peg).', level: 0, levelLabels: ['Ancla 0%', 'Lento 1%', 'Neutral 1,5%', 'Acelerado 4%', 'Devaluación'] },
   { id: 'CONTROL_CAMBIOS', title: 'Controles de cambios', description: 'Cupos, parking y límites para comprar divisas (Cepo).', level: 0, levelLabels: ['Libre', 'Suave', 'Neutral', 'Cepo Duro', 'Feriado Cambiario'] },
   { id: 'TASA_INTERES', title: 'Tasa de interés', description: 'Costo del dinero y pases en la economía (BCRA).', level: 0, levelLabels: ['Licuación', 'Baja', 'Neutral', 'Positiva', 'Super-Tasa'] },
   { id: 'SALARIOS_PARITARIAS', title: 'Salarios y paritarias', description: 'Homologación en Secretaría de Trabajo y salario mínimo.', level: 0, levelLabels: ['Techo Duro', 'Pauta', 'Neutral', 'Indexada', 'Suma Fija'] },
   { id: 'SUBSIDIOS_TARIFAS', title: 'Subsidios y tarifas', description: 'Energía (CAMMESA), gas, transporte y agua.', level: 0, levelLabels: ['Tarifazo 100%', 'Quita Gradual', 'Neutral', 'Segmentado', 'Congelado'] },
   { id: 'PLANES_SOCIALES', title: 'Planes sociales', description: 'AUH, Tarjeta Alimentar y transferencias vulnerables.', level: 0, levelLabels: ['Recorte', 'Sin Punteros', 'Neutral', 'Refuerzo CBA', 'Universal'] },
-  { id: 'OBRA_PUBLICA', title: 'Obra pública', description: 'Rutas, gasoductos, vivienda e infraestructura.', level: -1, levelLabels: ['Obra Cero', 'Concesión Privada', 'Neutral', 'Federal', 'Plan Quinquenal'] },
+  { id: 'OBRA_PUBLICA', title: 'Obra pública', description: 'Rutas, gasoductos, vivienda e infraestructura.', level: 0, levelLabels: ['Obra Cero', 'Concesión Privada', 'Neutral', 'Federal', 'Plan Quinquenal'] },
   { id: 'JUBILACIONES', title: 'Jubilaciones (ANSES)', description: 'Movilidad previsional, bonos y haberes.', level: 0, levelLabels: ['Licuadora', 'Bono Fijo', 'Neutral IPC', 'Recomposición', '82% Móvil'] },
-  { id: 'EMPRESAS_PUBLICAS', title: 'Empresas públicas', description: 'Tamaño del Estado empresario (YPF, AA, AySA, Trenes).', level: -1, levelLabels: ['Privatizar Todo', 'Privatizar', 'Neutral', 'Saneamiento', 'Estatizar'] }
+  { id: 'EMPRESAS_PUBLICAS', title: 'Empresas públicas', description: 'Tamaño del Estado empresario (YPF, AA, AySA, Trenes).', level: 0, levelLabels: ['Privatizar Todo', 'Privatizar', 'Neutral', 'Saneamiento', 'Estatizar'] }
 ];
 
 export const INITIAL_RIGI_SECTORS: RigisectorItem[] = [
@@ -595,3 +595,4 @@ export const INITIAL_SECTOR_MEASURES: SectorMeasureCard[] = [
   { id: 'M_SEGURIDAD_ANTIMAFIA', sectorId: 'SEGURIDAD', title: 'Ley Antimafia y Despliegue Conjunto en Rosario y Frontera Norte', description: 'Aplica penas de asociación ilícita a bandas narco e instala radares INVAP.', durationType: 'PERMANENTE', active: true, fiscalCostPctGdp: 0.18, inflationEffectPp: 0.0, approvalEffectPp: 3.4 },
   { id: 'M_DEUDA_DESARME_PUTS', sectorId: 'DEUDA', title: 'Recompra de PUTs Bancarios y Saneamiento de LEFIs del BCRA', description: 'Elimina el seguro de emisión endógena en manos de los bancos privados.', durationType: 'PERMANENTE', active: false, fiscalCostPctGdp: 0.4, inflationEffectPp: -0.6, approvalEffectPp: 1.5 }
 ];
+

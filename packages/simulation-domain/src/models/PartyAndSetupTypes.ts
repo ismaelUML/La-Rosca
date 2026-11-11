@@ -187,3 +187,4 @@ export interface GameSetupConfiguration {
   party: PoliticalPartyPreset;
   difficulty: DifficultyLevel;
 }
+

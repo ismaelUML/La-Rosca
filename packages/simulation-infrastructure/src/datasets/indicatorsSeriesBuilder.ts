@@ -133,3 +133,4 @@ export function buildIndicatorsCatalog(state: SimulationState): IndicatorSeriesC
     createCard('ALISTAMIENTO_FFAA', 'DEFENSA', 'Alistamiento y Soberanía Atlántico Sur', '%', 54.0, round2(58 + state.treasury.primaryResultPctGdp * 2.5), 'pp', t, 'Patrullaje Milla 200, Radarización Norte y FONDEF.')
   ];
 }
+

@@ -105,3 +105,4 @@ export interface ElectoralCampaignState {
   effectiveUrnaProjectedVotePct: number;
   winsInFirstRound45Or40Plus10: boolean;
 }
+
