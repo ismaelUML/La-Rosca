@@ -2,7 +2,8 @@ import type {
   CampaignActionCard,
   CampaignExecutePayload,
   CampaignSimulationState,
-  CampaignStageType
+  CampaignStageType,
+  LocalJurisdictionZone
 } from '../models/CampaignTypes.js';
 import { clamp, round2 } from '../economy/mathUtils.js';
 
@@ -82,23 +83,34 @@ function normalizeCandidateImage(pos: number, neg: number): { pos: number; neg: 
   };
 }
 
+function applyLocalZoneBonus(
+  zones: LocalJurisdictionZone[] | undefined,
+  targetId: string
+): LocalJurisdictionZone[] | undefined {
+  if (!zones) return undefined;
+  return zones.map((z) => (z.id === targetId ? { ...z, visitsCount: z.visitsCount + 1 } : z));
+}
+
 function applyRecorridaBonus(
   state: CampaignSimulationState,
   targetProvinceId: string
 ): CampaignSimulationState {
   const provIndex = state.provinces.findIndex((p) => p.provinceId === targetProvinceId);
-  if (provIndex === -1) {
+  const nextLocalZones = applyLocalZoneBonus(state.localZones, targetProvinceId);
+  if (provIndex === -1 && !nextLocalZones) {
     return state;
   }
-  const prov = state.provinces[provIndex]!;
+  const prov = state.provinces[provIndex] ?? state.provinces[0]!;
   const nextProvinces = [...state.provinces];
   const mult = prov.affinityMultiplier;
 
-  nextProvinces[provIndex] = {
-    ...prov,
-    visitsCount: prov.visitsCount + 1,
-    playerVotePct: round2(prov.playerVotePct + 3.2 * mult)
-  };
+  if (provIndex !== -1) {
+    nextProvinces[provIndex] = {
+      ...prov,
+      visitsCount: prov.visitsCount + 1,
+      playerVotePct: round2(prov.playerVotePct + 3.2 * mult)
+    };
+  }
 
   const norm = normalizeCandidateImage(
     state.image.imagenPositiva + 2.8 * mult,
@@ -108,6 +120,7 @@ function applyRecorridaBonus(
   return {
     ...state,
     provinces: nextProvinces,
+    localZones: nextLocalZones,
     attributes: {
       ...state.attributes,
       relevancia: round2(clamp(state.attributes.relevancia + 0.7, 0, 100)),
@@ -132,7 +145,8 @@ export function executeCampaignAction(
     return state;
   }
 
-  const nextBudget = round2(state.budgetArgentums - action.cost);
+  const extraBudget = action.id === 'CONCILIACION_CIRCULO_ROJO' ? 45.0 : 0;
+  const nextBudget = round2(state.budgetArgentums - action.cost + extraBudget);
   const nextActions = state.actionsRemainingThisMonth - 1;
 
   const updatedState: CampaignSimulationState = {
@@ -170,7 +184,13 @@ const ACTION_DELTAS_MAP: Record<CampaignActionCard['id'], ActionEffectDeltas> = 
   DEBATE: { dRelevancia: 2.2, dInteligencia: 1.4, dConvencimiento: 0, dApoyo: 0, dNegociacion: 0, dPositiva: 0, dNegativa: 0, internaBoost: 1.5, generalBoost: 1.0 },
   MILITANCIA_DIGITAL: { dRelevancia: 1.6, dInteligencia: 0, dConvencimiento: 0, dApoyo: 0.6, dNegociacion: 0, dPositiva: 0, dNegativa: 0, internaBoost: 0, generalBoost: 0 },
   REUNION_AFILIADOS: { dRelevancia: 0, dInteligencia: 0, dConvencimiento: 0.9, dApoyo: 1.9, dNegociacion: 0, dPositiva: 0, dNegativa: 0, internaBoost: 1.4, generalBoost: 0 },
-  NEGOCIACION_SECTORES: { dRelevancia: 0, dInteligencia: 0, dConvencimiento: 0, dApoyo: 1.5, dNegociacion: 1.5, dPositiva: 0, dNegativa: 0, internaBoost: 1.1, generalBoost: 0 }
+  NEGOCIACION_SECTORES: { dRelevancia: 0, dInteligencia: 0, dConvencimiento: 0, dApoyo: 1.5, dNegociacion: 1.5, dPositiva: 0, dNegativa: 0, internaBoost: 1.1, generalBoost: 0 },
+  CARPETAZO_MEDIATICO: { dRelevancia: 2.2, dInteligencia: 0, dConvencimiento: 0, dApoyo: 0, dNegociacion: 0, dPositiva: 0, dNegativa: 1.1, internaBoost: 4.5, generalBoost: 0 },
+  PACTO_CON_INTENDENTES: { dRelevancia: 1.0, dInteligencia: 0, dConvencimiento: 1.0, dApoyo: 2.8, dNegociacion: 1.8, dPositiva: 0.5, dNegativa: 0, internaBoost: 2.5, generalBoost: 2.0 },
+  ACTO_ESTADIO_PLAZA: { dRelevancia: 3.5, dInteligencia: 0, dConvencimiento: 4.8, dApoyo: 3.0, dNegociacion: 0, dPositiva: 1.5, dNegativa: 0, internaBoost: 3.2, generalBoost: 1.5 },
+  CONCILIACION_CIRCULO_ROJO: { dRelevancia: 1.0, dInteligencia: 2.8, dConvencimiento: 0, dApoyo: 0.5, dNegociacion: 1.5, dPositiva: 0, dNegativa: 0.5, internaBoost: 0.5, generalBoost: 0 },
+  GIRA_INTERNACIONAL: { dRelevancia: 2.0, dInteligencia: 3.8, dConvencimiento: 0, dApoyo: 0, dNegociacion: 0, dPositiva: 3.0, dNegativa: 0, internaBoost: 1.5, generalBoost: 1.8 },
+  DESPLIEGUE_STREAMERS: { dRelevancia: 2.5, dInteligencia: 0, dConvencimiento: 2.0, dApoyo: 0, dNegociacion: 0, dPositiva: 1.5, dNegativa: 0, internaBoost: 2.0, generalBoost: 1.5 }
 };
 
 function applyStandardActionEffects(

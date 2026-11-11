@@ -36,6 +36,12 @@ import {
 import { CampaignResumenView } from './features/campaign/CampaignResumenView.js';
 import { CampaignImageAndMapView } from './features/campaign/CampaignImageAndMapView.js';
 import { CampaignActionsView } from './features/campaign/CampaignActionsView.js';
+import { CampaignApoyosView } from './features/campaign/CampaignApoyosView.js';
+import { CampaignCoalicionesView } from './features/campaign/CampaignCoalicionesView.js';
+import { CampaignPartidoProvinciasView } from './features/campaign/CampaignPartidoProvinciasView.js';
+import { CampaignApoyoProvinciasView } from './features/campaign/CampaignApoyoProvinciasView.js';
+import { CampaignGobernantesView } from './features/campaign/CampaignGobernantesView.js';
+import { CampaignDemografiaPaisView } from './features/campaign/CampaignDemografiaPaisView.js';
 import {
   GameSidebarLayout,
   type InGameSidebarSection
@@ -90,25 +96,34 @@ function CampaignActivePanel({
   onNavigateActions,
   onExecuteAction
 }: CampaignActivePanelProps) {
-  if (section === 'IMAGEN_Y_MAPA') {
-    return <CampaignImageAndMapView state={state} />;
-  }
-  if (section === 'ACCIONES_CAMPAÑA') {
-    return (
+  const viewMap: Record<CampaignNavSection, React.ReactNode> = {
+    RESUMEN: (
+      <CampaignResumenView
+        state={state}
+        onAdvanceMonth={onAdvanceMonth}
+        onNavigateActions={onNavigateActions}
+      />
+    ),
+    IMAGEN_Y_MAPA: <CampaignImageAndMapView state={state} />,
+    ACCIONES_CAMPAÑA: (
       <CampaignActionsView
         state={state}
         onExecuteAction={onExecuteAction}
         onAdvanceMonth={onAdvanceMonth}
       />
-    );
-  }
-  return (
-    <CampaignResumenView
-      state={state}
-      onAdvanceMonth={onAdvanceMonth}
-      onNavigateActions={onNavigateActions}
-    />
-  );
+    ),
+    APOYOS: <CampaignApoyosView state={state} onAdvanceMonth={onAdvanceMonth} />,
+    CANDIDATURA_COALICIONES: <CampaignCoalicionesView state={state} />,
+    PARTIDO_PROVINCIAS: <CampaignPartidoProvinciasView state={state} />,
+    APOYO_PROVINCIAS: <CampaignApoyoProvinciasView state={state} />,
+    GOBERNANTES: <CampaignGobernantesView state={state} />,
+    POBLACION: <CampaignDemografiaPaisView initialTab="POBLACION" />,
+    INMIGRACION: <CampaignDemografiaPaisView initialTab="INMIGRACION" />,
+    EMIGRACION: <CampaignDemografiaPaisView initialTab="EMIGRACION" />,
+    REGISTRO_DIARIO: <RegistroHistoryView historyLog={state.historyLog} />
+  };
+
+  return <>{viewMap[section] ?? viewMap.RESUMEN}</>;
 }
 
 interface ActiveSectionRendererProps {

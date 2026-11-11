@@ -130,6 +130,7 @@ export function CampaignImageAndMapView({ state }: CampaignImageAndMapViewProps)
           mode={mapDivision}
           provinces={state.provinces}
           selectedProvinceId={selectedProvinceId}
+          partySigla={state.partySigla}
           onSelectProvince={setSelectedProvinceId}
         />
 

@@ -2,7 +2,19 @@ import React from 'react';
 import type { CampaignSimulationState, GameSetupConfiguration } from '@argentina-sim/domain';
 import { PartyEmblemSvg } from '../party-setup/PartyEmblemSvg.js';
 
-export type CampaignNavSection = 'RESUMEN' | 'IMAGEN_Y_MAPA' | 'ACCIONES_CAMPAÑA';
+export type CampaignNavSection =
+  | 'RESUMEN'
+  | 'IMAGEN_Y_MAPA'
+  | 'ACCIONES_CAMPAÑA'
+  | 'APOYOS'
+  | 'CANDIDATURA_COALICIONES'
+  | 'PARTIDO_PROVINCIAS'
+  | 'APOYO_PROVINCIAS'
+  | 'GOBERNANTES'
+  | 'POBLACION'
+  | 'INMIGRACION'
+  | 'EMIGRACION'
+  | 'REGISTRO_DIARIO';
 
 interface CampaignSidebarLayoutProps {
   setup: GameSetupConfiguration;
@@ -18,10 +30,47 @@ interface CampaignSidebarLayoutProps {
   children: React.ReactNode;
 }
 
-const CAMPAIGN_NAV_ITEMS: Array<{ id: CampaignNavSection; label: string }> = [
-  { id: 'RESUMEN', label: 'Resumen' },
-  { id: 'IMAGEN_Y_MAPA', label: 'Imagen y mapa' },
-  { id: 'ACCIONES_CAMPAÑA', label: 'Acciones de campaña' }
+const CAMPAIGN_NAV_GROUPS = [
+  {
+    title: 'SITUACIÓN',
+    colorClass: 'text-sky-400',
+    items: [
+      { id: 'RESUMEN' as const, label: 'Resumen' },
+      { id: 'IMAGEN_Y_MAPA' as const, label: 'Imagen y mapa' }
+    ]
+  },
+  {
+    title: 'ESTRATEGIA',
+    colorClass: 'text-emerald-400',
+    items: [
+      { id: 'ACCIONES_CAMPAÑA' as const, label: 'Acciones' },
+      { id: 'APOYOS' as const, label: 'Apoyos' }
+    ]
+  },
+  {
+    title: 'POLÍTICO',
+    colorClass: 'text-purple-400',
+    items: [
+      { id: 'CANDIDATURA_COALICIONES' as const, label: 'Candidatura y coaliciones' },
+      { id: 'PARTIDO_PROVINCIAS' as const, label: 'Partido en las provincias' },
+      { id: 'APOYO_PROVINCIAS' as const, label: 'Apoyo en Provincias' },
+      { id: 'GOBERNANTES' as const, label: 'Gobernantes' }
+    ]
+  },
+  {
+    title: 'PAÍS',
+    colorClass: 'text-amber-400',
+    items: [
+      { id: 'POBLACION' as const, label: 'Población' },
+      { id: 'INMIGRACION' as const, label: 'Inmigración' },
+      { id: 'EMIGRACION' as const, label: 'Emigración' }
+    ]
+  },
+  {
+    title: 'DIARIO',
+    colorClass: 'text-slate-400',
+    items: [{ id: 'REGISTRO_DIARIO' as const, label: 'Registro' }]
+  }
 ];
 
 export function CampaignSidebarLayout({
@@ -94,39 +143,52 @@ export function CampaignSidebarLayout({
       </header>
 
       <div className="flex-1 flex overflow-hidden">
-        <aside className="w-56 shrink-0 bg-[#0b0d14] border-r border-slate-800/80 overflow-y-auto p-3 space-y-5 flex flex-col justify-between">
-          <div>
-            <div className="px-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              ■ SITUACIÓN
-            </div>
-            <div className="space-y-0.5">
-              {CAMPAIGN_NAV_ITEMS.map((item) => {
-                const isSelected = activeSection === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => onSelectSection(item.id)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition ${
-                      isSelected
-                        ? 'bg-[#1a1f2e] text-white font-semibold'
-                        : 'text-slate-300 hover:bg-[#121622] hover:text-white'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
+        <aside className="w-56 shrink-0 bg-[#0b0d14] border-r border-slate-800/80 overflow-y-auto p-3 space-y-4 flex flex-col justify-between">
+          <div className="space-y-4">
+            {CAMPAIGN_NAV_GROUPS.map((group) => (
+              <div key={group.title}>
+                <div className={`px-2.5 text-[10px] font-bold uppercase tracking-wider mb-1.5 ${group.colorClass}`}>
+                  ■ {group.title}
+                </div>
+                <div className="space-y-0.5">
+                  {group.items.map((item) => {
+                    const isSelected = activeSection === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => onSelectSection(item.id)}
+                        className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                          isSelected
+                            ? 'bg-[#1a1f2e] text-white font-semibold'
+                            : 'text-slate-300 hover:bg-[#121622] hover:text-white'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
 
-          <div className="pt-4 border-t border-slate-800/70">
+          <div className="pt-3 border-t border-slate-800/70 space-y-3">
+            <div className="px-1 text-[11px]">
+              <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+                OBJETIVO
+              </div>
+              <div className="text-white font-semibold mt-0.5 line-clamp-2">
+                {state.stage.objectiveTitle}
+              </div>
+            </div>
+
             <button
               type="button"
               onClick={onSkipToGovernment}
               className="w-full text-left p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-amber-300 transition"
             >
-              ⚡ Pasar directamente al Gobierno (Diciembre 2027)
+              ⚡ Pasar al Gobierno (Dic 2027)
             </button>
           </div>
         </aside>

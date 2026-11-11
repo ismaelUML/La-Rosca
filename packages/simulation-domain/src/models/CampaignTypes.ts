@@ -78,6 +78,12 @@ export interface ProvinceCampaignInfo {
   playerVotePct: number;
 }
 
+export interface LocalJurisdictionZone {
+  id: string;
+  name: string;
+  visitsCount: number;
+}
+
 export type CampaignActionId =
   | 'RECORRIDA'
   | 'ENTREVISTA'
@@ -87,7 +93,13 @@ export type CampaignActionId =
   | 'DEBATE'
   | 'MILITANCIA_DIGITAL'
   | 'REUNION_AFILIADOS'
-  | 'NEGOCIACION_SECTORES';
+  | 'NEGOCIACION_SECTORES'
+  | 'CARPETAZO_MEDIATICO'
+  | 'PACTO_CON_INTENDENTES'
+  | 'ACTO_ESTADIO_PLAZA'
+  | 'CONCILIACION_CIRCULO_ROJO'
+  | 'GIRA_INTERNACIONAL'
+  | 'DESPLIEGUE_STREAMERS';
 
 export interface CampaignActionEffectPill {
   label: string;
@@ -130,6 +142,7 @@ export interface CampaignSimulationState {
   internalPoll: InternalPoll;
   demographics: CandidateDemographics;
   provinces: ProvinceCampaignInfo[];
+  localZones?: LocalJurisdictionZone[];
   budgetArgentums: number;
   actionsRemainingThisMonth: number;
   actionsTotalThisMonth: number;

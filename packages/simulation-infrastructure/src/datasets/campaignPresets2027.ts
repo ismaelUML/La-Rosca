@@ -134,6 +134,78 @@ export const CAMPAIGN_ACTIONS_CATALOG: CampaignActionCard[] = [
       { label: 'CONVENCIMIENTO', rangeText: '-0,5/0', isWarning: true },
       { label: 'IMAGEN NEGATIVA', rangeText: '0/+0,3', isWarning: true }
     ]
+  },
+  {
+    id: 'CARPETAZO_MEDIATICO',
+    title: 'Carpetazo mediático',
+    description: 'Filtrar a la prensa o streamers afines una contradicción o escándalo del rival interno más cercano.',
+    cost: 6.0,
+    requirementText: 'Requisito: Vulnerabilidad menor a 40 para no recibir un contragolpe.',
+    effects: [
+      { label: 'RIVAL INTERNO', rangeText: '-3,2/-7,5', isWarning: true },
+      { label: 'RELEVANCIA', rangeText: '+1,5/+3,0' },
+      { label: 'VULNERABILIDAD', rangeText: '+1,2/+2,5', isWarning: true },
+      { label: 'IMAGEN NEGATIVA', rangeText: '+0,5/+1,8', isWarning: true }
+    ]
+  },
+  {
+    id: 'PACTO_CON_INTENDENTES',
+    title: 'Pacto con intendentes y punteros',
+    description: 'Asegurar el aparato territorial, la entrega de boletas y la fiscalización en los distritos clave.',
+    cost: 12.0,
+    effects: [
+      { label: 'PISO ELECTORAL', rangeText: '+2,0/+4,5' },
+      { label: 'APOYO PARTIDARIO', rangeText: '+1,8/+3,5' },
+      { label: 'CONVENCIMIENTO', rangeText: '+0,5/+1,5' },
+      { label: 'NEGOCIACIÓN', rangeText: '+1,0/+2,5' }
+    ]
+  },
+  {
+    id: 'ACTO_ESTADIO_PLAZA',
+    title: 'Acto masivo en estadio o plaza',
+    description: 'Demostración de fuerza popular con liturgia militante, banderas y discurso épico transmitido en vivo.',
+    cost: 14.5,
+    minRelevanceRequired: 40,
+    requirementText: 'Requisito: Relevancia mínima de 40 para llenar la convocatoria.',
+    effects: [
+      { label: 'CONVENCIMIENTO', rangeText: '+3,5/+6,2' },
+      { label: 'RELEVANCIA', rangeText: '+2,8/+4,5' },
+      { label: 'APOYO PARTIDARIO', rangeText: '+2,0/+3,8' },
+      { label: 'IMAGEN POSITIVA', rangeText: '+1,0/+2,4' }
+    ]
+  },
+  {
+    id: 'CONCILIACION_CIRCULO_ROJO',
+    title: 'Almuerzo con el Círculo Rojo (IDEA / UIA)',
+    description: 'Reunión reservada con directores ejecutivos y banqueros para presentar tus equipos económicos y fondear la campaña.',
+    cost: 1.5,
+    effects: [
+      { label: 'PRESUPUESTO DE CAMPAÑA', rangeText: '+45,0 ¥' },
+      { label: 'INTELIGENCIA PERCIBIDA', rangeText: '+1,8/+3,5' },
+      { label: 'IMAGEN EN POPULARES', rangeText: '-0,8/0', isWarning: true }
+    ]
+  },
+  {
+    id: 'GIRA_INTERNACIONAL',
+    title: 'Gira internacional (Washington / Madrid / Roma)',
+    description: 'Fotos protocolares con líderes extranjeros y think tanks para proyectar estatura de estadista internacional.',
+    cost: 8.5,
+    effects: [
+      { label: 'IMAGEN POSITIVA', rangeText: '+2,0/+4,2' },
+      { label: 'INTELIGENCIA PERCIBIDA', rangeText: '+2,5/+4,8' },
+      { label: 'RELEVANCIA', rangeText: '+1,2/+2,5' }
+    ]
+  },
+  {
+    id: 'DESPLIEGUE_STREAMERS',
+    title: 'Estrategia en streamers e influencers',
+    description: 'Copar plataformas de streaming (Twitch, Kick, YouTube) y micro-segmentación en TikTok para el voto sub-30.',
+    cost: 5.0,
+    effects: [
+      { label: 'VOTO 16 A 29 AÑOS', rangeText: '+4,5/+8,0' },
+      { label: 'DESCONOCIMIENTO', rangeText: '-4,2/-1,5' },
+      { label: 'RELEVANCIA', rangeText: '+1,8/+3,4' }
+    ]
   }
 ];
 
@@ -307,6 +379,20 @@ const BASE_PROVINCES_CONFIG: Array<{ id: string; name: string; affinity: 'AFIN' 
   { id: 'TIERRA_DEL_FUEGO', name: 'Tierra del Fuego', affinity: 'NEUTRAL', mult: 0.85 }
 ];
 
+const PBA_LOCAL_ZONES = [
+  { id: 'LA_PLATA', name: 'La Plata y Gran La Plata', visitsCount: 0 },
+  { id: 'CONURBANO_NORTE', name: 'Conurbano norte', visitsCount: 0 },
+  { id: 'CONURBANO_SUR_OESTE', name: 'Conurbano sur y oeste', visitsCount: 0 },
+  { id: 'INTERIOR_BONAERENSE', name: 'Interior bonaerense', visitsCount: 0 }
+];
+
+const GENERIC_LOCAL_ZONES = [
+  { id: 'CAPITAL', name: 'Capital provincial y alrededores', visitsCount: 0 },
+  { id: 'INTERIOR_PRODUCTIVO', name: 'Interior productivo', visitsCount: 0 },
+  { id: 'ZONA_NORTE', name: 'Zona norte y valles', visitsCount: 0 },
+  { id: 'ZONA_SUR', name: 'Zona sur y sierras', visitsCount: 0 }
+];
+
 export function createInitialCampaignState(
   candidate: RealPoliticianPreset | { id: string; name: string },
   party: PoliticalPartyPreset,
@@ -325,6 +411,8 @@ export function createInitialCampaignState(
     leadingPartyColor: party.primaryColor,
     playerVotePct: presets.votingIntention.intencionVotoGeneral * p.mult
   }));
+
+  const localZones = provinceId === 'PBA' ? PBA_LOCAL_ZONES : GENERIC_LOCAL_ZONES;
 
   return {
     stage: {
@@ -347,6 +435,7 @@ export function createInitialCampaignState(
     internalPoll: presets.internalPoll,
     demographics: presets.demographics,
     provinces,
+    localZones,
     budgetArgentums: 125.0,
     actionsRemainingThisMonth: 4,
     actionsTotalThisMonth: 4,

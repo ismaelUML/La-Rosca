@@ -45,6 +45,30 @@ function ActionProvinceSelector({
   selectedProvinceId,
   onProvinceChange
 }: ActionProvinceSelectorProps) {
+  const isGovernor = state.targetRole === 'GOBERNADOR' && Boolean(state.localZones?.length);
+
+  if (isGovernor && state.localZones) {
+    return (
+      <div className="space-y-1.5 my-2 pt-2 border-t border-slate-800/80">
+        <label className="block text-[11px] font-semibold text-slate-300">Zona</label>
+        <select
+          value={selectedProvinceId}
+          onChange={(e) => onProvinceChange(e.target.value)}
+          className="w-full bg-[#0b0e15] border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white"
+        >
+          {state.localZones.map((z) => (
+            <option key={z.id} value={z.id}>
+              {z.name} · visitas {z.visitsCount}
+            </option>
+          ))}
+        </select>
+        <div className="text-[11px] text-slate-400">
+          Jurisdicción provincial: recorrida focalizada en las secciones electorales clave.
+        </div>
+      </div>
+    );
+  }
+
   const selectedProv =
     state.provinces.find((p) => p.provinceId === selectedProvinceId) ?? state.provinces[0]!;
 
