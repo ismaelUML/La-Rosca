@@ -168,14 +168,27 @@ export interface SectorMeasureCard {
   approvalEffectPp: number;
 }
 
+// Cada sector del RIGI tiene que reflejar los 29 sectores de la ley real con sus montos minimos,
+// proyectos en cartera y conflicto social. Nada de 4 sectores genericos de cotillon.
 export interface RigisectorItem {
   id: string;
   name: string;
+  branch: string;
   description: string;
+  minProjectMillionUsd: number;
+  regimeInvestmentPpGdp: number;
+  exportsBillionUsd: number;
+  unemploymentDeltaPp: number;
+  fiscalCostPctGdp: number;
+  monthlyConflictRiskPct: number;
+  enabledDateLabel?: string;
+  activeProjectsCount: number;
+  accumulatedInvestmentMillionUsd: number;
+  maturityPct: number;
   enabledByDecree: boolean;
-  monthlyInvestmentMillionUsd: number;
-  exportBoostBillionUsd: number;
-  localConflictRiskPct: number;
+  monthlyInvestmentMillionUsd?: number;
+  exportBoostBillionUsd?: number;
+  localConflictRiskPct?: number;
 }
 
 export interface CustomTaxProposal {

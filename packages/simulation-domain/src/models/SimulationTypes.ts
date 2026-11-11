@@ -202,14 +202,27 @@ export interface HiddenStructuralVariables {
   climateRegime: ClimateRegime;
 }
 
+// En Argentina los impuestos no son todos iguales ni a palos: hay 6 que el Ejecutivo
+// puede tocar por decreto/resolucion (retenciones, aranceles, combustibles) y 11 que
+// si no pasan por el Congreso te clavan una cautelar en la Corte a las dos horas.
+export type TaxCategory =
+  | 'COMERCIO_EXTERIOR'
+  | 'CONSUMO'
+  | 'RENTA'
+  | 'TRABAJO'
+  | 'FINANCIERO'
+  | 'PATRIMONIO';
+
 export interface TaxItem {
   id: string;
   name: string;
+  category?: TaxCategory;
   legalMechanism: 'LEY_CONGRESO' | 'DECRETO_EJECUTIVO';
   isCoparticipable: boolean;
   currentRatePct: number;
   initialRatePct: number;
   revenuePctGdp: number;
+  revenueMillionUsdMonthly?: number;
   evasionPct: number;
 }
 

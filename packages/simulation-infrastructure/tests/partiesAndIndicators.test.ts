@@ -17,7 +17,7 @@ describe('Datasets de Partidos, Políticos Reales y Series de Indicadores 2027',
     expect(REAL_POLITICIANS_2027.length).toBeGreaterThanOrEqual(18);
     expect(INITIAL_CABINET_2027).toHaveLength(10);
     expect(INITIAL_ECONOMIC_LEVERS).toHaveLength(10);
-    expect(INITIAL_RIGI_SECTORS).toHaveLength(4);
+    expect(INITIAL_RIGI_SECTORS).toHaveLength(29);
     expect(SECTOR_CATEGORIES_SUMMARY).toHaveLength(12);
     expect(INITIAL_SECTOR_MEASURES.length).toBeGreaterThanOrEqual(6);
   });
