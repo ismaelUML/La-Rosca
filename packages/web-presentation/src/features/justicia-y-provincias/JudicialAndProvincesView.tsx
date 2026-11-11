@@ -143,3 +143,4 @@ export function JudicialAndProvincesView({ state, onDispatch }: JudicialAndProvi
     </div>
   );
 }
+

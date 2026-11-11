@@ -241,3 +241,4 @@ export function MacroAndBankingView({ state, onDispatch }: MacroAndBankingViewPr
     </div>
   );
 }
+

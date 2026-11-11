@@ -164,3 +164,4 @@ export function EnergyAndLaborView({ state, onDispatch }: EnergyAndLaborViewProp
     </div>
   );
 }
+
