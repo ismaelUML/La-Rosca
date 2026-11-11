@@ -1,0 +1,48 @@
+name: CI & SonarCloud Quality Gate
+
+on:
+  push:
+    branches: [ "main", "master", "develop" ]
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  analyze:
+    name: Build, Test & SonarCloud
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Verify Complexity Limits (CC <= 5)
+        run: npm run lint:complexity
+
+      - name: Execute Tests with Coverage
+        run: npm run test:coverage
+
+      - name: Build All Workspaces
+        run: npm run build
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: SonarCloud Quality Gate Verification
+        uses: SonarSource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          scanMetadataReportFile: .scannerwork/report-task.txt
