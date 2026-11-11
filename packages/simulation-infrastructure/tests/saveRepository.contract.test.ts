@@ -28,7 +28,7 @@ function runSaveRepositoryContractSuite(name: string, factory: () => SaveReposit
       expect(slots[0]?.slotId).toBe('slot-1');
     });
 
-    it('exporta e importa codigo portable comprimido sin corromper el JSON (sin error 500 de QQG)', () => {
+    it('exporta e importa codigo portable comprimido sin corromper el JSON de forma determinista', () => {
       const repo = factory();
       const state = createInitialSimulationState2027('DIPUTADO', 'TORMENTA_PERFECTA', 'SANTA_FE');
 

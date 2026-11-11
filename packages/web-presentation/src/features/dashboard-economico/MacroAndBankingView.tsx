@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-// En vez de la moneda inventada "argentum" y la caja negra de QQG, aca mostramos las
+// En vez de monedas abstractas y cajas negras simplistas, aca mostramos las
 // 3 hojas de balance conectadas (Tesoro, BCRA y Bancos Privados) y la autopsia exacta del IPC.
 
 interface MacroAndBankingViewProps {

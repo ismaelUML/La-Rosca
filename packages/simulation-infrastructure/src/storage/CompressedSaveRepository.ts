@@ -1,9 +1,9 @@
 import type { SaveRepositoryPort, SaveSlotSummary, SimulationState } from '@argentina-sim/domain';
 import { strFromU8, strToU8, unzlibSync, zlibSync } from 'fflate';
 
-// A diferencia de QQG que manda un string crudo a un servidor y explota con
-// "500: Unexpected token is not valid JSON", aca comprimimos el binario con zlib
-// en el cliente, le pegamos un prefijo versionado y lo validamos antes de tocar el estado.
+// En vez de mandar un string crudo a un servidor remoto que pueda fallar,
+// aca comprimimos el binario con zlib en el cliente, le pegamos un prefijo
+// versionado y lo validamos deterministamente antes de tocar el estado.
 
 function uint8ToBase64Url(bytes: Uint8Array): string {
   let binary = '';
