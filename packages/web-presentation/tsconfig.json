@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@argentina-sim/domain": ["../simulation-domain/src/index.ts"],
+      "@argentina-sim/infrastructure": ["../simulation-infrastructure/src/index.ts"]
+    },
+    "noEmit": true
+  },
+  "include": ["src/**/*"]
+}

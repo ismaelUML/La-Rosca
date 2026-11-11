@@ -1,0 +1,24 @@
+{
+  "name": "argentina-2027-simulador",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Simulador politico, macroeconomico, judicial y militar de la Republica Argentina (2027)",
+  "workspaces": [
+    "packages/simulation-domain",
+    "packages/simulation-infrastructure",
+    "packages/web-presentation"
+  ],
+  "scripts": {
+    "dev": "npm --workspace=@argentina-sim/web run dev",
+    "build": "npm --workspace=@argentina-sim/domain run build && npm --workspace=@argentina-sim/infrastructure run build && npm --workspace=@argentina-sim/web run build",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint:complexity": "node scripts/verify-complexity.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@vitest/coverage-v8": "^2.1.8",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
