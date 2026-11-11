@@ -41,6 +41,20 @@ function formatSignedDelta(delta: number): string {
   return delta > 0 ? `+${delta}` : String(delta);
 }
 
+export const CATEGORY_COLORS: Record<string, string> = {
+  PRECIOS: '#f97316',          // Naranja fuego / Precios
+  EMPLEO: '#0ea5e9',           // Celeste cielo / Empleo
+  ACTIVIDAD: '#10b981',        // Esmeralda vibrante / Actividad
+  INGRESOS: '#a855f7',         // Púrpura frambuesa / Ingresos y Jubilaciones
+  SOCIEDAD: '#ec4899',         // Rosa fuerte / Pobreza
+  SEGURIDAD: '#eab308',        // Ámbar dorado / Seguridad
+  SECTOR_EXTERNO: '#3b82f6',   // Azul marino / Sector externo
+  FINANZAS: '#14b8a6',         // Turquesa / Finanzas y Emisión
+  FINANZAS_PUBLICAS: '#f59e0b',// Ámbar cobrizo / Finanzas públicas y Deuda
+  OPINION_PUBLICA: '#8b5cf6',  // Violeta / Opinión pública
+  DEFENSA: '#64748b'           // Pizarra / Soberanía
+};
+
 interface IndicatorCardFooterProps {
   card: IndicatorSeriesCard;
   showDetail: boolean;
@@ -88,6 +102,7 @@ export function IndicatorChartCard({ card }: IndicatorChartCardProps) {
   const padMax = Math.ceil(card.maxValue + Math.abs(card.maxValue) * 0.08 + 0.5);
   const { linePoints, areaPoints, coords } = buildSvgPolyline(card.points, padMin, padMax);
   const deltaColor = resolveVariationColorClass(card.monthlyVariation, card.invertColorLogic);
+  const accentColor = card.accentColor ?? CATEGORY_COLORS[card.category] ?? '#f97316';
 
   return (
     <div className="rounded-2xl bg-[#10131b] border border-slate-800/90 p-5 flex flex-col justify-between">
@@ -96,7 +111,10 @@ export function IndicatorChartCard({ card }: IndicatorChartCardProps) {
           <div>
             <div className="text-xs font-medium text-slate-300">{card.title}</div>
             <div className="mt-1 flex items-baseline gap-1.5">
-              <span className="text-3xl font-extrabold text-[#f97316] tracking-tight">
+              <span
+                style={{ color: accentColor }}
+                className="text-3xl font-extrabold tracking-tight"
+              >
                 {card.currentValue}
               </span>
               <span className="text-sm text-slate-400 font-medium">{card.unit}</span>
@@ -120,8 +138,8 @@ export function IndicatorChartCard({ card }: IndicatorChartCardProps) {
             <line x1="24" y1="62" x2="416" y2="62" stroke="#1e2433" strokeDasharray="3 3" />
             <line x1="24" y1="106" x2="416" y2="106" stroke="#1e2433" />
 
-            <polygon points={areaPoints} fill="#f97316" fillOpacity="0.13" />
-            <polyline fill="none" stroke="#f97316" strokeWidth="2.2" points={linePoints} />
+            <polygon points={areaPoints} fill={accentColor} fillOpacity="0.13" />
+            <polyline fill="none" stroke={accentColor} strokeWidth="2.2" points={linePoints} />
 
             {coords.map((c) => (
               <g key={c.point.label}>
@@ -129,7 +147,7 @@ export function IndicatorChartCard({ card }: IndicatorChartCardProps) {
                   cx={c.x}
                   cy={c.y}
                   r={3.2}
-                  fill="#f97316"
+                  fill={accentColor}
                   className="cursor-pointer"
                   onMouseEnter={() => setHoveredPoint(c.point)}
                   onMouseLeave={() => setHoveredPoint(null)}
@@ -144,7 +162,7 @@ export function IndicatorChartCard({ card }: IndicatorChartCardProps) {
           {hoveredPoint ? (
             <div className="absolute top-1 right-2 px-2.5 py-1 rounded-lg bg-slate-950/95 border border-slate-700 text-[11px] text-slate-200 shadow">
               {hoveredPoint.label}:{' '}
-              <strong className="text-orange-400">
+              <strong style={{ color: accentColor }}>
                 {hoveredPoint.value} {card.unit}
               </strong>
             </div>

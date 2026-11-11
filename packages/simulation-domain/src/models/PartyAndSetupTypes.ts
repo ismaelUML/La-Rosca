@@ -134,6 +134,7 @@ export interface IndicatorSeriesCard {
   maxValue: number;
   subtitle?: string;
   invertColorLogic?: boolean;
+  accentColor?: string;
   points: IndicatorPoint[];
 }
 

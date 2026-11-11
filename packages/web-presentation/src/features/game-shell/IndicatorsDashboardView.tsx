@@ -19,7 +19,7 @@ const CATEGORY_TABS: Array<{ id: IndicatorCategory | 'TODOS'; label: string }> =
   { id: 'FINANZAS_PUBLICAS', label: 'Finanzas públicas' },
   { id: 'OPINION_PUBLICA', label: 'Opinión pública' },
   { id: 'DEFENSA', label: 'Defensa' },
-  { id: 'TODOS', label: 'Ver todos (24)' }
+  { id: 'TODOS', label: 'Ver todos' }
 ];
 
 interface IndicatorsDashboardViewProps {

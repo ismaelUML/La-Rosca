@@ -336,6 +336,75 @@ function ModeTogglePair<T extends string>({
   );
 }
 
+interface CargoSelectorSectionProps {
+  role: PlayableRole;
+  provinceId: string;
+  provinces: ProvinceSummary[];
+  onRoleChange: (r: PlayableRole) => void;
+  onProvinceChange: (p: string) => void;
+}
+
+function CargoSelectorSection({
+  role,
+  provinceId,
+  provinces,
+  onRoleChange,
+  onProvinceChange
+}: CargoSelectorSectionProps) {
+  const isPresident = role === 'PRESIDENTE';
+
+  return (
+    <section className="space-y-4">
+      <div className="border-b border-slate-800 pb-2">
+        <h2 className="text-base font-bold text-white flex items-center gap-2">
+          <span className="text-slate-500">|</span> Cargo
+        </h2>
+      </div>
+
+      <div className="inline-flex p-1 rounded-xl bg-[#10131c] border border-slate-800">
+        <button
+          type="button"
+          onClick={() => onRoleChange('PRESIDENTE')}
+          className={`px-4 py-2 rounded-lg text-xs font-semibold transition ${
+            isPresident ? 'bg-white text-slate-950 font-bold shadow' : 'text-slate-300'
+          }`}
+        >
+          Presidente de la Nación
+        </button>
+        <button
+          type="button"
+          onClick={() => onRoleChange('GOBERNADOR')}
+          className={`px-4 py-2 rounded-lg text-xs font-semibold transition ${
+            !isPresident ? 'bg-white text-slate-950 font-bold shadow' : 'text-slate-300'
+          }`}
+        >
+          Gobernador de provincia
+        </button>
+      </div>
+
+      {!isPresident ? (
+        <div className="space-y-2 pt-2">
+          <label className="block text-xs font-semibold text-white">Provincia</label>
+          <select
+            value={provinceId}
+            onChange={(e) => onProvinceChange(e.target.value)}
+            className="w-full bg-[#10131c] border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white"
+          >
+            {provinces.map((prov) => (
+              <option key={prov.id} value={prov.id}>
+                {prov.name} ({prov.region}) · Coparticipación {prov.coparticipationDependencyPct}% · {prov.keyEconomicDriver}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-slate-400 leading-relaxed mt-1">
+            Método electoral: Gobernador por mayoría simple a una sola vuelta; una reelección consecutiva; con PASO (piso para la general: 1,5 % de los votos válidos (ley 14.086)); legislatura bicameral (92 diputados y 46 senadores). Las PASO provinciales se suspendieron en 2025; en el juego siguen vigentes para 2027.
+          </p>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 interface NewGameSetupScreenProps {
   provinces: ProvinceSummary[];
   onBackToLanding: () => void;
@@ -467,38 +536,13 @@ export function NewGameSetupScreen({
           )}
         </section>
 
-        <section className="space-y-4">
-          <div className="border-b border-slate-800 pb-2">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <span className="text-slate-500">|</span> Cargo y Jurisdicción
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as PlayableRole)}
-              className="w-full bg-[#10131c] border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white"
-            >
-              <option value="PRESIDENTE">Presidente de la Nación</option>
-              <option value="GOBERNADOR">Gobernador de provincia</option>
-              <option value="DIPUTADO">Diputado Nacional</option>
-              <option value="SENADOR">Senador Nacional</option>
-            </select>
-
-            <select
-              value={provinceId}
-              onChange={(e) => setProvinceId(e.target.value)}
-              className="w-full bg-[#10131c] border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white"
-            >
-              {provinces.map((prov) => (
-                <option key={prov.id} value={prov.id}>
-                  {prov.name} ({prov.region}) · Coparticipación {prov.coparticipationDependencyPct}% · {prov.keyEconomicDriver}
-                </option>
-              ))}
-            </select>
-          </div>
-        </section>
+        <CargoSelectorSection
+          role={role}
+          provinceId={provinceId}
+          provinces={provinces}
+          onRoleChange={setRole}
+          onProvinceChange={setProvinceId}
+        />
 
         <section className="space-y-4">
           <div className="border-b border-slate-800 pb-2">

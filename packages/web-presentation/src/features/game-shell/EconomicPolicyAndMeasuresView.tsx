@@ -24,6 +24,206 @@ interface EconomicPolicyViewProps {
   onAdvanceTurn: () => void;
 }
 
+interface FineTuningCardProps {
+  title: string;
+  badgeText: string;
+  badgeColorClass: string;
+  accentClass: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  summary: string;
+  positiveBadges: string[];
+  negativeBadges: string[];
+  onChange: (val: number) => void;
+}
+
+function FineTuningCard({
+  title,
+  badgeText,
+  badgeColorClass,
+  accentClass,
+  value,
+  min,
+  max,
+  step,
+  summary,
+  positiveBadges,
+  negativeBadges,
+  onChange
+}: FineTuningCardProps) {
+  return (
+    <div className="p-4 rounded-xl bg-[#0b0e15] border border-slate-800 space-y-3 flex flex-col justify-between">
+      <div>
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <span className="text-xs font-bold text-white leading-tight">{title}</span>
+          <span className={`font-mono text-xs font-extrabold px-2 py-0.5 rounded bg-slate-900 border border-slate-700 ${badgeColorClass}`}>
+            {badgeText}
+          </span>
+        </div>
+        <p className="text-[11px] text-slate-400 leading-relaxed">{summary}</p>
+      </div>
+
+      <div className="space-y-2">
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className={`w-full ${accentClass}`}
+        />
+        <div className="flex justify-between text-[10px] text-slate-500 font-mono">
+          <span>mín {min}%</span>
+          <span>actual: {value}%</span>
+          <span>máx {max}%</span>
+        </div>
+      </div>
+
+      <div className="space-y-1.5 pt-1 border-t border-slate-800/60">
+        <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+          Efectos estimados en el país:
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {positiveBadges.map((b) => (
+            <span
+              key={b}
+              className="font-mono text-[10px] font-bold px-2 py-0.5 rounded border bg-[#10231c] border-emerald-700/60 text-emerald-400 shadow-sm"
+            >
+              {b}
+            </span>
+          ))}
+          {negativeBadges.map((b) => (
+            <span
+              key={b}
+              className="font-mono text-[10px] font-bold px-2 py-0.5 rounded border bg-[#29131a] border-rose-800/60 text-rose-400 shadow-sm"
+            >
+              {b}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function resolvePegEffects(peg: number): { pos: string[]; neg: string[] } {
+  if (peg > 2) {
+    return {
+      pos: ['EXPORTACIONES +1,2', 'RESERVAS BCRA +0,8', 'COMPETITIVIDAD +2'],
+      neg: ['INFLACIÓN MENSUAL +0,7', 'SALARIO REAL -1,5', 'APROBACIÓN -1,2']
+    };
+  }
+  return {
+    pos: ['INFLACIÓN MENSUAL -0,6', 'APROBACIÓN +0,8', 'PODER ADQUISITIVO +1'],
+    neg: ['RESERVAS BCRA -1,5', 'BRECHA CAMBIARIA +2,0', 'SILOBOLSAS +1,5 M TON']
+  };
+}
+
+function resolveTnaEffects(tna: number): { pos: string[]; neg: string[] } {
+  if (tna > 40) {
+    return {
+      pos: ['DÓLAR PARALELO -1,5', 'INFLACIÓN -0,4', 'DEPÓSITOS EN PESOS +2,0'],
+      neg: ['CRÉDITO PyME -2,5', 'ACTIVIDAD INDUSTRIAL -1,0', 'DÉFICIT CUASIFISCAL +1,2']
+    };
+  }
+  return {
+    pos: ['CRÉDITO PyME +2,0', 'ACTIVIDAD INDUSTRIAL +1,2', 'INVERSIÓN +1,0'],
+    neg: ['DÓLAR PARALELO +2,0', 'BRECHA CAMBIARIA +3,0', 'INFLACIÓN +0,7']
+  };
+}
+
+function resolveCammesaEffects(coverage: number): { pos: string[]; neg: string[] } {
+  if (coverage > 60) {
+    return {
+      pos: ['GASTO PRIMARIO -0,8', 'RESULTADO FISCAL +0,8 % PIB', 'RIESGO PAÍS -30'],
+      neg: ['INFLACIÓN MENSUAL +0,6', 'APROBACIÓN -2,5', 'SALARIO REAL -1,8']
+    };
+  }
+  return {
+    pos: ['APROBACIÓN +2,0', 'INFLACIÓN MENSUAL -0,4', 'CONSUMO PRIVADO +1,0'],
+    neg: ['GASTO PRIMARIO +1,2', 'DÉFICIT FISCAL -1,2 % PIB', 'RIESGO PAÍS +45']
+  };
+}
+
+function FineTuningSection({
+  state,
+  onDispatch
+}: {
+  state: SimulationState;
+  onDispatch: (action: PolicyAction) => void;
+}) {
+  const peg = state.centralBank.crawlingPegMonthlyPct;
+  const tna = state.centralBank.policyRateAnnualPct;
+  const coverage = state.energy.userTariffCoveragePct;
+
+  const { pos: pegPos, neg: pegNeg } = resolvePegEffects(peg);
+  const { pos: tnaPos, neg: tnaNeg } = resolveTnaEffects(tna);
+  const { pos: cammesaPos, neg: cammesaNeg } = resolveCammesaEffects(coverage);
+
+  return (
+    <div className="rounded-2xl bg-[#10131b] border border-slate-800/90 p-5 space-y-4">
+      <div>
+        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+          Calibración Fina de Mesa de Dinero BCRA y Secretaría de Energía
+        </h3>
+        <p className="text-xs text-slate-400 mt-0.5">
+          Ajustá la velocidad de devaluación, la tasa monetaria de los bancos y los subsidios energéticos. Cada perilla tiene costos y beneficios directos.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 text-xs">
+        <FineTuningCard
+          title="Crawling Peg Oficial Mensual"
+          badgeText={`${peg}% mes`}
+          badgeColorClass="text-sky-400"
+          accentClass="accent-sky-400"
+          value={peg}
+          min={0}
+          max={15}
+          step={0.5}
+          summary="Ritmo al que el BCRA devalúa el dólar oficial mayorista frente a la inflación."
+          positiveBadges={pegPos}
+          negativeBadges={pegNeg}
+          onChange={(val) => onDispatch({ type: 'SET_CRAWLING_PEG', monthlyPct: val })}
+        />
+
+        <FineTuningCard
+          title="Tasa de Política Monetaria (TNA)"
+          badgeText={`${tna}% TNA`}
+          badgeColorClass="text-amber-400"
+          accentClass="accent-amber-400"
+          value={tna}
+          min={10}
+          max={120}
+          step={2}
+          summary="Tasa que paga el Central a los bancos para aspirar pesos y remunerar los plazos fijos."
+          positiveBadges={tnaPos}
+          negativeBadges={tnaNeg}
+          onChange={(val) => onDispatch({ type: 'SET_POLICY_RATE', annualRatePct: val })}
+        />
+
+        <FineTuningCard
+          title="Cobertura Tarifaria CAMMESA"
+          badgeText={`${coverage}% costo`}
+          badgeColorClass="text-emerald-400"
+          accentClass="accent-emerald-400"
+          value={coverage}
+          min={20}
+          max={100}
+          step={5}
+          summary="Porcentaje del costo de generar electricidad y gas que pagan los usuarios en su boleta."
+          positiveBadges={cammesaPos}
+          negativeBadges={cammesaNeg}
+          onChange={(val) => onDispatch({ type: 'SET_TARIFF_COVERAGE', coveragePct: val })}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function EconomicPolicyView({
   levers,
   state,
@@ -97,72 +297,7 @@ export function EconomicPolicyView({
         })}
       </div>
 
-      <div className="rounded-2xl bg-[#10131b] border border-slate-800/90 p-5 space-y-4">
-        <h3 className="text-sm font-bold text-white">
-          Calibración Fina de Mesa de Dinero BCRA y Secretaría de Energía
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-          <label className="block p-3 rounded-xl bg-[#0b0e15] border border-slate-800">
-            <div className="flex justify-between mb-1">
-              <span className="text-slate-300">Crawling Peg Oficial Mensual</span>
-              <span className="font-mono font-bold text-sky-400">
-                {state.centralBank.crawlingPegMonthlyPct}%
-              </span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={15}
-              step={0.5}
-              value={state.centralBank.crawlingPegMonthlyPct}
-              onChange={(e) =>
-                onDispatch({ type: 'SET_CRAWLING_PEG', monthlyPct: Number(e.target.value) })
-              }
-              className="w-full accent-sky-400"
-            />
-          </label>
-
-          <label className="block p-3 rounded-xl bg-[#0b0e15] border border-slate-800">
-            <div className="flex justify-between mb-1">
-              <span className="text-slate-300">Tasa de Política Monetaria (TNA)</span>
-              <span className="font-mono font-bold text-amber-400">
-                {state.centralBank.policyRateAnnualPct}%
-              </span>
-            </div>
-            <input
-              type="range"
-              min={10}
-              max={120}
-              step={2}
-              value={state.centralBank.policyRateAnnualPct}
-              onChange={(e) =>
-                onDispatch({ type: 'SET_POLICY_RATE', annualRatePct: Number(e.target.value) })
-              }
-              className="w-full accent-amber-400"
-            />
-          </label>
-
-          <label className="block p-3 rounded-xl bg-[#0b0e15] border border-slate-800">
-            <div className="flex justify-between mb-1">
-              <span className="text-slate-300">Cobertura Tarifaria CAMMESA</span>
-              <span className="font-mono font-bold text-emerald-400">
-                {state.energy.userTariffCoveragePct}%
-              </span>
-            </div>
-            <input
-              type="range"
-              min={20}
-              max={100}
-              step={5}
-              value={state.energy.userTariffCoveragePct}
-              onChange={(e) =>
-                onDispatch({ type: 'SET_TARIFF_COVERAGE', coveragePct: Number(e.target.value) })
-              }
-              className="w-full accent-emerald-400"
-            />
-          </label>
-        </div>
-      </div>
+      <FineTuningSection state={state} onDispatch={onDispatch} />
     </div>
   );
 }
