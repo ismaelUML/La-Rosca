@@ -216,6 +216,9 @@ function ActiveSectionRenderer(props: ActiveSectionRendererProps) {
     APOYOS: (
       <CampaignApoyosView state={props.campaignState} />
     ),
+    PARTIDO_PROVINCIAS: (
+      <CampaignPartidoProvinciasView state={props.campaignState} />
+    ),
     CONGRESO_Y_JUSTICIA: (
       <JudicialAndProvincesView state={props.state} onDispatch={props.onDispatch} />
     ),

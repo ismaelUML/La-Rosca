@@ -20,6 +20,7 @@ export type InGameSidebarSection =
   | 'RIGI'
   | 'CAMARAS'
   | 'APOYOS'
+  | 'PARTIDO_PROVINCIAS'
   | 'CONGRESO_Y_JUSTICIA'
   | 'PROVINCIAS_Y_DEFENSA';
 
@@ -58,6 +59,7 @@ const SIDEBAR_GROUPS: Array<{
     items: [
       { id: 'CAMARAS', label: 'Cámaras (Diputados y Senado)' },
       { id: 'APOYOS', label: 'Apoyos y Figuras' },
+      { id: 'PARTIDO_PROVINCIAS', label: 'Partido en las provincias' },
       { id: 'CONGRESO_Y_JUSTICIA', label: 'Votaciones y Corte Suprema' }
     ]
   },
