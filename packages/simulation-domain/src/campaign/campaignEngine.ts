@@ -127,27 +127,47 @@ function applyLocalZoneBonus(
   return zones.map((z) => (z.id === targetId ? { ...z, visitsCount: z.visitsCount + 1 } : z));
 }
 
+function computeRecorridaVisitMultiplier(visits: number, affinityMult: number = 1.0): number {
+  if (visits <= 0) return 1.0 * affinityMult;
+  if (visits === 1) return 0.65 * affinityMult;
+  if (visits === 2) return 0.40 * affinityMult;
+  if (visits === 3) return 0.25 * affinityMult;
+  return 0.13 * affinityMult;
+}
+
+function computeRecorridaApoyoBoost(mult: number): number {
+  if (mult > 0.2) return 0.5 * mult;
+  return 0;
+}
+
+function updateProvincesVisits(
+  provinces: ProvinceCampaignInfo[],
+  targetProvinceId: string,
+  mult: number
+): ProvinceCampaignInfo[] {
+  return provinces.map((p) => {
+    if (p.provinceId !== targetProvinceId) return p;
+    return {
+      ...p,
+      visitsCount: p.visitsCount + 1,
+      playerVotePct: round2(p.playerVotePct + 3.2 * mult)
+    };
+  });
+}
+
 function applyRecorridaBonus(
   state: CampaignSimulationState,
-  targetProvinceId: string,
-  fatigueMult: number = 1.0
+  targetProvinceId: string
 ): CampaignSimulationState {
-  const provIndex = state.provinces.findIndex((p) => p.provinceId === targetProvinceId);
+  const prov = state.provinces.find((p) => p.provinceId === targetProvinceId);
   const nextLocalZones = applyLocalZoneBonus(state.localZones, targetProvinceId);
-  if (provIndex === -1 && !nextLocalZones) {
+  if (!prov && !nextLocalZones) {
     return state;
   }
-  const prov = state.provinces[provIndex] ?? state.provinces[0]!;
-  const nextProvinces = [...state.provinces];
-  const mult = prov.affinityMultiplier * fatigueMult;
-
-  if (provIndex !== -1) {
-    nextProvinces[provIndex] = {
-      ...prov,
-      visitsCount: prov.visitsCount + 1,
-      playerVotePct: round2(prov.playerVotePct + 3.2 * mult)
-    };
-  }
+  const affinity = prov ? prov.affinityMultiplier : 1.0;
+  const visits = prov ? prov.visitsCount : 0;
+  const mult = computeRecorridaVisitMultiplier(visits, affinity);
+  const nextProvinces = updateProvincesVisits(state.provinces, targetProvinceId, mult);
 
   const norm = normalizeCandidateImage(
     state.image.imagenPositiva + 2.8 * mult,
@@ -160,8 +180,8 @@ function applyRecorridaBonus(
     localZones: nextLocalZones,
     attributes: {
       ...state.attributes,
-      relevancia: round2(clamp(state.attributes.relevancia + 0.7 * fatigueMult, 0, 100)),
-      apoyoPartidario: round2(clamp(state.attributes.apoyoPartidario + 0.5 * fatigueMult, 0, 100))
+      relevancia: round2(clamp(state.attributes.relevancia + 0.7 * mult, 0, 100)),
+      apoyoPartidario: round2(clamp(state.attributes.apoyoPartidario + computeRecorridaApoyoBoost(mult), 0, 100))
     },
     image: { imagenPositiva: norm.pos, imagenNegativa: norm.neg, desconocimiento: norm.desc },
     votingIntention: {
@@ -219,7 +239,7 @@ export function executeCampaignAction(
   };
 
   if (payload.actionId === 'RECORRIDA') {
-    return applyRecorridaBonus(updatedState, payload.selectedProvinceId, fatigueMult);
+    return applyRecorridaBonus(updatedState, payload.selectedProvinceId);
   }
 
   return applyStandardActionEffects(updatedState, action.id, fatigueMult);

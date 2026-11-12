@@ -80,3 +80,4 @@ export function ElectionResultsSvgMap({ provinces }: ElectionResultsSvgMapProps)
     </div>
   );
 }
+

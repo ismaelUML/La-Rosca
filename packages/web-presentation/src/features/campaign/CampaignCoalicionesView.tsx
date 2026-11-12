@@ -23,11 +23,18 @@ interface CampaignCoalicionesViewProps {
   onUpdateState?: (updater: (prev: CampaignSimulationState) => CampaignSimulationState) => void;
 }
 
+interface CoalitionPartnerLeader {
+  name: string;
+  role: string;
+}
+
 interface CoalitionPartnerConfig {
   sigla: string;
   name: string;
   description: string;
   color: string;
+  leaders: CoalitionPartnerLeader[];
+  voteContributionPct: number;
 }
 
 const COALITION_CATALOG: CoalitionPartnerConfig[] = [
@@ -35,37 +42,73 @@ const COALITION_CATALOG: CoalitionPartnerConfig[] = [
     sigla: 'LLA',
     name: 'La Libertad Avanza',
     description: 'Votos de derecha y juventud. Exige veto a subas tributarias y control del BCRA.',
-    color: '#8b5cf6'
+    color: '#8b5cf6',
+    leaders: [
+      { name: 'Javier Milei', role: 'Líder liberal libertario' },
+      { name: 'Patricia Bullrich', role: 'Referente de Seguridad y orden' },
+      { name: 'Victoria Villarruel', role: 'Vicepresidenta de la Nación' }
+    ],
+    voteContributionPct: 6.8
   },
   {
     sigla: 'UCR',
     name: 'Unión Cívica Radical',
     description: 'Estructura territorial en municipios y senadores clave. Exige educación y federalismo.',
-    color: '#dc2626'
+    color: '#dc2626',
+    leaders: [
+      { name: 'Rodrigo de Loredo', role: 'Presidente bloque UCR Diputados' },
+      { name: 'Martín Lousteau', role: 'Presidente Comité Nacional UCR' },
+      { name: 'Maximiliano Pullaro', role: 'Gobernador de Santa Fe' }
+    ],
+    voteContributionPct: 3.8
   },
   {
     sigla: 'PF',
     name: 'Provincias Unidas / Peronismo Federal',
     description: 'Gobernadores de centro interior. Exigen reparto automático de fondos y obra pública.',
-    color: '#2563eb'
+    color: '#2563eb',
+    leaders: [
+      { name: 'Juan Schiaretti', role: 'Exgobernador de Córdoba' },
+      { name: 'Florencio Randazzo', role: 'Diputado peronismo federal' },
+      { name: 'Martín Llaryora', role: 'Gobernador de Córdoba' }
+    ],
+    voteContributionPct: 3.5
   },
   {
     sigla: 'UxP',
     name: 'Unión por la Patria',
     description: 'Piso popular del Conurbano y sindicatos. Polarización alta con la centroderecha.',
-    color: '#0284c7'
+    color: '#0284c7',
+    leaders: [
+      { name: 'Axel Kicillof', role: 'Gobernador de Buenos Aires' },
+      { name: 'Sergio Massa', role: 'Líder Frente Renovador' },
+      { name: 'Eduardo "Wado" de Pedro', role: 'Senador nacional' }
+    ],
+    voteContributionPct: 6.5
   },
   {
     sigla: 'PRO',
     name: 'Propuesta Republicana (PRO)',
     description: 'Votante urbano de clase media e institucionalistas. Piden equilibrio fiscal y seguridad.',
-    color: '#eab308'
+    color: '#eab308',
+    leaders: [
+      { name: 'Mauricio Macri', role: 'Fundador y líder del PRO' },
+      { name: 'Cristian Ritondo', role: 'Jefe bloque PRO Diputados' },
+      { name: 'Diego Santilli', role: 'Diputado nacional bonaerense' }
+    ],
+    voteContributionPct: 4.2
   },
   {
     sigla: 'FIT',
     name: 'Frente de Izquierda',
     description: 'Aporte de comisiones internas fabriles. Rechaza frentes burgueses tradicionales.',
-    color: '#e11d48'
+    color: '#e11d48',
+    leaders: [
+      { name: 'Myriam Bregman', role: 'Referente nacional PTS/FIT' },
+      { name: 'Nicolás del Caño', role: 'Diputado nacional de izquierda' },
+      { name: 'Romina del Plá', role: 'Dirigente Partido Obrero' }
+    ],
+    voteContributionPct: 1.5
   }
 ];
 
@@ -437,6 +480,24 @@ function CoalitionPartnerActionSlot({
   );
 }
 
+function CoalitionLeadersList({ leaders }: { leaders: CoalitionPartnerLeader[] }) {
+  return (
+    <div className="p-2.5 rounded-xl bg-[#0b0e15] border border-slate-800/80 space-y-1.5 my-2">
+      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+        Principales referentes:
+      </div>
+      <div className="space-y-1">
+        {leaders.map((lead) => (
+          <div key={lead.name} className="flex items-center justify-between text-xs">
+            <span className="text-white font-semibold">{lead.name}</span>
+            <span className="text-[11px] text-slate-400">{lead.role}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface CoalitionCardProps {
   partner: CoalitionPartnerConfig;
   affinityPct: number;
@@ -460,16 +521,24 @@ function CoalitionCard({
     <div className="rounded-2xl bg-[#10131b] border border-slate-800/90 p-4 flex flex-col justify-between space-y-3">
       <div>
         <div className="flex justify-between items-center mb-1">
-          <span className="font-bold text-white text-sm">{partner.name}</span>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: partner.color }} />
+            <span className="font-bold text-white text-sm">{partner.name}</span>
+          </div>
           <span className="text-xs font-mono font-bold text-sky-400">
             {affinityPct} % afinidad
           </span>
         </div>
         <p className="text-xs text-slate-400 leading-relaxed">
-          Afinidad ideológica {affinityPct} % · aporta parte de su fuerza pero ese partido deja de
-          competir en la elección, designa varios ministros si ganás y sus legisladores te responden
-          menos. Máximo 2 socios.
+          {partner.description}
         </p>
+
+        <CoalitionLeadersList leaders={partner.leaders} />
+
+        <div className="flex items-center justify-between text-xs text-emerald-400 font-mono pt-1">
+          <span>Aporte estimado:</span>
+          <strong>+{partner.voteContributionPct.toFixed(1).replace('.', ',')} % votos</strong>
+        </div>
       </div>
 
       <CoalitionPartnerActionSlot

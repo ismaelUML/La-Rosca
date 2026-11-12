@@ -97,3 +97,4 @@ describe('Fase 4: Military Theater & Weighted Sigmoid Combat', () => {
     expect(order.updatedTheater.illegalFishingOrNarcoPressurePct).toBe(0);
   });
 });
+

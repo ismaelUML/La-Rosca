@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import type { PolicyAction, SimulationState } from '@argentina-sim/domain';
 import { CongressBillsNegotiationSection } from './CongressBillsNegotiationSection.js';
+import { ReformasInstitucionalesSection } from './ReformasInstitucionalesSection.js';
 
 // En el Congreso no se gobierna con discursos bonitos: se gobierna con el quorum de 129
 // en Diputados y los 37 senadores en la Camara Alta. Si no tenes los votos,
@@ -153,11 +154,17 @@ function getChamberSeats(f: PartySeatShare, chamber: 'deputies' | 'senate'): num
   return chamber === 'deputies' ? f.deputiesSeats : f.senateSeats;
 }
 
+interface HemicycleDot {
+  x: number;
+  y: number;
+  color: string;
+}
+
 function assignColorsToDots(
   dots: Array<{ x: number; y: number }>,
   forces: PartySeatShare[],
   chamber: 'deputies' | 'senate'
-) {
+): HemicycleDot[] {
   const orderedForces = getOrderedForces(forces);
   const colored: Array<{ x: number; y: number; color: string }> = [];
   let dotIndex = 0;
@@ -331,15 +338,17 @@ export interface CamarasLegislativasViewProps {
   onDispatch: (action: PolicyAction) => void;
 }
 
+export type CongressSubTab = 'ROSCA_LEYES' | 'REFORMAS' | 'COMPOSICION';
+
 function CongressSubTabHeader({
   subTab,
   onSelectTab
 }: {
-  subTab: 'COMPOSICION' | 'ROSCA_LEYES';
-  onSelectTab: (t: 'COMPOSICION' | 'ROSCA_LEYES') => void;
+  subTab: CongressSubTab;
+  onSelectTab: (t: CongressSubTab) => void;
 }) {
   return (
-    <div className="flex gap-2 border-b border-slate-800 pb-2">
+    <div className="flex flex-wrap gap-2 border-b border-slate-800 pb-2">
       <button
         type="button"
         onClick={() => onSelectTab('ROSCA_LEYES')}
@@ -350,6 +359,17 @@ function CongressSubTabHeader({
         }`}
       >
         Rosca y votación de leyes
+      </button>
+      <button
+        type="button"
+        onClick={() => onSelectTab('REFORMAS')}
+        className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
+          subTab === 'REFORMAS'
+            ? 'bg-white text-slate-950 shadow'
+            : 'text-slate-400 hover:text-white'
+        }`}
+      >
+        Reformas del Sistema Político (ea)
       </button>
       <button
         type="button"
@@ -438,11 +458,41 @@ function CongressCompositionView({
   );
 }
 
+function CongressSubTabContent({
+  subTab,
+  state,
+  onDispatch,
+  forces,
+  deputiesColored,
+  senateColored
+}: {
+  subTab: CongressSubTab;
+  state: SimulationState;
+  onDispatch: (action: PolicyAction) => void;
+  forces: PartySeatShare[];
+  deputiesColored: HemicycleDot[];
+  senateColored: HemicycleDot[];
+}) {
+  if (subTab === 'ROSCA_LEYES') {
+    return <CongressBillsNegotiationSection state={state} onDispatch={onDispatch} />;
+  }
+  if (subTab === 'REFORMAS') {
+    return <ReformasInstitucionalesSection />;
+  }
+  return (
+    <CongressCompositionView
+      forces={forces}
+      deputiesColored={deputiesColored}
+      senateColored={senateColored}
+    />
+  );
+}
+
 export function CamarasLegislativasView({
   state,
   onDispatch
 }: CamarasLegislativasViewProps) {
-  const [subTab, setSubTab] = useState<'COMPOSICION' | 'ROSCA_LEYES'>('ROSCA_LEYES');
+  const [subTab, setSubTab] = useState<CongressSubTab>('ROSCA_LEYES');
   const [forces] = useState<PartySeatShare[]>(INITIAL_CONGRESS_FORCES);
 
   const rawDeputiesDots = useMemo(() => generateHemicycleDots(257, 8, 70, 150), []);
@@ -476,15 +526,14 @@ export function CamarasLegislativasView({
 
       <CongressSubTabHeader subTab={subTab} onSelectTab={setSubTab} />
 
-      {subTab === 'ROSCA_LEYES' ? (
-        <CongressBillsNegotiationSection state={state} onDispatch={onDispatch} />
-      ) : (
-        <CongressCompositionView
-          forces={forces}
-          deputiesColored={deputiesColored}
-          senateColored={senateColored}
-        />
-      )}
+      <CongressSubTabContent
+        subTab={subTab}
+        state={state}
+        onDispatch={onDispatch}
+        forces={forces}
+        deputiesColored={deputiesColored}
+        senateColored={senateColored}
+      />
     </div>
   );
 }

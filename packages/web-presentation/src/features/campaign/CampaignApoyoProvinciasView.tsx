@@ -102,9 +102,8 @@ function LocalLeaderCard({
           Relevancia {leader.relevance} · Influencia {leader.influence}
         </div>
 
-        <div className="mt-2 text-xs flex items-center justify-between">
-          <span className="text-slate-400">Probabilidad de éxito:</span>
-          <strong className="text-emerald-400 font-mono">≈ {effectiveProb} %</strong>
+        <div className="mt-2 text-xs text-slate-300 font-mono">
+          Apoyo estimado: <strong className="text-white font-bold">{effectiveProb} %</strong>
         </div>
       </div>
 

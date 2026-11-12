@@ -19,6 +19,12 @@ function formatScaledNumber(num: number): string {
   return '0';
 }
 
+function formatScaledBound(val: number, mult: number, isLower: boolean): string {
+  const scaled = val * mult;
+  if (isLower && mult < 0.25 && scaled < 0.35) return '0';
+  return formatScaledNumber(scaled);
+}
+
 function scaleRangeText(rangeText: string, mult: number): string {
   if (Math.abs(mult - 1) < 0.02) return rangeText;
   const parts = rangeText.split('/');
@@ -26,8 +32,8 @@ function scaleRangeText(rangeText: string, mult: number): string {
   const n1 = parseFloat(parts[0]!.replace(',', '.'));
   const n2 = parseFloat(parts[1]!.replace(',', '.'));
   if (isNaN(n1) || isNaN(n2)) return rangeText;
-  const s1 = formatScaledNumber(n1 * mult);
-  const s2 = formatScaledNumber(n2 * mult);
+  const s1 = formatScaledBound(n1, mult, true);
+  const s2 = formatScaledBound(n2, mult, false);
   return `${s1}/${s2}`;
 }
 
@@ -54,15 +60,23 @@ function resolveActionDisplayMultiplier(
   return 1 / (1 + 0.40 * fatigue);
 }
 
+function checkShouldShowPill(eff: CampaignActionCard['effects'][number], mult: number): boolean {
+  if (eff.isWarning) return true;
+  if (eff.label === 'APOYO PARTIDARIO' && mult < 0.2) return false;
+  return true;
+}
+
 interface ActionPillsListProps {
   effects: CampaignActionCard['effects'];
   multiplier: number;
 }
 
 function ActionPillsList({ effects, multiplier }: ActionPillsListProps) {
+  const visibleEffects = effects.filter((eff) => checkShouldShowPill(eff, multiplier));
+
   return (
     <div className="flex flex-wrap gap-1.5 my-3">
-      {effects.map((eff) => {
+      {visibleEffects.map((eff) => {
         const scaledRange = eff.isWarning ? eff.rangeText : scaleRangeText(eff.rangeText, multiplier);
         return (
           <span
@@ -133,8 +147,8 @@ function ActionProvinceSelector({
           </option>
         ))}
       </select>
-      <div className="text-[11px] text-slate-400">
-        Afinidad ideológica: <strong className="text-amber-400">{selectedProv.ideologicalAffinity}</strong> · el efecto de la recorrida se multiplica ×{selectedProv.affinityMultiplier}
+      <div className="text-[11px] text-sky-200 bg-sky-950/60 border border-sky-800/70 p-2 rounded-xl mt-2 leading-relaxed">
+        Afinidad ideológica: <strong className="text-amber-400 font-bold">{selectedProv.ideologicalAffinity}</strong> · el efecto de la recorrida se multiplica ×{selectedProv.affinityMultiplier.toFixed(2).replace('.', ',')}
       </div>
     </div>
   );

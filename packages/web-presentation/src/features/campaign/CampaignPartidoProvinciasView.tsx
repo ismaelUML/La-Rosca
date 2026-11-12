@@ -726,13 +726,19 @@ interface ProvincialVoteBarProps {
   shares: ProvincialPartyShare[];
 }
 
-function buildDiffLabel(playerShare: number, rivalShare: number, rivalName: string): string {
-  if (playerShare >= rivalShare) {
-    const diff = (playerShare - rivalShare).toFixed(1).replace('.', ',');
-    return `Tu fórmula: ${playerShare.toFixed(1).replace('.', ',')} % (+${diff} vs. ${rivalName}) · ¡Tu fórmula lidera!`;
+function ProvincialLeadingBadge({ isLeading, diff, rivalName }: { isLeading: boolean; diff: string; rivalName: string }) {
+  if (isLeading) {
+    return (
+      <span className="font-mono font-bold text-purple-400 text-xs tracking-wide">
+        ¡Tu fórmula lidera!
+      </span>
+    );
   }
-  const diffVsTop = (rivalShare - playerShare).toFixed(1).replace('.', ',');
-  return `Tu fórmula: ${playerShare.toFixed(1).replace('.', ',')} % (-${diffVsTop} vs. ${rivalName})`;
+  return (
+    <span className="font-mono text-slate-400 text-xs">
+      Segunda fuerza (-{diff} vs. {rivalName})
+    </span>
+  );
 }
 
 function resolvePlayerShare(shares: ProvincialPartyShare[]): number {
@@ -781,13 +787,16 @@ function ProvincialVoteBar({ shares }: ProvincialVoteBarProps) {
   );
   const playerShare = resolvePlayerShare(sortedShares);
   const rival = resolveRivalShare(sortedShares);
-  const diffLabel = buildDiffLabel(playerShare, rival.share, rival.name);
+  const isLeading = playerShare >= rival.share && playerShare > 0;
+  const diff = isLeading
+    ? (playerShare - rival.share).toFixed(1).replace('.', ',')
+    : (rival.share - playerShare).toFixed(1).replace('.', ',');
 
   return (
     <div className="rounded-2xl bg-[#0f131c] border border-slate-800 p-5 space-y-4">
       <div className="flex items-center justify-between text-xs">
         <span className="font-extrabold text-white text-sm">Intención de voto provincial</span>
-        <span className="font-mono font-bold text-purple-400">{diffLabel}</span>
+        <ProvincialLeadingBadge isLeading={isLeading} diff={diff} rivalName={rival.name} />
       </div>
 
       <div className="w-full h-4 rounded-full overflow-hidden flex bg-slate-900 border border-slate-800">
@@ -1007,6 +1016,24 @@ function returnAllianceVotes(
   return [...updated].sort((a, b) => b.sharePct - a.sharePct);
 }
 
+const DISTRICT_REFERENTES_TABLE = [
+  { match: 'unidas', text: 'Caudillos distritales y legisladores provinciales' },
+  { match: 'federal', text: 'Caudillos distritales y legisladores provinciales' },
+  { match: 'patria', text: 'Referentes del peronismo distrital e intendentes' },
+  { match: 'pj', text: 'Referentes del peronismo distrital e intendentes' },
+  { match: 'frejupa', text: 'Referentes del peronismo distrital e intendentes' },
+  { match: 'pro', text: 'Dirigentes de gestión urbana y concejales' },
+  { match: 'radical', text: 'Comité provincial y dirigentes territoriales' },
+  { match: 'defendamos', text: 'Federico Sciurano y ediles de Ushuaia / Río Grande' },
+  { match: 'fit', text: 'Delegados de base y comisiones obreras' }
+];
+
+function resolveDistrictReferente(partyName: string): string {
+  const lower = partyName.toLowerCase();
+  const found = DISTRICT_REFERENTES_TABLE.find((item) => lower.includes(item.match));
+  return found ? found.text : 'Concejales y dirigentes locales del espacio';
+}
+
 interface ProvincialCoalitionCardProps {
   party: ProvincialPartyShare;
   isInAlliance: boolean;
@@ -1023,6 +1050,7 @@ function ProvincialCoalitionCard({
   onBreakAlliance
 }: ProvincialCoalitionCardProps) {
   const potentialBoost = Math.max(0.3, Math.round(party.sharePct * 0.6 * 10) / 10);
+  const referente = resolveDistrictReferente(party.partyName);
 
   return (
     <div className="rounded-2xl bg-[#0f131c] border border-slate-800 p-4 flex flex-col justify-between space-y-3">
@@ -1040,6 +1068,11 @@ function ProvincialCoalitionCard({
             <span className="text-[10px] text-slate-400">Fuerza opositora / distrital</span>
           )}
         </div>
+
+        <div className="text-[11px] text-slate-300">
+          Referente: <span className="font-semibold text-white">{referente}</span>
+        </div>
+
         <div className="text-xs text-slate-400">
           Intención de voto provincial: <strong className="text-white">{party.sharePct.toFixed(1).replace('.', ',')} %</strong>
         </div>

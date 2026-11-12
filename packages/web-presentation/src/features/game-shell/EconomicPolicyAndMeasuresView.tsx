@@ -480,6 +480,20 @@ export function SectorMeasuresView({ measures, onToggleMeasure }: SectorMeasures
 
   const visibleMeasures = sectorMeasures.filter((m) => m.durationType === filterMode);
 
+  const handleApproveAllInSector = () => {
+    const toActivate = visibleMeasures.filter((m) => !m.active);
+    for (const m of toActivate) {
+      onToggleMeasure(m.id);
+    }
+  };
+
+  const handleApproveAllPossible = () => {
+    const toActivate = measures.filter((m) => !m.active);
+    for (const m of toActivate) {
+      onToggleMeasure(m.id);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="border-b border-slate-800/80 pb-4">
@@ -531,9 +545,25 @@ export function SectorMeasuresView({ measures, onToggleMeasure }: SectorMeasures
             </button>
           </div>
 
-          <span className="text-xs text-slate-400">
-            Sector actual: <strong className="text-white">{selectedSector}</strong>
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-slate-400 mr-2">
+              Sector actual: <strong className="text-white">{selectedSector}</strong>
+            </span>
+            <button
+              type="button"
+              onClick={handleApproveAllInSector}
+              className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-slate-200 transition shadow"
+            >
+              Aprobar todas las del sector
+            </button>
+            <button
+              type="button"
+              onClick={handleApproveAllPossible}
+              className="px-3 py-1.5 rounded-xl bg-purple-950/70 hover:bg-purple-900 border border-purple-700 text-xs font-bold text-purple-200 transition shadow"
+            >
+              Aprobar todas las posibles
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">

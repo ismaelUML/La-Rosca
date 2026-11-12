@@ -132,3 +132,4 @@ export function executeTheaterOrder(
     resultText: `Operativo de saturación en ${theater.name}: apresto operacional +8.0%, control +3.0%.`
   };
 }
+

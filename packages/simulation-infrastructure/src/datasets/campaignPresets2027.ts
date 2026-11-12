@@ -22,16 +22,16 @@ export const CAMPAIGN_ACTIONS_CATALOG: CampaignActionCard[] = [
     id: 'RECORRIDA',
     title: 'Recorrida',
     description: 'Visitar una provincia (o zona, si competís por una gobernación).',
-    cost: 9.0,
+    cost: 8.6,
     needsProvince: true,
     requirementText: 'Requisito: El efecto depende de cuánto coincide la provincia con tu ideología y de cuántas veces ya la visitaste.',
     effects: [
-      { label: 'IMAGEN EN LA ZONA', rangeText: '+2,3/+9,2' },
-      { label: 'IMAGEN POSITIVA', rangeText: '+1,9/+7,4' },
-      { label: 'RELEVANCIA', rangeText: '+0,3/+1,1' },
-      { label: 'APOYO PARTIDARIO', rangeText: '+0,2/+0,9' },
+      { label: 'IMAGEN EN LA ZONA', rangeText: '+2,4/+9,7' },
+      { label: 'IMAGEN POSITIVA', rangeText: '+2,5/+9,8' },
+      { label: 'RELEVANCIA', rangeText: '+0,5/+1,5' },
+      { label: 'APOYO PARTIDARIO', rangeText: '+0,3/+1,2' },
       { label: 'IMAGEN NEGATIVA', rangeText: '0/+0,3', isWarning: true },
-      { label: 'INTELIGENCIA PERCIBIDA', rangeText: '-0,3/0', isWarning: true }
+      { label: 'INTELIGENCIA PERCIBIDA', rangeText: '-0,2/0', isWarning: true }
     ]
   },
   {
