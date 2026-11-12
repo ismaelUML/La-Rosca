@@ -12,9 +12,10 @@ import {
 } from '@argentina-sim/domain';
 import { REAL_POLITICIANS_2027 } from '@argentina-sim/infrastructure';
 
-// Vista de Apoyos y Figuras Politicas:
-// Cada figura es dialoguista o dogmatica. El carrusel de figuras permite pedir apoyo
-// o seducir para el pase de partido (con 20 puntos menos de probabilidad).
+// Vista de Apoyos y Figuras Políticas:
+// En la política argentina, un llamado a destiempo quema puentes. Si le pedís apoyo a un
+// dirigente o lo invitás a saltar de bancada a tu espacio y te rechaza, te clava el visto:
+// se come un cooldown de 5 meses sin poder insistirle. Si acepta, suma votos e imagen.
 
 const PARTY_FILTER_BUTTONS = ['LLA', 'PRO', 'UCR', 'UxP', 'PF', 'FIT'] as const;
 
@@ -76,11 +77,22 @@ function isPoliticianFuncionario(roleDescription: string): boolean {
 
 function PoliticianToggleSwitch({
   blocked,
+  cooldownMonths,
   probSupport
 }: {
   blocked: boolean;
+  cooldownMonths: number;
   probSupport: number;
 }) {
+  if (cooldownMonths > 0) {
+    return (
+      <div className="flex items-center gap-2 text-xs text-amber-400 py-1 font-mono">
+        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+        <span>Rechazó la propuesta · Disponible en {cooldownMonths} meses</span>
+      </div>
+    );
+  }
+
   if (blocked) {
     return (
       <div className="flex items-center gap-2.5 text-xs text-slate-400 py-1">
@@ -104,16 +116,33 @@ function PoliticianToggleSwitch({
 
 function PoliticianActionButtons({
   blocked,
+  cooldownMonths,
   endorsementRecord,
   onRequestEndorsement,
   onInviteDefection
 }: {
   blocked: boolean;
+  cooldownMonths: number;
   endorsementRecord?: NegotiationRecord;
   onRequestEndorsement: () => void;
   onInviteDefection: () => void;
 }) {
   const isAccepted = endorsementRecord?.verdict === 'ACEPTO';
+  const inCooldown = cooldownMonths > 0;
+
+  if (inCooldown) {
+    return (
+      <div className="pt-2">
+        <button
+          type="button"
+          disabled
+          className="w-full py-2 rounded-xl text-xs font-semibold bg-[#121622] border border-amber-900/50 text-amber-400/80 cursor-not-allowed"
+        >
+          Rechazó la propuesta ({cooldownMonths} meses restantes)
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex gap-2 pt-2">
@@ -140,12 +169,14 @@ function PoliticianActionButtons({
 
 function PoliticianCard({
   pol,
+  cooldownMonths,
   endorsementEval,
   endorsementRecord,
   onRequestEndorsement,
   onInviteDefection
 }: {
   pol: (typeof REAL_POLITICIANS_2027)[number];
+  cooldownMonths: number;
   endorsementEval: NegotiationAssessment;
   endorsementRecord?: NegotiationRecord;
   onRequestEndorsement: () => void;
@@ -193,12 +224,17 @@ function PoliticianCard({
           Relevancia {relevance} · Influencia {influence}
         </div>
 
-        <PoliticianToggleSwitch blocked={isBlocked} probSupport={probSupport} />
+        <PoliticianToggleSwitch
+          blocked={isBlocked}
+          cooldownMonths={cooldownMonths}
+          probSupport={probSupport}
+        />
       </div>
 
       <div className="space-y-2 border-t border-slate-800/70 pt-3">
         <PoliticianActionButtons
           blocked={isBlocked}
+          cooldownMonths={cooldownMonths}
           endorsementRecord={endorsementRecord}
           onRequestEndorsement={onRequestEndorsement}
           onInviteDefection={onInviteDefection}
@@ -212,9 +248,10 @@ function PoliticianCard({
 export interface CampaignApoyosViewProps {
   state: CampaignSimulationState;
   onAdvanceMonth?: () => void;
+  onUpdateState?: (updater: (prev: CampaignSimulationState) => CampaignSimulationState) => void;
 }
 
-export function CampaignApoyosView({ state }: CampaignApoyosViewProps) {
+export function CampaignApoyosView({ state, onUpdateState }: CampaignApoyosViewProps) {
   const [selectedPartyFilter, setSelectedPartyFilter] = useState('UCR');
   const [carouselIndex, setCarouselIndex] = useState(0);
 
@@ -237,9 +274,8 @@ export function CampaignApoyosView({ state }: CampaignApoyosViewProps) {
   const maxIndex = Math.max(0, filteredPoliticians.length - pageSize);
   const visiblePoliticians = filteredPoliticians.slice(carouselIndex, carouselIndex + pageSize);
 
-  const acceptedEndorsementsCount = Object.values(endorsementLedger).filter(
-    (r) => r.verdict === 'ACEPTO'
-  ).length + 70; // Base inicial de apoyos de aliados y legisladores afines
+  const acceptedEndorsementsCount =
+    Object.values(endorsementLedger).filter((r) => r.verdict === 'ACEPTO').length + 70;
 
   const handleSelectParty = (sigla: string) => {
     setSelectedPartyFilter(sigla);
@@ -258,6 +294,7 @@ export function CampaignApoyosView({ state }: CampaignApoyosViewProps) {
     const profile = buildPoliticianProfile(pol);
     const assessment = assessEndorsement(profile, player, mood);
     const accepted = rollNegotiation(assessment, `${pol.id}-end-${state.stage.currentMonthIndex}`);
+
     setEndorsementLedger((prev) => ({
       ...prev,
       [pol.id]: {
@@ -266,12 +303,45 @@ export function CampaignApoyosView({ state }: CampaignApoyosViewProps) {
         probabilityPct: assessment.probabilityPct
       }
     }));
+
+    if (accepted) {
+      onUpdateState?.((prev) => ({
+        ...prev,
+        attributes: {
+          ...prev.attributes,
+          apoyoPartidario: Math.min(100, Math.round((prev.attributes.apoyoPartidario + 1.2) * 10) / 10)
+        },
+        votingIntention: {
+          ...prev.votingIntention,
+          intencionVotoGeneral:
+            Math.round((prev.votingIntention.intencionVotoGeneral + 0.8) * 10) / 10
+        },
+        historyLog: [
+          `${pol.name} confirmó su respaldo público a tu campaña (+1.2 apoyo partidario, +0.8 votos).`,
+          ...prev.historyLog
+        ]
+      }));
+    } else {
+      // 5 meses de enfriamiento político si te rechaza la propuesta
+      onUpdateState?.((prev) => ({
+        ...prev,
+        politicianCooldowns: {
+          ...(prev.politicianCooldowns ?? {}),
+          [pol.id]: 5
+        },
+        historyLog: [
+          `${pol.name} rechazó tu pedido de apoyo (bloqueado por 5 meses para nuevas negociaciones).`,
+          ...prev.historyLog
+        ]
+      }));
+    }
   };
 
   const handleInviteDefection = (pol: (typeof REAL_POLITICIANS_2027)[number]) => {
     const profile = buildPoliticianProfile(pol);
     const assessment = assessDefection(profile, player, mood);
     const accepted = rollNegotiation(assessment, `${pol.id}-def-${state.stage.currentMonthIndex}`);
+
     setDefectionLedger((prev) => ({
       ...prev,
       [pol.id]: {
@@ -280,12 +350,39 @@ export function CampaignApoyosView({ state }: CampaignApoyosViewProps) {
         probabilityPct: assessment.probabilityPct
       }
     }));
-  };
 
-  const currentRangeLabel = `${carouselIndex + 1}-${Math.min(
-    carouselIndex + pageSize,
-    filteredPoliticians.length
-  )} de ${filteredPoliticians.length}`;
+    if (accepted) {
+      onUpdateState?.((prev) => ({
+        ...prev,
+        attributes: {
+          ...prev.attributes,
+          apoyoPartidario: Math.min(100, Math.round((prev.attributes.apoyoPartidario + 2.5) * 10) / 10)
+        },
+        votingIntention: {
+          ...prev.votingIntention,
+          intencionVotoGeneral:
+            Math.round((prev.votingIntention.intencionVotoGeneral + 1.6) * 10) / 10
+        },
+        historyLog: [
+          `¡Pase político del año! ${pol.name} saltó de bancada y se afilió a tu partido (+2.5 apoyo, +1.6 votos).`,
+          ...prev.historyLog
+        ]
+      }));
+    } else {
+      // 5 meses de enfriamiento político por rechazo de pase partidario
+      onUpdateState?.((prev) => ({
+        ...prev,
+        politicianCooldowns: {
+          ...(prev.politicianCooldowns ?? {}),
+          [pol.id]: 5
+        },
+        historyLog: [
+          `${pol.name} rechazó pasarse a tu espacio (bloqueado por 5 meses).`,
+          ...prev.historyLog
+        ]
+      }));
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -327,7 +424,10 @@ export function CampaignApoyosView({ state }: CampaignApoyosViewProps) {
           >
             ◀
           </button>
-          <span>{currentRangeLabel}</span>
+          <span>
+            {carouselIndex + 1}-{Math.min(carouselIndex + pageSize, filteredPoliticians.length)} de{' '}
+            {filteredPoliticians.length}
+          </span>
           <button
             type="button"
             disabled={carouselIndex >= maxIndex}
@@ -343,10 +443,13 @@ export function CampaignApoyosView({ state }: CampaignApoyosViewProps) {
         {visiblePoliticians.map((pol) => {
           const profile = buildPoliticianProfile(pol);
           const endorsementEval = assessEndorsement(profile, player, mood);
+          const cooldown = state.politicianCooldowns?.[pol.id] ?? 0;
+
           return (
             <PoliticianCard
               key={pol.id}
               pol={pol}
+              cooldownMonths={cooldown}
               endorsementEval={endorsementEval}
               endorsementRecord={endorsementLedger[pol.id]}
               onRequestEndorsement={() => handleRequestEndorsement(pol)}

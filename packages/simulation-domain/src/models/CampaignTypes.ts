@@ -183,6 +183,12 @@ export interface CampaignSimulationState {
   partyAxis?: IdeologicalAxisPosition;
   countryMood?: CountryMoodSnapshot;
   diplomacy?: CampaignDiplomacyLedger;
+  actionUsageCount?: Record<string, number>;
+  politicianCooldowns?: Record<string, number>;
+  isCandidacyConfirmed?: boolean;
+  coalitionParties?: string[];
+  runningMateId?: string | null;
+  rejectedAlliances?: string[];
   budgetArgentums: number;
   actionsRemainingThisMonth: number;
   actionsTotalThisMonth: number;

@@ -439,6 +439,14 @@ export function createInitialCampaignState(
     },
     targetRole: role,
     targetProvinceId: provinceId,
+    // Estado inicial de la rosca: sin fatiga acumulada en spots, sin dirigentes bloqueados
+    // por mandarles mensaje un domingo a la noche, y sin coaliciones cerradas de antemano.
+    actionUsageCount: {},
+    politicianCooldowns: {},
+    isCandidacyConfirmed: false,
+    coalitionParties: [],
+    runningMateId: null,
+    rejectedAlliances: [],
     attributes: presets.attributes,
     image: presets.image,
     votingIntention: presets.votingIntention,

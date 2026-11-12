@@ -235,3 +235,4 @@ Al seleccionar una provincia en carrera:
   - `Campaña (4 acciones)`: Entrevista, Publicidad, Acto partidario, Formación de equipos, Debate, Plan de gobierno, etc., con presupuesto específico local.
   - `Coalición`: Cierre de alianzas distritales.
   - `Perfil del candidato`: Atributos del binomio provincial.
+

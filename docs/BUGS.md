@@ -137,3 +137,4 @@
   - **Gráfico de barras apiladas / multi-partido**: Visualización de intención de voto por fuerza (Provincias Unidas, LLA, UxP, fuerzas locales, FIT, UCR, etc.).
   - **Selectores de Fórmula Provincial**: Dropdowns interactivos para designar Gobernador y Vicegobernador según los dirigentes locales de tu fuerza.
   - **Manejo de campaña provincial profunda**: Presupuesto propio asignado por distrito, tabs de `Campaña (4 acciones)`, `Coalición` y `Perfil del candidato`.
+

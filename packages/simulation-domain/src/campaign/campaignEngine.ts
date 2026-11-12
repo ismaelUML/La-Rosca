@@ -84,6 +84,40 @@ function normalizeCandidateImage(pos: number, neg: number): { pos: number; neg: 
   };
 }
 
+// Ley del rendimiento decreciente en campaña: si metés tres actos seguidos en La Matanza
+// o spameás tres conferencias de prensa el mismo mes, los medios se saturan, la gente
+// cambia de canal y el spot rinde cada vez menos. La hipérbola 1 / (1 + 0.40 * U) castiga
+// el spam sin anular por completo la acción.
+export function computeActionFatigueMultiplier(usageCount: number): number {
+  return round2(1 / (1 + 0.4 * Math.max(0, usageCount)));
+}
+
+// Al pasar el mes, la fatiga de la opinión pública se disipa: la rosca se enfría y los
+// electores se olvidan de que apareciste hasta en la sopa. Reducimos el contador en 1.
+export function decayActionFatigue(usageMap?: Record<string, number>): Record<string, number> {
+  if (!usageMap) return {};
+  const next: Record<string, number> = {};
+  for (const [key, val] of Object.entries(usageMap)) {
+    if (val > 1) {
+      next[key] = val - 1;
+    }
+  }
+  return next;
+}
+
+// Cooldown de 5 meses para dirigentes que rechazaron tu llamado: si Pichetto o Kicillof
+// te dijeron que no, no podés insistir al mes siguiente como un pesado de call center.
+export function decayPoliticianCooldowns(cooldowns?: Record<string, number>): Record<string, number> {
+  if (!cooldowns) return {};
+  const next: Record<string, number> = {};
+  for (const [id, months] of Object.entries(cooldowns)) {
+    if (months > 1) {
+      next[id] = months - 1;
+    }
+  }
+  return next;
+}
+
 function applyLocalZoneBonus(
   zones: LocalJurisdictionZone[] | undefined,
   targetId: string
@@ -94,7 +128,8 @@ function applyLocalZoneBonus(
 
 function applyRecorridaBonus(
   state: CampaignSimulationState,
-  targetProvinceId: string
+  targetProvinceId: string,
+  fatigueMult: number = 1.0
 ): CampaignSimulationState {
   const provIndex = state.provinces.findIndex((p) => p.provinceId === targetProvinceId);
   const nextLocalZones = applyLocalZoneBonus(state.localZones, targetProvinceId);
@@ -103,7 +138,7 @@ function applyRecorridaBonus(
   }
   const prov = state.provinces[provIndex] ?? state.provinces[0]!;
   const nextProvinces = [...state.provinces];
-  const mult = prov.affinityMultiplier;
+  const mult = prov.affinityMultiplier * fatigueMult;
 
   if (provIndex !== -1) {
     nextProvinces[provIndex] = {
@@ -124,8 +159,8 @@ function applyRecorridaBonus(
     localZones: nextLocalZones,
     attributes: {
       ...state.attributes,
-      relevancia: round2(clamp(state.attributes.relevancia + 0.7, 0, 100)),
-      apoyoPartidario: round2(clamp(state.attributes.apoyoPartidario + 0.5, 0, 100))
+      relevancia: round2(clamp(state.attributes.relevancia + 0.7 * fatigueMult, 0, 100)),
+      apoyoPartidario: round2(clamp(state.attributes.apoyoPartidario + 0.5 * fatigueMult, 0, 100))
     },
     image: { imagenPositiva: norm.pos, imagenNegativa: norm.neg, desconocimiento: norm.desc },
     votingIntention: {
@@ -134,6 +169,28 @@ function applyRecorridaBonus(
       tuInterna: round2(state.votingIntention.tuInterna + 0.8 * mult)
     }
   };
+}
+
+function resolveActionUsage(
+  usageMap: Record<string, number> | undefined,
+  actionId: string
+): { prevUsage: number; nextMap: Record<string, number> } {
+  const current = usageMap?.[actionId] || 0;
+  return {
+    prevUsage: current,
+    nextMap: { ...usageMap, [actionId]: current + 1 }
+  };
+}
+
+function computeActionExtraBudget(actionId: string): number {
+  return actionId === 'CONCILIACION_CIRCULO_ROJO' ? 45.0 : 0;
+}
+
+function formatFatigueNote(prevUsage: number, fatigueMult: number): string {
+  if (prevUsage <= 0) {
+    return '';
+  }
+  return ` (efecto al ${(fatigueMult * 100).toFixed(0)}% por saturación)`;
 }
 
 export function executeCampaignAction(
@@ -146,22 +203,25 @@ export function executeCampaignAction(
     return state;
   }
 
-  const extraBudget = action.id === 'CONCILIACION_CIRCULO_ROJO' ? 45.0 : 0;
+  const { prevUsage, nextMap } = resolveActionUsage(state.actionUsageCount, action.id);
+  const fatigueMult = computeActionFatigueMultiplier(prevUsage);
+  const extraBudget = computeActionExtraBudget(action.id);
   const nextBudget = round2(state.budgetArgentums - action.cost + extraBudget);
-  const nextActions = state.actionsRemainingThisMonth - 1;
+  const fatigueNote = formatFatigueNote(prevUsage, fatigueMult);
 
   const updatedState: CampaignSimulationState = {
     ...state,
     budgetArgentums: nextBudget,
-    actionsRemainingThisMonth: nextActions,
-    historyLog: [`Se ejecutó "${action.title}" (-${action.cost} argentums).`, ...state.historyLog]
+    actionsRemainingThisMonth: state.actionsRemainingThisMonth - 1,
+    actionUsageCount: nextMap,
+    historyLog: [`Se ejecutó "${action.title}" (-${action.cost} argentums)${fatigueNote}.`, ...state.historyLog]
   };
 
   if (payload.actionId === 'RECORRIDA') {
-    return applyRecorridaBonus(updatedState, payload.selectedProvinceId);
+    return applyRecorridaBonus(updatedState, payload.selectedProvinceId, fatigueMult);
   }
 
-  return applyStandardActionEffects(updatedState, action.id);
+  return applyStandardActionEffects(updatedState, action.id, fatigueMult);
 }
 
 interface ActionEffectDeltas {
@@ -196,24 +256,27 @@ const ACTION_DELTAS_MAP: Record<CampaignActionCard['id'], ActionEffectDeltas> = 
 
 function applyStandardActionEffects(
   state: CampaignSimulationState,
-  actionId: CampaignActionCard['id']
+  actionId: CampaignActionCard['id'],
+  fatigueMult: number = 1.0
 ): CampaignSimulationState {
   const d = ACTION_DELTAS_MAP[actionId];
+  const mult = Math.max(0.15, fatigueMult);
+
   const attrs = {
     ...state.attributes,
-    relevancia: round2(clamp(state.attributes.relevancia + d.dRelevancia, 0, 100)),
-    inteligenciaPercibida: round2(clamp(state.attributes.inteligenciaPercibida + d.dInteligencia, 0, 100)),
-    convencimiento: round2(clamp(state.attributes.convencimiento + d.dConvencimiento, 0, 100)),
-    apoyoPartidario: round2(clamp(state.attributes.apoyoPartidario + d.dApoyo, 0, 100)),
-    negociacion: round2(clamp(state.attributes.negociacion + d.dNegociacion, 0, 100))
+    relevancia: round2(clamp(state.attributes.relevancia + d.dRelevancia * mult, 0, 100)),
+    inteligenciaPercibida: round2(clamp(state.attributes.inteligenciaPercibida + d.dInteligencia * mult, 0, 100)),
+    convencimiento: round2(clamp(state.attributes.convencimiento + d.dConvencimiento * mult, 0, 100)),
+    apoyoPartidario: round2(clamp(state.attributes.apoyoPartidario + d.dApoyo * mult, 0, 100)),
+    negociacion: round2(clamp(state.attributes.negociacion + d.dNegociacion * mult, 0, 100))
   };
 
   const norm = normalizeCandidateImage(
-    state.image.imagenPositiva + d.dPositiva,
-    state.image.imagenNegativa + d.dNegativa
+    state.image.imagenPositiva + d.dPositiva * mult,
+    state.image.imagenNegativa + d.dNegativa * mult
   );
 
-  const updatedPoll = updateInternalPollVoteShares(state.internalPoll, d.internaBoost);
+  const updatedPoll = updateInternalPollVoteShares(state.internalPoll, d.internaBoost * mult);
 
   return {
     ...state,
@@ -222,8 +285,8 @@ function applyStandardActionEffects(
     internalPoll: updatedPoll,
     votingIntention: {
       ...state.votingIntention,
-      tuInterna: round2(state.votingIntention.tuInterna + d.internaBoost),
-      intencionVotoGeneral: round2(state.votingIntention.intencionVotoGeneral + d.generalBoost)
+      tuInterna: round2(state.votingIntention.tuInterna + d.internaBoost * mult),
+      intencionVotoGeneral: round2(state.votingIntention.intencionVotoGeneral + d.generalBoost * mult)
     }
   };
 }
@@ -252,6 +315,8 @@ export function advanceCampaignMonth(state: CampaignSimulationState): CampaignSi
     ...state.historyLog
   ];
   const nextMood = state.countryMood ? evolveCountryMood(state.countryMood, nextMonthIndex) : undefined;
+  const nextActionUsage = decayActionFatigue(state.actionUsageCount);
+  const nextCooldowns = decayPoliticianCooldowns(state.politicianCooldowns);
 
   return {
     ...state,
@@ -263,6 +328,8 @@ export function advanceCampaignMonth(state: CampaignSimulationState): CampaignSi
       formattedDate: milestone.date
     },
     countryMood: nextMood,
+    actionUsageCount: nextActionUsage,
+    politicianCooldowns: nextCooldowns,
     budgetArgentums: replenishedBudget,
     actionsRemainingThisMonth: 4,
     historyLog: nextHistory

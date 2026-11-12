@@ -51,3 +51,4 @@ Para incorporar los faltantes de QQG sin romper la arquitectura existente:
 
 4. **Fase D - Escrutinio de Noche Electoral (PASO, Generales y Balotaje)**:
    - Pantalla solemne de resultados con padrón electoral real (36.262.373 electores), conteo de votos nominales, cálculo constitucional de balotaje (Art. 97 y 98 CN) y mapa de resultados pintado por fuerza.
+

@@ -138,4 +138,31 @@ describe('Sistema Electoral y Campaña 2027 (Screenshots)', () => {
     expect(state.stage.stage).toBe('GOBIERNO');
     expect(state.stage.formattedDate).toBe('10 de diciembre de 2027');
   });
+
+  it('aplica rendimientos decrecientes por fatiga al repetir la misma accion y los recupera al mes siguiente', () => {
+    const proParty = POLITICAL_PARTIES_2027.find((p) => p.sigla === 'PRO')!;
+    let state = createInitialCampaignState(
+      { id: 'MAURICIO_MACRI', name: 'Mauricio Macri' },
+      proParty,
+      'PRESIDENTE',
+      'CABA'
+    );
+    const pubAction = CAMPAIGN_ACTIONS_CATALOG.find((a) => a.id === 'PUBLICIDAD')!;
+
+    const prevRel = state.attributes.relevancia;
+    state = executeCampaignAction(state, pubAction, { actionId: 'PUBLICIDAD' });
+    const gain1 = state.attributes.relevancia - prevRel;
+
+    const afterFirstRel = state.attributes.relevancia;
+    state = executeCampaignAction(state, pubAction, { actionId: 'PUBLICIDAD' });
+    const gain2 = state.attributes.relevancia - afterFirstRel;
+
+    // La segunda ejecucion debe rendir menos que la primera por fatiga (hiperbola 1 / (1 + 0.40 * U))
+    expect(gain2).toBeLessThan(gain1);
+    expect(state.actionUsageCount?.PUBLICIDAD).toBe(2);
+
+    // Al avanzar de mes, la fatiga debe decaer de 2 a 1
+    state = advanceCampaignMonth(state);
+    expect(state.actionUsageCount?.PUBLICIDAD).toBe(1);
+  });
 });

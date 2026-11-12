@@ -91,6 +91,7 @@ interface CampaignActivePanelProps {
   onAdvanceMonth: () => void;
   onNavigateActions: () => void;
   onExecuteAction: (payload: CampaignExecutePayload) => void;
+  onUpdateCampaignState?: (updater: (prev: CampaignSimulationState) => CampaignSimulationState) => void;
 }
 
 function CampaignActivePanel({
@@ -98,7 +99,8 @@ function CampaignActivePanel({
   state,
   onAdvanceMonth,
   onNavigateActions,
-  onExecuteAction
+  onExecuteAction,
+  onUpdateCampaignState
 }: CampaignActivePanelProps) {
   const viewMap: Record<CampaignNavSection, React.ReactNode> = {
     RESUMEN: (
@@ -116,8 +118,19 @@ function CampaignActivePanel({
         onAdvanceMonth={onAdvanceMonth}
       />
     ),
-    APOYOS: <CampaignApoyosView state={state} onAdvanceMonth={onAdvanceMonth} />,
-    CANDIDATURA_COALICIONES: <CampaignCoalicionesView state={state} />,
+    APOYOS: (
+      <CampaignApoyosView
+        state={state}
+        onAdvanceMonth={onAdvanceMonth}
+        onUpdateState={onUpdateCampaignState}
+      />
+    ),
+    CANDIDATURA_COALICIONES: (
+      <CampaignCoalicionesView
+        state={state}
+        onUpdateState={onUpdateCampaignState}
+      />
+    ),
     PARTIDO_PROVINCIAS: <CampaignPartidoProvinciasView state={state} />,
     APOYO_PROVINCIAS: <CampaignApoyoProvinciasView state={state} />,
     GOBERNANTES: <CampaignGobernantesView state={state} />,
@@ -317,6 +330,29 @@ function computeHasActiveSave(
   return turnMonth > 1 || campaignMonth > 1;
 }
 
+function resolveCustomCandidateName(characterName: string | undefined): string {
+  const trimmed = characterName ? characterName.trim() : '';
+  return trimmed.length > 0 ? trimmed : 'Mi Personaje';
+}
+
+// Resuelve la identidad del candidato sin pisar la eleccion de "Mi Personaje".
+// El bug historico agarraba a Macri por default porque selectedPoliticianId quedaba
+// seteado de la pantalla previa aunque el usuario hubiera tippeado su propio nombre.
+function resolveCandidateFromSetup(nextSetup: GameSetupConfiguration): { id: string; name: string } {
+  if (nextSetup.characterMode === 'MI_PERSONAJE') {
+    const name = resolveCustomCandidateName(nextSetup.characterName);
+    return {
+      id: `CUSTOM_${name.replace(/\s+/g, '_').toUpperCase()}`,
+      name
+    };
+  }
+  const real = REAL_POLITICIANS_2027.find((p) => p.id === nextSetup.selectedPoliticianId);
+  if (real) {
+    return real;
+  }
+  return { id: 'CUSTOM_CANDIDATO', name: 'Candidato' };
+}
+
 export function App() {
   const saveRepo = useMemo(() => new CompressedSaveRepository(), []);
   const savedSession = useMemo(() => loadSessionFromStorage(), []);
@@ -413,11 +449,7 @@ export function App() {
 
   const handleStartConfiguredGame = (nextSetup: GameSetupConfiguration) => {
     setSetup(nextSetup);
-    const candidateObj =
-      REAL_POLITICIANS_2027.find((p) => p.id === nextSetup.selectedPoliticianId) ?? {
-        id: 'CUSTOM',
-        name: nextSetup.characterName
-      };
+    const candidateObj = resolveCandidateFromSetup(nextSetup);
 
     setCampaignState(
       createInitialCampaignState(
@@ -534,6 +566,7 @@ export function App() {
           onAdvanceMonth={handleAdvanceCampaign}
           onNavigateActions={() => setCampaignNavSection('ACCIONES_CAMPAÑA')}
           onExecuteAction={handleExecuteCampaignAction}
+          onUpdateCampaignState={setCampaignState}
         />
       </CampaignSidebarLayout>
     );
