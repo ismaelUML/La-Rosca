@@ -19,13 +19,37 @@ import {
 // despues se forma la inflacion del mes, luego se ajustan paritarias y recaudacion (con Olivera-Tanzi),
 // y al final reaccionan los bancos, el Riesgo Pais, Comodoro Py y las encuestas.
 
+function isCrisisRegime(brecha: number, reserves: number): boolean {
+  return brecha > 35 || reserves < 35;
+}
+
+function isStabilizationRegime(primaryResult: number, monthlyIpc: number, brecha: number): boolean {
+  return primaryResult >= 0 && monthlyIpc < 3.0 && brecha < 20;
+}
+
+function calculateAnchorGain(
+  primaryResult: number,
+  monthlyIpc: number,
+  brecha: number,
+  reserves: number
+): number {
+  if (isCrisisRegime(brecha, reserves)) return -4.5;
+  if (isStabilizationRegime(primaryResult, monthlyIpc, brecha)) return 2.2;
+  return primaryResult >= 0 ? 0.8 : -2.8;
+}
+
 function stepStructuralExpectations(
   state: SimulationState,
   nextInflationMonthlyPct: number,
   nextBrechaPct: number,
   primaryResultPctGdp: number
 ): SimulationState['structural'] {
-  const anchorGain = primaryResultPctGdp >= 0 && nextInflationMonthlyPct < 3.5 ? 1.8 : -3.2;
+  const anchorGain = calculateAnchorGain(
+    primaryResultPctGdp,
+    nextInflationMonthlyPct,
+    nextBrechaPct,
+    state.centralBank.grossReservesBillionUsd
+  );
   const anchorCredibilityIndex = round2(clamp(state.structural.anchorCredibilityIndex + anchorGain, 8, 98));
   const expectedInflation3mPct = round2(clamp(nextInflationMonthlyPct * 3.1 - anchorCredibilityIndex * 0.04, 1.5, 140));
   const expectedDevaluation3mPct = round2(

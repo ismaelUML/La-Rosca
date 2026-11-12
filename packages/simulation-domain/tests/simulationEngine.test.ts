@@ -67,5 +67,17 @@ describe('Motor Macroeconomico, Judicial y Laboral Argentino 2027', () => {
     expect(round2(1.239)).toBe(1.24);
     expect(logisticCurve(0, 0, 1)).toBeCloseTo(0.5, 2);
   });
+
+  it('calcula la productoria geometrica interanual de 12 meses, inercia con smoothing y ajuste de tcReal/priceLevel', () => {
+    const state = createInitialSimulationState2027('PRESIDENTE', 'ESTANDAR_2027', 'CABA');
+    expect(state.inflation.interannualIpcPct).toBe(33.0);
+    expect(state.inflation.inflHist?.length).toBe(12);
+
+    const nextState = advanceSimulationMonth(state);
+    expect(nextState.inflation.inflHist?.length).toBe(12);
+    expect(nextState.inflation.interannualIpcPct).toBeGreaterThan(0);
+    expect(nextState.inflation.tcReal).toBeDefined();
+    expect(nextState.inflation.priceLevel).toBeGreaterThan(100);
+  });
 });
 

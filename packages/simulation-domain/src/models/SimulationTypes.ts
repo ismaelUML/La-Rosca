@@ -84,6 +84,9 @@ export interface InflationBreakdown {
   povertyCbtPct: number;
   indigenceCbaPct: number;
   giniCoefficient: number;
+  inflHist?: number[];
+  tcReal?: number;
+  priceLevel?: number;
 }
 
 export interface EnergyMatrixState {

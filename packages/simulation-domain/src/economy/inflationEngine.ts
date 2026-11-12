@@ -22,6 +22,60 @@ export function computeInertiaComponent(
   return round2(previousInflationPct * inertiaWeight);
 }
 
+export function computeInterannualFromHistory(history: number[]): number {
+  if (history.length === 0) return 33.0;
+  let product = 1;
+  const recent = history.slice(-12);
+  for (const m of recent) {
+    product *= 1 + m / 100;
+  }
+  if (recent.length < 12) {
+    const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
+    for (let i = recent.length; i < 12; i++) {
+      product *= 1 + avg / 100;
+    }
+  }
+  return round2(clamp((product - 1) * 100, 3.0, 999.0));
+}
+
+function computeInertiaWeight(anchorCredibility: number, indecCredibility: number): number {
+  const markup = indecCredibility < 60 ? 0.14 : 0;
+  return clamp(0.62 - anchorCredibility * 0.0025 + markup, 0.3, 0.82);
+}
+
+function computeSmoothedHistoryValue(history: number[], fallback: number): number {
+  const slice = history.slice(-3);
+  if (slice.length === 0) return fallback;
+  const sum = slice.reduce((acc, val, idx) => acc + val * (idx + 1), 0);
+  const weightSum = slice.reduce((acc, _, idx) => acc + (idx + 1), 0);
+  return sum / weightSum;
+}
+
+export function computeInertiaFromHistory(
+  history: number[],
+  fallbackVal: number,
+  anchorCredibilityIndex: number,
+  indecCredibilityIndex: number
+): number {
+  const weight = computeInertiaWeight(anchorCredibilityIndex, indecCredibilityIndex);
+  const smoothed = computeSmoothedHistoryValue(history, fallbackVal);
+  return round2(smoothed * weight);
+}
+
+function updateExchangeAndPriceLevel(
+  prevTcReal: number,
+  prevPriceLevel: number,
+  crawlingPegPct: number,
+  realMonthlyIpcPct: number
+): { tcReal: number; priceLevel: number } {
+  const devalRate = crawlingPegPct / 100;
+  const inflRate = realMonthlyIpcPct / 100;
+  const realMultiplier = (1 + devalRate) / (1 + inflRate + 0.0025);
+  const tcReal = round2(clamp(prevTcReal * realMultiplier, 25, 250));
+  const priceLevel = round2(prevPriceLevel * (1 + inflRate));
+  return { tcReal, priceLevel };
+}
+
 export function computePassThroughComponent(
   crawlingPegPct: number,
   exchangeBrechaPct: number,
@@ -65,7 +119,9 @@ export function computeNextInflationBreakdown(
   structural: HiddenStructuralVariables,
   previousTariffCoveragePct: number
 ): InflationBreakdown {
-  const inertiaComponentPp = computeInertiaComponent(
+  const currentHist = current.inflHist ?? [current.realMonthlyIpcPct];
+  const inertiaComponentPp = computeInertiaFromHistory(
+    currentHist,
     current.realMonthlyIpcPct,
     structural.anchorCredibilityIndex,
     structural.indecCredibilityIndex
@@ -86,18 +142,27 @@ export function computeNextInflationBreakdown(
     clamp(inertiaComponentPp + passThroughComponentPp + tarifazoComponentPp + monetaryDropComponentPp, 0.2, 45)
   );
 
+  const nextHist = [...currentHist, realMonthlyIpcPct].slice(-12);
+  const interannualIpcPct = computeInterannualFromHistory(nextHist);
+
   // Si el gobierno interviene el INDEC (credibilidad < 60), dibuja el numero oficial a la mitad
   const officialIndecIpcPct =
     structural.indecCredibilityIndex < 60 ? round2(Math.min(realMonthlyIpcPct * 0.42, 1.4)) : realMonthlyIpcPct;
 
   const foodInflationMonthlyPct = round2(clamp(realMonthlyIpcPct + passThroughComponentPp * 0.45, 0.1, 55));
-  const interannualIpcPct = round2(clamp(current.interannualIpcPct * 0.88 + realMonthlyIpcPct * 1.95, 4, 420));
 
   // Separamos Indigencia (CBA = comida) de Pobreza (CBT = comida + tarifas de servicios).
   const wageLagDelta = realMonthlyIpcPct - (labor.realWageIndex - 100) * 0.12;
   const indigenceCbaPct = round2(clamp(current.indigenceCbaPct + (foodInflationMonthlyPct - 2.2) * 0.24, 3.5, 32));
   const povertyCbtPct = round2(
     clamp(current.povertyCbtPct + (wageLagDelta - 2.0) * 0.35 + tarifazoComponentPp * 0.42, 16, 72)
+  );
+
+  const { tcReal, priceLevel } = updateExchangeAndPriceLevel(
+    current.tcReal ?? 100,
+    current.priceLevel ?? 100,
+    centralBank.crawlingPegMonthlyPct,
+    realMonthlyIpcPct
   );
 
   return {
@@ -112,7 +177,10 @@ export function computeNextInflationBreakdown(
     foodInflationMonthlyPct,
     povertyCbtPct,
     indigenceCbaPct,
-    giniCoefficient: round2(clamp(current.giniCoefficient + (povertyCbtPct - 32) * 0.02, 36, 54))
+    giniCoefficient: round2(clamp(current.giniCoefficient + (povertyCbtPct - 32) * 0.02, 36, 54)),
+    inflHist: nextHist,
+    tcReal,
+    priceLevel
   };
 }
 

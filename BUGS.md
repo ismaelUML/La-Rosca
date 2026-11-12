@@ -112,12 +112,14 @@ Este documento recopila y cataloga todos los bugs, desvíos respecto a *¿Quién
 ### [FEAT-001] Inercia de 3-6 meses en inflación y productoria geométrica interanual de 12 meses
 - **Severidad**: Alta (Fidelidad Macroeconómica).
 - **Descripción**: La inflación mensual no debe impactar de golpe al mes siguiente sino suavizarse con una inercia de 3-6 meses y acumular un historial de 12 meses para la productoria anual.
-- **Estado**: 🟡 EN PLANIFICACIÓN.
+- **Estado**: 🟢 RESUELTO (Fase 1).
+- **Impacto**: `computeInterannualFromHistory` con productoria estricta de 12 meses e inercia ponderada en `computeInertiaFromHistory`.
 
 ### [FEAT-002] Feedback dinámico Reservas $\rightarrow$ Brecha (penalizaciones 15 % y 25-30 %) $\rightarrow$ Corrida suave
 - **Severidad**: Alta (Régimen Cambiario).
 - **Descripción**: Al caer las reservas brutas/netas, la brecha debe disparar no linealmente empujando dólar, precios y destruyendo confianza.
-- **Estado**: 🟡 EN PLANIFICACIÓN.
+- **Estado**: 🟢 RESUELTO (Fase 1).
+- **Impacto**: `computeBrechaStressPenalties` y `computeReserveCorridaMultiplier` con feedback hacia `anchorCredibilityIndex`.
 
 ### [FEAT-003] Flujo dinámico de RIGI con cola `rigiPending`, sectores y desistimiento por tiempo
 - **Severidad**: Media (Módulo RIGI).

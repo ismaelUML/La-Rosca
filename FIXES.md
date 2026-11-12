@@ -90,3 +90,25 @@ Registro de soluciones arquitectónicas, módulos modificados, métricas de cali
     $$\text{Mult}_{\text{fatiga}} = \frac{1}{1 + 0.35 \times (4 - \text{accionesRestantes})}$$
   - Escalamiento en vivo del texto de las píldoras (`scaleProvincialBadge`) para que los rangos reflejen la pérdida de efectividad.
   - Reset mensual automático al avanzar de turno mediante `useEffect` sobre `state.stage.currentMonthIndex`, recargando las 4 acciones y sumando 12 argentums de presupuesto provincial.
+
+---
+
+### FIX-007: Fase 1 Macroeconómica 1:1 (Inercia de IPC, productoria de 12 meses y feedback reservas/brecha)
+- **Commit**: En preparación
+- **Archivos**:
+  - `packages/simulation-domain/src/models/SimulationTypes.ts`
+  - `packages/simulation-domain/src/economy/inflationEngine.ts`
+  - `packages/simulation-domain/src/economy/centralBankAndBankingEngine.ts`
+  - `packages/simulation-domain/src/engine/SimulationEngine.ts`
+  - `packages/simulation-infrastructure/src/datasets/initialState2027Factory.ts`
+  - `packages/simulation-domain/tests/simulationEngine.test.ts`
+- **Solución técnica**:
+  - Se agregó `inflHist` (vector de hasta 12 meses) en `InflationBreakdown`.
+  - Se implementó `computeInterannualFromHistory` con la productoria geométrica estricta de los 12 meses:
+    $$\text{inflacionAnual} = \prod_{i=1}^{12} \left(1 + \frac{\text{infl\_mes}_i}{100}\right) - 1$$
+  - Inercia con smoothing en `computeInertiaFromHistory` promediando los últimos 3 meses ponderados.
+  - Actualización mensual del Tipo de Cambio Real (`tcReal` base 100) y del Nivel de Precios (`priceLevel` base 100) ajustado por devaluación e inflación.
+  - Feedback no-lineal en `computeParallelExchangeRates` con penalizaciones por superación de brecha (umbrales 15 % y 28 %) y corrida cambiaria suave cuando las reservas caen por debajo de los niveles de alarma.
+  - Calibración de los indicadores iniciales para Presidente: Inflación mensual 1,9 %, interanual 33 %, dólar $1.450, brecha 8 %, reservas 50 mil M USD, riesgo país 620 pb, pobreza 32 %, desempleo 7,6 %, informalidad 42 %.
+  - 23 tests unitarios pasando en Vitest y 68 archivos superando la auditoría de $CC \le 5$ y $MI \ge 75$.
+

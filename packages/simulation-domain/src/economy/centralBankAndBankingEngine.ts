@@ -33,6 +33,24 @@ export function computeSilobolsaLiquidationBillionUsd(
   };
 }
 
+function computeBrechaStressPenalties(baseBrecha: number): number {
+  const p15 = Math.max(0, baseBrecha - 15) * 0.35;
+  const p28 = Math.max(0, baseBrecha - 28) * 0.65;
+  return p15 + p28;
+}
+
+function computeReserveCorridaMultiplier(
+  netReserves: number,
+  grossReserves: number,
+  brecha: number
+): number {
+  const reserveLoss = Math.max(0, 50 - grossReserves) * 0.02 + Math.max(0, -netReserves) * 0.04;
+  if (reserveLoss > 0.15 && brecha > 25) {
+    return 1 + Math.min(0.45, reserveLoss * (brecha / 30));
+  }
+  return 1.0;
+}
+
 export function computeParallelExchangeRates(
   officialDollarArs: number,
   centralBank: CentralBankBalance,
@@ -44,10 +62,16 @@ export function computeParallelExchangeRates(
   const cepoFactor = centralBank.cepoStrictnessIndex / 100;
   const putsPressure = putsExecutedBillionArs * 0.004;
   const reserveFear = Math.max(0, -centralBank.netLiquidReservesBillionUsd) * 2.8;
-  const rawBrecha =
-    cepoFactor * (14 + structural.expectedDevaluation3mPct * 0.75 + reserveFear + putsPressure);
+  const baseBrecha =
+    cepoFactor * (8 + structural.expectedDevaluation3mPct * 0.70 + reserveFear + putsPressure);
+  const stressPenalty = computeBrechaStressPenalties(baseBrecha);
+  const corridaMult = computeReserveCorridaMultiplier(
+    centralBank.netLiquidReservesBillionUsd,
+    centralBank.grossReservesBillionUsd,
+    baseBrecha
+  );
 
-  const exchangeBrechaPct = round2(clamp(rawBrecha, 1.2, 165));
+  const exchangeBrechaPct = round2(clamp((baseBrecha + stressPenalty) * corridaMult, 1.2, 195));
   const mepDollarArs = round2(officialDollarArs * (1 + exchangeBrechaPct / 100));
   const cclDollarArs = round2(mepDollarArs * 1.025);
   const blueDollarArs = round2(mepDollarArs * (1 + cepoFactor * 0.04));

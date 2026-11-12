@@ -87,8 +87,8 @@ interface DifficultyModifiers {
 }
 
 const DIFFICULTY_PRESETS: Record<DifficultyLevel, DifficultyModifiers> = {
-  VIENTO_DE_COLA: { grossReserves: 52.0, countryRisk: 380, monthlyIpc: 1.4, climate: 'EL_NINO' },
-  ESTANDAR_2027: { grossReserves: 38.5, countryRisk: 640, monthlyIpc: 2.4, climate: 'NEUTRO' },
+  VIENTO_DE_COLA: { grossReserves: 55.0, countryRisk: 380, monthlyIpc: 1.4, climate: 'EL_NINO' },
+  ESTANDAR_2027: { grossReserves: 50.0, countryRisk: 620, monthlyIpc: 1.9, climate: 'NEUTRO' },
   HERENCIA_MALDITA: { grossReserves: 25.0, countryRisk: 1180, monthlyIpc: 5.8, climate: 'NEUTRO' },
   TORMENTA_PERFECTA: { grossReserves: 22.5, countryRisk: 1450, monthlyIpc: 7.4, climate: 'LA_NINA' },
   DICIEMBRE_2001: { grossReserves: 19.5, countryRisk: 2150, monthlyIpc: 12.5, climate: 'LA_NINA' }
@@ -112,7 +112,7 @@ export function createInitialSimulationState2027(
     selectedProvinceId,
     difficulty,
     gdpNominalBillionUsd: 690,
-    gdpGrowthAnnualPct: 2.4,
+    gdpGrowthAnnualPct: 0.8,
     countryRiskEmbiPb: preset.countryRisk,
     treasury: {
       revenuePctGdp: 15.8,
@@ -140,11 +140,11 @@ export function createInitialSimulationState2027(
       policyRateAnnualPct: 32,
       crawlingPegMonthlyPct: 1.5,
       cepoStrictnessIndex: 55,
-      officialDollarArs: 1520,
-      mepDollarArs: 1710,
-      cclDollarArs: 1755,
-      blueDollarArs: 1740,
-      exchangeBrechaPct: 15.4
+      officialDollarArs: 1450,
+      mepDollarArs: 1566,
+      cclDollarArs: 1605,
+      blueDollarArs: 1595,
+      exchangeBrechaPct: 8.0
     },
     bankingSystem: {
       privateDepositsArsBillion: 64000,
@@ -165,11 +165,14 @@ export function createInitialSimulationState2027(
       realMonthlyIpcPct: preset.monthlyIpc,
       officialIndecIpcPct: preset.monthlyIpc,
       privateCongressIpcPct: preset.monthlyIpc,
-      interannualIpcPct: Number((preset.monthlyIpc * 11.2).toFixed(1)),
+      interannualIpcPct: 33.0,
       foodInflationMonthlyPct: Number((preset.monthlyIpc * 1.08).toFixed(2)),
-      povertyCbtPct: 34.2,
-      indigenceCbaPct: 8.4,
-      giniCoefficient: 41.8
+      povertyCbtPct: 32.0,
+      indigenceCbaPct: 8.0,
+      giniCoefficient: 42.0,
+      inflHist: Array(12).fill(preset.monthlyIpc),
+      tcReal: 100.0,
+      priceLevel: 100.0
     },
     energy: {
       thermalSharePct: 57.5,
@@ -185,8 +188,8 @@ export function createInitialSimulationState2027(
       blackoutRiskPct: 16
     },
     labor: {
-      unemploymentPct: 6.9,
-      informalityPct: 39.4,
+      unemploymentPct: 7.6,
+      informalityPct: 42.0,
       realWageIndex: 100,
       laborLitigationMultiplier: 1.85,
       activeNationalStrike: false,
