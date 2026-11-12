@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { CabinetMinister } from '@argentina-sim/domain';
+import { MinisterReplacementModal } from './MinisterReplacementModal.js';
 
 // Vista de Gabinete (DESPACHO -> Gabinete): las 10 carteras ministeriales con
 // competencia, lealtad, riesgo de desgaste, barra de desempeno y recambio politico.
@@ -7,14 +8,32 @@ import type { CabinetMinister } from '@argentina-sim/domain';
 interface CabinetViewProps {
   ministers: CabinetMinister[];
   onReinforceMinister: (id: string) => void;
-  onReplaceMinister: (id: string) => void;
+  onReplaceMinister?: (id: string) => void;
+  onAppointMinister?: (ministryId: string, newMinister: CabinetMinister) => void;
+  playerPartySigla?: string;
+  coalitionParties?: string[];
 }
 
 export function CabinetView({
   ministers,
   onReinforceMinister,
-  onReplaceMinister
+  onReplaceMinister,
+  onAppointMinister,
+  playerPartySigla,
+  coalitionParties
 }: CabinetViewProps) {
+  const [replacingMinistry, setReplacingMinistry] = useState<CabinetMinister | null>(null);
+
+  const handleConfirmReplacement = (newMinister: CabinetMinister) => {
+    if (!replacingMinistry) return;
+    if (onAppointMinister) {
+      onAppointMinister(replacingMinistry.id, newMinister);
+    } else {
+      onReplaceMinister?.(replacingMinistry.id);
+    }
+    setReplacingMinistry(null);
+  };
+
   return (
     <div className="space-y-5">
       <div className="border-b border-slate-800/80 pb-4">
@@ -96,7 +115,7 @@ export function CabinetView({
                 </button>
                 <button
                   type="button"
-                  onClick={() => onReplaceMinister(m.id)}
+                  onClick={() => setReplacingMinistry(m)}
                   className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-rose-950/60 border border-slate-700 text-xs font-medium text-slate-300"
                 >
                   Reemplazar
@@ -106,6 +125,16 @@ export function CabinetView({
           </div>
         ))}
       </div>
+
+      {replacingMinistry ? (
+        <MinisterReplacementModal
+          ministry={replacingMinistry}
+          playerPartySigla={playerPartySigla ?? 'LLA'}
+          coalitionParties={coalitionParties ?? []}
+          onConfirm={handleConfirmReplacement}
+          onClose={() => setReplacingMinistry(null)}
+        />
+      ) : null}
     </div>
   );
 }

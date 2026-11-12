@@ -18,8 +18,20 @@ describe('Datasets de Partidos, Políticos Reales y Series de Indicadores 2027',
     expect(INITIAL_CABINET_2027).toHaveLength(10);
     expect(INITIAL_ECONOMIC_LEVERS).toHaveLength(10);
     expect(INITIAL_RIGI_SECTORS).toHaveLength(29);
+    const enabledRigis = INITIAL_RIGI_SECTORS.filter((r) => r.enabledByDecree);
+    expect(enabledRigis).toHaveLength(0);
     expect(SECTOR_CATEGORIES_SUMMARY).toHaveLength(12);
     expect(INITIAL_SECTOR_MEASURES.length).toBeGreaterThanOrEqual(6);
+  });
+
+  it('inicializa los impuestos con los porcentajes oficiales de AFIP', () => {
+    const state = createInitialSimulationState2027('PRESIDENTE', 'ESTANDAR_2027', 'PBA');
+    const iva = state.taxes.find((t) => t.id === 'IVA_GRAL');
+    const soja = state.taxes.find((t) => t.id === 'RET_SOJA');
+    const maiz = state.taxes.find((t) => t.id === 'RET_MAIZ_TRIGO');
+    expect(iva?.currentRatePct).toBe(21.0);
+    expect(soja?.currentRatePct).toBe(33.0);
+    expect(maiz?.currentRatePct).toBe(12.0);
   });
 
   it('construye las series históricas con puntos desde dic 26 hasta el mes actual', () => {

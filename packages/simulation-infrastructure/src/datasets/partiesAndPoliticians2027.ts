@@ -307,7 +307,7 @@ export const INITIAL_ECONOMIC_LEVERS: EconomicLeverItem[] = [
 
 // Los 29 sectores reales del RIGI con sus montos minimos, impactos en PBI/exportaciones
 // y riesgo de conflictividad social y ambiental.
-export const INITIAL_RIGI_SECTORS: RigisectorItem[] = [
+const RAW_RIGI_SECTORS: RigisectorItem[] = [
   {
     id: 'RIGI_COBRE',
     name: 'Minería de cobre',
@@ -889,6 +889,17 @@ export const INITIAL_RIGI_SECTORS: RigisectorItem[] = [
     localConflictRiskPct: 3
   }
 ];
+
+// Al asumir la presidencia el 10 de diciembre de 2027, el presidente empieza con CERO de los 29
+// sectores del RIGI habilitados (0/29). Cada sector requiere la firma de un decreto expreso.
+export const INITIAL_RIGI_SECTORS: RigisectorItem[] = RAW_RIGI_SECTORS.map((sec) => ({
+  ...sec,
+  enabledByDecree: false,
+  activeProjectsCount: 0,
+  accumulatedInvestmentMillionUsd: 0,
+  maturityPct: 0,
+  enabledDateLabel: 'No habilitado por decreto'
+}));
 
 export const SECTOR_CATEGORIES_SUMMARY: Array<{
   id: string;

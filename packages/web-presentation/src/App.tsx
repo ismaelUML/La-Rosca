@@ -165,6 +165,7 @@ interface ActiveSectionRendererProps {
   onAdvanceTurn: () => void;
   onReinforceMinister: (id: string) => void;
   onReplaceMinister: (id: string) => void;
+  onAppointMinister?: (id: string, newMinister: CabinetMinister) => void;
   onChangeLever: (id: string, lv: -2 | -1 | 0 | 1 | 2) => void;
   onToggleMeasure: (id: string) => void;
   onAddCustomTax: (tax: CustomTaxProposal) => void;
@@ -187,6 +188,9 @@ function ActiveSectionRenderer(props: ActiveSectionRendererProps) {
         ministers={props.ministers}
         onReinforceMinister={props.onReinforceMinister}
         onReplaceMinister={props.onReplaceMinister}
+        onAppointMinister={props.onAppointMinister}
+        playerPartySigla={props.setup.party.sigla}
+        coalitionParties={props.campaignState.coalitionParties}
       />
     ),
     REGISTRO: <RegistroHistoryView historyLog={props.state.eventLog} />,
@@ -684,6 +688,11 @@ export function App() {
             prev.map((m) =>
               m.id === id ? { ...m, ministerName: `${m.ministerName} (Recambio)`, performance: 62, risk: 12 } : m
             )
+          )
+        }
+        onAppointMinister={(id, newMinister) =>
+          setMinisters((prev) =>
+            prev.map((m) => (m.id === id ? newMinister : m))
           )
         }
         onChangeLever={(id, level) => {

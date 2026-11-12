@@ -19,44 +19,66 @@ export interface PartySeatShare {
 
 const INITIAL_CONGRESS_FORCES: PartySeatShare[] = [
   {
-    id: 'PF',
-    name: 'Peronismo Federal',
-    shortLabel: 'PF',
-    deputiesSeats: 16,
-    senateSeats: 2,
-    color: '#2563eb',
-    colorName: 'Azul',
-    badgeBg: 'bg-blue-600',
+    id: 'LLA',
+    name: 'La Libertad Avanza (Oficialismo)',
+    shortLabel: 'LLA',
+    deputiesSeats: 38,
+    senateSeats: 7,
+    color: '#a855f7',
+    colorName: 'Violeta',
+    badgeBg: 'bg-purple-600 text-white',
     relation: 100
   },
   {
     id: 'PRO',
-    name: 'Propuesta Republicana',
+    name: 'Propuesta Republicana (PRO)',
     shortLabel: 'PRO',
-    deputiesSeats: 8,
-    senateSeats: 1,
+    deputiesSeats: 37,
+    senateSeats: 6,
     color: '#facc15',
     colorName: 'Amarillo',
     badgeBg: 'bg-amber-400 text-slate-950',
-    relation: 100
+    relation: 78
   },
   {
     id: 'UCR',
     name: 'Unión Cívica Radical',
     shortLabel: 'UCR',
-    deputiesSeats: 6,
-    senateSeats: 0,
+    deputiesSeats: 34,
+    senateSeats: 13,
     color: '#dc2626',
     colorName: 'Rojo y blanco',
     badgeBg: 'bg-red-600 text-white',
-    relation: 11
+    relation: 42
+  },
+  {
+    id: 'PF',
+    name: 'Peronismo Federal / Provincias Unidas',
+    shortLabel: 'PF',
+    deputiesSeats: 16,
+    senateSeats: 6,
+    color: '#2563eb',
+    colorName: 'Azul',
+    badgeBg: 'bg-blue-600 text-white',
+    relation: 55
+  },
+  {
+    id: 'PROVINCIALES',
+    name: 'Bloques Provinciales y Fuerzas Locales',
+    shortLabel: 'PROV',
+    deputiesSeats: 28,
+    senateSeats: 7,
+    color: '#10b981',
+    colorName: 'Verde',
+    badgeBg: 'bg-emerald-600 text-white',
+    relation: 50
   },
   {
     id: 'UXP',
     name: 'Unión por la Patria',
     shortLabel: 'UxP',
-    deputiesSeats: 66,
-    senateSeats: 17,
+    deputiesSeats: 99,
+    senateSeats: 33,
     color: '#38bdf8',
     colorName: 'Celeste',
     badgeBg: 'bg-sky-500 text-slate-950',
@@ -66,23 +88,12 @@ const INITIAL_CONGRESS_FORCES: PartySeatShare[] = [
     id: 'FIT',
     name: 'Frente de Izquierda y de Trabajadores',
     shortLabel: 'FIT',
-    deputiesSeats: 7,
-    senateSeats: 1,
+    deputiesSeats: 5,
+    senateSeats: 0,
     color: '#ef4444',
     colorName: 'Rojo',
     badgeBg: 'bg-red-700 text-white',
     relation: 0
-  },
-  {
-    id: 'LLA',
-    name: 'La Libertad Avanza (Oficialismo)',
-    shortLabel: 'LLA',
-    deputiesSeats: 154,
-    senateSeats: 51,
-    color: '#a855f7',
-    colorName: 'Violeta',
-    badgeBg: 'bg-purple-600 text-white',
-    relation: 100
   }
 ];
 
@@ -230,6 +241,22 @@ function HemicycleCard({
   );
 }
 
+function resolveRelationLabel(relation: number): { label: string; badgeClass: string } {
+  if (relation >= 80) {
+    return { label: 'Aliado estratégico', badgeClass: 'bg-emerald-950/80 text-emerald-300 border-emerald-800' };
+  }
+  if (relation >= 60) {
+    return { label: 'Diálogo abierto', badgeClass: 'bg-blue-950/80 text-blue-300 border-blue-800' };
+  }
+  if (relation >= 40) {
+    return { label: 'Negociación puntual', badgeClass: 'bg-amber-950/80 text-amber-300 border-amber-800' };
+  }
+  if (relation >= 20) {
+    return { label: 'Oposición moderada', badgeClass: 'bg-orange-950/80 text-orange-300 border-orange-800' };
+  }
+  return { label: 'Oposición dura', badgeClass: 'bg-rose-950/80 text-rose-300 border-rose-800' };
+}
+
 function CongressTopMetrics() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -237,40 +264,37 @@ function CongressTopMetrics() {
         <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
           BLOQUE PROPIO
         </div>
-        <div className="text-3xl font-mono font-extrabold text-white mt-2">64</div>
-        <div className="text-[11px] text-slate-500 mt-1">Bancas puras sin aliados directos</div>
+        <div className="text-3xl font-mono font-extrabold text-white mt-2">38</div>
+        <div className="text-[11px] text-slate-500 mt-1">38 diputados · 7 senadores (Minoría parlamentaria)</div>
       </div>
 
       <div className="p-4 rounded-2xl bg-[#10131b] border border-slate-800/90 shadow-sm flex flex-col justify-between">
         <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
           GOBERNABILIDAD
         </div>
-        <div className="text-3xl font-mono font-extrabold text-white mt-2">66 %</div>
+        <div className="text-3xl font-mono font-extrabold text-white mt-2">36 %</div>
         <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800 mt-2">
-          <div className="bg-blue-600 h-full rounded-full" style={{ width: '66%' }} />
+          <div className="bg-amber-500 h-full rounded-full" style={{ width: '36%' }} />
         </div>
+        <div className="text-[11px] text-slate-500 mt-1">Baja: requiere acuerdos con aliados para quórum</div>
       </div>
 
       <div className="p-4 rounded-2xl bg-[#10131b] border border-slate-800/90 shadow-sm flex flex-col justify-between">
         <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
           CAPACIDAD DE NEGOCIACIÓN
         </div>
-        <div className="text-3xl font-mono font-extrabold text-white mt-2">99,9</div>
+        <div className="text-3xl font-mono font-extrabold text-white mt-2">38,5</div>
         <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800 mt-2">
-          <div className="bg-purple-600 h-full rounded-full" style={{ width: '99.9%' }} />
+          <div className="bg-purple-600 h-full rounded-full" style={{ width: '38.5%' }} />
         </div>
+        <div className="text-[11px] text-slate-500 mt-1">Capacidad inicial limitada por minoría estricta</div>
       </div>
     </div>
   );
 }
 
-function PoliticalForceTableRow({
-  force,
-  onAdjustRelation
-}: {
-  force: PartySeatShare;
-  onAdjustRelation: (newRel: number) => void;
-}) {
+function PoliticalForceTableRow({ force }: { force: PartySeatShare }) {
+  const relInfo = resolveRelationLabel(force.relation);
   return (
     <tr className="border-b border-slate-800/50 hover:bg-slate-900/40 transition">
       <td className="py-3 px-4">
@@ -288,18 +312,13 @@ function PoliticalForceTableRow({
         {force.senateSeats}
       </td>
       <td className="py-3 px-4 text-right">
-        <div className="inline-flex items-center gap-2">
-          <span className="font-mono font-extrabold text-sm text-emerald-400">
-            {force.relation}
+        <div className="inline-flex items-center gap-2 justify-end">
+          <span className="font-mono font-extrabold text-sm text-slate-200">
+            {force.relation}%
           </span>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={force.relation}
-            onChange={(e) => onAdjustRelation(Number(e.target.value))}
-            className="w-20 md:w-28 accent-emerald-500"
-          />
+          <span className={`px-2.5 py-0.5 rounded border text-[11px] font-semibold ${relInfo.badgeClass}`}>
+            {relInfo.label}
+          </span>
         </div>
       </td>
     </tr>
@@ -315,7 +334,7 @@ export function CamarasLegislativasView({
   state: _state,
   onDispatch: _onDispatch
 }: CamarasLegislativasViewProps) {
-  const [forces, setForces] = useState<PartySeatShare[]>(INITIAL_CONGRESS_FORCES);
+  const [forces] = useState<PartySeatShare[]>(INITIAL_CONGRESS_FORCES);
 
   const rawDeputiesDots = useMemo(() => generateHemicycleDots(257, 8, 70, 150), []);
   const rawSenateDots = useMemo(() => generateHemicycleDots(72, 4, 70, 140), []);
@@ -328,12 +347,6 @@ export function CamarasLegislativasView({
     () => assignColorsToDots(rawSenateDots, forces, 'senate'),
     [rawSenateDots, forces]
   );
-
-  const handleAdjustRelation = (id: string, newRel: number) => {
-    setForces((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, relation: newRel } : f))
-    );
-  };
 
   return (
     <div className="space-y-6">
@@ -398,7 +411,6 @@ export function CamarasLegislativasView({
                 <PoliticalForceTableRow
                   key={force.id}
                   force={force}
-                  onAdjustRelation={(val) => handleAdjustRelation(force.id, val)}
                 />
               ))}
             </tbody>

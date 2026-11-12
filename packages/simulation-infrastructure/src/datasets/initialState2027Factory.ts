@@ -18,16 +18,16 @@ import { PROVINCES_2027_DATASET } from './provinces2027Dataset.js';
 // y los otros 11 requieren ley del Congreso si no queres que te frenen el gobierno en tribunales.
 export const INITIAL_TAXES_2027: TaxItem[] = [
   // --- Comercio exterior (Decreto del Ejecutivo) ---
-  { id: 'RET_SOJA', name: 'Retenciones: Soja y derivados', category: 'COMERCIO_EXTERIOR', legalMechanism: 'DECRETO_EJECUTIVO', isCoparticipable: false, currentRatePct: 20.0, initialRatePct: 24.0, revenuePctGdp: 1.10, revenueMillionUsdMonthly: 632, evasionPct: 14 },
-  { id: 'RET_MAIZ_TRIGO', name: 'Retenciones: Maíz y Trigo', category: 'COMERCIO_EXTERIOR', legalMechanism: 'DECRETO_EJECUTIVO', isCoparticipable: false, currentRatePct: 5.0, initialRatePct: 8.5, revenuePctGdp: 0.45, revenueMillionUsdMonthly: 258, evasionPct: 12 },
-  { id: 'RET_CARNE_LACTEOS', name: 'Retenciones: Carne y Lácteos', category: 'COMERCIO_EXTERIOR', legalMechanism: 'DECRETO_EJECUTIVO', isCoparticipable: false, currentRatePct: 3.0, initialRatePct: 5.0, revenuePctGdp: 0.18, revenueMillionUsdMonthly: 103, evasionPct: 8 },
-  { id: 'RET_IND_ENERGIA', name: 'Retenciones: Industria y Energía', category: 'COMERCIO_EXTERIOR', legalMechanism: 'DECRETO_EJECUTIVO', isCoparticipable: false, currentRatePct: 2.0, initialRatePct: 3.0, revenuePctGdp: 0.12, revenueMillionUsdMonthly: 69, evasionPct: 6 },
-  { id: 'ARANCEL_IMPO', name: 'Aranceles de Importación (AEC)', category: 'COMERCIO_EXTERIOR', legalMechanism: 'DECRETO_EJECUTIVO', isCoparticipable: false, currentRatePct: 8.0, initialRatePct: 11.0, revenuePctGdp: 0.65, revenueMillionUsdMonthly: 373, evasionPct: 15 },
+  { id: 'RET_SOJA', name: 'Retenciones: Soja y derivados', category: 'COMERCIO_EXTERIOR', legalMechanism: 'DECRETO_EJECUTIVO', isCoparticipable: false, currentRatePct: 33.0, initialRatePct: 33.0, revenuePctGdp: 1.25, revenueMillionUsdMonthly: 718, evasionPct: 14 },
+  { id: 'RET_MAIZ_TRIGO', name: 'Retenciones: Maíz y Trigo', category: 'COMERCIO_EXTERIOR', legalMechanism: 'DECRETO_EJECUTIVO', isCoparticipable: false, currentRatePct: 12.0, initialRatePct: 12.0, revenuePctGdp: 0.52, revenueMillionUsdMonthly: 298, evasionPct: 12 },
+  { id: 'RET_CARNE_LACTEOS', name: 'Retenciones: Carne y Lácteos', category: 'COMERCIO_EXTERIOR', legalMechanism: 'DECRETO_EJECUTIVO', isCoparticipable: false, currentRatePct: 6.75, initialRatePct: 6.75, revenuePctGdp: 0.22, revenueMillionUsdMonthly: 126, evasionPct: 8 },
+  { id: 'RET_IND_ENERGIA', name: 'Retenciones: Industria y Energía', category: 'COMERCIO_EXTERIOR', legalMechanism: 'DECRETO_EJECUTIVO', isCoparticipable: false, currentRatePct: 4.5, initialRatePct: 4.5, revenuePctGdp: 0.16, revenueMillionUsdMonthly: 92, evasionPct: 6 },
+  { id: 'ARANCEL_IMPO', name: 'Aranceles de Importación (AEC)', category: 'COMERCIO_EXTERIOR', legalMechanism: 'DECRETO_EJECUTIVO', isCoparticipable: false, currentRatePct: 11.0, initialRatePct: 11.0, revenuePctGdp: 0.65, revenueMillionUsdMonthly: 373, evasionPct: 15 },
   // --- Consumo (1 decreto, 3 leyes) ---
-  { id: 'COMBUSTIBLES', name: 'Combustibles Líquidos (ICL / IDC)', category: 'CONSUMO', legalMechanism: 'DECRETO_EJECUTIVO', isCoparticipable: false, currentRatePct: 49.0, initialRatePct: 100.0, revenuePctGdp: 0.55, revenueMillionUsdMonthly: 316, evasionPct: 5 },
-  { id: 'IVA_GRAL', name: 'IVA General', category: 'CONSUMO', legalMechanism: 'LEY_CONGRESO', isCoparticipable: true, currentRatePct: 18.0, initialRatePct: 21.0, revenuePctGdp: 6.80, revenueMillionUsdMonthly: 3910, evasionPct: 24 },
+  { id: 'COMBUSTIBLES', name: 'Combustibles Líquidos (ICL / IDC)', category: 'CONSUMO', legalMechanism: 'DECRETO_EJECUTIVO', isCoparticipable: false, currentRatePct: 100.0, initialRatePct: 100.0, revenuePctGdp: 0.72, revenueMillionUsdMonthly: 414, evasionPct: 5 },
+  { id: 'IVA_GRAL', name: 'IVA General', category: 'CONSUMO', legalMechanism: 'LEY_CONGRESO', isCoparticipable: true, currentRatePct: 21.0, initialRatePct: 21.0, revenuePctGdp: 7.20, revenueMillionUsdMonthly: 4140, evasionPct: 24 },
   { id: 'IVA_RED', name: 'IVA Reducido (Alimentos y salud)', category: 'CONSUMO', legalMechanism: 'LEY_CONGRESO', isCoparticipable: true, currentRatePct: 10.5, initialRatePct: 10.5, revenuePctGdp: 1.20, revenueMillionUsdMonthly: 690, evasionPct: 20 },
-  { id: 'IMP_INTERNOS', name: 'Impuestos Internos (Autos y tabaco)', category: 'CONSUMO', legalMechanism: 'LEY_CONGRESO', isCoparticipable: true, currentRatePct: 9.0, initialRatePct: 10.0, revenuePctGdp: 0.90, revenueMillionUsdMonthly: 517, evasionPct: 10 },
+  { id: 'IMP_INTERNOS', name: 'Impuestos Internos (Autos y tabaco)', category: 'CONSUMO', legalMechanism: 'LEY_CONGRESO', isCoparticipable: true, currentRatePct: 10.0, initialRatePct: 10.0, revenuePctGdp: 0.90, revenueMillionUsdMonthly: 517, evasionPct: 10 },
   // --- Renta (Leyes del Congreso) ---
   { id: 'GAN_SOC', name: 'Ganancias: Sociedades', category: 'RENTA', legalMechanism: 'LEY_CONGRESO', isCoparticipable: true, currentRatePct: 35.0, initialRatePct: 35.0, revenuePctGdp: 2.90, revenueMillionUsdMonthly: 1667, evasionPct: 22 },
   { id: 'GAN_PERS', name: 'Ganancias: Personas Humanas', category: 'RENTA', legalMechanism: 'LEY_CONGRESO', isCoparticipable: true, currentRatePct: 35.0, initialRatePct: 35.0, revenuePctGdp: 2.10, revenueMillionUsdMonthly: 1207, evasionPct: 12 },
@@ -38,7 +38,7 @@ export const INITIAL_TAXES_2027: TaxItem[] = [
   { id: 'APORTES_PERS', name: 'Aportes Personales Jubilatorios', category: 'TRABAJO', legalMechanism: 'LEY_CONGRESO', isCoparticipable: false, currentRatePct: 17.0, initialRatePct: 17.0, revenuePctGdp: 2.10, revenueMillionUsdMonthly: 1207, evasionPct: 36 },
   // --- Financiero y Patrimonio (Leyes del Congreso) ---
   { id: 'CHEQUE', name: 'Impuesto sobre Créditos y Débitos (Cheque)', category: 'FINANCIERO', legalMechanism: 'LEY_CONGRESO', isCoparticipable: false, currentRatePct: 1.20, initialRatePct: 1.20, revenuePctGdp: 1.35, revenueMillionUsdMonthly: 776, evasionPct: 7 },
-  { id: 'BIENES_PERS', name: 'Bienes Personales (Patrimonio)', category: 'PATRIMONIO', legalMechanism: 'LEY_CONGRESO', isCoparticipable: true, currentRatePct: 0.50, initialRatePct: 0.50, revenuePctGdp: 0.39, revenueMillionUsdMonthly: 224, evasionPct: 32 }
+  { id: 'BIENES_PERS', name: 'Bienes Personales (Patrimonio)', category: 'PATRIMONIO', legalMechanism: 'LEY_CONGRESO', isCoparticipable: true, currentRatePct: 1.25, initialRatePct: 1.25, revenuePctGdp: 0.45, revenueMillionUsdMonthly: 258, evasionPct: 32 }
 ];
 
 export const INITIAL_PARITARIAS_2027: SectorParitaria[] = [
