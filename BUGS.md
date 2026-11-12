@@ -129,8 +129,21 @@ Este documento recopila y cataloga todos los bugs, desvíos respecto a *¿Quién
 
 ### [FEAT-004] Negociación de leyes bloque por bloque con posturas (a favor / en duda / en contra) y concesiones
 - **Severidad**: Alta (Módulo Congreso).
-- **Descripción**: Negociar con jefes de bloque ofreciendo partidas en Argentum, ministerios en Gabinete o suavización de artículos.
-- **Estado**: 🟡 EN PLANIFICACIÓN (Fase 3).
+- **Descripción**: Negociar con jefes de bloque ofreciendo partidas en Argentum, ministerios en Gabinete, presión de gobernadores o suavización de artículos, resolviendo quórum y mayoría en Diputados (129) y Senado (37).
+- **Estado**: 🟢 RESUELTO (Fase 3).
+- **Impacto**: `congressEngine.ts` con catálogo `INITIAL_CONGRESS_BILLS` y `INITIAL_PARLIAMENTARY_BLOCS`, probabilidades de voto por afinidad y concesiones (`ARGENTUMS`, `GABINETE`, `SUAVIZAR`, `GOBERNADORES`), simulación estocástica de votación en recinto con quórum estricto (`simulateChamberVote`, `executeFullCongressVote`), acción `ENACT_CONGRESS_BILL` en `PolicyActionHandler` y vista interactiva `CongressBillsNegotiationSection.tsx` con breakdown por cámara y modal de sanción/rechazo.
+
+### [BUG-015] Intención de voto en interna provincial mostraba lista del PRO jugando con LLA
+- **Severidad**: Media (Módulo Campaña / Mapa Vectorial).
+- **Descripción**: Al hacer clic en La Pampa durante la interna presidencial de La Libertad Avanza, el popup mostraba a Mauricio Macri, María Eugenia Vidal, Ignacio Torres y Horacio Rodríguez Larreta por fixture estático y fallback de sigla `'PRO'`.
+- **Estado**: 🟢 RESUELTO (Commit Fase 3).
+- **Impacto**: Corrección en `districtPollGenerator.ts`, `ArgentinaRealVectorMap.tsx` y `App.tsx` para sincronizar con la sigla activa (`state.partySigla`) y priorizar siempre la lista de interna del jugador (Javier Milei, Victoria Villarruel, Patricia Bullrich, Santiago Caputo).
+
+### [BUG-016] Falta de recomposición paulatina mes a mes en las visitas provinciales de campaña
+- **Severidad**: Media (Módulo Campaña / Acciones).
+- **Descripción**: Las visitas repetidas a una misma provincia generaban rendimientos decrecientes (fatiga de campaña) pero no se recomponían al avanzar el tiempo.
+- **Estado**: 🟢 RESUELTO (Commit Fase 3).
+- **Impacto**: Se incorporó `decayProvincesFatigue` y `decayLocalZonesFatigue` en `advanceCampaignMonth`, reduciendo la fatiga territorial acumulada mes a mes para recomponer el rendimiento de las recorridas.
 
 ### [FEAT-005] Catálogo de 6 problemáticas institucionales de Intervención Federal con Formosa y Santiago
 - **Severidad**: Media (Módulo Político / Territorio).

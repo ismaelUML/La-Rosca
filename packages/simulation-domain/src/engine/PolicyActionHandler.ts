@@ -1,5 +1,6 @@
 import type { PolicyAction, SimulationState } from '../models/SimulationTypes.js';
 import { clamp, round2 } from '../economy/mathUtils.js';
+import { INITIAL_CONGRESS_BILLS } from '../politics/congressEngine.js';
 
 // Partimos el despacho de acciones en handlers chiquitos por dominio para mantener CC <= 5
 // y que cada medida explique exactamente que cable toca y que rompe de rebote.
@@ -195,12 +196,51 @@ function applyJudicialOrTaxAction(state: SimulationState, action: PolicyAction):
   return state;
 }
 
+function computeBillApproval(prevApproval: number, delta: number | undefined): number {
+  if (!delta) return prevApproval;
+  return clamp(round2(prevApproval + delta), 5, 95);
+}
+
+function applyCongressBillAction(state: SimulationState, action: PolicyAction): SimulationState | null {
+  if (action.type !== 'ENACT_CONGRESS_BILL') return null;
+  const bill = INITIAL_CONGRESS_BILLS.find((b) => b.id === action.billId);
+  const title = bill ? bill.title : action.billId;
+  const c = bill?.consequences;
+
+  const nextGdp = round2(state.gdpGrowthAnnualPct + (c?.gdpGrowthDelta ?? 0));
+  const nextRisk = Math.max(200, state.countryRiskEmbiPb + (c?.countryRiskDelta ?? 0));
+  const nextApproval = computeBillApproval(state.publicOpinion.managementApprovalPct, c?.publicApprovalDelta);
+
+  return {
+    ...state,
+    gdpGrowthAnnualPct: nextGdp,
+    countryRiskEmbiPb: nextRisk,
+    publicOpinion: { ...state.publicOpinion, managementApprovalPct: nextApproval },
+    eventLog: [
+      `Congreso Nacional: Se promulgó formalmente "${title}" tras su sanción en el recinto.`,
+      ...state.eventLog.slice(0, 14)
+    ]
+  };
+}
+
+function applyPrimaryPasses(state: SimulationState, action: PolicyAction): SimulationState | null {
+  const mon = applyMonetaryAction(state, action);
+  if (mon) return mon;
+  const eng = applyEnergyAndLaborAction(state, action);
+  if (eng) return eng;
+  return applyCongressBillAction(state, action);
+}
+
+function applySecondaryPasses(state: SimulationState, action: PolicyAction): SimulationState | null {
+  const ref = applyStateReformOrIndecAction(state, action);
+  if (ref) return ref;
+  return applyFiscalOrFederalAction(state, action);
+}
+
 export function applyPolicyAction(state: SimulationState, action: PolicyAction): SimulationState {
-  const firstPass = applyMonetaryAction(state, action) ?? applyEnergyAndLaborAction(state, action);
-  if (firstPass) return firstPass;
-  return (
-    applyStateReformOrIndecAction(state, action) ??
-    applyFiscalOrFederalAction(state, action) ??
-    applyJudicialOrTaxAction(state, action)
-  );
+  const primary = applyPrimaryPasses(state, action);
+  if (primary) return primary;
+  const secondary = applySecondaryPasses(state, action);
+  if (secondary) return secondary;
+  return applyJudicialOrTaxAction(state, action);
 }

@@ -523,7 +523,7 @@ export function ArgentinaRealVectorMap({
   mode,
   provinces,
   selectedProvinceId,
-  partySigla = 'PRO',
+  partySigla = 'LLA',
   internalCandidates,
   onSelectProvince
 }: ArgentinaRealVectorMapProps) {

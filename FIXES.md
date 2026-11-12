@@ -115,7 +115,7 @@ Registro de soluciones arquitectónicas, módulos modificados, métricas de cali
 ---
 
 ### FIX-008: Fase 2 RIGI Dinámico y 6 Problemáticas Institucionales de Intervención Federal
-- **Commit**: En preparación
+- **Commit**: `e6cac5b`
 - **Archivos**:
   - `packages/simulation-domain/src/engine/rigiEngine.ts`
   - `packages/simulation-domain/src/models/PartyAndSetupTypes.ts`
@@ -133,4 +133,42 @@ Registro de soluciones arquitectónicas, módulos modificados, métricas de cali
   - Intervención Federal: Formosa inicia con 6 problemáticas institucionales (`expresion`, `justicia`, `corrupcion`, `fraude`, `legislatura`, `represion`) y Santiago del Estero con 4. Contador de 24 meses continuos con $\ge 5$ problemáticas en `stepProvincesState`. Acción `INTERVENE_PROVINCE` en `PolicyActionHandler` con destitución del gobernador provincial, designación de comisionado interventor federal y convocatoria a elecciones provinciales obligatorias en 6 meses con cuenta regresiva mensual.
   - Corrección de visualización provincial: En `CampaignPartidoProvinciasView.tsx`, eliminación de la etiqueta redundante `"Tu fórmula (tu fórmula)"` mediante `formatVoteRowLabel` y ordenamiento estricto descendente en `transferAllianceVotes`, `returnAllianceVotes` y `handleExecuteAction`, asegurando que la fórmula ganadora siempre encabece el listado y la barra de intención con la insignia `¡Tu fórmula lidera!`.
   - 25 tests unitarios pasando en Vitest, auditoría determinista superada en los 69 archivos de la base de código ($CC \le 5$, $MI \ge 75$) y compilación limpia en TypeScript y Vite.
+
+---
+
+### FIX-009: Fase 3 Negociación Parlamentaria por Bloques en el Congreso y Paridad Territorial en Campaña
+- **Commit**: En preparación
+- **Archivos**:
+  - `packages/simulation-domain/src/politics/congressEngine.ts`
+  - `packages/simulation-domain/src/engine/PolicyActionHandler.ts`
+  - `packages/simulation-domain/src/campaign/campaignEngine.ts`
+  - `packages/simulation-domain/src/models/SimulationTypes.ts`
+  - `packages/simulation-domain/src/index.ts`
+  - `packages/simulation-domain/tests/simulationEngine.test.ts`
+  - `packages/web-presentation/src/features/game-shell/CongressBillsNegotiationSection.tsx`
+  - `packages/web-presentation/src/features/game-shell/CamarasLegislativasView.tsx`
+  - `packages/web-presentation/src/features/campaign/ArgentinaRealVectorMap.tsx`
+  - `packages/web-presentation/src/features/campaign/districtPollGenerator.ts`
+  - `packages/web-presentation/src/App.tsx`
+- **Solución técnica**:
+  - Motor Parlamentario de Negociación por Bloques (`congressEngine.ts`):
+    - Catálogo `INITIAL_PARLIAMENTARY_BLOCS` con las 7 fuerzas legislativas reales (Diputados 257 / Senado 72): `LLA` (38/7, afín 100%), `PRO` (37/6, afín 78%), `PF` (16/6, afín 55%), `PROVINCIALES` (28/7, afín 50%), `UCR` (34/13, afín 42%), `UXP` (99/33, oposición dura 10%), `FIT` (5/0, oposición dura 2%).
+    - Posturas parlamentarias dinámicas: `A favor` ($\ge 60\%$), `En duda` ($35-59\%$), `En contra` ($< 35\%$).
+    - 4 tipos de concesiones legislativas:
+      - Obra Pública / Partidas presupuestarias (`ARGENTUMS`, 30 argentums, $+24\%$ prob).
+      - Espacio en Gabinete (`GABINETE`, 10 capital político, $+28\%$ prob).
+      - Pacto con Gobernadores (`GOBERNADORES`, $+35\%$ prob en peronismo federal y provinciales).
+      - Suavizar articulado del proyecto (`SUAVIZAR`, $+15\%$ probabilidad transversal).
+    - Simulación nominal de votación en recinto (`simulateChamberVote`, `executeFullCongressVote`): Quórum y mayoría calificada estricta (129 en Diputados, 37 en Senadores). Si ambas cámaras aprueban, la ley queda sancionada; si alguna rechaza, queda bloqueada con su respectivo dictamen.
+    - Acción `ENACT_CONGRESS_BILL` en `PolicyActionHandler`: actualiza PBI, riesgo país, superávit fiscal y aprobación presidencial en el estado de gobierno, registrando la sanción oficial en el historial.
+  - UI de Cámaras Legislativas (`CamarasLegislativasView.tsx` y `CongressBillsNegotiationSection.tsx`):
+    - Navegación entre solapas: `Rosca y votación de leyes` y `Composición y bancas (257 Dip / 72 Sen)`.
+    - Tarjetas de proyección en tiempo real para Diputados y Senado con barras de progreso hacia los umbrales de quórum de 129 y 37.
+    - Selector de proyectos de ley (`Ley Bases 2.0`, `Presupuesto Déficit Cero`, `Reforma Laboral`, `Pacto Fiscal Federal`, `Intervención Federal`).
+    - Grilla de tarjetas de bloques con botones de concesión y botón principal "Llevar a votación en el recinto".
+    - Modal de escrutinio parlamentario (`VoteResultModal`) con el desglose exacto de votos afirmativos, negativos y abstenciones por bloque y cámara.
+  - Corrección de bugs territoriales en campaña:
+    - Popup de La Pampa: Desacoplado del preset estático del PRO. Cuando el jugador compite por LLA, el mapa vectorial proyecta la interna oficialista real (Javier Milei, Victoria Villarruel, Patricia Bullrich, Santiago Caputo).
+    - Recomposición paulatina de campaña: `decayProvincesFatigue` y `decayLocalZonesFatigue` en `advanceCampaignMonth` reducen la fatiga acumulada por visitas mes a mes, restaurando gradualmente la efectividad de las recorridas territoriales.
+  - Calidad de software: 26 tests unitarios pasando en Vitest, auditoría determinista superada en los 71 archivos del proyecto ($CC \le 5$, $MI \ge 75$) y compilación TypeScript/Vite libre de errores.
 

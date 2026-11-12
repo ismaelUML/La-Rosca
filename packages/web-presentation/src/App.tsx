@@ -87,12 +87,12 @@ type ScreenMode = 'LANDING' | 'NEW_GAME_SETUP' | 'CAMPAIGN' | 'GOVERNMENT';
 const DEFAULT_SETUP: GameSetupConfiguration = {
   sessionId: '9762057179063',
   characterMode: 'UN_POLITICO_REAL',
-  characterName: 'Mauricio Macri',
-  selectedPoliticianId: 'MAURICIO_MACRI',
+  characterName: 'Javier Milei',
+  selectedPoliticianId: 'JAVIER_MILEI',
   role: 'PRESIDENTE',
   provinceId: 'CABA',
   partyMode: 'PARTIDO_EXISTENTE',
-  party: POLITICAL_PARTIES_2027[1]!,
+  party: POLITICAL_PARTIES_2027[0]!,
   difficulty: 'ESTANDAR_2027'
 };
 
@@ -410,8 +410,8 @@ export function App() {
     return (
       savedSession?.campaignState ??
       createInitialCampaignState(
-        { id: 'MAURICIO_MACRI', name: 'Mauricio Macri' },
-        POLITICAL_PARTIES_2027[1]!,
+        { id: 'JAVIER_MILEI', name: 'Javier Milei' },
+        POLITICAL_PARTIES_2027[0]!,
         'PRESIDENTE',
         'CABA'
       )

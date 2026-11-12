@@ -7,7 +7,14 @@ import {
   round2,
   advanceRigiMonthlyQueue,
   approveRigiProject,
-  type RigisectorItem
+  type RigisectorItem,
+  INITIAL_PARLIAMENTARY_BLOCS,
+  INITIAL_CONGRESS_BILLS,
+  computeBlocProbability,
+  applyConcessionToBloc,
+  simulateChamberVote,
+  executeFullCongressVote,
+  type CongressNegotiationBloc
 } from '@argentina-sim/domain';
 import { createInitialSimulationState2027, PROVINCES_2027_DATASET } from '@argentina-sim/infrastructure';
 
@@ -130,6 +137,36 @@ describe('Motor Macroeconomico, Judicial y Laboral Argentino 2027', () => {
     const formosaNext = nextMonth.provinces.find((p) => p.id === 'FORMOSA');
     expect(formosaNext?.eleccionEnMeses).toBe(5);
     expect(formosaNext?.intervenida).toBe(true);
+  });
+
+  it('negocia proyectos de ley bloque por bloque en el Congreso y promulga leyes con quórum estricto', () => {
+    const pfBloc = INITIAL_PARLIAMENTARY_BLOCS.find((b) => b.id === 'PF')!;
+    expect(pfBloc.currentStance).toBe('EN_DUDA');
+    expect(pfBloc.probabilityYes).toBeLessThan(60);
+
+    // Otorgar concesión de gobernadores y partidas
+    const boosted = applyConcessionToBloc(pfBloc, 'GOBERNADORES', 55, false);
+    expect(boosted.concessionsReceived).toContain('GOBERNADORES');
+    expect(boosted.probabilityYes).toBeGreaterThanOrEqual(80);
+    expect(boosted.currentStance).toBe('A_FAVOR');
+
+    // Simulación de votación en Diputados
+    const depVote = simulateChamberVote('DIPUTADOS', INITIAL_PARLIAMENTARY_BLOCS);
+    expect(depVote.totalSeats).toBe(257);
+    expect(depVote.quorumNeeded).toBe(129);
+
+    // Votación completa con la Ley Bases 2.0
+    const bill = INITIAL_CONGRESS_BILLS[0]!;
+    const outcome = executeFullCongressVote(bill, INITIAL_PARLIAMENTARY_BLOCS);
+    expect(outcome.billId).toBe('LEY_BASES_2');
+    expect(typeof outcome.passed).toBe('boolean');
+
+    // Promulgación en SimulationState
+    let state = createInitialSimulationState2027('PRESIDENTE', 'ESTANDAR_2027', 'CABA');
+    const prevGdp = state.gdpGrowthAnnualPct;
+    state = applyPolicyAction(state, { type: 'ENACT_CONGRESS_BILL', billId: 'LEY_BASES_2' });
+    expect(state.gdpGrowthAnnualPct).toBeGreaterThan(prevGdp);
+    expect(state.eventLog[0]).toContain('Ley Bases 2.0');
   });
 });
 

@@ -3,7 +3,8 @@ import type {
   CampaignExecutePayload,
   CampaignSimulationState,
   CampaignStageType,
-  LocalJurisdictionZone
+  LocalJurisdictionZone,
+  ProvinceCampaignInfo
 } from '../models/CampaignTypes.js';
 import { clamp, round2 } from '../economy/mathUtils.js';
 import { evolveCountryMood } from './countryMoodEngine.js';
@@ -305,6 +306,21 @@ function updateInternalPollVoteShares(poll: CampaignSimulationState['internalPol
   return { ...poll, candidates: nextCandidates };
 }
 
+function decayProvincesFatigue(provinces: ProvinceCampaignInfo[]): ProvinceCampaignInfo[] {
+  return provinces.map((p) => ({
+    ...p,
+    visitsCount: Math.max(0, p.visitsCount - 1)
+  }));
+}
+
+function decayLocalZonesFatigue(zones?: LocalJurisdictionZone[]): LocalJurisdictionZone[] | undefined {
+  if (!zones) return undefined;
+  return zones.map((z) => ({
+    ...z,
+    visitsCount: Math.max(0, z.visitsCount - 1)
+  }));
+}
+
 export function advanceCampaignMonth(state: CampaignSimulationState): CampaignSimulationState {
   const nextMonthIndex = state.stage.currentMonthIndex + 1;
   const milestone = STAGE_MILESTONES[nextMonthIndex] ?? STAGE_MILESTONES[12]!;
@@ -317,6 +333,8 @@ export function advanceCampaignMonth(state: CampaignSimulationState): CampaignSi
   const nextMood = state.countryMood ? evolveCountryMood(state.countryMood, nextMonthIndex) : undefined;
   const nextActionUsage = decayActionFatigue(state.actionUsageCount);
   const nextCooldowns = decayPoliticianCooldowns(state.politicianCooldowns);
+  const nextProvinces = decayProvincesFatigue(state.provinces);
+  const nextLocalZones = decayLocalZonesFatigue(state.localZones);
 
   return {
     ...state,
@@ -330,6 +348,8 @@ export function advanceCampaignMonth(state: CampaignSimulationState): CampaignSi
     countryMood: nextMood,
     actionUsageCount: nextActionUsage,
     politicianCooldowns: nextCooldowns,
+    provinces: nextProvinces,
+    localZones: nextLocalZones,
     budgetArgentums: replenishedBudget,
     actionsRemainingThisMonth: 4,
     historyLog: nextHistory

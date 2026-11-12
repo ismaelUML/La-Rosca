@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import type { PolicyAction, SimulationState } from '@argentina-sim/domain';
+import { CongressBillsNegotiationSection } from './CongressBillsNegotiationSection.js';
 
 // En el Congreso no se gobierna con discursos bonitos: se gobierna con el quorum de 129
 // en Diputados y los 37 senadores en la Camara Alta. Si no tenes los votos,
@@ -330,10 +331,118 @@ export interface CamarasLegislativasViewProps {
   onDispatch: (action: PolicyAction) => void;
 }
 
+function CongressSubTabHeader({
+  subTab,
+  onSelectTab
+}: {
+  subTab: 'COMPOSICION' | 'ROSCA_LEYES';
+  onSelectTab: (t: 'COMPOSICION' | 'ROSCA_LEYES') => void;
+}) {
+  return (
+    <div className="flex gap-2 border-b border-slate-800 pb-2">
+      <button
+        type="button"
+        onClick={() => onSelectTab('ROSCA_LEYES')}
+        className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
+          subTab === 'ROSCA_LEYES'
+            ? 'bg-white text-slate-950 shadow'
+            : 'text-slate-400 hover:text-white'
+        }`}
+      >
+        Rosca y votación de leyes
+      </button>
+      <button
+        type="button"
+        onClick={() => onSelectTab('COMPOSICION')}
+        className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
+          subTab === 'COMPOSICION'
+            ? 'bg-white text-slate-950 shadow'
+            : 'text-slate-400 hover:text-white'
+        }`}
+      >
+        Composición y bancas (257 Dip / 72 Sen)
+      </button>
+    </div>
+  );
+}
+
+function CongressForcesTable({ forces }: { forces: PartySeatShare[] }) {
+  return (
+    <div className="rounded-2xl bg-[#10131b] border border-slate-800/90 overflow-hidden shadow-lg">
+      <div className="p-4 md:p-5 border-b border-slate-800/80">
+        <h3 className="text-base font-extrabold text-white leading-tight">
+          | Relación con cada fuerza
+        </h3>
+        <p className="text-xs text-slate-400 mt-1">
+          Nivel de afinidad y disciplina parlamentaria con los bloques. Determina si bajan a dar quórum y cómo votan en particular.
+        </p>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs">
+          <thead className="bg-[#0b0e15] border-b border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <tr>
+              <th className="py-3 px-4">FUERZA</th>
+              <th className="py-3 px-4 text-center">CÁMARA DE DIPUTADOS</th>
+              <th className="py-3 px-4 text-center">SENADO</th>
+              <th className="py-3 px-4 text-right">RELACIÓN</th>
+            </tr>
+          </thead>
+          <tbody>
+            {forces.map((force) => (
+              <PoliticalForceTableRow
+                key={force.id}
+                force={force}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function CongressCompositionView({
+  forces,
+  deputiesColored,
+  senateColored
+}: {
+  forces: PartySeatShare[];
+  deputiesColored: Array<{ x: number; y: number; color: string }>;
+  senateColored: Array<{ x: number; y: number; color: string }>;
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <HemicycleCard
+          title="Cámara de Diputados"
+          count={257}
+          dots={deputiesColored}
+          legendList={forces}
+          quorumNeeded={129}
+          labelSub="DIPUTADOS"
+        />
+        <HemicycleCard
+          title="Senado"
+          count={72}
+          dots={senateColored}
+          legendList={forces}
+          quorumNeeded={37}
+          labelSub="SENADORES"
+        />
+      </div>
+
+      <CongressTopMetrics />
+      <CongressForcesTable forces={forces} />
+    </div>
+  );
+}
+
 export function CamarasLegislativasView({
-  state: _state,
-  onDispatch: _onDispatch
+  state,
+  onDispatch
 }: CamarasLegislativasViewProps) {
+  const [subTab, setSubTab] = useState<'COMPOSICION' | 'ROSCA_LEYES'>('ROSCA_LEYES');
   const [forces] = useState<PartySeatShare[]>(INITIAL_CONGRESS_FORCES);
 
   const rawDeputiesDots = useMemo(() => generateHemicycleDots(257, 8, 70, 150), []);
@@ -361,62 +470,21 @@ export function CamarasLegislativasView({
           <h1 className="text-2xl md:text-3xl font-extrabold text-white mt-0.5">Cámaras</h1>
         </div>
         <div className="text-xs text-slate-400">
-          Guardada · se puede seguir con el código desde cualquier dispositivo
+          Negociación por bloques · Quórum 129 Diputados y 37 Senadores
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <HemicycleCard
-          title="Cámara de Diputados"
-          count={257}
-          dots={deputiesColored}
-          legendList={forces}
-          quorumNeeded={129}
-          labelSub="DIPUTADOS"
+      <CongressSubTabHeader subTab={subTab} onSelectTab={setSubTab} />
+
+      {subTab === 'ROSCA_LEYES' ? (
+        <CongressBillsNegotiationSection state={state} onDispatch={onDispatch} />
+      ) : (
+        <CongressCompositionView
+          forces={forces}
+          deputiesColored={deputiesColored}
+          senateColored={senateColored}
         />
-        <HemicycleCard
-          title="Senado"
-          count={72}
-          dots={senateColored}
-          legendList={forces}
-          quorumNeeded={37}
-          labelSub="SENADORES"
-        />
-      </div>
-
-      <CongressTopMetrics />
-
-      <div className="rounded-2xl bg-[#10131b] border border-slate-800/90 overflow-hidden shadow-lg">
-        <div className="p-4 md:p-5 border-b border-slate-800/80">
-          <h3 className="text-base font-extrabold text-white leading-tight">
-            | Relación con cada fuerza
-          </h3>
-          <p className="text-xs text-slate-400 mt-1">
-            Nivel de afinidad y disciplina parlamentaria con los bloques. Determina si bajan a dar quórum y cómo votan en particular.
-          </p>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[#0b0e15] border-b border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              <tr>
-                <th className="py-3 px-4">FUERZA</th>
-                <th className="py-3 px-4 text-center">CÁMARA DE DIPUTADOS</th>
-                <th className="py-3 px-4 text-center">SENADO</th>
-                <th className="py-3 px-4 text-right">RELACIÓN</th>
-              </tr>
-            </thead>
-            <tbody>
-              {forces.map((force) => (
-                <PoliticalForceTableRow
-                  key={force.id}
-                  force={force}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

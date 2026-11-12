@@ -15,4 +15,5 @@ export * from './ports/FakeSaveRepository.js';
 export * from './engine/PolicyActionHandler.js';
 export * from './engine/SimulationEngine.js';
 export * from './engine/rigiEngine.js';
+export * from './politics/congressEngine.js';
 

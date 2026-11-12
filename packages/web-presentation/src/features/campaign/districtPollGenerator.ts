@@ -235,7 +235,7 @@ export function buildDistrictPopup(
   districtName: string,
   subRegion: string,
   provinceId: string,
-  partySigla: string = 'PRO',
+  partySigla: string = 'LLA',
   internalCandidates?: DistrictCandidateBase[]
 ): DistrictPopupData {
   if (!internalCandidates || internalCandidates.length === 0) {
