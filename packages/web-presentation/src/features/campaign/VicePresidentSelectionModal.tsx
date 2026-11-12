@@ -27,12 +27,19 @@ function computePolHash(polId: string, salt: number, mod: number): number {
 function resolveAvailableViceCandidates(state: CampaignSimulationState): ViceCandidateOption[] {
   const allowedParties = [state.partySigla, ...(state.coalitionParties ?? [])];
 
-  return REAL_POLITICIANS_2027.filter((p) => {
+  const matched = REAL_POLITICIANS_2027.filter((p) => {
     if (p.id === state.candidateId) {
       return false;
     }
     return allowedParties.includes(p.partySigla);
-  }).map((p) => ({
+  });
+
+  const pool =
+    matched.length > 0
+      ? matched
+      : REAL_POLITICIANS_2027.filter((p) => p.id !== state.candidateId).slice(0, 8);
+
+  return pool.map((p) => ({
     id: p.id,
     name: p.name,
     partySigla: p.partySigla,
@@ -157,3 +164,4 @@ export function VicePresidentSelectionModal({
     </div>
   );
 }
+

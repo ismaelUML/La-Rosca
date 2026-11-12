@@ -139,7 +139,12 @@ function CampaignActivePanel({
       />
     ),
     PARTIDO_PROVINCIAS: <CampaignPartidoProvinciasView state={state} />,
-    APOYO_PROVINCIAS: <CampaignApoyoProvinciasView state={state} />,
+    APOYO_PROVINCIAS: (
+      <CampaignApoyoProvinciasView
+        state={state}
+        onUpdateState={onUpdateCampaignState}
+      />
+    ),
     GOBERNANTES: <CampaignGobernantesView state={state} />,
     POBLACION: <CampaignDemografiaPaisView key="POBLACION" initialTab="POBLACION" />,
     INMIGRACION: <CampaignDemografiaPaisView key="INMIGRACION" initialTab="INMIGRACION" />,

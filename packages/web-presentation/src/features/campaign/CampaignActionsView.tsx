@@ -11,25 +11,72 @@ import { CAMPAIGN_ACTIONS_CATALOG } from '@argentina-sim/infrastructure';
 // las 9 acciones electorales con pildoras de efectos, requisitos,
 // selector territorial de provincia y validacion de presupuesto y acciones restantes.
 
-interface ActionPillsListProps {
-  effects: CampaignActionCard['effects'];
+function formatScaledNumber(num: number): string {
+  const rounded = Math.round(num * 10) / 10;
+  const fixed = Math.abs(rounded).toFixed(1).replace('.', ',');
+  if (rounded > 0.05) return `+${fixed}`;
+  if (rounded < -0.05) return `-${fixed}`;
+  return '0';
 }
 
-function ActionPillsList({ effects }: ActionPillsListProps) {
+function scaleRangeText(rangeText: string, mult: number): string {
+  if (Math.abs(mult - 1) < 0.02) return rangeText;
+  const parts = rangeText.split('/');
+  if (parts.length !== 2) return rangeText;
+  const n1 = parseFloat(parts[0]!.replace(',', '.'));
+  const n2 = parseFloat(parts[1]!.replace(',', '.'));
+  if (isNaN(n1) || isNaN(n2)) return rangeText;
+  const s1 = formatScaledNumber(n1 * mult);
+  const s2 = formatScaledNumber(n2 * mult);
+  return `${s1}/${s2}`;
+}
+
+function computeRecorridaMultiplier(visits: number, affinityMult: number = 1.0): number {
+  if (visits <= 0) return 1.0 * affinityMult;
+  if (visits === 1) return 0.65 * affinityMult;
+  if (visits === 2) return 0.40 * affinityMult;
+  if (visits === 3) return 0.25 * affinityMult;
+  return 0.13 * affinityMult;
+}
+
+function resolveActionDisplayMultiplier(
+  actionId: string,
+  state: CampaignSimulationState,
+  selectedProvinceId: string
+): number {
+  if (actionId === 'RECORRIDA') {
+    const prov = state.provinces.find((p) => p.provinceId === selectedProvinceId);
+    const visits = prov?.visitsCount ?? 0;
+    const affinity = prov?.affinityMultiplier ?? 1.0;
+    return computeRecorridaMultiplier(visits, affinity);
+  }
+  const fatigue = state.actionUsageCount?.[actionId] ?? 0;
+  return 1 / (1 + 0.40 * fatigue);
+}
+
+interface ActionPillsListProps {
+  effects: CampaignActionCard['effects'];
+  multiplier: number;
+}
+
+function ActionPillsList({ effects, multiplier }: ActionPillsListProps) {
   return (
     <div className="flex flex-wrap gap-1.5 my-3">
-      {effects.map((eff) => (
-        <span
-          key={eff.label}
-          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-            eff.isWarning
-              ? 'bg-amber-950/80 text-amber-300 border border-amber-800/60'
-              : 'bg-emerald-950/80 text-emerald-300 border border-emerald-800/60'
-          }`}
-        >
-          {eff.label} {eff.rangeText}
-        </span>
-      ))}
+      {effects.map((eff) => {
+        const scaledRange = eff.isWarning ? eff.rangeText : scaleRangeText(eff.rangeText, multiplier);
+        return (
+          <span
+            key={eff.label}
+            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+              eff.isWarning
+                ? 'bg-amber-950/80 text-amber-300 border border-amber-800/60'
+                : 'bg-emerald-950/80 text-emerald-300 border border-emerald-800/60'
+            }`}
+          >
+            {eff.label} {scaledRange}
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -130,7 +177,10 @@ function ActionCardItem({
         </div>
         <p className="text-xs text-slate-400 mt-1">{action.description}</p>
 
-        <ActionPillsList effects={action.effects} />
+        <ActionPillsList
+          effects={action.effects}
+          multiplier={resolveActionDisplayMultiplier(action.id, state, selectedProvinceId)}
+        />
 
         {action.requirementText ? (
           <div className="text-[11px] text-slate-500 mb-2">{action.requirementText}</div>

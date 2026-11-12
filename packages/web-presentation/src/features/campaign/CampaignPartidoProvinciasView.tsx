@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { CampaignSimulationState } from '@argentina-sim/domain';
 
 // Comando de campaña provincial profunda (QQG Capturas 2, 3, 4, 5):
@@ -39,6 +39,7 @@ export interface DeepProvincialData {
   localBudgetArgentums: number;
   localActionsRemaining: number;
   loyaltyIndex: number;
+  localAlliances?: string[];
 }
 
 const INITIAL_PROVINCES_CATALOG: Record<string, DeepProvincialData> = {
@@ -725,14 +726,54 @@ interface ProvincialVoteBarProps {
   shares: ProvincialPartyShare[];
 }
 
+function buildDiffLabel(playerShare: number, rivalShare: number, rivalName: string): string {
+  if (playerShare >= rivalShare) {
+    const diff = (playerShare - rivalShare).toFixed(1).replace('.', ',');
+    return `Tu fórmula: ${playerShare.toFixed(1).replace('.', ',')} % (+${diff} vs. ${rivalName}) · ¡Tu fórmula lidera!`;
+  }
+  const diffVsTop = (rivalShare - playerShare).toFixed(1).replace('.', ',');
+  return `Tu fórmula: ${playerShare.toFixed(1).replace('.', ',')} % (-${diffVsTop} vs. ${rivalName})`;
+}
+
+function resolvePlayerShare(shares: ProvincialPartyShare[]): number {
+  for (const s of shares) {
+    if (s.isPlayer) return s.sharePct;
+  }
+  return 0;
+}
+
+function resolveRivalShare(sorted: ProvincialPartyShare[]): { name: string; share: number } {
+  const isTop = sorted[0]?.isPlayer ?? false;
+  const rival = isTop ? sorted[1] : sorted[0];
+  const name = rival ? rival.partyName : 'primero';
+  const share = rival ? rival.sharePct : 0;
+  return { name, share };
+}
+
+function VoteRowItem({ share }: { share: ProvincialPartyShare }) {
+  const label = share.isPlayer ? `${share.partyName} (tu fórmula)` : share.partyName;
+  const textClass = share.isPlayer ? 'font-bold text-white' : 'text-slate-300';
+  return (
+    <div className="flex items-center justify-between text-xs">
+      <div className="flex items-center gap-2">
+        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: share.color }} />
+        <span className={textClass}>{label}</span>
+      </div>
+      <span className="font-mono font-extrabold text-white">
+        {share.sharePct.toFixed(1).replace('.', ',')} %
+      </span>
+    </div>
+  );
+}
+
 function ProvincialVoteBar({ shares }: ProvincialVoteBarProps) {
-  const playerShare = shares.find((s) => s.isPlayer)?.sharePct ?? 0;
-  const topShare = Math.max(...shares.map((s) => s.sharePct));
-  const diffVsTop = (playerShare - topShare).toFixed(1).replace('.', ',');
-  const diffLabel =
-    playerShare >= topShare
-      ? '¡Tu fórmula lidera!'
-      : `Tu fórmula: ${playerShare.toFixed(1).replace('.', ',')} % (${diffVsTop} vs. primero)`;
+  const sortedShares = useMemo(
+    () => [...shares].sort((a, b) => b.sharePct - a.sharePct),
+    [shares]
+  );
+  const playerShare = resolvePlayerShare(sortedShares);
+  const rival = resolveRivalShare(sortedShares);
+  const diffLabel = buildDiffLabel(playerShare, rival.share, rival.name);
 
   return (
     <div className="rounded-2xl bg-[#0f131c] border border-slate-800 p-5 space-y-4">
@@ -742,7 +783,7 @@ function ProvincialVoteBar({ shares }: ProvincialVoteBarProps) {
       </div>
 
       <div className="w-full h-4 rounded-full overflow-hidden flex bg-slate-900 border border-slate-800">
-        {shares.map((s) => (
+        {sortedShares.map((s) => (
           <div
             key={s.partyName}
             style={{ width: `${s.sharePct}%`, backgroundColor: s.color }}
@@ -753,18 +794,8 @@ function ProvincialVoteBar({ shares }: ProvincialVoteBarProps) {
       </div>
 
       <div className="space-y-2 pt-2 border-t border-slate-800/80">
-        {shares.map((s) => (
-          <div key={s.partyName} className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
-              <span className={s.isPlayer ? 'font-bold text-white' : 'text-slate-300'}>
-                {s.partyName} {s.isPlayer ? '(tu fórmula)' : ''}
-              </span>
-            </div>
-            <span className="font-mono font-extrabold text-white">
-              {s.sharePct.toFixed(1).replace('.', ',')} %
-            </span>
-          </div>
+        {sortedShares.map((s) => (
+          <VoteRowItem key={s.partyName} share={s} />
         ))}
       </div>
     </div>
@@ -901,7 +932,139 @@ interface ProvincialActionsGridProps {
   onExecute: (cost: number, boost: number) => void;
 }
 
+function formatScaledProvNumber(n: number): string {
+  const sign = n > 0 ? '+' : '';
+  const formatted = n.toFixed(1).replace('.', ',');
+  return n === 0 ? '0' : `${sign}${formatted}`;
+}
+
+function scaleRangeString(rangeText: string, mult: number): string {
+  if (Math.abs(mult - 1) < 0.02) return rangeText;
+  const parts = rangeText.split('/');
+  if (parts.length !== 2) return rangeText;
+  const n1 = parseFloat(parts[0]!.replace(',', '.'));
+  const n2 = parseFloat(parts[1]!.replace(',', '.'));
+  if (isNaN(n1) || isNaN(n2)) return rangeText;
+  return `${formatScaledProvNumber(n1 * mult)}/${formatScaledProvNumber(n2 * mult)}`;
+}
+
+function scaleProvincialBadge(badge: string, mult: number): string {
+  if (Math.abs(mult - 1) < 0.02) return badge;
+  const lastSpace = badge.lastIndexOf(' ');
+  if (lastSpace === -1) return badge;
+  const prefix = badge.slice(0, lastSpace);
+  const range = badge.slice(lastSpace + 1);
+  return `${prefix} ${scaleRangeString(range, mult)}`;
+}
+
+function computeProvincialFatigueMult(actionsLeft: number): number {
+  const actionsDone = Math.max(0, 4 - actionsLeft);
+  return 1 / (1 + 0.35 * actionsDone);
+}
+
+function isPartyIncompatible(partyName: string): boolean {
+  return partyName.includes('FIT') || partyName.includes('Socialismo');
+}
+
+function transferAllianceVotes(
+  shares: ProvincialPartyShare[],
+  alliedParty: string,
+  transfer: number
+): ProvincialPartyShare[] {
+  return shares.map((s) => {
+    if (s.isPlayer) {
+      return { ...s, sharePct: Math.round((s.sharePct + transfer) * 10) / 10 };
+    }
+    if (s.partyName === alliedParty) {
+      return { ...s, sharePct: Math.max(0.2, Math.round((s.sharePct - transfer) * 10) / 10) };
+    }
+    return s;
+  });
+}
+
+function returnAllianceVotes(
+  shares: ProvincialPartyShare[],
+  alliedParty: string
+): ProvincialPartyShare[] {
+  return shares.map((s) => {
+    if (s.partyName === alliedParty) {
+      return { ...s, sharePct: Math.round((s.sharePct + 2.5) * 10) / 10 };
+    }
+    if (s.isPlayer) {
+      return { ...s, sharePct: Math.max(1.0, Math.round((s.sharePct - 3.0) * 10) / 10) };
+    }
+    return s;
+  });
+}
+
+interface ProvincialCoalitionCardProps {
+  party: ProvincialPartyShare;
+  isInAlliance: boolean;
+  canAddMore: boolean;
+  onFormAlliance: () => void;
+  onBreakAlliance: () => void;
+}
+
+function ProvincialCoalitionCard({
+  party,
+  isInAlliance,
+  canAddMore,
+  onFormAlliance,
+  onBreakAlliance
+}: ProvincialCoalitionCardProps) {
+  const potentialBoost = Math.max(0.3, Math.round(party.sharePct * 0.6 * 10) / 10);
+
+  return (
+    <div className="rounded-2xl bg-[#0f131c] border border-slate-800 p-4 flex flex-col justify-between space-y-3">
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: party.color }} />
+            <span className="text-sm font-extrabold text-white">{party.partyName}</span>
+          </div>
+          {isInAlliance ? (
+            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-800/60 px-2 py-0.5 rounded">
+              ✓ En coalición distrital
+            </span>
+          ) : (
+            <span className="text-[10px] text-slate-400">Fuerza opositora / distrital</span>
+          )}
+        </div>
+        <div className="text-xs text-slate-400">
+          Intención de voto provincial: <strong className="text-white">{party.sharePct.toFixed(1).replace('.', ',')} %</strong>
+        </div>
+        <div className="text-xs text-purple-300">
+          Aporte potencial a tu fórmula: <strong className="text-purple-200">+{potentialBoost.toFixed(1).replace('.', ',')} %</strong>
+        </div>
+      </div>
+
+      <div>
+        {isInAlliance ? (
+          <button
+            type="button"
+            onClick={onBreakAlliance}
+            className="w-full py-2 rounded-xl text-xs font-bold text-rose-400 bg-rose-950/40 border border-rose-900/60 hover:bg-rose-900/60 transition"
+          >
+            Desarmar alianza
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={!canAddMore}
+            onClick={onFormAlliance}
+            className="w-full py-2 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white transition shadow"
+          >
+            {canAddMore ? 'Proponer alianza distrital' : 'Máximo 2 aliados alcanzado'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ProvincialActionsGrid({ budget, actionsLeft, onExecute }: ProvincialActionsGridProps) {
+  const fatigueMult = computeProvincialFatigueMult(actionsLeft);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between text-xs">
@@ -934,7 +1097,7 @@ function ProvincialActionsGrid({ budget, actionsLeft, onExecute }: ProvincialAct
                       key={b}
                       className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-slate-900 border border-slate-700 text-emerald-400"
                     >
-                      {b}
+                      {scaleProvincialBadge(b, fatigueMult)}
                     </span>
                   ))}
                 </div>
@@ -943,7 +1106,7 @@ function ProvincialActionsGrid({ budget, actionsLeft, onExecute }: ProvincialAct
               <button
                 type="button"
                 disabled={!allowed}
-                onClick={() => onExecute(act.cost, 1.8)}
+                onClick={() => onExecute(act.cost, 1.8 * fatigueMult)}
                 className="w-full py-2 rounded-xl text-xs font-bold bg-white hover:bg-slate-200 text-slate-950 disabled:opacity-40 disabled:cursor-not-allowed transition shadow"
               >
                 Hacer (Costo: -{act.cost.toFixed(1).replace('.', ',')})
@@ -964,6 +1127,7 @@ interface ProvincialDrilldownProps {
 
 function ProvincialDrilldownView({ prov, onBack, onUpdateProv }: ProvincialDrilldownProps) {
   const [subTab, setSubTab] = useState<'CAMPAÑA' | 'COALICION' | 'PERFIL'>('CAMPAÑA');
+  const [coalitionBanner, setCoalitionBanner] = useState<string | null>(null);
 
   const handleExecuteAction = (cost: number, boostPct: number) => {
     onUpdateProv((prev) => {
@@ -982,6 +1146,36 @@ function ProvincialDrilldownView({ prov, onBack, onUpdateProv }: ProvincialDrill
         shares: nextShares
       };
     });
+  };
+
+  const handleFormAlliance = (target: ProvincialPartyShare) => {
+    const currentAlliances = prov.localAlliances ?? [];
+    if (currentAlliances.length >= 2) {
+      setCoalitionBanner('Ya alcanzaste el límite máximo de 2 coaliciones distritales.');
+      return;
+    }
+    if (isPartyIncompatible(target.partyName)) {
+      setCoalitionBanner(`${target.partyName} rechazó la alianza distrital por diferencias ideológicas.`);
+      return;
+    }
+    const transfer = Math.max(0.3, Math.round(target.sharePct * 0.6 * 10) / 10);
+    onUpdateProv((prev) => ({
+      ...prev,
+      localAlliances: [...(prev.localAlliances ?? []), target.partyName],
+      shares: transferAllianceVotes(prev.shares, target.partyName, transfer)
+    }));
+    setCoalitionBanner(
+      `¡Alianza confirmada con ${target.partyName}! Aporta +${transfer.toFixed(1).replace('.', ',')} % a tu fórmula.`
+    );
+  };
+
+  const handleBreakAlliance = (targetParty: string) => {
+    onUpdateProv((prev) => ({
+      ...prev,
+      localAlliances: (prev.localAlliances ?? []).filter((name) => name !== targetParty),
+      shares: returnAllianceVotes(prev.shares, targetParty)
+    }));
+    setCoalitionBanner(`Rompiste la alianza distrital con ${targetParty}. Tu fórmula pierde intención de voto.`);
   };
 
   return (
@@ -1069,13 +1263,47 @@ function ProvincialDrilldownView({ prov, onBack, onUpdateProv }: ProvincialDrill
         )}
 
         {subTab === 'COALICION' && (
-          <div className="rounded-2xl bg-[#0f131c] border border-slate-800 p-5 text-xs text-slate-300 space-y-2">
-            <h4 className="text-sm font-bold text-white">Alianzas distritales en {prov.name}</h4>
-            <p className="text-slate-400 leading-relaxed">
-              Las fuerzas locales provinciales como Defendamos {prov.name} o partidos vecinalistas
-              aportan hasta un 15 % de los votos. Podés cerrar coalición distrital si tu candidato
-              mantiene afinidad con sus referentes.
-            </p>
+          <div className="space-y-4">
+            <div className="rounded-2xl bg-[#0f131c] border border-slate-800 p-5 text-xs text-slate-300 space-y-2">
+              <h4 className="text-sm font-bold text-white">Alianzas distritales en {prov.name}</h4>
+              <p className="text-slate-400 leading-relaxed">
+                Podés sellar alianza con hasta 2 fuerzas provinciales o vecinalistas para fortalecer tu
+                candidatura a gobernador. Cada aliado suma hasta el 60 % de su caudal electoral directamente
+                a tu fórmula.
+              </p>
+            </div>
+
+            {coalitionBanner ? (
+              <div className="rounded-xl p-3 bg-purple-950/60 border border-purple-800 text-purple-200 text-xs flex items-center justify-between">
+                <span>{coalitionBanner}</span>
+                <button
+                  type="button"
+                  onClick={() => setCoalitionBanner(null)}
+                  className="text-purple-400 hover:text-white font-bold ml-2"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : null}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {prov.shares
+                .filter((s) => !s.isPlayer)
+                .map((party) => {
+                  const isInAlliance = (prov.localAlliances ?? []).includes(party.partyName);
+                  const canAddMore = (prov.localAlliances?.length ?? 0) < 2 || isInAlliance;
+                  return (
+                    <ProvincialCoalitionCard
+                      key={party.partyName}
+                      party={party}
+                      isInAlliance={isInAlliance}
+                      canAddMore={canAddMore}
+                      onFormAlliance={() => handleFormAlliance(party)}
+                      onBreakAlliance={() => handleBreakAlliance(party.partyName)}
+                    />
+                  );
+                })}
+            </div>
           </div>
         )}
 
@@ -1112,8 +1340,26 @@ interface TurnCardProps {
   onOpen: (id: string) => void;
 }
 
+function checkIsPlayerLeading(shares: ProvincialPartyShare[]): { playerShare: number; isLeading: boolean } {
+  let playerShare = 0;
+  let topRival = 0;
+  for (const s of shares) {
+    if (s.isPlayer) {
+      playerShare = s.sharePct;
+    } else if (s.sharePct > topRival) {
+      topRival = s.sharePct;
+    }
+  }
+  return {
+    playerShare,
+    isLeading: playerShare > topRival && playerShare > 0
+  };
+}
+
 function TurnCardItem({ prov, onOpen }: TurnCardProps) {
-  const playerShare = prov.shares.find((s) => s.isPlayer)?.sharePct ?? 0;
+  const { playerShare, isLeading } = checkIsPlayerLeading(prov.shares);
+  const borderClass = isLeading ? 'border-purple-500 shadow-md shadow-purple-500/20' : 'border-slate-800';
+  const shareText = playerShare > 0 ? `${playerShare.toFixed(1).replace('.', ',')} %` : 'sin datos';
 
   return (
     <div
@@ -1128,13 +1374,17 @@ function TurnCardItem({ prov, onOpen }: TurnCardProps) {
       </div>
 
       <div className="relative w-20 h-20 mx-auto flex items-center justify-center">
-        <div className="w-16 h-16 rounded-full border-4 border-slate-800 flex items-center justify-center flex-col">
-          <span className="text-xs font-mono font-extrabold text-white">
-            {playerShare > 0 ? `${playerShare.toFixed(1).replace('.', ',')} %` : 'sin datos'}
-          </span>
+        <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center flex-col ${borderClass}`}>
+          <span className="text-xs font-mono font-extrabold text-white">{shareText}</span>
           <span className="text-[8px] text-slate-500">tu fórmula</span>
         </div>
       </div>
+
+      {isLeading ? (
+        <div className="text-[9px] font-extrabold text-emerald-400 bg-emerald-950/80 border border-emerald-800/60 rounded px-1.5 py-0.5 inline-block mx-auto">
+          ¡Tu fórmula lidera!
+        </div>
+      ) : null}
 
       <div className="border-t border-slate-800/70 pt-2 space-y-1">
         <div className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">
@@ -1152,12 +1402,31 @@ export interface CampaignPartidoProvinciasViewProps {
   state?: CampaignSimulationState;
 }
 
-export function CampaignPartidoProvinciasView({ state: _state }: CampaignPartidoProvinciasViewProps) {
+export function CampaignPartidoProvinciasView({ state }: CampaignPartidoProvinciasViewProps) {
   const [selectedTurn, setSelectedTurn] = useState<'2028' | '2029' | '2030' | '2031' | 'MAPA'>('2028');
   const [provincesMap, setProvincesMap] = useState<Record<string, DeepProvincialData>>(
     INITIAL_PROVINCES_CATALOG
   );
   const [selectedProvinceId, setSelectedProvinceId] = useState<string | null>(null);
+  const prevMonthRef = useRef<number | undefined>(state?.stage?.currentMonthIndex);
+
+  useEffect(() => {
+    const monthIndex = state?.stage?.currentMonthIndex;
+    if (monthIndex !== undefined && monthIndex !== prevMonthRef.current) {
+      prevMonthRef.current = monthIndex;
+      setProvincesMap((prev) => {
+        const next: Record<string, DeepProvincialData> = {};
+        for (const [key, val] of Object.entries(prev)) {
+          next[key] = {
+            ...val,
+            localActionsRemaining: 4,
+            localBudgetArgentums: Math.round((val.localBudgetArgentums + 12.0) * 10) / 10
+          };
+        }
+        return next;
+      });
+    }
+  }, [state?.stage?.currentMonthIndex]);
 
   const allProvinces = Object.values(provincesMap);
   const activeTurnProvinces =
