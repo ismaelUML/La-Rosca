@@ -131,6 +131,7 @@ export function CampaignImageAndMapView({ state }: CampaignImageAndMapViewProps)
           provinces={state.provinces}
           selectedProvinceId={selectedProvinceId}
           partySigla={state.partySigla}
+          internalCandidates={state.internalPoll?.candidates}
           onSelectProvince={setSelectedProvinceId}
         />
 

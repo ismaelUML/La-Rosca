@@ -4,6 +4,7 @@ import * as topojson from 'topojson-client';
 import type { ProvinceCampaignInfo } from '@argentina-sim/domain';
 import {
   buildDistrictPopup,
+  type DistrictCandidateBase,
   type DistrictCandidateProjection,
   type DistrictPopupData
 } from './districtPollGenerator.js';
@@ -284,12 +285,14 @@ function DistrictPopupCard({
 interface ConurbanoZoomPanelProps {
   features: GeoFeatureItem[];
   partySigla: string;
+  internalCandidates?: DistrictCandidateBase[];
   onSelectDistrict: (popup: DistrictPopupData) => void;
 }
 
 function ConurbanoZoomPanel({
   features,
   partySigla,
+  internalCandidates,
   onSelectDistrict
 }: ConurbanoZoomPanelProps) {
   return (
@@ -314,7 +317,7 @@ function ConurbanoZoomPanel({
               className="cursor-pointer transition-colors hover:brightness-125 hover:stroke-white"
               onClick={() =>
                 onSelectDistrict(
-                  buildDistrictPopup(feat.name, 'Buenos Aires', 'PBA', partySigla)
+                  buildDistrictPopup(feat.name, 'Buenos Aires', 'PBA', partySigla, internalCandidates)
                 )
               }
             >
@@ -332,6 +335,7 @@ interface ArgentinaRealVectorMapProps {
   provinces: ProvinceCampaignInfo[];
   selectedProvinceId: string;
   partySigla?: string;
+  internalCandidates?: DistrictCandidateBase[];
   onSelectProvince: (id: string) => void;
 }
 
@@ -340,6 +344,7 @@ interface ArgentinaSideProvinceListProps {
   selectedProvinceId: string;
   mode: 'PROVINCIA' | 'DEPARTAMENTO';
   partySigla: string;
+  internalCandidates?: DistrictCandidateBase[];
   onSelectProvince: (id: string) => void;
   onSelectPopup: (popup: DistrictPopupData) => void;
 }
@@ -349,6 +354,7 @@ function ArgentinaSideProvinceList({
   selectedProvinceId,
   mode,
   partySigla,
+  internalCandidates,
   onSelectProvince,
   onSelectPopup
 }: ArgentinaSideProvinceListProps) {
@@ -374,7 +380,7 @@ function ArgentinaSideProvinceList({
               type="button"
               onClick={() => {
                 onSelectProvince(p.provinceId);
-                onSelectPopup(buildDistrictPopup(p.provinceName, '', p.provinceId, partySigla));
+                onSelectPopup(buildDistrictPopup(p.provinceName, '', p.provinceId, partySigla, internalCandidates));
               }}
               className={`w-full text-left px-3 py-2 rounded-xl border transition flex items-center justify-between ${bgClass}`}
             >
@@ -404,6 +410,7 @@ interface ArgentinaMainSvgCardProps {
   selectedProvinceId: string;
   provinceColorMap: Record<string, string>;
   partySigla: string;
+  internalCandidates?: DistrictCandidateBase[];
   popupDistrict: DistrictPopupData | null;
   onHover: (info: string | null) => void;
   onSelectProvince: (id: string) => void;
@@ -416,6 +423,7 @@ function ArgentinaMainSvgCard({
   selectedProvinceId,
   provinceColorMap,
   partySigla,
+  internalCandidates,
   popupDistrict,
   onHover,
   onSelectProvince,
@@ -449,7 +457,7 @@ function ArgentinaMainSvgCard({
               onMouseLeave={() => onHover(null)}
               onClick={() => {
                 onSelectProvince(mappedProvId);
-                onSelectPopup(buildDistrictPopup(feat.name, feat.subRegion, mappedProvId, partySigla));
+                onSelectPopup(buildDistrictPopup(feat.name, feat.subRegion, mappedProvId, partySigla, internalCandidates));
               }}
             />
           );
@@ -489,11 +497,13 @@ function ConurbanoZoomSlot({
   show,
   features,
   partySigla,
+  internalCandidates,
   onSelectDistrict
 }: {
   show: boolean;
   features: GeoFeatureItem[];
   partySigla: string;
+  internalCandidates?: DistrictCandidateBase[];
   onSelectDistrict: (popup: DistrictPopupData) => void;
 }) {
   if (!show) {
@@ -503,6 +513,7 @@ function ConurbanoZoomSlot({
     <ConurbanoZoomPanel
       features={features}
       partySigla={partySigla}
+      internalCandidates={internalCandidates}
       onSelectDistrict={onSelectDistrict}
     />
   );
@@ -513,6 +524,7 @@ export function ArgentinaRealVectorMap({
   provinces,
   selectedProvinceId,
   partySigla = 'PRO',
+  internalCandidates,
   onSelectProvince
 }: ArgentinaRealVectorMapProps) {
   const [provinceFeatures, setProvinceFeatures] = useState<GeoFeatureItem[]>([]);
@@ -564,6 +576,7 @@ export function ArgentinaRealVectorMap({
           selectedProvinceId={selectedProvinceId}
           provinceColorMap={provinceColorMap}
           partySigla={partySigla}
+          internalCandidates={internalCandidates}
           popupDistrict={popupDistrict}
           onHover={setHoveredInfo}
           onSelectProvince={onSelectProvince}
@@ -575,6 +588,7 @@ export function ArgentinaRealVectorMap({
           show={showConurbano}
           features={conurbanoFeatures}
           partySigla={partySigla}
+          internalCandidates={internalCandidates}
           onSelectDistrict={(popup) => setPopupDistrict(popup)}
         />
       </div>
@@ -584,6 +598,7 @@ export function ArgentinaRealVectorMap({
         selectedProvinceId={selectedProvinceId}
         mode={mode}
         partySigla={partySigla}
+        internalCandidates={internalCandidates}
         onSelectProvince={onSelectProvince}
         onSelectPopup={setPopupDistrict}
       />

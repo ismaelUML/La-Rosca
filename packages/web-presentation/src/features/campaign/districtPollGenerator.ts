@@ -140,18 +140,58 @@ const LA_PAMPA_POPUP: DistrictPopupData = {
   ]
 };
 
-function resolveScreenshotReference(districtName: string): DistrictPopupData | null {
-  const upper = districtName.toUpperCase();
-  if (upper.includes('GENERAL PUEYRREDON')) {
+export interface DistrictCandidateBase {
+  name: string;
+  voteSharePct: number;
+  color: string;
+}
+
+function checkPueyrredonMatch(upper: string, partySigla: string): DistrictPopupData | null {
+  if (partySigla === 'PRO' && upper.includes('GENERAL PUEYRREDON')) {
     return PUEYRREDON_POPUP;
   }
-  if (upper.includes('ALBERTI')) {
+  return null;
+}
+
+function checkAlbertiMatch(upper: string, partySigla: string): DistrictPopupData | null {
+  if (partySigla === 'UxP' && upper.includes('ALBERTI')) {
     return ALBERTI_POPUP;
   }
-  if (upper.includes('LA PAMPA')) {
+  return null;
+}
+
+function checkLaPampaMatch(upper: string, partySigla: string): DistrictPopupData | null {
+  if (partySigla === 'PRO' && upper.includes('LA PAMPA')) {
     return LA_PAMPA_POPUP;
   }
   return null;
+}
+
+function resolveScreenshotReference(districtName: string, partySigla: string): DistrictPopupData | null {
+  const upper = districtName.toUpperCase();
+  return checkPueyrredonMatch(upper, partySigla) ?? checkAlbertiMatch(upper, partySigla) ?? checkLaPampaMatch(upper, partySigla);
+}
+
+function resolveCandidateBaseList(
+  partySigla: string,
+  internalCandidates?: DistrictCandidateBase[]
+): Array<{ name: string; basePct: number; color: string }> {
+  if (internalCandidates && internalCandidates.length > 0) {
+    return internalCandidates.map((c) => ({
+      name: c.name,
+      basePct: c.voteSharePct,
+      color: c.color
+    }));
+  }
+  const preset = PARTY_PRESET_CANDIDATES[partySigla];
+  if (preset) {
+    return preset;
+  }
+  return [
+    { name: 'Candidato principal (vos)', basePct: 52.0, color: '#38bdf8' },
+    { name: 'Línea Federal', basePct: 26.0, color: '#60a5fa' },
+    { name: 'Corriente Alternativa', basePct: 22.0, color: '#93c5fd' }
+  ];
 }
 
 // Genera el sondeo para cualquiera de los 527 departamentos de forma procedural
@@ -160,7 +200,8 @@ function generateProceduralDistrictPopup(
   districtName: string,
   subRegion: string,
   provinceId: string,
-  partySigla: string
+  partySigla: string,
+  internalCandidates?: DistrictCandidateBase[]
 ): DistrictPopupData {
   const isDept = Boolean(subRegion);
   const title = isDept ? `${districtName} · ${subRegion}` : districtName;
@@ -168,14 +209,15 @@ function generateProceduralDistrictPopup(
   const electorateText = PROVINCIAL_ELECTORATES[provinceId] ?? '850.000';
   const indecisosPct = 4 + (hashString(districtName) % 3);
 
-  const baseList = PARTY_PRESET_CANDIDATES[partySigla] ?? PARTY_PRESET_CANDIDATES.PRO!;
+  const baseList = resolveCandidateBaseList(partySigla, internalCandidates);
   const seed = hashString(districtName);
   // Amplitud de oscilacion local: +/- 7 puntos porcentuales maximo respecto a la media provincial
   const delta = (seed % 14) - 7;
+  const divisor = Math.max(1, baseList.length - 1);
 
   const candidates: DistrictCandidateProjection[] = baseList.map((c, idx) => {
     // Si el puntero sube, le comemos proporcionalmente al resto de la interna para no inventar votos
-    const shift = idx === 0 ? delta : -delta / (baseList.length - 1);
+    const shift = idx === 0 ? delta : -delta / divisor;
     const pct = Math.max(5, Math.min(85, Number((c.basePct + shift).toFixed(1))));
     return { name: c.name, pct, color: c.color };
   });
@@ -193,11 +235,14 @@ export function buildDistrictPopup(
   districtName: string,
   subRegion: string,
   provinceId: string,
-  partySigla: string = 'PRO'
+  partySigla: string = 'PRO',
+  internalCandidates?: DistrictCandidateBase[]
 ): DistrictPopupData {
-  const directMatch = resolveScreenshotReference(districtName);
-  if (directMatch) {
-    return directMatch;
+  if (!internalCandidates || internalCandidates.length === 0) {
+    const directMatch = resolveScreenshotReference(districtName, partySigla);
+    if (directMatch) {
+      return directMatch;
+    }
   }
-  return generateProceduralDistrictPopup(districtName, subRegion, provinceId, partySigla);
+  return generateProceduralDistrictPopup(districtName, subRegion, provinceId, partySigla, internalCandidates);
 }
