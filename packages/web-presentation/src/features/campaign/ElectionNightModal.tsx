@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import type { CampaignSimulationState } from '@argentina-sim/domain';
+import { ElectionResultsSvgMap } from './ElectionResultsSvgMap.js';
 
 // Modal de Noche Electoral y Escrutinio Oficial (QQG Capturas 9 y 10):
 // En Argentina la noche de las urnas es sagrada y dramática: las pantallas del Correo Argentino,
@@ -17,7 +18,7 @@ interface CandidateVoteResult {
   isPlayer: boolean;
 }
 
-interface EscrutinioData {
+export interface EscrutinioData {
   padronTotal: number;
   participacionPct: number;
   votosPositivos: number;
@@ -50,6 +51,92 @@ function resolveEscrutinioTitle(isDirectVictory: boolean, isPlayerWinner: boolea
   return 'Vas a segunda vuelta';
 }
 
+interface NationalPresetTicket {
+  partySigla: string;
+  fuerza: string;
+  candidato: string;
+  color: string;
+  baseWeight: number;
+}
+
+const NATIONAL_TICKETS_POOL: NationalPresetTicket[] = [
+  {
+    partySigla: 'UxP',
+    fuerza: 'UxP + FIT',
+    candidato: 'Axel Kicillof (fórmula presidencial con vicepresidencia)',
+    color: '#0284c7',
+    baseWeight: 44
+  },
+  {
+    partySigla: 'LLA',
+    fuerza: 'La Libertad Avanza',
+    candidato: 'Javier Milei (fórmula presidencial con vicepresidencia)',
+    color: '#8b5cf6',
+    baseWeight: 44
+  },
+  {
+    partySigla: 'PRO',
+    fuerza: 'Propuesta Republicana (PRO)',
+    candidato: 'Mauricio Macri (fórmula presidencial con vicepresidencia)',
+    color: '#eab308',
+    baseWeight: 20
+  },
+  {
+    partySigla: 'PF',
+    fuerza: 'Provincias Unidas / Peronismo Federal',
+    candidato: 'Juan Schiaretti (fórmula presidencial con vicepresidencia)',
+    color: '#2563eb',
+    baseWeight: 16
+  },
+  {
+    partySigla: 'UCR',
+    fuerza: 'Unión Cívica Radical',
+    candidato: 'Maximiliano Pullaro (fórmula presidencial con vicepresidencia)',
+    color: '#dc2626',
+    baseWeight: 14
+  },
+  {
+    partySigla: 'FIT',
+    fuerza: 'Frente de Izquierda',
+    candidato: 'Myriam Bregman (fórmula presidencial con vicepresidencia)',
+    color: '#ef4444',
+    baseWeight: 6
+  }
+];
+
+function resolveRivalTickets(playerPartySigla: string, coalitionParties: string[] = []): NationalPresetTicket[] {
+  const allied = new Set([playerPartySigla, ...coalitionParties]);
+  return NATIONAL_TICKETS_POOL.filter((t) => !allied.has(t.partySigla));
+}
+
+function distributeRivalShares(
+  rivals: NationalPresetTicket[],
+  remainingPct: number,
+  votosValidos: number
+): CandidateVoteResult[] {
+  const sumWeights = rivals.reduce((acc, r) => acc + r.baseWeight, 0) || 1;
+  let allocatedPct = 0;
+  const results: CandidateVoteResult[] = [];
+
+  for (let i = 0; i < rivals.length; i++) {
+    const r = rivals[i]!;
+    const isLast = i === rivals.length - 1;
+    const share = isLast
+      ? Math.max(0.5, Math.round((remainingPct - allocatedPct) * 10) / 10)
+      : Math.round(((r.baseWeight / sumWeights) * remainingPct) * 10) / 10;
+    allocatedPct += share;
+    results.push({
+      fuerza: r.fuerza,
+      candidato: r.candidato,
+      votos: Math.round((votosValidos * share) / 100),
+      pct: share,
+      color: r.color,
+      isPlayer: false
+    });
+  }
+  return results;
+}
+
 function computeBalotajeEscrutinio(
   state: CampaignSimulationState,
   votosValidos: number,
@@ -59,12 +146,15 @@ function computeBalotajeEscrutinio(
   abstencion: number,
   coalitionLabel: string
 ): EscrutinioData {
-  const playerShare = Math.min(85, Math.max(15, state.votingIntention.intencionVotoGeneral));
-  const playerPct = Math.min(78, Math.max(48, Math.round((playerShare * 1.5) * 10) / 10));
+  const playerShare = Math.min(80, Math.max(20, state.votingIntention.intencionVotoGeneral));
+  const playerPct = Math.min(78, Math.max(48, Math.round(playerShare * 1.35 * 10) / 10));
   const rivalPct = Math.round((100 - playerPct) * 10) / 10;
   const playerVotes = Math.round((votosValidos * playerPct) / 100);
   const rivalVotes = votosValidos - playerVotes;
   const isPlayerWinner = playerPct > rivalPct;
+
+  const rivals = resolveRivalTickets(state.partySigla, state.coalitionParties);
+  const topRival = rivals[0] ?? NATIONAL_TICKETS_POOL[0]!;
 
   const results: CandidateVoteResult[] = [
     {
@@ -72,15 +162,15 @@ function computeBalotajeEscrutinio(
       candidato: `${state.candidateName} (fórmula presidencial con vicepresidencia)`,
       votos: playerVotes,
       pct: playerPct,
-      color: state.partyColor || '#ef4444',
+      color: state.partyColor || '#8b5cf6',
       isPlayer: true
     },
     {
-      fuerza: 'UxP',
-      candidato: 'Axel Kicillof (fórmula presidencial con vicepresidencia)',
+      fuerza: topRival.fuerza,
+      candidato: topRival.candidato,
       votos: rivalVotes,
       pct: rivalPct,
-      color: '#0284c7',
+      color: topRival.color,
       isPlayer: false
     }
   ];
@@ -117,60 +207,27 @@ function computeGeneralesEscrutinio(
   coalitionLabel: string,
   stage: ElectionStageType
 ): EscrutinioData {
-  const playerShare = Math.min(85, Math.max(15, state.votingIntention.intencionVotoGeneral));
-  const rival1Pct = 35.5;
+  const playerShare = Math.min(80, Math.max(15, state.votingIntention.intencionVotoGeneral));
   const playerPct = Math.round(playerShare * 10) / 10;
-  const remaining = Math.max(10, 100 - playerPct - rival1Pct);
-  const llaPct = Math.round(remaining * 0.65 * 10) / 10;
-  const pfPct = Math.round(remaining * 0.22 * 10) / 10;
-  const proPct = Math.max(1.5, Math.round((remaining - llaPct - pfPct) * 10) / 10);
-  const fallbackColor = state.partyColor ? state.partyColor : '#ef4444';
+  const remainingPct = Math.round((100 - playerPct) * 10) / 10;
+  const playerVotes = Math.round((votosValidos * playerPct) / 100);
 
-  const rawResults: CandidateVoteResult[] = [
-    {
-      fuerza: 'UxP + FIT',
-      candidato: 'Axel Kicillof (fórmula presidencial con vicepresidencia)',
-      votos: Math.round((votosValidos * rival1Pct) / 100),
-      pct: rival1Pct,
-      color: '#0284c7',
-      isPlayer: false
-    },
-    {
-      fuerza: coalitionLabel,
-      candidato: `${state.candidateName} (fórmula presidencial con vicepresidencia)`,
-      votos: Math.round((votosValidos * playerPct) / 100),
-      pct: playerPct,
-      color: fallbackColor,
-      isPlayer: true
-    },
-    {
-      fuerza: 'LLA',
-      candidato: 'Javier Milei (fórmula presidencial con vicepresidencia)',
-      votos: Math.round((votosValidos * llaPct) / 100),
-      pct: llaPct,
-      color: '#8b5cf6',
-      isPlayer: false
-    },
-    {
-      fuerza: 'PF',
-      candidato: 'Juan Schiaretti (fórmula presidencial con vicepresidencia)',
-      votos: Math.round((votosValidos * pfPct) / 100),
-      pct: pfPct,
-      color: '#2563eb',
-      isPlayer: false
-    },
-    {
-      fuerza: 'PRO',
-      candidato: 'Mauricio Macri (fórmula presidencial con vicepresidencia)',
-      votos: Math.round((votosValidos * proPct) / 100),
-      pct: proPct,
-      color: '#eab308',
-      isPlayer: false
-    }
-  ].sort((a, b) => b.pct - a.pct);
+  const rivals = resolveRivalTickets(state.partySigla, state.coalitionParties);
+  const rivalResults = distributeRivalShares(rivals, remainingPct, votosValidos);
+
+  const playerResult: CandidateVoteResult = {
+    fuerza: coalitionLabel,
+    candidato: `${state.candidateName} (fórmula presidencial con vicepresidencia)`,
+    votos: playerVotes,
+    pct: playerPct,
+    color: state.partyColor || '#8b5cf6',
+    isPlayer: true
+  };
+
+  const rawResults = [playerResult, ...rivalResults].sort((a, b) => b.pct - a.pct);
 
   const first = rawResults[0]!;
-  const second = rawResults[1]!;
+  const second = rawResults[1] ?? first;
   const diff = first.pct - second.pct;
   const directVictory = checkConstitutionalFirstRoundWin(first.pct, diff);
   const title = resolveEscrutinioTitle(directVictory, first.isPlayer, stage === 'PASO');
@@ -185,15 +242,13 @@ function computeGeneralesEscrutinio(
     abstencion,
     results: rawResults,
     verdictTitle: title,
-    verdictSubtitle: `Sacaste ${playerPct.toFixed(1).replace('.', ',')} % (${Math.round(
-      (votosValidos * playerPct) / 100
-    ).toLocaleString('es-AR')} votos).`,
+    verdictSubtitle: `Sacaste ${playerPct.toFixed(1).replace('.', ',')} % (${playerVotes.toLocaleString('es-AR')} votos).`,
     isVictory: directVictory && first.isPlayer,
     isRunoff
   };
 }
 
-function computeEscrutinio(
+export function computeEscrutinio(
   stage: ElectionStageType,
   state: CampaignSimulationState
 ): EscrutinioData {
@@ -373,7 +428,7 @@ export function ElectionNightModal({
             ))}
           </div>
 
-          <div className="rounded-2xl bg-[#0f131c] border border-slate-800 p-4 space-y-2">
+          <div className="rounded-2xl bg-[#0f131c] border border-slate-800 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-white">Mapa de resultados oficial</span>
               <span className="text-[10px] font-mono text-slate-400">Padrón CNE escrutado 100%</span>
@@ -381,13 +436,16 @@ export function ElectionNightModal({
             <p className="text-xs text-slate-400">
               Pintado con la fuerza ganadora en los 24 distritos electorales del país.
             </p>
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2 pt-1">
               <span className="px-3 py-1 rounded-lg text-xs font-bold bg-white text-slate-950 shadow">
                 Por provincia
               </span>
               <span className="px-3 py-1 rounded-lg text-xs font-medium bg-slate-900 text-slate-400 border border-slate-800">
                 Por departamento
               </span>
+            </div>
+            <div className="pt-2">
+              <ElectionResultsSvgMap provinces={state.provinces} />
             </div>
           </div>
         </div>

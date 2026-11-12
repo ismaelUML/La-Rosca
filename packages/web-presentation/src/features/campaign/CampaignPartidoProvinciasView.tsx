@@ -752,8 +752,8 @@ function resolveRivalShare(sorted: ProvincialPartyShare[]): { name: string; shar
 
 function formatVoteRowLabel(share: ProvincialPartyShare): string {
   if (!share.isPlayer) return share.partyName;
-  if (share.partyName === 'Tu fórmula' || share.partyName.includes('(tu fórmula)')) {
-    return share.partyName;
+  if (share.partyName.toLowerCase().includes('tu fórmula')) {
+    return 'Tu fórmula';
   }
   return `${share.partyName} (tu fórmula)`;
 }

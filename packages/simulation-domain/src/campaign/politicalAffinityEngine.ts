@@ -339,11 +339,22 @@ function coalitionFactors(partnerSigla: string, player: PlayerStanding, mood: Co
   ];
 }
 
+const RIGHT_PARTIES = new Set(['LLA', 'PRO']);
+const LEFT_PARTIES = new Set(['UxP', 'FIT']);
+
+function isPolarOpposites(p1: string, p2: string): boolean {
+  if (RIGHT_PARTIES.has(p1)) return LEFT_PARTIES.has(p2);
+  if (LEFT_PARTIES.has(p1)) return RIGHT_PARTIES.has(p2);
+  return false;
+}
+
 function coalitionBlock(partnerSigla: string, player: PlayerStanding): string | null {
   const distance = ideologicalDistance(resolvePartyAxis(partnerSigla), player.axis);
+  const polar = isPolarOpposites(partnerSigla, player.partySigla);
   return firstBlock([
     [partnerSigla === player.partySigla, 'Es tu propio partido.'],
-    [distance > 62, 'Polarización insalvable: sus bases no se lo perdonarían.']
+    [polar, 'Polarización histórica: incompatibilidad programática absoluta y rechazo de las bases.'],
+    [distance > 45, 'Polarización insalvable: sus bases no se lo perdonarían.']
   ]);
 }
 

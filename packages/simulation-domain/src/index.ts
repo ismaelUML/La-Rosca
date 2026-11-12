@@ -16,4 +16,6 @@ export * from './engine/PolicyActionHandler.js';
 export * from './engine/SimulationEngine.js';
 export * from './engine/rigiEngine.js';
 export * from './politics/congressEngine.js';
+export * from './engine/semanticParserEngine.js';
+export * from './politics/militaryTheaterEngine.js';
 

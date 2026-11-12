@@ -26,6 +26,7 @@ import {
   createInitialCampaignState,
   createInitialSimulationState2027,
   INITIAL_CABINET_2027,
+  INITIAL_VACANT_CABINET_2027,
   INITIAL_ECONOMIC_LEVERS,
   INITIAL_RIGI_SECTORS,
   INITIAL_SECTOR_MEASURES,
@@ -54,7 +55,8 @@ import { CampaignDemografiaPaisView } from './features/campaign/CampaignDemograf
 import { CampaignMonthlyDilemmaModal } from './features/campaign/CampaignMonthlyDilemmaModal.js';
 import {
   ElectionNightModal,
-  type ElectionStageType
+  type ElectionStageType,
+  computeEscrutinio
 } from './features/campaign/ElectionNightModal.js';
 import {
   GameSidebarLayout,
@@ -396,6 +398,16 @@ function resolveElectionStageForMonth(monthIndex: number): ElectionStageType | n
   return null;
 }
 
+function checkElectionTransitionToGovernment(
+  stage: ElectionStageType,
+  isVictory: boolean,
+  isRunoff: boolean
+): boolean {
+  if (!isVictory) return false;
+  if (stage === 'BALOTAJE') return true;
+  return stage === 'GENERALES' && !isRunoff;
+}
+
 export function App() {
   const saveRepo = useMemo(() => new CompressedSaveRepository(), []);
   const savedSession = useMemo(() => loadSessionFromStorage(), []);
@@ -434,7 +446,7 @@ export function App() {
   const [portableSaveBanner, setPortableSaveBanner] = useState<string | null>(null);
 
   const [ministers, setMinisters] = useState<CabinetMinister[]>(() => {
-    return savedSession?.ministers ?? INITIAL_CABINET_2027;
+    return savedSession?.ministers ?? INITIAL_VACANT_CABINET_2027;
   });
   const [levers, setLevers] = useState<EconomicLeverItem[]>(() => {
     return savedSession?.levers ?? INITIAL_ECONOMIC_LEVERS;
@@ -443,7 +455,11 @@ export function App() {
     return savedSession?.measures ?? INITIAL_SECTOR_MEASURES;
   });
   const [rigiSectors, setRigiSectors] = useState<RigisectorItem[]>(() => {
-    return savedSession?.rigiSectors ?? INITIAL_RIGI_SECTORS;
+    const raw = savedSession?.rigiSectors;
+    if (raw && raw.length === 29 && raw.filter((r) => r.enabledByDecree).length < 29) {
+      return raw;
+    }
+    return INITIAL_RIGI_SECTORS;
   });
   const [customTaxes, setCustomTaxes] = useState<CustomTaxProposal[]>(() => {
     return savedSession?.customTaxes ?? [];
@@ -496,9 +512,23 @@ export function App() {
     savedSession
   ]);
 
+  const startPresidentialGovernment = () => {
+    setState(createInitialSimulationState2027(setup.role, setup.difficulty, setup.provinceId));
+    setMinisters(INITIAL_VACANT_CABINET_2027);
+    setRigiSectors(INITIAL_RIGI_SECTORS);
+    setRigiPending([]);
+    setActiveSection('GABINETE');
+    setScreenMode('GOVERNMENT');
+  };
+
   const handleStartConfiguredGame = (nextSetup: GameSetupConfiguration) => {
     setSetup(nextSetup);
     const candidateObj = resolveCandidateFromSetup(nextSetup);
+
+    setMinisters(INITIAL_VACANT_CABINET_2027);
+    setRigiSectors(INITIAL_RIGI_SECTORS);
+    setRigiPending([]);
+    setActiveSection('GABINETE');
 
     setCampaignState(
       createInitialCampaignState(
@@ -515,8 +545,7 @@ export function App() {
   const handleAdvanceCampaign = () => {
     const next = advanceCampaignMonth(campaignState);
     if (next.stage.stage === 'GOBIERNO') {
-      setState(createInitialSimulationState2027(setup.role, setup.difficulty, setup.provinceId));
-      setScreenMode('GOVERNMENT');
+      startPresidentialGovernment();
       return;
     }
     const dilemma = resolveMonthlyDilemma(next.stage.currentMonthIndex, next.resolvedDilemmas);
@@ -532,9 +561,16 @@ export function App() {
   };
 
   const handleProceedElection = () => {
-    if (activeElectionModal === 'BALOTAJE') {
-      setState(createInitialSimulationState2027(setup.role, setup.difficulty, setup.provinceId));
-      setScreenMode('GOVERNMENT');
+    if (activeElectionModal) {
+      const escrutinio = computeEscrutinio(activeElectionModal, campaignState);
+      const shouldEnterGov = checkElectionTransitionToGovernment(
+        activeElectionModal,
+        escrutinio.isVictory,
+        escrutinio.isRunoff
+      );
+      if (shouldEnterGov) {
+        startPresidentialGovernment();
+      }
     }
     setActiveElectionModal(null);
   };
@@ -646,10 +682,7 @@ export function App() {
         portableSaveBanner={portableSaveBanner}
         onSelectSection={setCampaignNavSection}
         onAdvanceMonth={handleAdvanceCampaign}
-        onSkipToGovernment={() => {
-          setState(createInitialSimulationState2027(setup.role, setup.difficulty, setup.provinceId));
-          setScreenMode('GOVERNMENT');
-        }}
+        onSkipToGovernment={startPresidentialGovernment}
         onExportSaveCode={handleExportSaveCode}
         onCloseSaveBanner={() => setPortableSaveBanner(null)}
         onExitToMenu={() => setScreenMode('LANDING')}

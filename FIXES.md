@@ -137,7 +137,75 @@ Registro de soluciones arquitectónicas, módulos modificados, métricas de cali
 ---
 
 ### FIX-009: Fase 3 Negociación Parlamentaria por Bloques en el Congreso y Paridad Territorial en Campaña
+- **Commit**: `9e15ff7`
+- **Archivos**:
+  - `packages/simulation-domain/src/politics/congressEngine.ts`
+  - `packages/simulation-domain/src/engine/PolicyActionHandler.ts`
+  - `packages/simulation-domain/src/campaign/campaignEngine.ts`
+  - `packages/simulation-domain/src/models/SimulationTypes.ts`
+  - `packages/simulation-domain/src/index.ts`
+  - `packages/simulation-domain/tests/simulationEngine.test.ts`
+  - `packages/web-presentation/src/features/game-shell/CongressBillsNegotiationSection.tsx`
+  - `packages/web-presentation/src/features/game-shell/CamarasLegislativasView.tsx`
+  - `packages/web-presentation/src/features/campaign/ArgentinaRealVectorMap.tsx`
+  - `packages/web-presentation/src/features/campaign/districtPollGenerator.ts`
+  - `packages/web-presentation/src/App.tsx`
+- **Solución técnica**:
+  - Motor Parlamentario de Negociación por Bloques (`congressEngine.ts`):
+    - Catálogo `INITIAL_PARLIAMENTARY_BLOCS` con las 7 fuerzas legislativas reales (Diputados 257 / Senado 72): `LLA` (38/7, afín 100%), `PRO` (37/6, afín 78%), `PF` (16/6, afín 55%), `PROVINCIALES` (28/7, afín 50%), `UCR` (34/13, afín 42%), `UXP` (99/33, oposición dura 10%), `FIT` (5/0, oposición dura 2%).
+    - Posturas parlamentarias dinámicas: `A favor` ($\ge 60\%$), `En duda` ($35-59\%$), `En contra` ($< 35\%$).
+    - 4 tipos de concesiones legislativas:
+      - Obra Pública / Partidas presupuestarias (`ARGENTUMS`, 30 argentums, $+24\%$ prob).
+      - Espacio en Gabinete (`GABINETE`, 10 capital político, $+28\%$ prob).
+      - Pacto con Gobernadores (`GOBERNADORES`, $+35\%$ prob en peronismo federal y provinciales).
+      - Suavizar articulado del proyecto (`SUAVIZAR`, $+15\%$ probabilidad transversal).
+    - Simulación nominal de votación en recinto (`simulateChamberVote`, `executeFullCongressVote`): Quórum y mayoría calificada estricta (129 en Diputados, 37 en Senadores). Si ambas cámaras aprueban, la ley queda sancionada; si alguna rechaza, queda bloqueada con su respectivo dictamen.
+    - Acción `ENACT_CONGRESS_BILL` en `PolicyActionHandler`: actualiza PBI, riesgo país, superávit fiscal y aprobación presidencial en el estado de gobierno, registrando la sanción oficial en el historial.
+  - UI de Cámaras Legislativas (`CamarasLegislativasView.tsx` y `CongressBillsNegotiationSection.tsx`):
+    - Navegación entre solapas: `Rosca y votación de leyes` y `Composición y bancas (257 Dip / 72 Sen)`.
+    - Tarjetas de proyección en tiempo real para Diputados y Senado con barras de progreso hacia los umbrales de quórum de 129 y 37.
+    - Selector de proyectos de ley (`Ley Bases 2.0`, `Presupuesto Déficit Cero`, `Reforma Laboral`, `Pacto Fiscal Federal`, `Intervención Federal`).
+    - Grilla de tarjetas de bloques con botones de concesión y botón principal "Llevar a votación en el recinto".
+    - Modal de escrutinio parlamentario (`VoteResultModal`) con el desglose exacto de votos afirmativos, negativos y abstenciones por bloque y cámara.
+  - Corrección de bugs territoriales en campaña:
+    - Popup de La Pampa: Desacoplado del preset estático del PRO. Cuando el jugador compite por LLA, el mapa vectorial proyecta la interna oficialista real (Javier Milei, Victoria Villarruel, Patricia Bullrich, Santiago Caputo).
+    - Recomposición paulatina de campaña: `decayProvincesFatigue` y `decayLocalZonesFatigue` en `advanceCampaignMonth` reducen la fatiga acumulada por visitas mes a mes, restaurando gradualmente la efectividad de las recorridas territoriales.
+  - Calidad de software: 26 tests unitarios pasando en Vitest, auditoría determinista superada en los 71 archivos del proyecto ($CC \le 5$, $MI \ge 75$) y compilación TypeScript/Vite libre de errores.
+
+---
+
+### FIX-010: Fase 4 Parser Semántico, Combate Militar Sigmoide, Escrutinio Matemático 100% y Gabinete Inaugural Vacante
 - **Commit**: En preparación
+- **Archivos**:
+  - `packages/simulation-domain/src/engine/semanticParserEngine.ts`
+  - `packages/simulation-domain/src/politics/militaryTheaterEngine.ts`
+  - `packages/simulation-domain/src/campaign/politicalAffinityEngine.ts`
+  - `packages/simulation-infrastructure/src/datasets/partiesAndPoliticians2027.ts`
+  - `packages/web-presentation/src/features/campaign/ElectionNightModal.tsx`
+  - `packages/web-presentation/src/features/campaign/ElectionResultsSvgMap.tsx`
+  - `packages/web-presentation/src/features/campaign/ArgentinaRealVectorMap.tsx`
+  - `packages/web-presentation/src/features/campaign/CampaignPartidoProvinciasView.tsx`
+  - `packages/web-presentation/src/features/game-shell/CabinetView.tsx`
+  - `packages/web-presentation/src/features/game-shell/MinisterReplacementModal.tsx`
+  - `packages/web-presentation/src/features/game-shell/BudgetAndTaxesView.tsx`
+  - `packages/web-presentation/src/App.tsx`
+  - `packages/simulation-domain/tests/fase4Engines.test.ts`
+- **Solución técnica**:
+  - Mapa vectorial en Noche Electoral (`ElectionResultsSvgMap.tsx`): Integración del mapa SVG interactivo de la República Argentina con los 24 distritos coloreados con la fuerza ganadora del escrutinio y tooltips dinámicos con conteo en vivo.
+  - Escrutinio oficial matemáticamente congruente (`ElectionNightModal.tsx`):
+    - Se eliminaron las 5 filas estáticas que generaban sumatorias del $119.2\%$.
+    - `distributeRivalShares` y `resolveRivalTickets` garantizan que la sumatoria total sea exactamente del $100.0\%$, sin fórmulas repetidas y excluyendo a socios de la coalición del jugador de las candidaturas rivales.
+    - Bloqueo en `politicalAffinityEngine.ts` de alianzas inverosímiles entre polos opuestos (`LLA`/`PRO` vs `UxP`/`FIT`).
+  - RIGI inicial 0 de 29: Reseteo estricto a `INITIAL_RIGI_SECTORS` (`enabledByDecree: false` en los 29 sectores) al crear o asumir mandato, eliminando cualquier estado residual en `localStorage`.
+  - Gabinete presidencial inaugural vacante (`CabinetView.tsx`, `INITIAL_VACANT_CABINET_2027`):
+    - Al asumir la presidencia, los 10 ministerios arrancan en estado `'Vacante (A designar)'` con etiqueta `SIN DESIGNAR`.
+    - Banner inaugural: *"¡Asumiste la Presidencia! Es momento de armar tu equipo de gobierno"*, con contador de carteras cubiertas y botón directo *"Designar ministro"* para seleccionar candidatos de su propio partido o socios de coalición.
+  - Fase 4 - Parser Semántico (`semanticParserEngine.ts`):
+    - Evaluación en vivo en `BudgetAndTaxesView.tsx` (`Impuestos Propios`): clasificación ideológica (`LIBERAL`, `ESTATISTA`, `PRAGMATICO`), detección de metas (inflación, inversión, empleo, recaudación, pobreza), cálculo de resistencia parlamentaria y alerta constitucional por confiscatoriedad si la alícuota supera el 35%.
+  - Fase 4 - Teatros Militares y Combate Sigmoide (`militaryTheaterEngine.ts`):
+    - Fórmula sigmoide $\sigma(z) = \frac{1}{1 + e^{-z}}$ para resolución de combates aeronavales y terrestres en los 4 teatros (`Frontera Norte`, `Rosario y Conurbano`, `Atlántico Sur Milla 200`, `Malvinas y Antártida`).
+    - Despliegues operativos (`PATRULLA`, `SATURACION`) y orden de anexión territorial y soberanía plena al superar el 90% de control territorial.
+  - Disciplina de calidad: 36 tests pasando en Vitest, auditoría de complejidad superada en los 74 archivos ($CC \le 5$, $MI \ge 75$) y build de Vite exitoso.
 - **Archivos**:
   - `packages/simulation-domain/src/politics/congressEngine.ts`
   - `packages/simulation-domain/src/engine/PolicyActionHandler.ts`

@@ -71,7 +71,7 @@ const PROVINCE_NAME_TO_ID: Record<string, string> = {
   TUCUMAN: 'TUCUMAN'
 };
 
-function resolveFeatureProvinceId(feat: GeoFeatureItem): string {
+export function resolveFeatureProvinceId(feat: GeoFeatureItem): string {
   if (feat.subRegion && PROVINCE_NAME_TO_ID[feat.subRegion]) {
     return PROVINCE_NAME_TO_ID[feat.subRegion]!;
   }
@@ -209,7 +209,7 @@ function normalizeConurbanoFeatures(topoData: any): GeoFeatureItem[] {
   return items;
 }
 
-function normalizeFeatures(topoData: any, objectKey: string): GeoFeatureItem[] {
+export function normalizeFeatures(topoData: any, objectKey: string): GeoFeatureItem[] {
   const pathGen = buildPathGenerator();
   const geoObj = topojson.feature(topoData, topoData.objects[objectKey]) as any;
   const items: GeoFeatureItem[] = [];

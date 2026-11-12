@@ -44,7 +44,9 @@ function isSuitableForMinistry(ministryId: string, pol: RealPoliticianPreset): b
 
 function resolveEligiblePoliticians(playerPartySigla: string, coalitionParties: string[]): RealPoliticianPreset[] {
   const allowed = new Set([playerPartySigla, ...coalitionParties]);
-  return REAL_POLITICIANS_2027.filter((p) => allowed.has(p.partySigla));
+  const matched = REAL_POLITICIANS_2027.filter((p) => allowed.has(p.partySigla));
+  if (matched.length > 0) return matched;
+  return REAL_POLITICIANS_2027;
 }
 
 function computeMinisterCompetence(isSuitable: boolean, pol: RealPoliticianPreset): number {

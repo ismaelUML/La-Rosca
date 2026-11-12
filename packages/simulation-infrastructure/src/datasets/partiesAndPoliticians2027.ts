@@ -292,6 +292,142 @@ export const INITIAL_CABINET_2027: CabinetMinister[] = [
   }
 ];
 
+// Al asumir la presidencia o iniciar nuevo gobierno, las 10 carteras estratégicas arrancan
+// vacantes (0 de 10 cubiertas) para que el jugador elija a sus propios ministros de acuerdo
+// a su partido, acuerdos de coalición y perfiles de idoneidad técnica.
+export const INITIAL_VACANT_CABINET_2027: CabinetMinister[] = [
+  {
+    id: 'JEFATURA',
+    ministryName: 'Jefatura de Gabinete',
+    ministerName: 'Vacante (A designar)',
+    partySigla: '—',
+    affinityPct: 0,
+    isCoalitionQuota: false,
+    competence: 0,
+    loyalty: 0,
+    risk: 0,
+    performance: 0,
+    monthlyEffectText: 'Sin ministro: parálisis operativa en la jefatura'
+  },
+  {
+    id: 'INTERIOR',
+    ministryName: 'Interior',
+    ministerName: 'Vacante (A designar)',
+    partySigla: '—',
+    affinityPct: 0,
+    isCoalitionQuota: false,
+    competence: 0,
+    loyalty: 0,
+    risk: 0,
+    performance: 0,
+    monthlyEffectText: 'Sin ministro: desarticulación con gobernadores e intendentes'
+  },
+  {
+    id: 'ECONOMIA',
+    ministryName: 'Economía',
+    ministerName: 'Vacante (A designar)',
+    partySigla: '—',
+    affinityPct: 0,
+    isCoalitionQuota: false,
+    competence: 0,
+    loyalty: 0,
+    risk: 0,
+    performance: 0,
+    monthlyEffectText: 'Sin ministro: incertidumbre en mercados y ancla fiscal'
+  },
+  {
+    id: 'SEGURIDAD',
+    ministryName: 'Seguridad',
+    ministerName: 'Vacante (A designar)',
+    partySigla: '—',
+    affinityPct: 0,
+    isCoalitionQuota: false,
+    competence: 0,
+    loyalty: 0,
+    risk: 0,
+    performance: 0,
+    monthlyEffectText: 'Sin ministro: falta de mando en fuerzas federales'
+  },
+  {
+    id: 'JUSTICIA',
+    ministryName: 'Justicia',
+    ministerName: 'Vacante (A designar)',
+    partySigla: '—',
+    affinityPct: 0,
+    isCoalitionQuota: false,
+    competence: 0,
+    loyalty: 0,
+    risk: 0,
+    performance: 0,
+    monthlyEffectText: 'Sin ministro: acefalía en el vínculo con los tribunales'
+  },
+  {
+    id: 'DEFENSA',
+    ministryName: 'Defensa',
+    ministerName: 'Vacante (A designar)',
+    partySigla: '—',
+    affinityPct: 0,
+    isCoalitionQuota: false,
+    competence: 0,
+    loyalty: 0,
+    risk: 0,
+    performance: 0,
+    monthlyEffectText: 'Sin ministro: desatención operativa en las FF.AA.'
+  },
+  {
+    id: 'CANCILLERIA',
+    ministryName: 'Relaciones Exteriores',
+    ministerName: 'Vacante (A designar)',
+    partySigla: '—',
+    affinityPct: 0,
+    isCoalitionQuota: false,
+    competence: 0,
+    loyalty: 0,
+    risk: 0,
+    performance: 0,
+    monthlyEffectText: 'Sin ministro: parálisis en negociaciones exteriores'
+  },
+  {
+    id: 'INFRAESTRUCTURA',
+    ministryName: 'Desregulación e Infraestructura',
+    ministerName: 'Vacante (A designar)',
+    partySigla: '—',
+    affinityPct: 0,
+    isCoalitionQuota: false,
+    competence: 0,
+    loyalty: 0,
+    risk: 0,
+    performance: 0,
+    monthlyEffectText: 'Sin ministro: freno de obras públicas estratégicas'
+  },
+  {
+    id: 'SALUD',
+    ministryName: 'Salud',
+    ministerName: 'Vacante (A designar)',
+    partySigla: '—',
+    affinityPct: 0,
+    isCoalitionQuota: false,
+    competence: 0,
+    loyalty: 0,
+    risk: 0,
+    performance: 0,
+    monthlyEffectText: 'Sin ministro: demoras críticas en provisión sanitaria'
+  },
+  {
+    id: 'CAPITAL_HUMANO',
+    ministryName: 'Capital Humano',
+    ministerName: 'Vacante (A designar)',
+    partySigla: '—',
+    affinityPct: 0,
+    isCoalitionQuota: false,
+    competence: 0,
+    loyalty: 0,
+    risk: 0,
+    performance: 0,
+    monthlyEffectText: 'Sin ministro: descontrol en planes y asistencia social'
+  }
+];
+
 export const INITIAL_ECONOMIC_LEVERS: EconomicLeverItem[] = [
   { id: 'GASTO_PUBLICO', title: 'Gasto público', description: 'Nivel del gasto primario del Estado.', level: 0, levelLabels: ['Motosierra', 'Ajuste', 'Neutral', 'Expansivo', 'Plan Platita'] },
   { id: 'TIPO_CAMBIO', title: 'Tipo de cambio', description: 'Ritmo de ajuste del dólar oficial (Crawling Peg).', level: 0, levelLabels: ['Ancla 0%', 'Lento 1%', 'Neutral 1,5%', 'Acelerado 4%', 'Devaluación'] },

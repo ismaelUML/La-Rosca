@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
-import type {
-  CustomTaxProposal,
-  PolicyAction,
-  RigiPendingProject,
-  RigisectorItem,
-  SimulationState
+import React, { useMemo, useState } from 'react';
+import {
+  parseSemanticTaxOrLaw,
+  type CustomTaxProposal,
+  type PolicyAction,
+  type RigiPendingProject,
+  type RigisectorItem,
+  type SemanticImpactSummary,
+  type SemanticIdeologyDirection,
+  type SimulationState
 } from '@argentina-sim/domain';
 import { RigiSectorsSection } from './RigiSectorsSection.js';
 import { TaxesManagementSection } from './TaxesManagementSection.js';
@@ -140,6 +143,63 @@ interface CustomTaxesAndRigiViewProps {
   onApproveAllProjects?: () => void;
 }
 
+function resolveDirectionColor(direction: SemanticIdeologyDirection): string {
+  if (direction === 'LIBERAL') return 'text-emerald-400 bg-emerald-950/60 border-emerald-800';
+  if (direction === 'ESTATISTA') return 'text-sky-400 bg-sky-950/60 border-sky-800';
+  return 'text-amber-400 bg-amber-950/60 border-amber-800';
+}
+
+function SemanticTaxAnalysisPreview({ analysis }: { analysis: SemanticImpactSummary }) {
+  const dirColor = resolveDirectionColor(analysis.direction);
+  const revSign = analysis.fiscalDeltaGdpPct >= 0 ? '+' : '';
+
+  return (
+    <div className="p-4 rounded-xl bg-[#0b0e15] border border-slate-800 space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-slate-300">
+          Dictamen de Impacto Fiscal (Oficina de Presupuesto del Congreso)
+        </span>
+        <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${dirColor}`}>
+          {analysis.direction}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+          <div className="text-slate-400 text-[10px]">RECAUDACIÓN</div>
+          <div className="font-mono font-bold text-emerald-400 mt-0.5">
+            {revSign}{analysis.fiscalDeltaGdpPct} % PIB
+          </div>
+        </div>
+        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+          <div className="text-slate-400 text-[10px]">INVERSIÓN</div>
+          <div className="font-mono font-bold text-sky-400 mt-0.5">
+            {analysis.investmentDeltaPp >= 0 ? `+${analysis.investmentDeltaPp}` : analysis.investmentDeltaPp} pp
+          </div>
+        </div>
+        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+          <div className="text-slate-400 text-[10px]">INFLACIÓN MENSUAL</div>
+          <div className="font-mono font-bold text-amber-400 mt-0.5">
+            {analysis.inflationMonthlyDeltaPp >= 0 ? `+${analysis.inflationMonthlyDeltaPp}` : analysis.inflationMonthlyDeltaPp} pp
+          </div>
+        </div>
+        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+          <div className="text-slate-400 text-[10px]">RESISTENCIA CONGRESO</div>
+          <div className="font-mono font-bold text-rose-400 mt-0.5">
+            {analysis.congressResistancePct}%
+          </div>
+        </div>
+      </div>
+
+      {analysis.judicialWarning ? (
+        <div className="p-2.5 rounded-lg bg-rose-950/40 border border-rose-800/80 text-rose-200 text-xs">
+          ⚖️ {analysis.judicialWarning}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function CustomTaxesAndRigiView({
   mode,
   customTaxes,
@@ -155,6 +215,11 @@ export function CustomTaxesAndRigiView({
   const [taxArticles, setTaxArticles] = useState('');
   const [taxRate, setTaxRate] = useState(2.5);
 
+  const semanticAnalysis = useMemo(
+    () => parseSemanticTaxOrLaw(taxName, taxArticles, taxRate),
+    [taxName, taxArticles, taxRate]
+  );
+
   const handleSubmitTax = () => {
     if (!taxName.trim()) {
       return;
@@ -164,8 +229,8 @@ export function CustomTaxesAndRigiView({
       name: taxName.trim(),
       articlesText: taxArticles.trim() || 'Gravamen extraordinario sobre rentas financieras y grandes patrimonios.',
       ratePct: taxRate,
-      estimatedRevenuePctGdp: Number((taxRate * 0.14).toFixed(2)),
-      approvedByCongress: true
+      estimatedRevenuePctGdp: Math.max(0.1, semanticAnalysis.fiscalDeltaGdpPct),
+      approvedByCongress: semanticAnalysis.congressResistancePct < 65
     });
     setTaxName('');
     setTaxArticles('');
@@ -215,7 +280,7 @@ export function CustomTaxesAndRigiView({
             <input
               type="range"
               min={0.5}
-              max={15}
+              max={38}
               step={0.5}
               value={taxRate}
               onChange={(e) => setTaxRate(Number(e.target.value))}
@@ -237,10 +302,12 @@ export function CustomTaxesAndRigiView({
           />
         </div>
 
+        <SemanticTaxAnalysisPreview analysis={semanticAnalysis} />
+
         <button
           type="button"
           onClick={handleSubmitTax}
-          className="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-200 text-slate-950 font-extrabold text-xs"
+          className="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-200 text-slate-950 font-extrabold text-xs shadow transition"
         >
           Enviar Proyecto Tributario al Congreso
         </button>

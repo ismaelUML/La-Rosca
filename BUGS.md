@@ -153,11 +153,39 @@ Este documento recopila y cataloga todos los bugs, desvíos respecto a *¿Quién
 
 ### [FEAT-006] Combate militar con sigmoide ponderada y anexión territorial al superar el 90 %
 - **Severidad**: Media (Módulo Territorio / Militar).
-- **Descripción**: Resolución de conflictos con $\sigma(\Delta \text{poder} + \text{gasto} + \text{control\_previo} + \text{bloque} - \text{defensa})$ y absorción definitiva del país enemigo.
-- **Estado**: 🟡 EN PLANIFICACIÓN.
+- **Descripción**: Resolución de conflictos con $\sigma(z) = 1 / (1 + e^{-z})$ ponderando poder de combate, apresto operacional, alineamiento de equipamiento (OTAN/F-16 vs China/JF-17 vs INVAP/FAdeA) y gasto FONDEF, con absorción soberana definitiva al superar el 90% de control.
+- **Estado**: 🟢 RESUELTO (Fase 4).
+- **Impacto**: `militaryTheaterEngine.ts` con función sigmoide estricta, z-score operacional, simulación mensual `evolveMilitaryTheaters` y comando `executeTheaterOrder` (`PATRULLA`, `SATURACION`, `ANEXION_PACIFICA`).
 
 ### [FEAT-007] Parser semántico (regex + scoring) para Leyes Propias e Impuestos Propios
 - **Severidad**: Media (Módulo Legislativo / Tributario).
+- **Descripción**: Análisis de texto de iniciativas libres con detección de dirección ideológica (Liberal, Estatista, Pragmático), impacto en 5 variables macro (inflación, inversión, empleo, recaudación, pobreza), dictamen de resistencia en comisiones del Congreso y alerta constitucional de confiscatoriedad ante alícuotas superiores al 35%.
+- **Estado**: 🟢 RESUELTO (Fase 4).
+- **Impacto**: `semanticParserEngine.ts` con dictamen OPC en vivo en `BudgetAndTaxesView.tsx`, cálculo dinámico de recaudación y riesgo de judicialización.
+
+### [BUG-017] Escrutinio electoral incongruente con sumatoria > 100% y candidatos rivales duplicados
+- **Severidad**: Alta (Módulo Campaña / Elecciones).
+- **Descripción**: La pantalla de escrutinio general sumaba $119.2\%$, con tickets que duplicaban candidatos oficialistas o emparejaban espacios ideológicamente incompatibles (LLA + UxP + PRO).
+- **Estado**: 🟢 RESUELTO.
+- **Impacto**: `distributeRivalShares` y `resolveRivalTickets` garantizan sumatoria matemática estricta a $100.0\%$, exclusión de fuerzas aliadas en la lista opositora y bloqueo de frentes entre polos opuestos.
+
+### [BUG-018] RIGI arrancaba con 29 de 29 sectores habilitados en sesiones heredadas
+- **Severidad**: Media (Módulo RIGI).
+- **Descripción**: Al asumir o iniciar una nueva partida, se mostraban los 29 sectores activos en lugar del estado reglamentario inicial (0 de 29 habilitados).
+- **Estado**: 🟢 RESUELTO.
+- **Impacto**: Inicialización y reseteo estricto a `INITIAL_RIGI_SECTORS` en `App.tsx` al configurar o asumir el mandato presidencial.
+
+### [BUG-019] Gabinete presidencial iniciaba predefinido sin el flujo de nombramiento ministerial
+- **Severidad**: Media (Módulo Gabinete).
+- **Descripción**: El gobierno asumía con los 10 ministerios prellenados con nombres por defecto, impidiendo al jugador conformar su equipo inicial.
+- **Estado**: 🟢 RESUELTO.
+- **Impacto**: `INITIAL_VACANT_CABINET_2027` con las 10 carteras vacantes (`SIN DESIGNAR`), banner inaugural de gestión y flujo modal de designación cartera por cartera en `CabinetView.tsx`.
+
+### [BUG-020] Falta de mapa SVG vectorial de resultados electorales oficiales
+- **Severidad**: Baja (Presentación / Noche Electoral).
+- **Descripción**: La tarjeta del "Mapa de resultados oficial" solo mostraba texto y botones estáticos sin cartografía interactiva.
+- **Estado**: 🟢 RESUELTO.
+- **Impacto**: `ElectionResultsSvgMap.tsx` con cartografía IGN TopoJSON de los 24 distritos electorales coloreados por la fuerza ganadora y tooltips interactivos en `ElectionNightModal.tsx`.
 - **Descripción**: Formulario de texto libre que analiza dirección, variables afectadas, financiamiento y emite alertas de inviabilidad.
 - **Estado**: 🟡 EN PLANIFICACIÓN.
 
