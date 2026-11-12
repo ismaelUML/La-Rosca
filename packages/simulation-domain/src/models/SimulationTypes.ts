@@ -163,6 +163,11 @@ export interface ProvinceSummary {
   boletaUnicaActive: boolean;
   apparatusFiscalizacionPct: number;
   keyEconomicDriver: string;
+  problematicas?: string[];
+  mesesCon5OMasProblematicas?: number;
+  intervenida?: boolean;
+  interventorNombre?: string;
+  eleccionEnMeses?: number;
 }
 
 export interface PublicOpinionSegment {
@@ -268,5 +273,6 @@ export type PolicyAction =
   | { type: 'EXECUTE_ANSES_INTRA_STATE_SWAP' }
   | { type: 'SEND_ATN_TO_PROVINCE'; provinceId: string; amountPctGdp: number }
   | { type: 'OPERATE_COMODORO_PY_CASE'; caseId: string; operation: 'PUSH' | 'FREEZE' }
-  | { type: 'UPDATE_TAX_RATE'; taxId: string; newRatePct: number };
+  | { type: 'UPDATE_TAX_RATE'; taxId: string; newRatePct: number }
+  | { type: 'INTERVENE_PROVINCE'; provinceId: string; interventorName: string };
 

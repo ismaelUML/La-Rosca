@@ -185,7 +185,9 @@ export const PROVINCES_2027_DATASET: ProvinceSummary[] = [
     fiscalBalancePct: 0.9,
     boletaUnicaActive: false,
     apparatusFiscalizacionPct: 44,
-    keyEconomicDriver: 'Empleo Publico, Obra Publica y Frontera Agricola Sojera'
+    keyEconomicDriver: 'Empleo Publico, Obra Publica y Frontera Agricola Sojera',
+    problematicas: ['expresion', 'justicia', 'corrupcion', 'legislatura'],
+    mesesCon5OMasProblematicas: 0
   },
   {
     id: 'SAN_JUAN',
@@ -269,7 +271,9 @@ export const PROVINCES_2027_DATASET: ProvinceSummary[] = [
     fiscalBalancePct: -2.1,
     boletaUnicaActive: false,
     apparatusFiscalizacionPct: 35,
-    keyEconomicDriver: '70% Empleo Publico Provincial, Ley de Lemas y Coparticipacion Federal'
+    keyEconomicDriver: '70% Empleo Publico Provincial, Ley de Lemas y Coparticipacion Federal',
+    problematicas: ['expresion', 'justicia', 'corrupcion', 'fraude', 'legislatura', 'represion'],
+    mesesCon5OMasProblematicas: 0
   },
   {
     id: 'LA_RIOJA',

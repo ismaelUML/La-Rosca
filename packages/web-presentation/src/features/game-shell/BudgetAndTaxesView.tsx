@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type {
   CustomTaxProposal,
   PolicyAction,
+  RigiPendingProject,
   RigisectorItem,
   SimulationState
 } from '@argentina-sim/domain';
@@ -133,6 +134,10 @@ interface CustomTaxesAndRigiViewProps {
   rigiSectors: RigisectorItem[];
   onAddCustomTax: (tax: CustomTaxProposal) => void;
   onToggleRigi: (id: string) => void;
+  pendingProjects?: RigiPendingProject[];
+  onApproveProject?: (id: string) => void;
+  onRejectProject?: (id: string) => void;
+  onApproveAllProjects?: () => void;
 }
 
 export function CustomTaxesAndRigiView({
@@ -140,7 +145,11 @@ export function CustomTaxesAndRigiView({
   customTaxes,
   rigiSectors,
   onAddCustomTax,
-  onToggleRigi
+  onToggleRigi,
+  pendingProjects,
+  onApproveProject,
+  onRejectProject,
+  onApproveAllProjects
 }: CustomTaxesAndRigiViewProps) {
   const [taxName, setTaxName] = useState('');
   const [taxArticles, setTaxArticles] = useState('');
@@ -163,7 +172,16 @@ export function CustomTaxesAndRigiView({
   };
 
   if (mode === 'RIGI') {
-    return <RigiSectorsSection rigiSectors={rigiSectors} onToggleRigi={onToggleRigi} />;
+    return (
+      <RigiSectorsSection
+        rigiSectors={rigiSectors}
+        onToggleRigi={onToggleRigi}
+        pendingProjects={pendingProjects}
+        onApproveProject={onApproveProject}
+        onRejectProject={onRejectProject}
+        onApproveAllProjects={onApproveAllProjects}
+      />
+    );
   }
 
   return (

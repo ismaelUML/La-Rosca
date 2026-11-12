@@ -142,6 +142,35 @@ export function stepLaborMarket(
   };
 }
 
+function computeProblematicaMonths(prov: ProvinceSummary): number {
+  const problems = prov.problematicas || [];
+  if (problems.length < 5) return 0;
+  const current = prov.mesesCon5OMasProblematicas || 0;
+  return current + 1;
+}
+
+function computeInterventionStatus(prov: ProvinceSummary) {
+  const electionIn = prov.eleccionEnMeses !== undefined ? prov.eleccionEnMeses : 6;
+  const remaining = electionIn - 1;
+  const stillIntervened = remaining > 0;
+  return {
+    mesesCon5OMasProblematicas: 0,
+    intervenida: stillIntervened,
+    eleccionEnMeses: Math.max(0, remaining),
+    interventorNombre: stillIntervened ? prov.interventorNombre : undefined
+  };
+}
+
+function updateProvinceCrisisAndIntervention(prov: ProvinceSummary) {
+  if (!prov.intervenida) {
+    return {
+      mesesCon5OMasProblematicas: computeProblematicaMonths(prov),
+      intervenida: false
+    };
+  }
+  return computeInterventionStatus(prov);
+}
+
 export function stepProvincesState(
   provinces: ProvinceSummary[],
   coparticipableRevenuePctGdp: number,
@@ -155,12 +184,14 @@ export function stepProvincesState(
     const governorLoyaltyToPresident = round2(
       clamp(prov.governorLoyaltyToPresident + fiscalBalancePct * 1.8 + discretionaryAtnPctGdp * 12, 8, 96)
     );
+    const crisisInfo = updateProvinceCrisisAndIntervention(prov);
 
     return {
       ...prov,
       fiscalBalancePct,
       quasiCurrencyIssued,
-      governorLoyaltyToPresident
+      governorLoyaltyToPresident,
+      ...crisisInfo
     };
   });
 }

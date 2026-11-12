@@ -56,7 +56,7 @@ const INITIAL_PROVINCES_CATALOG: Record<string, DeepProvincialData> = {
     electorateBreakdown: { izq: 38, centro: 40, der: 22 },
     shares: [
       { partyName: 'Provincias Unidas', sharePct: 30.8, color: '#f97316' },
-      { partyName: 'Tu fórmula', sharePct: 29.6, color: '#8b5cf6', isPlayer: true },
+      { partyName: 'LLA', sharePct: 29.6, color: '#8b5cf6', isPlayer: true },
       { partyName: 'UxP', sharePct: 20.3, color: '#0284c7' },
       { partyName: 'Defendamos Tierra del Fuego', sharePct: 15.6, color: '#2563eb' },
       { partyName: 'FIT', sharePct: 2.0, color: '#ef4444' },
@@ -750,8 +750,16 @@ function resolveRivalShare(sorted: ProvincialPartyShare[]): { name: string; shar
   return { name, share };
 }
 
+function formatVoteRowLabel(share: ProvincialPartyShare): string {
+  if (!share.isPlayer) return share.partyName;
+  if (share.partyName === 'Tu fórmula' || share.partyName.includes('(tu fórmula)')) {
+    return share.partyName;
+  }
+  return `${share.partyName} (tu fórmula)`;
+}
+
 function VoteRowItem({ share }: { share: ProvincialPartyShare }) {
-  const label = share.isPlayer ? `${share.partyName} (tu fórmula)` : share.partyName;
+  const label = formatVoteRowLabel(share);
   const textClass = share.isPlayer ? 'font-bold text-white' : 'text-slate-300';
   return (
     <div className="flex items-center justify-between text-xs">
@@ -971,7 +979,7 @@ function transferAllianceVotes(
   alliedParty: string,
   transfer: number
 ): ProvincialPartyShare[] {
-  return shares.map((s) => {
+  const updated = shares.map((s) => {
     if (s.isPlayer) {
       return { ...s, sharePct: Math.round((s.sharePct + transfer) * 10) / 10 };
     }
@@ -980,13 +988,14 @@ function transferAllianceVotes(
     }
     return s;
   });
+  return [...updated].sort((a, b) => b.sharePct - a.sharePct);
 }
 
 function returnAllianceVotes(
   shares: ProvincialPartyShare[],
   alliedParty: string
 ): ProvincialPartyShare[] {
-  return shares.map((s) => {
+  const updated = shares.map((s) => {
     if (s.partyName === alliedParty) {
       return { ...s, sharePct: Math.round((s.sharePct + 2.5) * 10) / 10 };
     }
@@ -995,6 +1004,7 @@ function returnAllianceVotes(
     }
     return s;
   });
+  return [...updated].sort((a, b) => b.sharePct - a.sharePct);
 }
 
 interface ProvincialCoalitionCardProps {
@@ -1138,6 +1148,7 @@ function ProvincialDrilldownView({ prov, onBack, onUpdateProv }: ProvincialDrill
         const deduction = boostPct / Math.max(1, prev.shares.length - 1);
         return { ...s, sharePct: Math.max(0.5, Math.round((s.sharePct - deduction) * 10) / 10) };
       });
+      nextShares.sort((a, b) => b.sharePct - a.sharePct);
 
       return {
         ...prev,

@@ -4,7 +4,10 @@ import {
   applyPolicyAction,
   clamp,
   logisticCurve,
-  round2
+  round2,
+  advanceRigiMonthlyQueue,
+  approveRigiProject,
+  type RigisectorItem
 } from '@argentina-sim/domain';
 import { createInitialSimulationState2027, PROVINCES_2027_DATASET } from '@argentina-sim/infrastructure';
 
@@ -78,6 +81,55 @@ describe('Motor Macroeconomico, Judicial y Laboral Argentino 2027', () => {
     expect(nextState.inflation.interannualIpcPct).toBeGreaterThan(0);
     expect(nextState.inflation.tcReal).toBeDefined();
     expect(nextState.inflation.priceLevel).toBeGreaterThan(100);
+  });
+
+  it('avanza la cola del RIGI, genera proyectos pendientes y permite aprobarlos acumulando inversion', () => {
+    const dummySectors: RigisectorItem[] = [
+      {
+        id: 'MIN_LITIO',
+        name: 'Minería: Litio',
+        branch: 'MINERIA',
+        minInvestmentMillionUsd: 200,
+        regimeInvestmentPpGdp: 0.4,
+        exportsBillionUsd: 2.5,
+        fiscalExemptionCostArgentums: 25,
+        maturityMonths: 36,
+        enabledByDecree: true,
+        activeProjectsCount: 0,
+        accumulatedInvestmentMillionUsd: 0
+      }
+    ];
+
+    const q1 = advanceRigiMonthlyQueue([], dummySectors);
+    expect(q1.nextPending.length).toBe(1);
+    expect(q1.nextPending[0]?.sectorId).toBe('MIN_LITIO');
+
+    const approved = approveRigiProject(q1.nextPending[0]!.id, q1.nextPending, dummySectors);
+    expect(approved.nextPending.length).toBe(0);
+    expect(approved.nextSectors[0]?.activeProjectsCount).toBe(1);
+    expect(approved.nextSectors[0]?.accumulatedInvestmentMillionUsd).toBeGreaterThan(0);
+  });
+
+  it('cuenta meses de problematicas institucionales y ejecuta intervencion federal con destitucion y elecciones en 6 meses', () => {
+    let state = createInitialSimulationState2027('PRESIDENTE', 'ESTANDAR_2027', 'CABA');
+    const formosa = state.provinces.find((p) => p.id === 'FORMOSA');
+    expect(formosa?.problematicas?.length).toBe(6);
+
+    state = applyPolicyAction(state, {
+      type: 'INTERVENE_PROVINCE',
+      provinceId: 'FORMOSA',
+      interventorName: 'Dr. Interventor Federal'
+    });
+
+    const intervened = state.provinces.find((p) => p.id === 'FORMOSA');
+    expect(intervened?.intervenida).toBe(true);
+    expect(intervened?.eleccionEnMeses).toBe(6);
+    expect(intervened?.interventorNombre).toBe('Dr. Interventor Federal');
+
+    const nextMonth = advanceSimulationMonth(state);
+    const formosaNext = nextMonth.provinces.find((p) => p.id === 'FORMOSA');
+    expect(formosaNext?.eleccionEnMeses).toBe(5);
+    expect(formosaNext?.intervenida).toBe(true);
   });
 });
 

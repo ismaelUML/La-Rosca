@@ -140,6 +140,27 @@ function applyFiscalOrFederalAction(state: SimulationState, action: PolicyAction
       eventLog: [`Giro discrecional de ATN enviado a ${action.provinceId} a cambio de votos en el Congreso.`, ...state.eventLog.slice(0, 14)]
     };
   }
+  if (action.type === 'INTERVENE_PROVINCE') {
+    const provinces = state.provinces.map((prov) => {
+      if (prov.id !== action.provinceId) return prov;
+      return {
+        ...prov,
+        intervenida: true,
+        interventorNombre: action.interventorName,
+        eleccionEnMeses: 6,
+        governorLoyaltyToPresident: 95,
+        problematicas: ['expresion']
+      };
+    });
+    return {
+      ...state,
+      provinces,
+      eventLog: [
+        `Intervención Federal: el Congreso destituyó al gobernador de ${action.provinceId} y designó a ${action.interventorName}. Elecciones en 6 meses.`,
+        ...state.eventLog.slice(0, 14)
+      ]
+    };
+  }
   return null;
 }
 

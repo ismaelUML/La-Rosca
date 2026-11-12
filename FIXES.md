@@ -94,7 +94,7 @@ Registro de soluciones arquitectónicas, módulos modificados, métricas de cali
 ---
 
 ### FIX-007: Fase 1 Macroeconómica 1:1 (Inercia de IPC, productoria de 12 meses y feedback reservas/brecha)
-- **Commit**: En preparación
+- **Commit**: `b9518fa`
 - **Archivos**:
   - `packages/simulation-domain/src/models/SimulationTypes.ts`
   - `packages/simulation-domain/src/economy/inflationEngine.ts`
@@ -111,4 +111,26 @@ Registro de soluciones arquitectónicas, módulos modificados, métricas de cali
   - Feedback no-lineal en `computeParallelExchangeRates` con penalizaciones por superación de brecha (umbrales 15 % y 28 %) y corrida cambiaria suave cuando las reservas caen por debajo de los niveles de alarma.
   - Calibración de los indicadores iniciales para Presidente: Inflación mensual 1,9 %, interanual 33 %, dólar $1.450, brecha 8 %, reservas 50 mil M USD, riesgo país 620 pb, pobreza 32 %, desempleo 7,6 %, informalidad 42 %.
   - 23 tests unitarios pasando en Vitest y 68 archivos superando la auditoría de $CC \le 5$ y $MI \ge 75$.
+
+---
+
+### FIX-008: Fase 2 RIGI Dinámico y 6 Problemáticas Institucionales de Intervención Federal
+- **Commit**: En preparación
+- **Archivos**:
+  - `packages/simulation-domain/src/engine/rigiEngine.ts`
+  - `packages/simulation-domain/src/models/PartyAndSetupTypes.ts`
+  - `packages/simulation-domain/src/models/SimulationTypes.ts`
+  - `packages/simulation-domain/src/politics/judicialLaborAndOpinionEngine.ts`
+  - `packages/simulation-domain/src/engine/PolicyActionHandler.ts`
+  - `packages/simulation-infrastructure/src/datasets/provinces2027Dataset.ts`
+  - `packages/web-presentation/src/features/game-shell/RigiSectorsSection.tsx`
+  - `packages/web-presentation/src/features/game-shell/BudgetAndTaxesView.tsx`
+  - `packages/web-presentation/src/features/campaign/CampaignPartidoProvinciasView.tsx`
+  - `packages/web-presentation/src/App.tsx`
+  - `packages/simulation-domain/tests/simulationEngine.test.ts`
+- **Solución técnica**:
+  - Motor de RIGI (`rigiEngine.ts`): arranque en 0/29 con catálogo estratégico de proyectos (`STRATEGIC_RIGI_PROJECTS_POOL`), cola mensual `advanceRigiMonthlyQueue` que genera propuestas al habilitar sectores y las desiste automáticamente tras 4 meses de inacción. Aprobación individual (`approveRigiProject`) o masiva (`approveAllRigiProjects`) sumando inversión acumulada, proyectos activos y madurez.
+  - Intervención Federal: Formosa inicia con 6 problemáticas institucionales (`expresion`, `justicia`, `corrupcion`, `fraude`, `legislatura`, `represion`) y Santiago del Estero con 4. Contador de 24 meses continuos con $\ge 5$ problemáticas en `stepProvincesState`. Acción `INTERVENE_PROVINCE` en `PolicyActionHandler` con destitución del gobernador provincial, designación de comisionado interventor federal y convocatoria a elecciones provinciales obligatorias en 6 meses con cuenta regresiva mensual.
+  - Corrección de visualización provincial: En `CampaignPartidoProvinciasView.tsx`, eliminación de la etiqueta redundante `"Tu fórmula (tu fórmula)"` mediante `formatVoteRowLabel` y ordenamiento estricto descendente en `transferAllianceVotes`, `returnAllianceVotes` y `handleExecuteAction`, asegurando que la fórmula ganadora siempre encabece el listado y la barra de intención con la insignia `¡Tu fórmula lidera!`.
+  - 25 tests unitarios pasando en Vitest, auditoría determinista superada en los 69 archivos de la base de código ($CC \le 5$, $MI \ge 75$) y compilación limpia en TypeScript y Vite.
 

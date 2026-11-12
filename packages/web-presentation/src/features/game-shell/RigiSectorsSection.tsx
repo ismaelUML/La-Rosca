@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { RigisectorItem } from '@argentina-sim/domain';
+import type { RigisectorItem, RigiPendingProject } from '@argentina-sim/domain';
 
 // El RIGI no es un chiste de barritas: aca estan los 29 sectores reales de la Ley Bases
 // con sus 200/500 palos verdes de piso, madurez de proyectos y el costo fiscal
@@ -21,6 +21,54 @@ const RIGI_BRANCHES = [
 export interface RigiSectorsSectionProps {
   rigiSectors: RigisectorItem[];
   onToggleRigi: (id: string) => void;
+  pendingProjects?: RigiPendingProject[];
+  onApproveProject?: (id: string) => void;
+  onRejectProject?: (id: string) => void;
+  onApproveAllProjects?: () => void;
+}
+
+function RigiPendingCard({
+  project,
+  onApprove,
+  onReject
+}: {
+  project: RigiPendingProject;
+  onApprove?: (id: string) => void;
+  onReject?: (id: string) => void;
+}) {
+  const remaining = Math.max(1, project.expiresInMonths - project.monthsWaiting);
+  return (
+    <div className="p-4 rounded-2xl bg-[#0b0e15] border border-amber-900/50 flex flex-col justify-between space-y-3 shadow-md">
+      <div className="space-y-1.5">
+        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider bg-amber-950/70 border border-amber-800/60 px-2 py-0.5 rounded">
+          {project.sectorName}
+        </span>
+        <h4 className="text-sm font-extrabold text-white mt-1">{project.name}</h4>
+        <div className="text-xs text-slate-300">
+          Inversión mínima: <strong className="text-emerald-400 font-mono font-bold">{project.minProjectMillionUsd} M USD</strong>
+        </div>
+        <div className="text-[11px] text-slate-400">
+          Estado: espera resolución (<strong className="text-amber-300">{remaining} meses</strong> para desistir).
+        </div>
+      </div>
+      <div className="flex gap-2 pt-1 border-t border-slate-800/60">
+        <button
+          type="button"
+          onClick={() => onApprove?.(project.id)}
+          className="flex-1 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white transition shadow"
+        >
+          ✓ Aprobar
+        </button>
+        <button
+          type="button"
+          onClick={() => onReject?.(project.id)}
+          className="px-3 py-1.5 rounded-xl bg-rose-950/60 border border-rose-800 text-xs font-bold text-rose-300 hover:bg-rose-900/60 transition"
+        >
+          ✕ Rechazar
+        </button>
+      </div>
+    </div>
+  );
 }
 
 const BRANCH_BADGE_MAP: Record<string, string> = {
@@ -158,22 +206,231 @@ function RigiSectorCard({
   );
 }
 
-export function RigiSectorsSection({ rigiSectors, onToggleRigi }: RigiSectorsSectionProps) {
-  const [selectedBranch, setSelectedBranch] = useState<string>('TODAS');
+function RigiHeaderOverview({
+  enabledCount,
+  totalSectors,
+  totalInvPp,
+  totalExpMilM,
+  totalProjects,
+  totalMUsd
+}: {
+  enabledCount: number;
+  totalSectors: number;
+  totalInvPp: number;
+  totalExpMilM: number;
+  totalProjects: number;
+  totalMUsd: number;
+}) {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 text-xs">
+      <div className="p-3 rounded-xl bg-[#10131b] border border-slate-800">
+        <div className="text-slate-400">Sectores habilitados</div>
+        <div className="text-lg font-mono font-extrabold text-emerald-400 mt-0.5">
+          {enabledCount} de {totalSectors}
+        </div>
+      </div>
+      <div className="p-3 rounded-xl bg-[#10131b] border border-slate-800">
+        <div className="text-slate-400">Inversión a régimen</div>
+        <div className="text-lg font-mono font-extrabold text-sky-400 mt-0.5">
+          +{totalInvPp.toFixed(2).replace('.', ',')} pp PIB
+        </div>
+      </div>
+      <div className="p-3 rounded-xl bg-[#10131b] border border-slate-800">
+        <div className="text-slate-400">Exportaciones proyectadas</div>
+        <div className="text-lg font-mono font-extrabold text-amber-400 mt-0.5">
+          +{totalExpMilM.toFixed(1).replace('.', ',')} mil M USD
+        </div>
+      </div>
+      <div className="p-3 rounded-xl bg-[#10131b] border border-slate-800">
+        <div className="text-slate-400">Proyectos aprobados</div>
+        <div className="text-lg font-mono font-extrabold text-white mt-0.5">
+          {totalProjects} / 29 ({totalMUsd.toLocaleString('es-AR')} M USD)
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  const filtered = rigiSectors.filter(
+function RigiSectorsTab({
+  sectors,
+  selectedBranch,
+  onSelectBranch,
+  onToggle
+}: {
+  sectors: RigisectorItem[];
+  selectedBranch: string;
+  onSelectBranch: (b: string) => void;
+  onToggle: (id: string) => void;
+}) {
+  const filtered = sectors.filter(
     (s) => selectedBranch === 'TODAS' || s.branch === selectedBranch
   );
 
-  const enabledCount = rigiSectors.filter((s) => s.enabledByDecree).length;
-  const totalInvPp = rigiSectors
-    .filter((s) => s.enabledByDecree)
-    .reduce((acc, s) => acc + (s.regimeInvestmentPpGdp ?? 0), 0);
-  const totalExpMilM = rigiSectors
-    .filter((s) => s.enabledByDecree)
-    .reduce((acc, s) => acc + (s.exportsBillionUsd ?? 0), 0);
-  const totalProjects = rigiSectors.reduce((acc, s) => acc + (s.activeProjectsCount ?? 0), 0);
-  const totalMUsd = rigiSectors.reduce((acc, s) => acc + (s.accumulatedInvestmentMillionUsd ?? 0), 0);
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-1.5 pb-1">
+        {RIGI_BRANCHES.map((b) => (
+          <button
+            key={b}
+            type="button"
+            onClick={() => onSelectBranch(b)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+              selectedBranch === b
+                ? 'bg-purple-600 text-white shadow'
+                : 'bg-[#10131b] text-slate-400 border border-slate-800 hover:text-white'
+            }`}
+          >
+            {b}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filtered.map((sec) => (
+          <RigiSectorCard key={sec.id} sector={sec} onToggle={() => onToggle(sec.id)} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RigiPendingTab({
+  pendingProjects,
+  onApprove,
+  onReject
+}: {
+  pendingProjects: RigiPendingProject[];
+  onApprove?: (id: string) => void;
+  onReject?: (id: string) => void;
+}) {
+  if (pendingProjects.length === 0) {
+    return (
+      <div className="rounded-2xl bg-[#0b0e15] border border-slate-800 p-8 text-center text-xs text-slate-400">
+        No hay proyectos pendientes en este momento. Habilitá sectores del RIGI para atraer inversiones estratégicas.
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {pendingProjects.map((p) => (
+        <RigiPendingCard key={p.id} project={p} onApprove={onApprove} onReject={onReject} />
+      ))}
+    </div>
+  );
+}
+
+function sumActiveInvestment(rigiSectors: RigisectorItem[]) {
+  let count = 0;
+  let inv = 0;
+  let exp = 0;
+  for (const s of rigiSectors) {
+    if (s.enabledByDecree) {
+      count += 1;
+      inv += s.regimeInvestmentPpGdp;
+      exp += s.exportsBillionUsd;
+    }
+  }
+  return { enabledCount: count, totalInvPp: inv, totalExpMilM: exp };
+}
+
+function sumProjectVolumes(rigiSectors: RigisectorItem[]) {
+  let count = 0;
+  let usd = 0;
+  for (const s of rigiSectors) {
+    count += s.activeProjectsCount;
+    usd += s.accumulatedInvestmentMillionUsd;
+  }
+  return { totalProjects: count, totalMUsd: usd };
+}
+
+function computeRigiTotals(rigiSectors: RigisectorItem[]) {
+  const active = sumActiveInvestment(rigiSectors);
+  const projects = sumProjectVolumes(rigiSectors);
+  return { ...active, ...projects };
+}
+
+function canShowApproveAll(subTab: string, pendingCount: number, onApproveAll?: () => void): boolean {
+  if (subTab !== 'PENDIENTES') return false;
+  if (pendingCount <= 0) return false;
+  return Boolean(onApproveAll);
+}
+
+function RigiApproveAllButton({ pendingCount, onApproveAll }: { pendingCount: number; onApproveAll?: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onApproveAll}
+      className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow transition"
+    >
+      Aprobar todos ({pendingCount})
+    </button>
+  );
+}
+
+function RigiPendingBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500 text-slate-950 font-extrabold">
+      {count}
+    </span>
+  );
+}
+
+function RigiNavigationHeader({
+  subTab,
+  enabledCount,
+  pendingCount,
+  onSelectTab,
+  onApproveAll
+}: {
+  subTab: 'SECTORES' | 'PENDIENTES';
+  enabledCount: number;
+  pendingCount: number;
+  onSelectTab: (tab: 'SECTORES' | 'PENDIENTES') => void;
+  onApproveAll?: () => void;
+}) {
+  const showApprove = canShowApproveAll(subTab, pendingCount, onApproveAll);
+  const isSectores = subTab === 'SECTORES';
+  const secClass = isSectores ? 'bg-white text-slate-950 shadow' : 'text-slate-400 hover:text-white';
+  const pendClass = !isSectores ? 'bg-white text-slate-950 shadow' : 'text-slate-400 hover:text-white';
+
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-slate-800 pb-2">
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => onSelectTab('SECTORES')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition ${secClass}`}
+        >
+          Sectores ({enabledCount} de 29)
+        </button>
+        <button
+          type="button"
+          onClick={() => onSelectTab('PENDIENTES')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${pendClass}`}
+        >
+          <span>Proyectos pendientes</span>
+          <RigiPendingBadge count={pendingCount} />
+        </button>
+      </div>
+
+      {showApprove && <RigiApproveAllButton pendingCount={pendingCount} onApproveAll={onApproveAll} />}
+    </div>
+  );
+}
+
+export function RigiSectorsSection({
+  rigiSectors,
+  onToggleRigi,
+  pendingProjects = [],
+  onApproveProject,
+  onRejectProject,
+  onApproveAllProjects
+}: RigiSectorsSectionProps) {
+  const [selectedBranch, setSelectedBranch] = useState<string>('TODAS');
+  const [subTab, setSubTab] = useState<'SECTORES' | 'PENDIENTES'>('SECTORES');
+  const totals = computeRigiTotals(rigiSectors);
 
   return (
     <div className="space-y-6">
@@ -186,60 +443,38 @@ export function RigiSectorsSection({ rigiSectors, onToggleRigi }: RigiSectorsSec
           Beneficios aduaneros, tributarios y libre disponibilidad de divisas a 30 años para proyectos estratégicos de más de 200 M USD.
         </p>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 text-xs">
-          <div className="p-3 rounded-xl bg-[#10131b] border border-slate-800">
-            <div className="text-slate-400">Sectores habilitados</div>
-            <div className="text-lg font-mono font-extrabold text-emerald-400 mt-0.5">
-              {enabledCount} de {rigiSectors.length}
-            </div>
-          </div>
-          <div className="p-3 rounded-xl bg-[#10131b] border border-slate-800">
-            <div className="text-slate-400">Inversión a régimen</div>
-            <div className="text-lg font-mono font-extrabold text-sky-400 mt-0.5">
-              +{totalInvPp.toFixed(2).replace('.', ',')} pp PIB
-            </div>
-          </div>
-          <div className="p-3 rounded-xl bg-[#10131b] border border-slate-800">
-            <div className="text-slate-400">Exportaciones proyectadas</div>
-            <div className="text-lg font-mono font-extrabold text-amber-400 mt-0.5">
-              +{totalExpMilM.toFixed(1).replace('.', ',')} mil M USD
-            </div>
-          </div>
-          <div className="p-3 rounded-xl bg-[#10131b] border border-slate-800">
-            <div className="text-slate-400">Proyectos en cartera</div>
-            <div className="text-lg font-mono font-extrabold text-white mt-0.5">
-              {totalProjects} ({totalMUsd.toLocaleString('es-AR')} M USD)
-            </div>
-          </div>
-        </div>
+        <RigiHeaderOverview
+          enabledCount={totals.enabledCount}
+          totalSectors={rigiSectors.length}
+          totalInvPp={totals.totalInvPp}
+          totalExpMilM={totals.totalExpMilM}
+          totalProjects={totals.totalProjects}
+          totalMUsd={totals.totalMUsd}
+        />
       </div>
 
-      <div className="flex flex-wrap gap-1.5 pb-1">
-        {RIGI_BRANCHES.map((b) => (
-          <button
-            key={b}
-            type="button"
-            onClick={() => setSelectedBranch(b)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-              selectedBranch === b
-                ? 'bg-white text-slate-950 shadow'
-                : 'bg-[#10131b] text-slate-400 border border-slate-800 hover:text-white'
-            }`}
-          >
-            {b}
-          </button>
-        ))}
-      </div>
+      <RigiNavigationHeader
+        subTab={subTab}
+        enabledCount={totals.enabledCount}
+        pendingCount={pendingProjects.length}
+        onSelectTab={setSubTab}
+        onApproveAll={onApproveAllProjects}
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map((sec) => (
-          <RigiSectorCard
-            key={sec.id}
-            sector={sec}
-            onToggle={() => onToggleRigi(sec.id)}
-          />
-        ))}
-      </div>
+      {subTab === 'SECTORES' ? (
+        <RigiSectorsTab
+          sectors={rigiSectors}
+          selectedBranch={selectedBranch}
+          onSelectBranch={setSelectedBranch}
+          onToggle={onToggleRigi}
+        />
+      ) : (
+        <RigiPendingTab
+          pendingProjects={pendingProjects}
+          onApprove={onApproveProject}
+          onReject={onRejectProject}
+        />
+      )}
     </div>
   );
 }

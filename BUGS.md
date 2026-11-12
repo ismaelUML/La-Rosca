@@ -124,17 +124,19 @@ Este documento recopila y cataloga todos los bugs, desvíos respecto a *¿Quién
 ### [FEAT-003] Flujo dinámico de RIGI con cola `rigiPending`, sectores y desistimiento por tiempo
 - **Severidad**: Media (Módulo RIGI).
 - **Descripción**: Habilitar sectores productivos para que generen proyectos pendientes con `minUsd` que pueden aprobarse o desistir si expiran.
-- **Estado**: 🟡 EN PLANIFICACIÓN.
+- **Estado**: 🟢 RESUELTO (Fase 2).
+- **Impacto**: `rigiEngine.ts` con catálogo `STRATEGIC_RIGI_PROJECTS_POOL`, cola `advanceRigiMonthlyQueue` con expiración en 4 meses, aprobación unitaria o en bloque (`approveAllRigiProjects`), e interfaz de solapas `Sectores (X de 29)` vs `Proyectos pendientes (N)`.
 
 ### [FEAT-004] Negociación de leyes bloque por bloque con posturas (a favor / en duda / en contra) y concesiones
 - **Severidad**: Alta (Módulo Congreso).
 - **Descripción**: Negociar con jefes de bloque ofreciendo partidas en Argentum, ministerios en Gabinete o suavización de artículos.
-- **Estado**: 🟡 EN PLANIFICACIÓN.
+- **Estado**: 🟡 EN PLANIFICACIÓN (Fase 3).
 
 ### [FEAT-005] Catálogo de 6 problemáticas institucionales de Intervención Federal con Formosa y Santiago
 - **Severidad**: Media (Módulo Político / Territorio).
 - **Descripción**: Formosa inicia con 6 problemáticas institucionales (`expresion`, `justicia`, `corrupcion`, `fraude`, `legislatura`, `represion`) y Santiago con 4. Al cumplir 2 años continuos con $\ge 5$, se habilita el envío de ley de intervención al Congreso.
-- **Estado**: 🟡 EN PLANIFICACIÓN.
+- **Estado**: 🟢 RESUELTO (Fase 2).
+- **Impacto**: `provinces2027Dataset.ts` con catálogo de 6 problemáticas en Formosa y 4 en Santiago, contador de 24 meses continuos en `stepProvincesState`, acción `INTERVENE_PROVINCE` con destitución de gobernador, comisionado interventor y elecciones obligatorias en 6 meses.
 
 ### [FEAT-006] Combate militar con sigmoide ponderada y anexión territorial al superar el 90 %
 - **Severidad**: Media (Módulo Territorio / Militar).

@@ -4,6 +4,9 @@ import {
   advanceSimulationMonth,
   applyPolicyAction,
   executeCampaignAction,
+  advanceRigiMonthlyQueue,
+  approveRigiProject,
+  approveAllRigiProjects,
   type CabinetMinister,
   type CampaignExecutePayload,
   type CampaignSimulationState,
@@ -12,6 +15,7 @@ import {
   type GameSetupConfiguration,
   type PersistedGameSession,
   type PolicyAction,
+  type RigiPendingProject,
   type RigisectorItem,
   type SectorMeasureCard,
   type SimulationState
@@ -165,6 +169,10 @@ interface ActiveSectionRendererProps {
   measures: SectorMeasureCard[];
   rigiSectors: RigisectorItem[];
   customTaxes: CustomTaxProposal[];
+  rigiPending?: RigiPendingProject[];
+  onApproveRigiProject?: (id: string) => void;
+  onRejectRigiProject?: (id: string) => void;
+  onApproveAllRigiProjects?: () => void;
   onNavigate: (sec: InGameSidebarSection) => void;
   onDispatch: (action: PolicyAction) => void;
   onAdvanceTurn: () => void;
@@ -240,6 +248,10 @@ function ActiveSectionRenderer(props: ActiveSectionRendererProps) {
         rigiSectors={props.rigiSectors}
         onAddCustomTax={props.onAddCustomTax}
         onToggleRigi={props.onToggleRigi}
+        pendingProjects={props.rigiPending}
+        onApproveProject={props.onApproveRigiProject}
+        onRejectProject={props.onRejectRigiProject}
+        onApproveAllProjects={props.onApproveAllRigiProjects}
       />
     ),
     CAMARAS: (
@@ -287,7 +299,8 @@ function buildSessionPayload(
   levers: EconomicLeverItem[],
   measures: SectorMeasureCard[],
   rigiSectors: RigisectorItem[],
-  customTaxes: CustomTaxProposal[]
+  customTaxes: CustomTaxProposal[],
+  rigiPending?: RigiPendingProject[]
 ): PersistedGameSession {
   return {
     version: 1,
@@ -302,6 +315,7 @@ function buildSessionPayload(
     levers,
     measures,
     rigiSectors,
+    rigiPending,
     customTaxes
   };
 }
@@ -434,6 +448,9 @@ export function App() {
   const [customTaxes, setCustomTaxes] = useState<CustomTaxProposal[]>(() => {
     return savedSession?.customTaxes ?? [];
   });
+  const [rigiPending, setRigiPending] = useState<RigiPendingProject[]>(() => {
+    return savedSession?.rigiPending ?? [];
+  });
 
   useEffect(() => {
     if (
@@ -459,7 +476,8 @@ export function App() {
         levers,
         measures,
         rigiSectors,
-        customTaxes
+        customTaxes,
+        rigiPending
       )
     );
   }, [
@@ -474,6 +492,7 @@ export function App() {
     measures,
     rigiSectors,
     customTaxes,
+    rigiPending,
     savedSession
   ]);
 
@@ -568,7 +587,8 @@ export function App() {
         levers,
         measures,
         rigiSectors,
-        customTaxes
+        customTaxes,
+        rigiPending
       )
     );
     setPortableSaveBanner(saveRepo.exportPortableCode(state));
@@ -656,6 +676,60 @@ export function App() {
     );
   }
 
+  const handleApproveRigiProject = (projectId: string) => {
+    const res = approveRigiProject(projectId, rigiPending, rigiSectors);
+    setRigiPending(res.nextPending);
+    setRigiSectors(res.nextSectors);
+    if (res.approvedProject) {
+      setState((prev) => ({
+        ...prev,
+        eventLog: [
+          `RIGI: Proyecto aprobado "${res.approvedProject?.name}" (${res.approvedProject?.minProjectMillionUsd} M USD).`,
+          ...prev.eventLog.slice(0, 14)
+        ]
+      }));
+    }
+  };
+
+  const handleRejectRigiProject = (projectId: string) => {
+    const proj = rigiPending.find((p) => p.id === projectId);
+    setRigiPending((prev) => prev.filter((p) => p.id !== projectId));
+    if (proj) {
+      setState((prev) => ({
+        ...prev,
+        eventLog: [`RIGI: Proyecto "${proj.name}" rechazado.`, ...prev.eventLog.slice(0, 14)]
+      }));
+    }
+  };
+
+  const handleApproveAllRigiProjects = () => {
+    const res = approveAllRigiProjects(rigiPending, rigiSectors);
+    setRigiPending(res.nextPending);
+    setRigiSectors(res.nextSectors);
+    setState((prev) => ({
+      ...prev,
+      eventLog: [
+        `RIGI: Aprobados en bloque todos los proyectos pendientes (${res.count} proyectos).`,
+        ...prev.eventLog.slice(0, 14)
+      ]
+    }));
+  };
+
+  const handleAdvanceGovernmentTurn = () => {
+    setState((prev) => advanceSimulationMonth(prev));
+    const rigiQueue = advanceRigiMonthlyQueue(rigiPending, rigiSectors);
+    setRigiPending(rigiQueue.nextPending);
+    if (rigiQueue.desistedProjects.length > 0) {
+      setState((prev) => ({
+        ...prev,
+        eventLog: [
+          `RIGI: Proyectos desistidos por falta de respuesta: ${rigiQueue.desistedProjects.join(', ')}.`,
+          ...prev.eventLog.slice(0, 14)
+        ]
+      }));
+    }
+  };
+
   return (
     <GameSidebarLayout
       setup={setup}
@@ -663,7 +737,7 @@ export function App() {
       activeSection={activeSection}
       portableSaveBanner={portableSaveBanner}
       onSelectSection={setActiveSection}
-      onAdvanceTurn={() => setState((prev) => advanceSimulationMonth(prev))}
+      onAdvanceTurn={handleAdvanceGovernmentTurn}
       onExportSaveCode={handleExportSaveCode}
       onCloseSaveBanner={() => setPortableSaveBanner(null)}
       onExitToMenu={() => setScreenMode('LANDING')}
@@ -678,9 +752,13 @@ export function App() {
         measures={measures}
         rigiSectors={rigiSectors}
         customTaxes={customTaxes}
+        rigiPending={rigiPending}
+        onApproveRigiProject={handleApproveRigiProject}
+        onRejectRigiProject={handleRejectRigiProject}
+        onApproveAllRigiProjects={handleApproveAllRigiProjects}
         onNavigate={setActiveSection}
         onDispatch={(action) => setState((prev) => applyPolicyAction(prev, action))}
-        onAdvanceTurn={() => setState((prev) => advanceSimulationMonth(prev))}
+        onAdvanceTurn={handleAdvanceGovernmentTurn}
         onReinforceMinister={(id) =>
           setMinisters((prev) =>
             prev.map((m) =>

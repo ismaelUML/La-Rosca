@@ -192,6 +192,16 @@ export interface RigisectorItem {
   localConflictRiskPct?: number;
 }
 
+export interface RigiPendingProject {
+  id: string;
+  name: string;
+  sectorId: string;
+  sectorName: string;
+  minProjectMillionUsd: number;
+  monthsWaiting: number;
+  expiresInMonths: number;
+}
+
 export interface CustomTaxProposal {
   id: string;
   name: string;
@@ -228,6 +238,7 @@ export interface PersistedGameSession {
   levers: EconomicLeverItem[];
   measures: SectorMeasureCard[];
   rigiSectors: RigisectorItem[];
+  rigiPending?: RigiPendingProject[];
   customTaxes: CustomTaxProposal[];
 }
 
