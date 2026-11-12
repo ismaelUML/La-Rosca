@@ -30,10 +30,16 @@ export function stepSingleTaxCollection(
   const activityFactor = 1 + gdpGrowthAnnualPct / 100 / 12;
   const effectiveCollectionRatio = rateRatio * ((100 - evasionPct) / (100 - 28)) * oliveraTanziErosion * activityFactor;
 
+  // El ratio es una fórmula de NIVEL respecto de la recaudación de partida: si lo multiplicamos
+  // sobre la recaudación ya actualizada se acumula mes a mes (+15% mensual) y el superávit
+  // primario explota hasta 30% del PBI. Por eso se guarda la base y se aplica siempre sobre ella.
+  const baseRevenuePctGdp = tax.baseRevenuePctGdp ?? tax.revenuePctGdp;
+
   return {
     ...tax,
     evasionPct,
-    revenuePctGdp: round2(clamp(tax.revenuePctGdp * clamp(effectiveCollectionRatio, 0.85, 1.15), 0.05, 9.5))
+    baseRevenuePctGdp,
+    revenuePctGdp: round2(clamp(baseRevenuePctGdp * clamp(effectiveCollectionRatio, 0.85, 1.15), 0.05, 9.5))
   };
 }
 

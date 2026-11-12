@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   advanceCampaignMonth,
+  advanceGovernmentMonth,
   advanceSimulationMonth,
+  applyGovernmentEventChoice,
   applyPolicyAction,
+  getGovernmentRuntime,
   executeCampaignAction,
   advanceRigiMonthlyQueue,
   approveRigiProject,
@@ -53,6 +56,7 @@ import { CampaignApoyoProvinciasView } from './features/campaign/CampaignApoyoPr
 import { CampaignGobernantesView } from './features/campaign/CampaignGobernantesView.js';
 import { CampaignDemografiaPaisView } from './features/campaign/CampaignDemografiaPaisView.js';
 import { CampaignMonthlyDilemmaModal } from './features/campaign/CampaignMonthlyDilemmaModal.js';
+import { GovernmentOverlays } from './features/game-shell/GovernmentOverlays.js';
 import {
   ElectionNightModal,
   type ElectionStageType,
@@ -748,8 +752,16 @@ export function App() {
     }));
   };
 
+  const handleChooseGovernmentEvent = (optionId: string) => {
+    setState((prev) => applyGovernmentEventChoice(prev, optionId));
+  };
+
   const handleAdvanceGovernmentTurn = () => {
-    setState((prev) => advanceSimulationMonth(prev));
+    const gov = getGovernmentRuntime(state);
+    if (gov.pendingEventId !== null || gov.mandateStatus !== 'EN_CURSO') {
+      return;
+    }
+    setState((prev) => advanceGovernmentMonth(prev));
     const rigiQueue = advanceRigiMonthlyQueue(rigiPending, rigiSectors);
     setRigiPending(rigiQueue.nextPending);
     if (rigiQueue.desistedProjects.length > 0) {
@@ -824,6 +836,12 @@ export function App() {
             prev.map((r) => (r.id === id ? { ...r, enabledByDecree: !r.enabledByDecree } : r))
           )
         }
+      />
+      <GovernmentOverlays
+        state={state}
+        monthLabel={`Mes ${state.turnMonth}`}
+        onChooseEventOption={handleChooseGovernmentEvent}
+        onExitToMenu={() => setScreenMode('LANDING')}
       />
     </GameSidebarLayout>
   );

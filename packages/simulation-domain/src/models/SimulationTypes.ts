@@ -230,8 +230,31 @@ export interface TaxItem {
   currentRatePct: number;
   initialRatePct: number;
   revenuePctGdp: number;
+  baseRevenuePctGdp?: number;
   revenueMillionUsdMonthly?: number;
   evasionPct: number;
+}
+
+export type MandateStatus =
+  | 'EN_CURSO'
+  | 'MANDATO_COMPLETADO'
+  | 'RENUNCIA'
+  | 'JUICIO_POLITICO'
+  | 'DEFAULT_SOBERANO'
+  | 'HIPERINFLACION';
+
+// Estado de la presidencia en curso. Es opcional para no romper partidas guardadas antes de
+// que existieran los eventos de gobierno: si falta, el motor lo inicializa en limpio.
+export interface GovernmentRuntimeState {
+  pendingEventId: string | null;
+  eventHistory: Array<{ eventId: string; optionId: string; turnMonth: number }>;
+  lowGovernabilityMonths: number;
+  lowApprovalMonths: number;
+  defaultRiskMonths: number;
+  hyperinflationMonths: number;
+  mandateStatus: MandateStatus;
+  endReason?: string;
+  finalScore?: number;
 }
 
 export interface SimulationState {
@@ -257,6 +280,7 @@ export interface SimulationState {
   taxes: TaxItem[];
   structural: HiddenStructuralVariables;
   eventLog: string[];
+  government?: GovernmentRuntimeState;
 }
 
 export type PolicyAction =

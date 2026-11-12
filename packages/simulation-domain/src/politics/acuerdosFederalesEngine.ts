@@ -156,3 +156,4 @@ export function executeFederalAgreement(
     message: `✓ Acuerdo federal ejecutado: ${tool.name}. ${tool.effectSummary}`
   };
 }
+
