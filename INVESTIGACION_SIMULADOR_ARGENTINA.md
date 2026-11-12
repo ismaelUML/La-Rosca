@@ -1152,11 +1152,93 @@ Así se juega: ningún camino es perfecto, todos te dejan marcas en el cuerpo y 
 
 ---
 
+## 28. Especificaciones Exactas 1:1 de QQG (Reconstrucción del Bundle y Motor)
+
+A partir del desarmado del bundle de *¿Quién quiere gobernar?*, se establecen los algoritmos, estructuras de datos y parámetros definitivos para lograr la equivalencia milimétrica con el juego original.
+
+### 28.1. Matemática del Salto Inflacionario y Cambiario
+- **Inercia y Productoria Interanual**:
+  - La inflación mensual no es un impacto contemporáneo puro. Combina la emisión del período con una inercia de 3 a 6 meses (`inflHist` de hasta 12 meses).
+  - La inflación anualizada se calcula mediante la productoria geométrica estricta de los últimos 12 meses:
+    $$\text{inflacionAnual} = \prod_{i=1}^{12} \left(1 + \frac{\text{infl\_mes}_i}{100}\right) - 1$$
+  - Actualización del tipo de cambio real y del nivel de precios:
+    $$\text{tcReal}_{t} = \text{tcReal}_{t-1} \times \frac{1 + \text{devaluación}}{1 + \text{inflación} + 0.25}$$
+    $$\text{priceLevel}_{t} = \text{priceLevel}_{t-1} \times \left(1 + \frac{\text{inflación}}{100}\right)$$
+- **Feedback Dinámico Reservas $\rightarrow$ Brecha $\rightarrow$ Dólar $\rightarrow$ Confianza**:
+  - Al caer las reservas internacionales, la brecha cambiaria sufre penalizaciones progresivas (términos de estrés cuando la brecha supera el 15 % y el 25-30 %).
+  - Se activa una "corrida suave":
+    $$\text{Caída de Reservas} \longrightarrow \uparrow \text{Brecha} \longrightarrow \uparrow \text{Presión sobre Dólar e IPC} \longrightarrow \downarrow \text{Confianza} \longrightarrow \uparrow \text{Presión sobre Reservas}$$
+
+### 28.2. Catálogo y Mecánica RIGI (0/29)
+- **Estructura de Inicio**:
+  - Arranca con `rigi: {}` y `rigiPending: []`. El contador visible inicial es `0/29` (0 proyectos aprobados sobre el techo de 29 posibles).
+  - El jugador habilita sectores productivos (minería, energía, infraestructura, agro, tecnología, etc.).
+  - Una vez habilitado el sector, comienzan a llegar proyectos a `rigiPending` con atributos: `minUsd` (inversión mínima en millones de USD), `sectorId` y `fecha`.
+  - El jugador puede aprobar o rechazar cada proyecto. Si permanecen sin respuesta por varios meses, desisten y desaparecen de la cola.
+- **Registro del Sector Habilitado**:
+  ```javascript
+  rigi[sectorId] = {
+    since: date,
+    invested: 0,
+    projects: 0
+  };
+  ```
+- **Efectos Proporcionales al Aprobar**:
+  - Multiplicador de escala: $\frac{\text{invested}}{\text{minUsd} \times 10}$.
+  - Impactos: $+\text{Inversión}$, $+\text{Exportaciones}$, $+\text{Empleo}$, $+\text{Costo Fiscal}$ y riesgo de reacción o backlash político.
+
+### 28.3. Negociación Bloque por Bloque en el Congreso
+- **Unidad de Negociación**: Se negocia por fuerza o bloque parlamentario, no legislador por legislador.
+- **Posturas Parlamentarias**: Cada bloque frente a un proyecto de ley, presupuesto o reforma presenta 3 estados posibles: `A FAVOR`, `EN DUDA` o `EN CONTRA`.
+- **Probabilidad de Conversión Estocástica**:
+  $$p(\text{voto a favor}) = f(\text{afinidad}, \text{imagen}, \text{concesiones}, \text{tipo\_de\_ley}, \text{poder\_del\_bloque})$$
+- **Moneda de Concesión**:
+  - Partidas presupuestarias u obras para sus distritos (gasto en Argentums).
+  - Designación de cargos en el Gabinete (ministerios/secretarías para dirigentes de su espacio).
+  - Suavización o retiro de artículos ríspidos del proyecto.
+  - Compromiso de apoyo recíproco en futuras votaciones.
+- Si no se alcanza el quórum o la mayoría simple/absoluta, el proyecto naufraga y se activa un cooldown antes de poder reintroducirlo.
+
+### 28.4. Las Problemáticas de Intervención Federal
+- **Catálogo Institucional de Problemáticas**:
+  - `expresion`: Restricciones a la libertad de expresión y persecución a la prensa.
+  - `justicia`: Fallos judiciales incumplidos o justicia cooptada/avasallada.
+  - `corrupcion`: Denuncias probadas de corrupción estructural en la obra pública y contrataciones.
+  - `fraude`: Denuncias y pruebas de fraude electoral sistemático.
+  - `legislatura`: Legislatura provincial paralizada, clausurada o subordinada.
+  - `represion`: Violencia institucional, represión a opositores y presos políticos.
+- **Estados Iniciales de Alerta**:
+  - **Formosa**: Arranca con el set institucional completo de 6 problemáticas: `["expresion", "justicia", "corrupcion", "fraude", "legislatura", "represion"]`.
+  - **Santiago del Estero**: Arranca con 4 problemáticas: `["expresion", "justicia", "corrupcion", "legislatura"]`.
+- **Condición Estricta de Intervención**:
+  - Requiere $\ge 5$ problemáticas activas de forma consecutiva durante más de 2 años (24 meses).
+  - El Poder Ejecutivo envía el proyecto de ley al Congreso de la Nación.
+  - Al aprobarse la ley: se designa un **Interventor Federal**, se desplaza al gobernador y se convocan a **elecciones obligatorias en 6 meses**.
+
+### 28.5. Combate Militar y Anexión Territorial
+- **Fórmula de Resolución Sigmoide**:
+  $$p(\text{éxito}) = \sigma\left(\text{Poder}_{\text{AR}} - \text{Poder}_{\text{rival}} + \text{GastoMilitar}_{\% \text{PIB}} + k \cdot \text{ControlPrevio} + \text{BonoBloque} + \text{Motivación} - \text{DefensasRival}\right)$$
+- **Extinción del Estado Enemigo**: Si Argentina consolida un control territorial $> 90\%$, el país rival se extingue geopolíticamente y su territorio residual se anexa como provincia o territorio nacional incorporado.
+- **Régimen de Pacifismo y Decaimiento de Ataque**: Si el jugador no inicia conflictos armados en el mapa, la probabilidad de ser atacado por potencias extranjeras decae geométricamente ronda tras ronda:
+  $$P(\text{ataque enemigo})_t = 10\% \times 0.9^t \quad (10\% \rightarrow 9\% \rightarrow 8.1\% \rightarrow 7.29\% \dots)$$
+- Malvinas opera con probabilidad de agresión externa reducida y reglas diplomáticas exclusivas.
+
+### 28.6. Leyes Propias e Impuestos Propios
+- **Leyes Propias**:
+  - Formulario de texto libre estructurado: Título, Articulado/Texto, Área temática e Instrumento institucional (`Ley del Congreso` o `Decreto de Necesidad y Urgencia`).
+  - **Parser Semántico (Regex + Scoring Lexical)**: Analiza términos clave (impuestos, gasto público, emisión monetaria, exportaciones, tasas, aranceles, dirección subir/bajar, fuentes de financiamiento, autoridad de aplicación y plazos).
+  - Puntuación de calidad: Si el proyecto carece de financiamiento explícito, contradice la ideología declarada del espacio o una provincia intenta legislar sobre facultades delegadas a la Nación, el parser emite penalizaciones y advertencias antes de remitirlo a votación.
+- **Impuestos Propios**:
+  - Formulario con Nombre, Hecho imponible, Alícuota y Base de recaudación.
+  - El motor deduce la recaudación teórica y calcula la distorsión económica (aumento de informalidad, fuga de capitales o caída de inversión).
+
+---
+
 ## Resumen Final del Diseño Completo:
 - Con estos **9 bloques estructurales integrados** (desde la macro, la banca privada y la justicia hasta la seguridad, el narcotráfico, las escuelas y los eventos dinámicos), el simulador cuenta con el metamodelo más riguroso jamás documentado para un juego de estrategia política y económica argentina.
 - El sistema de **Afinidad Política** ya no tira monedas al azar: evalúa el humor social, la aprobación presidencial, la brecha de tamaño y los vetos ideológicos dogmáticos de cada dirigente real.
 - La pantalla de **Candidatura y Coaliciones** implementa la postulación personal o la delegación en un delfín con cálculo de riesgo de traición y estatura institucional mínima.
 - La pantalla de **Medidas** cuenta con una estética clara y colorida con píldoras de efecto estimado a 4 años, sectores con conteo de vigencias y clasificación ideológica explícita.
-- El sistema pasa todos los tests unitarios, compila limpiamente sin emitir errores de TypeScript y supera la auditoría matemática de complejidad ciclomática estricta ($CC \le 5$, $MI \ge 75$) en cada uno de sus 59 módulos.
+- El sistema pasa todos los tests unitarios, compila limpiamente sin emitir errores de TypeScript y supera la auditoría matemática de complejidad ciclomática estricta ($CC \le 5$, $MI \ge 75$) en cada uno de sus 68 módulos.
 
 Saludos! Ya tenemos la biblia completa del simulador y todo el código sincronizado con las mecánicas del juego. Decime si querés probar alguna simulación en caliente o avanzar con la siguiente pantalla!

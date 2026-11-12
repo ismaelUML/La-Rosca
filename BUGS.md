@@ -104,3 +104,43 @@ Este documento recopila y cataloga todos los bugs, desvíos respecto a *¿Quién
 - **Descripción**: Al asumir, se podía colocar cualquier dirigente en cualquier ministerio sin validar afinidad ni idoneidad sectorial (ej. Patricia Bullrich en Capital Humano en vez de Seguridad).
 - **Estado**: 🟢 RESUELTO (Commit `d596495`).
 - **Impacto**: Validación de área ministerial y ponderación de idoneidad y lealtad.
+
+---
+
+## 4. Requerimientos de Paridad 1:1 con QQG (En Hoja de Ruta)
+
+### [FEAT-001] Inercia de 3-6 meses en inflación y productoria geométrica interanual de 12 meses
+- **Severidad**: Alta (Fidelidad Macroeconómica).
+- **Descripción**: La inflación mensual no debe impactar de golpe al mes siguiente sino suavizarse con una inercia de 3-6 meses y acumular un historial de 12 meses para la productoria anual.
+- **Estado**: 🟡 EN PLANIFICACIÓN.
+
+### [FEAT-002] Feedback dinámico Reservas $\rightarrow$ Brecha (penalizaciones 15 % y 25-30 %) $\rightarrow$ Corrida suave
+- **Severidad**: Alta (Régimen Cambiario).
+- **Descripción**: Al caer las reservas brutas/netas, la brecha debe disparar no linealmente empujando dólar, precios y destruyendo confianza.
+- **Estado**: 🟡 EN PLANIFICACIÓN.
+
+### [FEAT-003] Flujo dinámico de RIGI con cola `rigiPending`, sectores y desistimiento por tiempo
+- **Severidad**: Media (Módulo RIGI).
+- **Descripción**: Habilitar sectores productivos para que generen proyectos pendientes con `minUsd` que pueden aprobarse o desistir si expiran.
+- **Estado**: 🟡 EN PLANIFICACIÓN.
+
+### [FEAT-004] Negociación de leyes bloque por bloque con posturas (a favor / en duda / en contra) y concesiones
+- **Severidad**: Alta (Módulo Congreso).
+- **Descripción**: Negociar con jefes de bloque ofreciendo partidas en Argentum, ministerios en Gabinete o suavización de artículos.
+- **Estado**: 🟡 EN PLANIFICACIÓN.
+
+### [FEAT-005] Catálogo de 6 problemáticas institucionales de Intervención Federal con Formosa y Santiago
+- **Severidad**: Media (Módulo Político / Territorio).
+- **Descripción**: Formosa inicia con 6 problemáticas institucionales (`expresion`, `justicia`, `corrupcion`, `fraude`, `legislatura`, `represion`) y Santiago con 4. Al cumplir 2 años continuos con $\ge 5$, se habilita el envío de ley de intervención al Congreso.
+- **Estado**: 🟡 EN PLANIFICACIÓN.
+
+### [FEAT-006] Combate militar con sigmoide ponderada y anexión territorial al superar el 90 %
+- **Severidad**: Media (Módulo Territorio / Militar).
+- **Descripción**: Resolución de conflictos con $\sigma(\Delta \text{poder} + \text{gasto} + \text{control\_previo} + \text{bloque} - \text{defensa})$ y absorción definitiva del país enemigo.
+- **Estado**: 🟡 EN PLANIFICACIÓN.
+
+### [FEAT-007] Parser semántico (regex + scoring) para Leyes Propias e Impuestos Propios
+- **Severidad**: Media (Módulo Legislativo / Tributario).
+- **Descripción**: Formulario de texto libre que analiza dirección, variables afectadas, financiamiento y emite alertas de inviabilidad.
+- **Estado**: 🟡 EN PLANIFICACIÓN.
+
