@@ -49,6 +49,10 @@ import { CampaignGobernantesView } from './features/campaign/CampaignGobernantes
 import { CampaignDemografiaPaisView } from './features/campaign/CampaignDemografiaPaisView.js';
 import { CampaignMonthlyDilemmaModal } from './features/campaign/CampaignMonthlyDilemmaModal.js';
 import {
+  ElectionNightModal,
+  type ElectionStageType
+} from './features/campaign/ElectionNightModal.js';
+import {
   GameSidebarLayout,
   type InGameSidebarSection
 } from './features/game-shell/GameSidebarLayout.js';
@@ -356,6 +360,19 @@ function resolveCandidateFromSetup(nextSetup: GameSetupConfiguration): { id: str
   return { id: 'CUSTOM_CANDIDATO', name: 'Candidato' };
 }
 
+function resolveElectionStageForMonth(monthIndex: number): ElectionStageType | null {
+  if (monthIndex === 8) {
+    return 'PASO';
+  }
+  if (monthIndex === 10) {
+    return 'GENERALES';
+  }
+  if (monthIndex === 11) {
+    return 'BALOTAJE';
+  }
+  return null;
+}
+
 export function App() {
   const saveRepo = useMemo(() => new CompressedSaveRepository(), []);
   const savedSession = useMemo(() => loadSessionFromStorage(), []);
@@ -380,6 +397,7 @@ export function App() {
   const [campaignNavSection, setCampaignNavSection] = useState<CampaignNavSection>(() => {
     return (savedSession?.campaignNavSection as CampaignNavSection) ?? 'RESUMEN';
   });
+  const [activeElectionModal, setActiveElectionModal] = useState<ElectionStageType | null>(null);
 
   const [state, setState] = useState<SimulationState>(() => {
     return (
@@ -475,10 +493,22 @@ export function App() {
     }
     const dilemma = resolveMonthlyDilemma(next.stage.currentMonthIndex, next.resolvedDilemmas);
     const nextDilemmaId = dilemma ? dilemma.id : null;
+    const electionStage = resolveElectionStageForMonth(next.stage.currentMonthIndex);
+    if (electionStage) {
+      setActiveElectionModal(electionStage);
+    }
     setCampaignState({
       ...next,
       activeMonthlyDilemmaId: nextDilemmaId
     });
+  };
+
+  const handleProceedElection = () => {
+    if (activeElectionModal === 'BALOTAJE') {
+      setState(createInitialSimulationState2027(setup.role, setup.difficulty, setup.provinceId));
+      setScreenMode('GOVERNMENT');
+    }
+    setActiveElectionModal(null);
   };
 
   const activeDilemma = useMemo(() => {
@@ -606,6 +636,12 @@ export function App() {
         <CampaignMonthlyDilemmaModal
           dilemma={activeDilemma}
           onSelectOption={handleResolveDilemma}
+        />
+        <ElectionNightModal
+          isOpen={Boolean(activeElectionModal)}
+          stageType={activeElectionModal ?? 'PASO'}
+          state={campaignState}
+          onProceed={handleProceedElection}
         />
       </CampaignSidebarLayout>
     );
