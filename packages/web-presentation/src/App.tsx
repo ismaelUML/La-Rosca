@@ -28,6 +28,8 @@ import {
   loadSessionFromStorage,
   POLITICAL_PARTIES_2027,
   REAL_POLITICIANS_2027,
+  resolveMonthlyDilemma,
+  type CampaignDilemmaOption,
   saveSessionToStorage
 } from '@argentina-sim/infrastructure';
 import { LandingScreen } from './features/party-setup/LandingScreen.js';
@@ -45,6 +47,7 @@ import { CampaignPartidoProvinciasView } from './features/campaign/CampaignParti
 import { CampaignApoyoProvinciasView } from './features/campaign/CampaignApoyoProvinciasView.js';
 import { CampaignGobernantesView } from './features/campaign/CampaignGobernantesView.js';
 import { CampaignDemografiaPaisView } from './features/campaign/CampaignDemografiaPaisView.js';
+import { CampaignMonthlyDilemmaModal } from './features/campaign/CampaignMonthlyDilemmaModal.js';
 import {
   GameSidebarLayout,
   type InGameSidebarSection
@@ -468,9 +471,41 @@ export function App() {
     if (next.stage.stage === 'GOBIERNO') {
       setState(createInitialSimulationState2027(setup.role, setup.difficulty, setup.provinceId));
       setScreenMode('GOVERNMENT');
-    } else {
-      setCampaignState(next);
+      return;
     }
+    const dilemma = resolveMonthlyDilemma(next.stage.currentMonthIndex, next.resolvedDilemmas);
+    const nextDilemmaId = dilemma ? dilemma.id : null;
+    setCampaignState({
+      ...next,
+      activeMonthlyDilemmaId: nextDilemmaId
+    });
+  };
+
+  const activeDilemma = useMemo(() => {
+    if (!campaignState.activeMonthlyDilemmaId) {
+      return null;
+    }
+    return resolveMonthlyDilemma(
+      campaignState.stage.currentMonthIndex,
+      campaignState.resolvedDilemmas
+    );
+  }, [
+    campaignState.activeMonthlyDilemmaId,
+    campaignState.stage.currentMonthIndex,
+    campaignState.resolvedDilemmas
+  ]);
+
+  const handleResolveDilemma = (option: CampaignDilemmaOption) => {
+    if (!activeDilemma) {
+      return;
+    }
+    const applied = option.apply(campaignState);
+    const dilemmaId = activeDilemma.id;
+    setCampaignState({
+      ...applied,
+      activeMonthlyDilemmaId: null,
+      resolvedDilemmas: [...(applied.resolvedDilemmas ?? []), dilemmaId]
+    });
   };
 
   const handleExecuteCampaignAction = (payload: CampaignExecutePayload) => {
@@ -567,6 +602,10 @@ export function App() {
           onNavigateActions={() => setCampaignNavSection('ACCIONES_CAMPAÑA')}
           onExecuteAction={handleExecuteCampaignAction}
           onUpdateCampaignState={setCampaignState}
+        />
+        <CampaignMonthlyDilemmaModal
+          dilemma={activeDilemma}
+          onSelectOption={handleResolveDilemma}
         />
       </CampaignSidebarLayout>
     );

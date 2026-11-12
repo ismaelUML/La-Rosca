@@ -189,6 +189,8 @@ export interface CampaignSimulationState {
   coalitionParties?: string[];
   runningMateId?: string | null;
   rejectedAlliances?: string[];
+  resolvedDilemmas?: string[];
+  activeMonthlyDilemmaId?: string | null;
   budgetArgentums: number;
   actionsRemainingThisMonth: number;
   actionsTotalThisMonth: number;
