@@ -123,7 +123,7 @@ function TopTelemetryBar({
           </div>
           <div className="leading-tight">
             <div className="text-xs font-serif font-black uppercase tracking-wider text-amber-100">
-              LA ROSADA · {setup.party.sigla}
+              LA ROSCA · {setup.party.sigla}
             </div>
             <div className="text-[10px] font-mono text-slate-300">
               {ROLE_LABELS[setup.role]} · {formatGameDate(state.turnMonth)}

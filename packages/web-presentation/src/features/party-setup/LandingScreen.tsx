@@ -85,7 +85,7 @@ export function LandingScreen({
                 COMANDO NACIONAL
               </div>
               <h1 className="text-4xl md:text-6xl font-serif font-black tracking-tight text-amber-50 leading-none">
-                LA ROSADA
+                LA ROSCA
               </h1>
               <p className="text-xs md:text-sm text-slate-300 leading-relaxed pt-1">
                 Campaña presidencial, interna partidaria y 48 meses de gobierno bajo fuego real: dólar, Congreso,
