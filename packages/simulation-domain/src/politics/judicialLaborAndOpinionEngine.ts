@@ -199,6 +199,7 @@ export function stepProvincesState(
 export interface PublicOpinionStepOptions {
   gdpGrowthAnnualPct?: number;
   approvalPainMult?: number;
+  measuresApprovalDeltaPp?: number;
 }
 
 function computeInflationApprovalDelta(realMonthlyIpcPct: number, painMult: number): number {
@@ -222,6 +223,28 @@ function computeExpectationDelta(
   return (2.0 - realMonthlyIpcPct) * 1.35 * inflMult - Math.max(0, exchangeBrechaPct - 35) * 0.12 + activityDelta * 0.5;
 }
 
+function computeOpinionNetDelta(
+  inflation: InflationBreakdown,
+  labor: LaborMarketState,
+  gdpGrowth: number,
+  painMult: number,
+  measuresDelta: number
+): number {
+  const inflationDelta = computeInflationApprovalDelta(inflation.realMonthlyIpcPct, painMult);
+  const povertyPain = Math.max(0, inflation.povertyCbtPct - 33) * 0.1 * painMult;
+  const activityDelta = computeActivityDelta(gdpGrowth, painMult);
+  const wageRelief = (labor.realWageIndex - 100) * 0.16;
+  return inflationDelta + wageRelief + activityDelta - povertyPain + measuresDelta;
+}
+
+function resolveOpinionOptions(options: PublicOpinionStepOptions) {
+  return {
+    painMult: options.approvalPainMult ?? 1.0,
+    gdpGrowth: options.gdpGrowthAnnualPct ?? 0,
+    measuresDelta: options.measuresApprovalDeltaPp ?? 0
+  };
+}
+
 export function stepPublicOpinion(
   opinion: PublicOpinionState,
   inflation: InflationBreakdown,
@@ -229,18 +252,14 @@ export function stepPublicOpinion(
   exchangeBrechaPct: number,
   options: PublicOpinionStepOptions = {}
 ): PublicOpinionState {
-  const painMult = options.approvalPainMult ?? 1.0;
-  const gdpGrowth = options.gdpGrowthAnnualPct ?? 0;
-  const inflationDelta = computeInflationApprovalDelta(inflation.realMonthlyIpcPct, painMult);
-  const povertyPain = Math.max(0, inflation.povertyCbtPct - 33) * 0.1 * painMult;
+  const { painMult, gdpGrowth, measuresDelta } = resolveOpinionOptions(options);
   const activityDelta = computeActivityDelta(gdpGrowth, painMult);
-  const wageRelief = (labor.realWageIndex - 100) * 0.16;
+  const netDelta = computeOpinionNetDelta(inflation, labor, gdpGrowth, painMult, measuresDelta);
 
-  const segments: PublicOpinionSegment[] = opinion.segments.map((seg) => {
-    const netDelta = inflationDelta + wageRelief + activityDelta - povertyPain;
-    const approvalPct = round2(clamp(seg.approvalPct + netDelta, 8, 88));
-    return { ...seg, approvalPct };
-  });
+  const segments: PublicOpinionSegment[] = opinion.segments.map((seg) => ({
+    ...seg,
+    approvalPct: round2(clamp(seg.approvalPct + netDelta, 8, 88))
+  }));
 
   const weightedApproval = segments.reduce((acc, s) => acc + s.approvalPct * (s.populationSharePct / 100), 0);
   const managementApprovalPct = round2(clamp(weightedApproval, 10, 85));

@@ -107,6 +107,7 @@ export interface InflationStepOptions {
   inertiaFloor?: number;
   fiscalDeficitPctGdp?: number;
   deficitMonetizationMult?: number;
+  measuresInflationDeltaPp?: number;
 }
 
 export function computeMonetaryDropComponent(
@@ -166,9 +167,13 @@ export function computeNextInflationBreakdown(
     options.deficitMonetizationMult
   );
 
-  const realMonthlyIpcPct = round2(
-    clamp(inertiaComponentPp + passThroughComponentPp + tarifazoComponentPp + monetaryDropComponentPp, 0.2, 45)
-  );
+  const rawTotal =
+    inertiaComponentPp +
+    passThroughComponentPp +
+    tarifazoComponentPp +
+    monetaryDropComponentPp +
+    (options.measuresInflationDeltaPp ?? 0);
+  const realMonthlyIpcPct = round2(clamp(rawTotal, 0.2, 45));
 
   const nextHist = [...currentHist, realMonthlyIpcPct].slice(-12);
   const interannualIpcPct = computeInterannualFromHistory(nextHist);

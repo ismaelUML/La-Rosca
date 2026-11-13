@@ -1,5 +1,6 @@
 import type { DifficultyLevel, SimulationState } from '../models/SimulationTypes.js';
 import { advanceRigiMonthlyQueue } from './rigiEngine.js';
+import { computeDomainPolicyModifiers } from './domainModifiersEngine.js';
 import { clamp, round2 } from '../economy/mathUtils.js';
 import { computeNextInflationBreakdown } from '../economy/inflationEngine.js';
 import { stepCentralBankBalance, stepPrivateBankingBalance } from '../economy/centralBankAndBankingEngine.js';
@@ -101,6 +102,7 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
   const nextYear = nextMonthOfYear === 1 ? state.currentYear + 1 : state.currentYear;
   const dynamics = DIFFICULTY_DYNAMICS[state.difficulty] ?? DIFFICULTY_DYNAMICS.ESTANDAR_2027;
   const fiscalDeficitPctGdp = Math.max(0, -state.treasury.financialResultPctGdp);
+  const mod = computeDomainPolicyModifiers(state);
 
   const nextEnergy = stepEnergyAndCammesa(
     state.energy,
@@ -126,7 +128,8 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
       fiscalDeficitPctGdp,
       lastRolloverPct: state.treasury.lastRolloverPct,
       reserveDrainBillionUsd: dynamics.reserveDrainBillionUsd,
-      deficitMonetizationMult: dynamics.deficitMonetizationMult
+      deficitMonetizationMult: dynamics.deficitMonetizationMult,
+      rigiExportsBillionUsd: mod.rigiMonthlyExportsBillionUsd
     }
   );
 
@@ -140,14 +143,23 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
     {
       inertiaFloor: dynamics.inertiaFloor,
       fiscalDeficitPctGdp,
-      deficitMonetizationMult: dynamics.deficitMonetizationMult
+      deficitMonetizationMult: dynamics.deficitMonetizationMult,
+      measuresInflationDeltaPp: mod.measuresInflationDeltaPp
     }
   );
 
   const industrialGasPenalty = nextEnergy.industrialGasCutActive ? -1.4 : 0;
   const creditBoost = (nextBanking.privateCreditPctGdp - 8) * 0.14;
   const gdpGrowthAnnualPct = round2(
-    clamp(state.gdpGrowthAnnualPct * 0.75 + creditBoost + industrialGasPenalty - (nextInflation.realMonthlyIpcPct - 2.2) * 0.45, -9.5, 8.5)
+    clamp(
+      state.gdpGrowthAnnualPct * 0.75 +
+        creditBoost +
+        industrialGasPenalty +
+        mod.rigiGdpGrowthBoostPp -
+        (nextInflation.realMonthlyIpcPct - 2.2) * 0.45,
+      -9.5,
+      8.5
+    )
   );
   const gdpNominalBillionUsd = round2(state.gdpNominalBillionUsd * (1 + gdpGrowthAnnualPct / 100 / 12));
 
@@ -160,7 +172,11 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
     nextTaxes,
     nextEnergy,
     gdpNominalBillionUsd,
-    state.structural.anchorCredibilityIndex
+    state.structural.anchorCredibilityIndex,
+    {
+      extraRevenuePctGdp: mod.customTaxesRevenuePctGdp,
+      extraSpendingPctGdp: mod.measuresFiscalCostPctGdp + mod.rigiFiscalCostPctGdp
+    }
   );
 
   const { nextDebtPortfolio, nextCountryRiskPb } = stepDebtAndCountryRisk(
@@ -188,7 +204,11 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
     nextInflation,
     nextLabor,
     nextCentralBank.exchangeBrechaPct,
-    { gdpGrowthAnnualPct, approvalPainMult: dynamics.approvalPainMult }
+    {
+      gdpGrowthAnnualPct,
+      approvalPainMult: dynamics.approvalPainMult,
+      measuresApprovalDeltaPp: mod.measuresApprovalDeltaPp
+    }
   );
   const nextJudicial = stepJudicialAndLawfare(
     state.judicial,
@@ -196,8 +216,16 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
     nextTreasury.coparticipableRevenuePctGdp
   );
 
+  const steppedStructural = stepStructuralExpectations(
+    state,
+    nextInflation.realMonthlyIpcPct,
+    nextCentralBank.exchangeBrechaPct,
+    nextTreasury.primaryResultPctGdp
+  );
   const nextStructural = {
-    ...stepStructuralExpectations(state, nextInflation.realMonthlyIpcPct, nextCentralBank.exchangeBrechaPct, nextTreasury.primaryResultPctGdp),
+    ...steppedStructural,
+    anchorCredibilityIndex: round2(clamp(steppedStructural.anchorCredibilityIndex + mod.cabinetAnchorBonus, 8, 98)),
+    stateCapacityExecutionIndex: mod.cabinetExecutionIndex ?? steppedStructural.stateCapacityExecutionIndex,
     silobolsaStockMillionTons: nextSilobolsaTons
   };
 

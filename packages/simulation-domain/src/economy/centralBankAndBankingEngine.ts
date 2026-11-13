@@ -123,6 +123,7 @@ export interface CentralBankStepOptions {
   lastRolloverPct?: number;
   reserveDrainBillionUsd?: number;
   deficitMonetizationMult?: number;
+  rigiExportsBillionUsd?: number;
 }
 
 function computeDeficitBaseEmission(
@@ -136,6 +137,11 @@ function computeDeficitBaseEmission(
   return round2(monetaryBase * (effectiveDeficitRatio / 100) * 1.8 * monetizationMult);
 }
 
+function computeOpenMarketInflow(centralBank: CentralBankBalance): number {
+  const isOpenMarket = centralBank.cepoStrictnessIndex <= 30 && centralBank.exchangeBrechaPct < 25;
+  return isOpenMarket ? 0.55 : 0;
+}
+
 function computeMulcNetIntervention(
   centralBank: CentralBankBalance,
   liquidatedBillionUsd: number,
@@ -145,11 +151,11 @@ function computeMulcNetIntervention(
   const extraDrain = options.reserveDrainBillionUsd ?? 0;
   const rolloverDrain = Math.max(0, (98 - (options.lastRolloverPct ?? 100)) * 0.035);
   const nonAgroExportsBillionUsd = Math.max(0.8, 2.4 - Math.max(0, centralBank.exchangeBrechaPct - 25) * 0.018);
-  const isOpenMarket = centralBank.cepoStrictnessIndex <= 30 && centralBank.exchangeBrechaPct < 25;
-  const openMarketInflow = isOpenMarket ? 0.55 : 0;
+  const openMarketInflow = computeOpenMarketInflow(centralBank);
   const importDemandBillionUsd =
     4.6 + Math.max(0, centralBank.exchangeBrechaPct - 25) * 0.032 + energyDeficitMillionUsd / 1000 + extraDrain + rolloverDrain;
-  return liquidatedBillionUsd + nonAgroExportsBillionUsd + openMarketInflow - importDemandBillionUsd;
+  const rigiExports = options.rigiExportsBillionUsd ?? 0;
+  return liquidatedBillionUsd + nonAgroExportsBillionUsd + openMarketInflow + rigiExports - importDemandBillionUsd;
 }
 
 export function stepCentralBankBalance(

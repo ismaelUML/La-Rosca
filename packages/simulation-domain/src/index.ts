@@ -15,6 +15,7 @@ export * from './ports/SaveRepositoryPort.js';
 export * from './ports/FakeSaveRepository.js';
 export * from './engine/PolicyActionHandler.js';
 export * from './engine/SimulationEngine.js';
+export * from './engine/domainModifiersEngine.js';
 export * from './engine/rigiEngine.js';
 export * from './politics/congressEngine.js';
 export * from './engine/semanticParserEngine.js';

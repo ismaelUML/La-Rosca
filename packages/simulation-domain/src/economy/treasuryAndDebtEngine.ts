@@ -84,12 +84,18 @@ export function stepEnergyAndCammesa(
   };
 }
 
+export interface TreasuryStepOptions {
+  extraRevenuePctGdp?: number;
+  extraSpendingPctGdp?: number;
+}
+
 export function stepTreasuryBalance(
   treasury: TreasuryBalance,
   taxes: TaxItem[],
   energy: EnergyMatrixState,
   gdpNominalBillionUsd: number,
-  anchorCredibilityIndex: number
+  anchorCredibilityIndex: number,
+  options: TreasuryStepOptions = {}
 ): TreasuryBalance {
   let coparticipableRevenuePctGdp = 0;
   let nonCoparticipableRevenuePctGdp = 0;
@@ -104,16 +110,19 @@ export function stepTreasuryBalance(
 
   // Ley 23.548: de la masa coparticipable Nacion se queda ~42%, el resto se va directo a las 24 provincias
   const nationalShareOfCoparticipable = coparticipableRevenuePctGdp * 0.42;
-  const revenuePctGdp = round2(nationalShareOfCoparticipable + nonCoparticipableRevenuePctGdp);
+  const extraRev = options.extraRevenuePctGdp ?? 0;
+  const revenuePctGdp = round2(nationalShareOfCoparticipable + nonCoparticipableRevenuePctGdp + extraRev);
 
   const cammesaSubsidiesPctGdp = round2(((energy.cammesaMonthlyDeficitMillionUsd * 12) / 1000 / gdpNominalBillionUsd) * 100);
+  const extraSpend = options.extraSpendingPctGdp ?? 0;
   const primarySpendingPctGdp = round2(
     treasury.ansesPensionsPctGdp +
       cammesaSubsidiesPctGdp +
       treasury.socialProgramsPctGdp +
       treasury.publicWagesPctGdp +
       treasury.publicWorksPctGdp +
-      treasury.discretionaryAtnPctGdp
+      treasury.discretionaryAtnPctGdp +
+      extraSpend
   );
 
   const primaryResultPctGdp = round2(revenuePctGdp - primarySpendingPctGdp);
