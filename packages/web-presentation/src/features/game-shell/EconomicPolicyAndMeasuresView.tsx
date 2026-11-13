@@ -49,16 +49,16 @@ function PegStrip({ state, onDispatch }: { state: SimulationState; onDispatch: (
 
   return (
     <ActionStripCard
-      icon="💵"
-      iconTileClass="bg-sky-950/60 text-sky-300"
+      icon="FX"
+      iconTileClass="bg-[#121c2b] text-sky-300"
       urgentLabel={urgentLabel}
       urgentClass="bg-amber-600 text-white"
-      title={`Velocidad del dólar oficial (${peg}% por mes)`}
+      title={`Dólar oficial (${peg}%/mes)`}
       subtitle={`Oficial $${state.centralBank.officialDollarArs.toLocaleString('es-AR')} · Brecha ${state.centralBank.exchangeBrechaPct.toFixed(1)}%`}
       tradeoff={tradeoff}
       rightAction={{
         label: isPegFast ? 'Anclar 1%' : 'Acelerar 3%',
-        sublabel: 'Atajo rápido',
+        sublabel: 'Ajuste rápido',
         variant: isPegFast ? 'done' : 'primary',
         onClick: () => onDispatch({ type: 'SET_CRAWLING_PEG', monthlyPct: isPegFast ? 1 : 3 })
       }}
@@ -102,12 +102,12 @@ function TnaStrip({ state, onDispatch }: { state: SimulationState; onDispatch: (
 
   return (
     <ActionStripCard
-      icon="🏦"
-      iconTileClass="bg-amber-950/60 text-amber-300"
+      icon="TNA"
+      iconTileClass="bg-[#231b10] text-amber-300"
       urgentLabel={urgentLabel}
-      urgentClass="bg-rose-600 text-white"
-      title={`Tasa de interés de referencia (${tna}% anual)`}
-      subtitle={`Equivale a ${(tna / 12).toFixed(1)}% por mes vs ${state.inflation.realMonthlyIpcPct.toFixed(1)}% de inflación`}
+      urgentClass="bg-rose-700 text-white"
+      title={`Tasa de política monetaria (${tna}% anual)`}
+      subtitle={`Mensual ${(tna / 12).toFixed(1)}% · IPC ${state.inflation.realMonthlyIpcPct.toFixed(1)}%`}
       tradeoff={copy.tradeoff}
       rightAction={{
         label: copy.label,
@@ -138,10 +138,10 @@ function TariffStrip({ state, onDispatch }: { state: SimulationState; onDispatch
 
   return (
     <ActionStripCard
-      icon="⚡"
-      iconTileClass="bg-emerald-950/60 text-emerald-300"
-      title={`Qué parte de la boleta paga la gente (${coverage}% del costo)`}
-      subtitle={`Subsidio mensual de CAMMESA: -USD ${state.energy.cammesaMonthlyDeficitMillionUsd} M`}
+      icon="TAR"
+      iconTileClass="bg-[#102219] text-emerald-300"
+      title={`Cobertura tarifaria (${coverage}% del costo)`}
+      subtitle={`Déficit CAMMESA: -USD ${state.energy.cammesaMonthlyDeficitMillionUsd} M/mes`}
       tradeoff={tradeoff}
       rightAction={{
         label: isTariffHigh ? 'Subsidiar 50%' : 'Sincerar 90%',
@@ -177,8 +177,8 @@ function FineTuningSection({
           <h3 className="text-sm font-bold uppercase tracking-wider text-amber-100">
             Mesa de Dinero (BCRA) y Tarifas (Energía)
           </h3>
-          <p className="text-[11px] text-rose-100/80">
-            Tocá las 3 perillas principales. Cada ajuste tiene efecto directo en dólares, inflación y calle.
+          <p className="text-[11px] font-mono text-rose-100/75">
+            PARÁMETROS DE DEVALUACIÓN, TASA MONETARIA Y SUBSIDIOS
           </p>
         </div>
       </div>
@@ -188,8 +188,8 @@ function FineTuningSection({
         <TnaStrip state={state} onDispatch={onDispatch} />
         <TariffStrip state={state} onDispatch={onDispatch} />
 
-        <div className="rounded-sm bg-[#0b1018] border border-[#283447] px-3.5 py-2.5 text-xs text-slate-300">
-          <span className="font-mono font-bold uppercase text-amber-400 mr-1.5">Se viene:</span>
+        <div className="rounded-sm bg-[#0b1018] border border-[#263142] px-3.5 py-2.5 text-xs text-slate-300">
+          <span className="font-mono font-bold uppercase text-amber-400 mr-1.5">ALERTA:</span>
           {buildFineTuningAlert(state)}
         </div>
       </div>

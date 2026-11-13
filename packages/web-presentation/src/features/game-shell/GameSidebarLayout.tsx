@@ -26,12 +26,10 @@ export type InGameSidebarSection =
 
 const SIDEBAR_GROUPS: Array<{
   groupTitle: string;
-  icon: string;
   items: Array<{ id: InGameSidebarSection; label: string }>;
 }> = [
   {
     groupTitle: 'DESPACHO',
-    icon: '🏛️',
     items: [
       { id: 'DESPACHO_RESUMEN', label: 'Despacho' },
       { id: 'GABINETE', label: 'Gabinete' },
@@ -40,7 +38,6 @@ const SIDEBAR_GROUPS: Array<{
   },
   {
     groupTitle: 'ECONOMÍA',
-    icon: '📊',
     items: [
       { id: 'INDICADORES', label: 'Indicadores' },
       { id: 'POLITICA_ECONOMICA', label: 'Política económica' },
@@ -50,7 +47,6 @@ const SIDEBAR_GROUPS: Array<{
   },
   {
     groupTitle: 'PRESUPUESTO',
-    icon: '💰',
     items: [
       { id: 'FINANCIAMIENTO', label: 'Financiamiento' },
       { id: 'IMPUESTOS', label: 'Impuestos' },
@@ -60,7 +56,6 @@ const SIDEBAR_GROUPS: Array<{
   },
   {
     groupTitle: 'POLÍTICA Y CONGRESO',
-    icon: '⚖️',
     items: [
       { id: 'CAMARAS', label: 'Cámaras (Diputados y Senado)' },
       { id: 'APOYOS', label: 'Apoyos y Figuras' },
@@ -170,7 +165,7 @@ function TopTelemetryBar({
             onClick={onAdvanceTurn}
             className="hoi-btn-gold px-3.5 py-1.5 rounded-sm font-extrabold text-xs uppercase tracking-wider transition"
           >
-            ▶ Avanzar Mes
+            Avanzar Mes
           </button>
           <button
             type="button"
@@ -220,7 +215,7 @@ function CommandDockNav({
                 }}
                 className={`px-3.5 py-1.5 rounded-t-sm text-[11px] font-mono font-bold uppercase tracking-wider transition ${cls}`}
               >
-                {group.icon} {group.groupTitle}
+                {group.groupTitle}
               </button>
             );
           })}

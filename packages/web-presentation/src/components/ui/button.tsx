@@ -7,14 +7,10 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const VARIANT_STYLES: Record<NonNullable<ButtonProps['variant']>, string> = {
-  default:
-    'bg-gradient-to-b from-[#25446b] to-[#172c47] text-amber-100 hover:from-[#2d5280] hover:to-[#1d3759] border border-[#7d6230]/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]',
-  destructive:
-    'bg-gradient-to-b from-[#7a1d26] to-[#4d1117] text-rose-100 hover:from-[#8f232e] hover:to-[#5e151d] border border-rose-600/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]',
-  outline:
-    'border border-[#334155] bg-[#0e141e] hover:bg-[#182233] text-slate-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]',
-  secondary:
-    'bg-[#192334] text-slate-100 hover:bg-[#223047] border border-[#3a4a63] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
+  default: 'bg-[#1c314d] text-[#f0e6d2] hover:bg-[#243d5e] border border-[#8a6d33]',
+  destructive: 'bg-[#5c1921] text-rose-100 hover:bg-[#70202a] border border-rose-800/70',
+  outline: 'border border-[#2b374a] bg-[#0e131b] hover:bg-[#17202d] text-slate-200',
+  secondary: 'bg-[#18212f] text-slate-100 hover:bg-[#202c3e] border border-[#303e54]'
 };
 
 export function Button({

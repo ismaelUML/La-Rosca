@@ -85,8 +85,8 @@ function JudicialTabContent({ state, onDispatch }: JudicialAndProvincesViewProps
         {judicial.activeCases.map((c) => (
           <ActionStripCard
             key={c.id}
-            icon="📁"
-            iconTileClass="bg-amber-950/80 text-amber-300"
+            icon="PY"
+            iconTileClass="bg-[#231b10] text-amber-300"
             urgentLabel={c.stage}
             urgentClass="bg-amber-600 text-white"
             title={c.title}
@@ -113,9 +113,9 @@ function JudicialTabContent({ state, onDispatch }: JudicialAndProvincesViewProps
         ))}
       </div>
 
-      <div className="rounded-xl border border-slate-800 bg-slate-950/90 px-3.5 py-2.5 text-xs">
-        <span className="font-bold text-slate-200 block mb-0.5">Se viene</span>
-        <p className="text-slate-400 leading-relaxed">{buildJudicialAlert(state)}</p>
+      <div className="rounded-sm border border-[#263142] bg-[#0b1018] px-3.5 py-2.5 text-xs">
+        <span className="font-mono font-bold uppercase text-amber-400 mr-1.5">ESTADO:</span>
+        <span className="text-slate-300">{buildJudicialAlert(state)}</span>
       </div>
     </div>
   );
@@ -146,7 +146,7 @@ function ProvinceStripRow({
   onSendAtn: (provinceId: string) => void;
 }) {
   const loyaltyUi = resolveProvinceLoyaltyStyle(province.governorLoyaltyToPresident);
-  const icon = province.quasiCurrencyIssued ? '🪙' : '🏛️';
+  const icon = province.quasiCurrencyIssued ? 'CM' : 'ATN';
   const urgentLabel = province.quasiCurrencyIssued ? 'Cuasimoneda' : undefined;
   const reelectionTag = province.reelectionAllowed ? '' : ' · Sin reelección';
 
@@ -229,9 +229,9 @@ function ProvincesTabContent({ state, onDispatch }: JudicialAndProvincesViewProp
         ))}
       </div>
 
-      <div className="rounded-xl border border-slate-800 bg-slate-950/90 px-3.5 py-2.5 text-xs">
-        <span className="font-bold text-slate-200 block mb-0.5">Se viene</span>
-        <p className="text-slate-400 leading-relaxed">{buildProvincesAlert(state)}</p>
+      <div className="rounded-sm border border-[#263142] bg-[#0b1018] px-3.5 py-2.5 text-xs">
+        <span className="font-mono font-bold uppercase text-amber-400 mr-1.5">ESTADO:</span>
+        <span className="text-slate-300">{buildProvincesAlert(state)}</span>
       </div>
     </div>
   );
@@ -265,14 +265,14 @@ export function JudicialAndProvincesView({ state, onDispatch }: JudicialAndProvi
             onClick={() => setActiveTab('judicial')}
             className={`py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${tabClass('judicial')}`}
           >
-            ⚖️ Justicia y Corte
+            Justicia y Corte
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('provinces')}
             className={`py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${tabClass('provinces')}`}
           >
-            🗺️ 24 Provincias y Agenda
+            24 Provincias y Agenda
           </button>
         </div>
       </CardHeader>

@@ -181,7 +181,7 @@ export function CampaignApoyoProvinciasView({ state, onUpdateState }: CampaignAp
         };
       });
     } else {
-      setBannerMessage(`⚠️ ${leader.name} rechazó tu propuesta. No podrás volver a insistirle por 5 meses.`);
+      setBannerMessage(`Rechazo: ${leader.name} rechazó tu propuesta. No podrás volver a insistirle por 5 meses.`);
       onUpdateState?.((prev) => {
         const prevDip = prev.diplomacy ?? { endorsements: {}, defections: {}, coalitions: {}, delegateId: null };
         return {

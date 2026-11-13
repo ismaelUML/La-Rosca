@@ -47,7 +47,7 @@ function EventOptionCard({ option, onChoose }: { option: GovernmentEventOption; 
       <button
         type="button"
         onClick={() => onChoose(option.id)}
-        className="hoi-btn-gold w-full py-2 rounded-sm text-xs font-extrabold uppercase tracking-wider transition"
+        className="w-full py-2 rounded-sm bg-[#181d26] hover:bg-[#232a37] text-[#f3f0e8] border border-[#2a313d] text-xs font-bold uppercase tracking-wider transition"
       >
         Ejecutar decisión
       </button>

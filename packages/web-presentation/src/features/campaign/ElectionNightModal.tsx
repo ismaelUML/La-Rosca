@@ -182,7 +182,7 @@ export function ElectionNightModal({
         <div className="p-4 md:p-6 bg-[#080a10] border-t border-slate-800 flex items-center justify-between">
           {isBalotajeWin ? (
             <div className="text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-3 py-1.5 rounded-xl">
-              🏆 Logro desbloqueado: Ganaste un balotaje
+              Logro desbloqueado: Ganaste un balotaje
             </div>
           ) : (
             <div className="text-xs text-slate-400 font-mono">

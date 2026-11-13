@@ -33,7 +33,6 @@ interface CampaignSidebarLayoutProps {
 const CAMPAIGN_NAV_GROUPS = [
   {
     title: 'SITUACIÓN',
-    icon: '🗺️',
     items: [
       { id: 'RESUMEN' as const, label: 'Resumen' },
       { id: 'IMAGEN_Y_MAPA' as const, label: 'Imagen y mapa' }
@@ -41,7 +40,6 @@ const CAMPAIGN_NAV_GROUPS = [
   },
   {
     title: 'ESTRATEGIA',
-    icon: '⚡',
     items: [
       { id: 'ACCIONES_CAMPAÑA' as const, label: 'Acciones' },
       { id: 'APOYOS' as const, label: 'Apoyos' }
@@ -49,7 +47,6 @@ const CAMPAIGN_NAV_GROUPS = [
   },
   {
     title: 'POLÍTICO',
-    icon: '🏛️',
     items: [
       { id: 'CANDIDATURA_COALICIONES' as const, label: 'Candidatura y coaliciones' },
       { id: 'PARTIDO_PROVINCIAS' as const, label: 'Partido en las provincias' },
@@ -59,7 +56,6 @@ const CAMPAIGN_NAV_GROUPS = [
   },
   {
     title: 'PAÍS',
-    icon: '📊',
     items: [
       { id: 'POBLACION' as const, label: 'Población' },
       { id: 'INMIGRACION' as const, label: 'Inmigración' },
@@ -68,7 +64,6 @@ const CAMPAIGN_NAV_GROUPS = [
   },
   {
     title: 'DIARIO',
-    icon: '📰',
     items: [{ id: 'REGISTRO_DIARIO' as const, label: 'Registro' }]
   }
 ];
@@ -116,14 +111,14 @@ function CampaignTopBar({
             onClick={onSkipToGovernment}
             className="px-2.5 py-1.5 rounded-sm bg-[#162133] hover:bg-[#1f2e47] border border-[#7d6230]/80 text-[11px] font-mono font-bold text-amber-200"
           >
-            ⚡ Ir a Dic 2027
+            Ir a Dic 2027
           </button>
           <button
             type="button"
             onClick={onAdvanceMonth}
             className="hoi-btn-gold px-3.5 py-1.5 rounded-sm font-extrabold text-xs uppercase tracking-wider transition"
           >
-            ▶ Avanzar Mes
+            Avanzar Mes
           </button>
           <button
             type="button"
@@ -176,7 +171,7 @@ function CampaignDockNav({
                   }}
                   className={`px-3 py-1.5 rounded-t-sm text-[11px] font-mono font-bold uppercase tracking-wider transition ${cls}`}
                 >
-                  {group.icon} {group.title}
+                  {group.title}
                 </button>
               );
             })}

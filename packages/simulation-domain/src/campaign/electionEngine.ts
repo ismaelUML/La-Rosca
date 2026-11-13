@@ -268,3 +268,4 @@ export function computeEscrutinio(stage: ElectionStageType, state: CampaignSimul
     stage
   );
 }
+

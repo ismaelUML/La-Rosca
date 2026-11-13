@@ -23,16 +23,14 @@ export interface ActionStripCardProps {
 }
 
 const RIGHT_VARIANT_CLASSES: Record<StripActionVariant, string> = {
-  done: 'bg-[#0f261c] hover:bg-[#143526] text-emerald-300 border-[#21593f]',
-  pending: 'bg-[#141c28] hover:bg-[#1c2839] text-slate-200 border-[#2e3c52]',
-  danger: 'bg-[#361116] hover:bg-[#49171e] text-rose-200 border-[#7d2530]',
-  primary: 'bg-[#1b3252] hover:bg-[#24426b] text-amber-100 border-[#7d6230]'
+  done: 'bg-[#10261c] hover:bg-[#153326] text-emerald-300 border-[#22523c]',
+  pending: 'bg-[#141b26] hover:bg-[#1b2533] text-slate-200 border-[#2a3648]',
+  danger: 'bg-[#361318] hover:bg-[#471920] text-rose-200 border-[#6e242d]',
+  primary: 'bg-[#1a2d47] hover:bg-[#223a5c] text-amber-100 border-[#8a6d33]'
 };
 
 function resolveBorderClass(urgentLabel?: string): string {
-  return urgentLabel
-    ? 'border-[#c9a24d]/80 shadow-[inset_0_1px_0_rgba(234,185,85,0.2)]'
-    : 'border-[#283447] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]';
+  return urgentLabel ? 'border-[#b89342]' : 'border-[#263142]';
 }
 
 function RightActionButton({ rightAction }: { rightAction?: StripRightAction }) {
@@ -44,11 +42,11 @@ function RightActionButton({ rightAction }: { rightAction?: StripRightAction }) 
       type="button"
       disabled={rightAction.disabled}
       onClick={rightAction.onClick}
-      className={`w-24 sm:w-28 shrink-0 border-l px-2 py-2 flex flex-col items-center justify-center gap-0.5 text-center transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] ${rightCls}`}
+      className={`w-24 sm:w-28 shrink-0 border-l px-2 py-2 flex flex-col items-center justify-center gap-0.5 text-center transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${rightCls}`}
     >
-      <span className="text-xs font-extrabold uppercase tracking-wide leading-tight">{rightAction.label}</span>
+      <span className="text-[11px] font-bold uppercase tracking-wide leading-tight">{rightAction.label}</span>
       {rightAction.sublabel && (
-        <span className="text-[10px] font-mono opacity-80 leading-tight">{rightAction.sublabel}</span>
+        <span className="text-[10px] font-mono opacity-75 leading-tight">{rightAction.sublabel}</span>
       )}
     </button>
   );
@@ -56,9 +54,9 @@ function RightActionButton({ rightAction }: { rightAction?: StripRightAction }) 
 
 export function ActionStripCard({
   icon,
-  iconTileClass = 'bg-[#121a26] text-slate-200',
+  iconTileClass = 'bg-[#0e131b] text-slate-300',
   urgentLabel,
-  urgentClass = 'bg-[#c9a24d] text-[#14110a]',
+  urgentClass = 'bg-[#b89342] text-[#100e09]',
   title,
   subtitle,
   tradeoff,
@@ -67,9 +65,9 @@ export function ActionStripCard({
 }: ActionStripCardProps) {
   return (
     <div
-      className={`rounded-sm bg-[#0f1520] border overflow-hidden flex items-stretch transition ${resolveBorderClass(urgentLabel)}`}
+      className={`rounded-sm bg-[#0f141d] border overflow-hidden flex items-stretch transition-colors ${resolveBorderClass(urgentLabel)}`}
     >
-      <div className={`w-14 sm:w-16 shrink-0 flex items-center justify-center border-r border-[#283447] text-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] ${iconTileClass}`}>
+      <div className={`w-14 sm:w-16 shrink-0 flex items-center justify-center border-r border-[#263142] font-mono text-[11px] font-bold tracking-wider uppercase ${iconTileClass}`}>
         <span>{icon}</span>
       </div>
 

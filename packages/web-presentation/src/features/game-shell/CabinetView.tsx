@@ -27,7 +27,7 @@ function CabinetInaugurationBanner({ assignedCount }: { assignedCount: number })
     <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/70 via-[#131724] to-sky-950/70 border border-purple-800/60 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-3">
       <div className="space-y-1">
         <div className="text-xs font-bold uppercase tracking-wider text-purple-400">
-          🏛️ Nombramiento inicial del Gabinete Nacional
+          Nombramiento inicial del Gabinete Nacional
         </div>
         <p className="text-sm font-semibold text-white">
           ¡Asumiste la Presidencia! Es momento de armar tu equipo de gobierno.

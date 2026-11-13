@@ -99,7 +99,7 @@ export function LandingScreen({
                 onClick={onStartNewGame}
                 className="hoi-btn-gold w-full py-3 px-5 rounded-sm text-sm font-extrabold uppercase tracking-wider flex items-center justify-between transition"
               >
-                <span>▶ Nueva Campaña / Gobierno</span>
+                <span>Nueva Campaña / Gobierno</span>
                 <span className="text-[10px] font-mono opacity-80">INICIAR</span>
               </button>
 

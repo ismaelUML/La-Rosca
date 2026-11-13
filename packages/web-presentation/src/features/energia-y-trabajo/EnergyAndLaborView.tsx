@@ -103,12 +103,12 @@ function EnergyTariffStrip({ state, onDispatch }: EnergyAndLaborViewProps) {
 
   return (
     <ActionStripCard
-      icon="💡"
-      iconTileClass="bg-amber-950/80 text-amber-300"
+      icon="MEM"
+      iconTileClass="bg-[#231b10] text-amber-300"
       urgentLabel={urgentLabel}
-      urgentClass="bg-rose-600 text-white"
-      title={`Boletas de luz y gas · Usuarios pagan ${energy.userTariffCoveragePct}%`}
-      subtitle="Definí cuánto de la boleta paga la gente y cuánto subsidia el Estado."
+      urgentClass="bg-rose-700 text-white"
+      title={`Tarifas eléctricas y gas · Cobertura ${energy.userTariffCoveragePct}%`}
+      subtitle={`Subsidio Tesoro: -${energy.cammesaMonthlyDeficitMillionUsd} M USD/mes · Generación: ${energy.generationCostUsdPerMwh} USD/MWh`}
       tradeoff={copy.tradeoff}
       rightAction={{
         label: copy.label,
@@ -146,10 +146,10 @@ function YpfPolicyStrip({ state, onDispatch }: EnergyAndLaborViewProps) {
 
   return (
     <ActionStripCard
-      icon="⛽"
-      iconTileClass="bg-sky-950/80 text-sky-300"
-      title={`Nafta y Gasoil (YPF) · ${copy.policyLabel}`}
-      subtitle="Regulá el precio del combustible en los surtidores de todo el país."
+      icon="YPF"
+      iconTileClass="bg-[#121c2b] text-sky-300"
+      title={`Surtidores YPF · ${copy.policyLabel}`}
+      subtitle="Régimen de precios de nafta y gasoil."
       tradeoff={copy.tradeoff}
       rightAction={{
         label: copy.label,
@@ -186,11 +186,11 @@ function IndustrialGasStrip({ state, onDispatch }: EnergyAndLaborViewProps) {
 
   return (
     <ActionStripCard
-      icon="🔥"
-      iconTileClass="bg-rose-950/80 text-rose-300"
+      icon="GAS"
+      iconTileClass="bg-[#2a1318] text-rose-300"
       urgentLabel={copy.urgentLabel}
       urgentClass="bg-amber-600 text-white"
-      title="Gas para industrias y GNC"
+      title="Suministro de gas a industrias y GNC"
       subtitle={copy.subtitle}
       tradeoff="Cortar el gas ahorra dólares rápido, pero frena fábricas y cae el PBI industrial."
       rightAction={{
@@ -216,9 +216,9 @@ function EnergyTabContent({ state, onDispatch }: EnergyAndLaborViewProps) {
       <YpfPolicyStrip state={state} onDispatch={onDispatch} />
       <IndustrialGasStrip state={state} onDispatch={onDispatch} />
 
-      <div className="rounded-xl border border-slate-800 bg-slate-950/90 px-3.5 py-2.5 text-xs">
-        <span className="font-bold text-slate-200 block mb-0.5">Se viene</span>
-        <p className="text-slate-400 leading-relaxed">{buildEnergyAlert(state)}</p>
+      <div className="rounded-sm border border-[#263142] bg-[#0b1018] px-3.5 py-2.5 text-xs">
+        <span className="font-mono font-bold uppercase text-amber-400 mr-1.5">ESTADO:</span>
+        <span className="text-slate-300">{buildEnergyAlert(state)}</span>
       </div>
     </div>
   );
@@ -246,9 +246,9 @@ function LaborStatsStrip({ state }: { state: SimulationState }) {
 
 function resolveParitariaBadge(strikeConflictIndex: number) {
   if (strikeConflictIndex >= 60) {
-    return { icon: '⚠️', iconTileClass: 'bg-rose-950/80 text-rose-300', urgentLabel: 'Tensión alta' };
+    return { icon: 'ALT', iconTileClass: 'bg-[#2a1318] text-rose-300', urgentLabel: 'Tensión alta' };
   }
-  return { icon: '🤝', iconTileClass: 'bg-emerald-950/80 text-emerald-300', urgentLabel: undefined };
+  return { icon: 'CGT', iconTileClass: 'bg-[#102219] text-emerald-300', urgentLabel: undefined };
 }
 
 function resolveParitariaAction(homologatedByState: boolean) {
@@ -296,8 +296,8 @@ function LaborTabContent({ state, onDispatch }: EnergyAndLaborViewProps) {
       <LaborStatsStrip state={state} />
 
       <ActionStripCard
-        icon="⚖️"
-        iconTileClass="bg-indigo-950/80 text-indigo-300"
+        icon="LAB"
+        iconTileClass="bg-[#181c2b] text-indigo-300"
         title="Modernización Laboral y Fondo de Cese"
         subtitle="Reforma Ley 24.013 para bajar la industria del juicio y facilitar contrataciones."
         tradeoff="Reduce litigiosidad y anima a PyMEs a blanquear empleo, pero genera rechazo sindical."
@@ -319,9 +319,9 @@ function LaborTabContent({ state, onDispatch }: EnergyAndLaborViewProps) {
         ))}
       </div>
 
-      <div className="rounded-xl border border-slate-800 bg-slate-950/90 px-3.5 py-2.5 text-xs">
-        <span className="font-bold text-slate-200 block mb-0.5">Se viene</span>
-        <p className="text-slate-400 leading-relaxed">{buildLaborAlert(state)}</p>
+      <div className="rounded-sm border border-[#263142] bg-[#0b1018] px-3.5 py-2.5 text-xs">
+        <span className="font-mono font-bold uppercase text-amber-400 mr-1.5">ESTADO:</span>
+        <span className="text-slate-300">{buildLaborAlert(state)}</span>
       </div>
     </div>
   );
@@ -364,14 +364,14 @@ function EnergyLaborHeader({
           onClick={() => onSelectTab('energy')}
           className={`py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${tabClass('energy')}`}
         >
-          ⚡ Energía y Tarifas
+          Energía y Tarifas
         </button>
         <button
           type="button"
           onClick={() => onSelectTab('labor')}
           className={`py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${tabClass('labor')}`}
         >
-          🏭 Paritarias y Empleo
+          Paritarias y Empleo
         </button>
       </div>
     </CardHeader>

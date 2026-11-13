@@ -164,7 +164,7 @@ function CandidateItem({ pol, ministryId, playerPartySigla, isSelected, onSelect
           </span>
         ) : (
           <span className="text-amber-400 font-bold text-[11px] flex items-center gap-1">
-            ⚠️ Incompatibilidad (-18 comp.)
+            Incompatibilidad (-18 comp.)
           </span>
         )}
         <span className="text-[11px] text-slate-400">Estilo: {pol.styleTrait}</span>

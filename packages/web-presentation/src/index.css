@@ -4,49 +4,38 @@
 
 @layer base {
   body {
-    background-color: #090c10;
-    background-image:
-      linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-    background-size: 32px 32px;
-    color: #e2e8f0;
+    background-color: #0b0f14;
+    color: #e6edf3;
     font-variant-numeric: tabular-nums;
   }
 }
 
 .hoi-panel {
-  background: linear-gradient(180deg, #131a26 0%, #0d121b 100%);
-  border: 1px solid #283447;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 10px 28px rgba(0, 0, 0, 0.55);
+  background-color: #11161f;
+  border: 1px solid #263142;
 }
 
 .hoi-header-steel {
-  background: linear-gradient(180deg, #1c2e48 0%, #121e30 100%);
-  border-bottom: 1px solid #7d6230;
+  background-color: #162233;
+  border-bottom: 1px solid #8a6d33;
 }
 
 .hoi-header-crimson {
-  background: linear-gradient(180deg, #561820 0%, #310e13 100%);
-  border-bottom: 1px solid #8a2c36;
+  background-color: #3d1419;
+  border-bottom: 1px solid #6f232c;
 }
 
 .hoi-paper-event {
-  background: linear-gradient(180deg, #f6f3ec 0%, #ebe5d8 100%);
-  border: 2px solid #2b323f;
-  box-shadow:
-    inset 0 0 0 1px rgba(120, 105, 80, 0.25),
-    0 24px 60px rgba(0, 0, 0, 0.8);
+  background-color: #f3f0e8;
+  border: 1px solid #2a313d;
 }
 
 .hoi-btn-gold {
-  background: linear-gradient(180deg, #eab955 0%, #c8922d 100%);
-  border: 1px solid #8b6318;
-  box-shadow: inset 0 1px 0 rgba(255, 245, 210, 0.45);
-  color: #16120a;
+  background-color: #b89342;
+  border: 1px solid #8d6e2c;
+  color: #100e09;
 }
 
 .hoi-btn-gold:hover {
-  background: linear-gradient(180deg, #f3c667 0%, #d59e36 100%);
+  background-color: #c7a14e;
 }

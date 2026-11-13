@@ -137,8 +137,8 @@ function TaxCard({
           }`}
         >
           {isDecreto
-            ? '⚡ Facultad delegada: aplica de inmediato por decreto'
-            : '🏛️ Requiere proyecto de ley y mayorías en el Congreso'}
+            ? 'Facultad delegada: aplica de inmediato por decreto'
+            : 'Requiere proyecto de ley y mayorías en el Congreso'}
         </span>
       </div>
     </div>

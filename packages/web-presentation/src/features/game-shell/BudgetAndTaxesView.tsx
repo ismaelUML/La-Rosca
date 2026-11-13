@@ -193,7 +193,7 @@ function SemanticTaxAnalysisPreview({ analysis }: { analysis: SemanticImpactSumm
 
       {analysis.judicialWarning ? (
         <div className="p-2.5 rounded-lg bg-rose-950/40 border border-rose-800/80 text-rose-200 text-xs">
-          ⚖️ {analysis.judicialWarning}
+          ALERTA JUDICIAL: {analysis.judicialWarning}
         </div>
       ) : null}
     </div>
