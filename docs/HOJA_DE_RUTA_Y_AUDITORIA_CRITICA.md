@@ -112,3 +112,4 @@
            └── 4. Ampliar eventos de gobierno encadenados y dilemas
                └── 5. Elecciones en dominio con rivales activos y medio término
 ```
+

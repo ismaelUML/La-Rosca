@@ -60,12 +60,8 @@ const SIDEBAR_GROUPS: Array<{
       { id: 'CAMARAS', label: 'Cámaras (Diputados y Senado)' },
       { id: 'APOYOS', label: 'Apoyos y Figuras' },
       { id: 'PARTIDO_PROVINCIAS', label: 'Partido en las provincias' },
-      { id: 'CONGRESO_Y_JUSTICIA', label: 'Votaciones y Corte Suprema' }
+      { id: 'CONGRESO_Y_JUSTICIA', label: 'Justicia y 24 Provincias' }
     ]
-  },
-  {
-    groupTitle: 'TERRITORIO Y DEFENSA',
-    items: [{ id: 'PROVINCIAS_Y_DEFENSA', label: '24 Provincias y FF.AA.' }]
   }
 ];
 

@@ -1,6 +1,7 @@
 import type { PolicyAction, SimulationState } from '../models/SimulationTypes.js';
 import { clamp, round2 } from '../economy/mathUtils.js';
 import { INITIAL_CONGRESS_BILLS } from '../politics/congressEngine.js';
+import { approveAllRigiProjects, approveRigiProject } from './rigiEngine.js';
 
 // Partimos el despacho de acciones en handlers chiquitos por dominio para mantener CC <= 5
 // y que cada medida explique exactamente que cable toca y que rompe de rebote.
@@ -223,6 +224,94 @@ function applyCongressBillAction(state: SimulationState, action: PolicyAction): 
   };
 }
 
+function applyCabinetAction(state: SimulationState, action: PolicyAction): SimulationState | null {
+  const ministers = state.ministers ?? [];
+  if (action.type === 'REINFORCE_MINISTER') {
+    return {
+      ...state,
+      ministers: ministers.map((m) =>
+        m.id === action.ministerId
+          ? { ...m, performance: Math.min(100, m.performance + 8), loyalty: Math.min(100, m.loyalty + 5) }
+          : m
+      )
+    };
+  }
+  if (action.type === 'REPLACE_MINISTER') {
+    return {
+      ...state,
+      ministers: ministers.map((m) =>
+        m.id === action.ministerId
+          ? { ...m, ministerName: `${m.ministerName} (Recambio)`, performance: 62, risk: 12 }
+          : m
+      )
+    };
+  }
+  if (action.type === 'APPOINT_MINISTER') {
+    return {
+      ...state,
+      ministers: ministers.map((m) => (m.id === action.ministerId ? action.minister : m))
+    };
+  }
+  return null;
+}
+
+function handleToggleMeasure(state: SimulationState, measureId: string): SimulationState {
+  const measures = state.measures ?? [];
+  return {
+    ...state,
+    measures: measures.map((m) => (m.id === measureId ? { ...m, active: !m.active } : m))
+  };
+}
+
+function handleToggleRigiSector(state: SimulationState, sectorId: string): SimulationState {
+  const sectors = state.rigiSectors ?? [];
+  return {
+    ...state,
+    rigiSectors: sectors.map((r) => (r.id === sectorId ? { ...r, enabledByDecree: !r.enabledByDecree } : r))
+  };
+}
+
+function applyMeasureAndTaxAction(state: SimulationState, action: PolicyAction): SimulationState | null {
+  if (action.type === 'TOGGLE_MEASURE') return handleToggleMeasure(state, action.measureId);
+  if (action.type === 'ADD_CUSTOM_TAX') {
+    return { ...state, customTaxes: [action.proposal, ...(state.customTaxes ?? [])] };
+  }
+  if (action.type === 'TOGGLE_RIGI_SECTOR') return handleToggleRigiSector(state, action.sectorId);
+  return null;
+}
+
+function handleApproveRigiProject(state: SimulationState, projectId: string): SimulationState {
+  const res = approveRigiProject(projectId, state.rigiPending ?? [], state.rigiSectors ?? []);
+  const log = res.approvedProject
+    ? [`RIGI: Proyecto aprobado "${res.approvedProject.name}" (${res.approvedProject.minProjectMillionUsd} M USD).`, ...state.eventLog.slice(0, 14)]
+    : state.eventLog;
+  return { ...state, rigiPending: res.nextPending, rigiSectors: res.nextSectors, eventLog: log };
+}
+
+function handleRejectRigiProject(state: SimulationState, projectId: string): SimulationState {
+  const pending = state.rigiPending ?? [];
+  const proj = pending.find((p) => p.id === projectId);
+  const log = proj ? [`RIGI: Proyecto "${proj.name}" rechazado.`, ...state.eventLog.slice(0, 14)] : state.eventLog;
+  return { ...state, rigiPending: pending.filter((p) => p.id !== projectId), eventLog: log };
+}
+
+function handleApproveAllRigi(state: SimulationState): SimulationState {
+  const res = approveAllRigiProjects(state.rigiPending ?? [], state.rigiSectors ?? []);
+  return {
+    ...state,
+    rigiPending: res.nextPending,
+    rigiSectors: res.nextSectors,
+    eventLog: [`RIGI: Aprobados en bloque todos los proyectos pendientes (${res.count} proyectos).`, ...state.eventLog.slice(0, 14)]
+  };
+}
+
+function applyRigiProjectAction(state: SimulationState, action: PolicyAction): SimulationState | null {
+  if (action.type === 'APPROVE_RIGI_PROJECT') return handleApproveRigiProject(state, action.projectId);
+  if (action.type === 'REJECT_RIGI_PROJECT') return handleRejectRigiProject(state, action.projectId);
+  if (action.type === 'APPROVE_ALL_RIGI_PROJECTS') return handleApproveAllRigi(state);
+  return null;
+}
+
 function applyPrimaryPasses(state: SimulationState, action: PolicyAction): SimulationState | null {
   const mon = applyMonetaryAction(state, action);
   if (mon) return mon;
@@ -234,7 +323,9 @@ function applyPrimaryPasses(state: SimulationState, action: PolicyAction): Simul
 function applySecondaryPasses(state: SimulationState, action: PolicyAction): SimulationState | null {
   const ref = applyStateReformOrIndecAction(state, action);
   if (ref) return ref;
-  return applyFiscalOrFederalAction(state, action);
+  const fisc = applyFiscalOrFederalAction(state, action);
+  if (fisc) return fisc;
+  return applyCabinetAction(state, action);
 }
 
 export function applyPolicyAction(state: SimulationState, action: PolicyAction): SimulationState {
@@ -242,5 +333,7 @@ export function applyPolicyAction(state: SimulationState, action: PolicyAction):
   if (primary) return primary;
   const secondary = applySecondaryPasses(state, action);
   if (secondary) return secondary;
+  const domainExtra = applyMeasureAndTaxAction(state, action) ?? applyRigiProjectAction(state, action);
+  if (domainExtra) return domainExtra;
   return applyJudicialOrTaxAction(state, action);
 }

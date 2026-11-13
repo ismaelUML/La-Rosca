@@ -118,12 +118,47 @@ export function stepPrivateBankingBalance(
   };
 }
 
+export interface CentralBankStepOptions {
+  fiscalDeficitPctGdp?: number;
+  lastRolloverPct?: number;
+  reserveDrainBillionUsd?: number;
+  deficitMonetizationMult?: number;
+}
+
+function computeDeficitBaseEmission(
+  monetaryBase: number,
+  fiscalDeficitPctGdp: number,
+  lastRolloverPct: number,
+  monetizationMult: number
+): number {
+  const rolloverGap = Math.max(0, (100 - lastRolloverPct) / 100);
+  const effectiveDeficitRatio = fiscalDeficitPctGdp * (0.35 + rolloverGap * 0.65);
+  return round2(monetaryBase * (effectiveDeficitRatio / 100) * 1.8 * monetizationMult);
+}
+
+function computeMulcNetIntervention(
+  centralBank: CentralBankBalance,
+  liquidatedBillionUsd: number,
+  energyDeficitMillionUsd: number,
+  options: CentralBankStepOptions
+): number {
+  const extraDrain = options.reserveDrainBillionUsd ?? 0;
+  const rolloverDrain = Math.max(0, (98 - (options.lastRolloverPct ?? 100)) * 0.035);
+  const nonAgroExportsBillionUsd = Math.max(0.8, 2.4 - Math.max(0, centralBank.exchangeBrechaPct - 25) * 0.018);
+  const isOpenMarket = centralBank.cepoStrictnessIndex <= 30 && centralBank.exchangeBrechaPct < 25;
+  const openMarketInflow = isOpenMarket ? 0.55 : 0;
+  const importDemandBillionUsd =
+    4.6 + Math.max(0, centralBank.exchangeBrechaPct - 25) * 0.032 + energyDeficitMillionUsd / 1000 + extraDrain + rolloverDrain;
+  return liquidatedBillionUsd + nonAgroExportsBillionUsd + openMarketInflow - importDemandBillionUsd;
+}
+
 export function stepCentralBankBalance(
   centralBank: CentralBankBalance,
   banking: PrivateBankingBalance,
   structural: HiddenStructuralVariables,
   energyDeficitMillionUsd: number,
-  monthOfYear: number
+  monthOfYear: number,
+  options: CentralBankStepOptions = {}
 ): { nextCentralBank: CentralBankBalance; nextSilobolsaTons: number } {
   const officialDollarArs = round2(centralBank.officialDollarArs * (1 + centralBank.crawlingPegMonthlyPct / 100));
   const { liquidatedBillionUsd, nextSilobolsaStockTons } = computeSilobolsaLiquidationBillionUsd(
@@ -133,26 +168,37 @@ export function stepCentralBankBalance(
     monthOfYear
   );
 
-  // Si la brecha es alta, los importadores sobrefacturan y adelantan compras vaciando el MULC
-  const importDemandBillionUsd = 4.6 + Math.max(0, centralBank.exchangeBrechaPct - 25) * 0.032 + energyDeficitMillionUsd / 1000;
-  const mulcNetInterventionBillionUsd = liquidatedBillionUsd - importDemandBillionUsd;
+  // Si la brecha es alta, los importadores sobrefacturan y adelantan compras vaciando el MULC,
+  // mientras los exportadores no-agro retacean liquidacion.
+  const mulcNetInterventionBillionUsd = computeMulcNetIntervention(
+    centralBank,
+    liquidatedBillionUsd,
+    energyDeficitMillionUsd,
+    options
+  );
 
   const argendolarEncajesBillionUsd = round2(banking.argendolarPrivateDepositsUsdBillion * 0.52);
   const grossReservesBillionUsd = round2(
-    clamp(centralBank.grossReservesBillionUsd + mulcNetInterventionBillionUsd, 14.0, 85.0)
+    clamp(centralBank.grossReservesBillionUsd + mulcNetInterventionBillionUsd, 0.0, 85.0)
   );
   const netLiquidReservesBillionUsd = round2(
     grossReservesBillionUsd - argendolarEncajesBillionUsd - centralBank.chinaSwapActivatedBillionUsd
   );
 
-  // Deficit cuasifiscal: los pasivos remunerados devengan tasa todos los meses y emiten endogenamente
+  // Deficit cuasifiscal + monetizacion de deficit fiscal sin rollover
   const monthlyQuasiFiscalInterest =
     centralBank.remuneratedLiabilitiesBillionArs * (centralBank.policyRateAnnualPct / 12 / 100);
+  const deficitEmission = computeDeficitBaseEmission(
+    centralBank.monetaryBaseBillionArs,
+    options.fiscalDeficitPctGdp ?? 0,
+    options.lastRolloverPct ?? 100,
+    options.deficitMonetizationMult ?? 1.0
+  );
   const remuneratedLiabilitiesBillionArs = round2(
     Math.max(0, centralBank.remuneratedLiabilitiesBillionArs + monthlyQuasiFiscalInterest - banking.putsExecutedThisMonthBillionArs)
   );
   const monetaryBaseBillionArs = round2(
-    centralBank.monetaryBaseBillionArs + banking.putsExecutedThisMonthBillionArs + monthlyQuasiFiscalInterest * 0.35
+    centralBank.monetaryBaseBillionArs + banking.putsExecutedThisMonthBillionArs + monthlyQuasiFiscalInterest * 0.35 + deficitEmission
   );
 
   const parallelRates = computeParallelExchangeRates(

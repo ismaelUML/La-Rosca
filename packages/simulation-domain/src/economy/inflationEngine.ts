@@ -38,9 +38,13 @@ export function computeInterannualFromHistory(history: number[]): number {
   return round2(clamp((product - 1) * 100, 3.0, 999.0));
 }
 
-function computeInertiaWeight(anchorCredibility: number, indecCredibility: number): number {
+function computeInertiaWeight(
+  anchorCredibility: number,
+  indecCredibility: number,
+  inertiaFloor = 0.52
+): number {
   const markup = indecCredibility < 60 ? 0.14 : 0;
-  return clamp(0.62 - anchorCredibility * 0.0025 + markup, 0.3, 0.82);
+  return clamp(0.72 - anchorCredibility * 0.0024 + markup, inertiaFloor, 0.9);
 }
 
 function computeSmoothedHistoryValue(history: number[], fallback: number): number {
@@ -55,9 +59,10 @@ export function computeInertiaFromHistory(
   history: number[],
   fallbackVal: number,
   anchorCredibilityIndex: number,
-  indecCredibilityIndex: number
+  indecCredibilityIndex: number,
+  inertiaFloor = 0.55
 ): number {
-  const weight = computeInertiaWeight(anchorCredibilityIndex, indecCredibilityIndex);
+  const weight = computeInertiaWeight(anchorCredibilityIndex, indecCredibilityIndex, inertiaFloor);
   const smoothed = computeSmoothedHistoryValue(history, fallbackVal);
   return round2(smoothed * weight);
 }
@@ -98,17 +103,33 @@ export function computeTarifazoComponent(
   return round2(tariffJumpDelta * 0.065 + fuelPressure);
 }
 
+export interface InflationStepOptions {
+  inertiaFloor?: number;
+  fiscalDeficitPctGdp?: number;
+  deficitMonetizationMult?: number;
+}
+
 export function computeMonetaryDropComponent(
   centralBank: CentralBankBalance,
-  structural: HiddenStructuralVariables
+  structural: HiddenStructuralVariables,
+  fiscalDeficitPctGdp = 0,
+  deficitMonetizationMult = 1.0
 ): number {
   // La tasa real negativa combinada con expectativa de devaluacion hace que la gente queme los pesos
   // (sube la velocidad de circulacion V aunque la Base Monetaria no haya crecido ese mes).
   const monthlyRatePct = centralBank.policyRateAnnualPct / 12;
   const realRateSpread = monthlyRatePct - structural.expectedInflation3mPct / 3;
-  const moneyDemandFlight = Math.max(0, -realRateSpread * 0.38);
-  const quasiFiscalPressure = (centralBank.remuneratedLiabilitiesBillionArs / Math.max(1, centralBank.monetaryBaseBillionArs)) * 0.45;
-  return round2(clamp(moneyDemandFlight + quasiFiscalPressure - structural.anchorCredibilityIndex * 0.015, -0.4, 8.5));
+  const moneyDemandFlight = Math.max(0, -realRateSpread * 0.36);
+  const quasiFiscalPressure = (centralBank.remuneratedLiabilitiesBillionArs / Math.max(1, centralBank.monetaryBaseBillionArs)) * 0.42;
+  const fiscalPressure = Math.max(0, fiscalDeficitPctGdp) * 0.55 * deficitMonetizationMult;
+  const reservePanic = Math.min(2.2, Math.max(0, -centralBank.netLiquidReservesBillionUsd) * 0.055);
+  return round2(
+    clamp(moneyDemandFlight + quasiFiscalPressure + fiscalPressure + reservePanic - structural.anchorCredibilityIndex * 0.014, -0.2, 16.0)
+  );
+}
+
+function resolveOfficialIndecIpc(realMonthlyIpcPct: number, indecCredibilityIndex: number): number {
+  return indecCredibilityIndex < 60 ? round2(Math.min(realMonthlyIpcPct * 0.42, 1.4)) : realMonthlyIpcPct;
 }
 
 export function computeNextInflationBreakdown(
@@ -117,14 +138,16 @@ export function computeNextInflationBreakdown(
   energy: EnergyMatrixState,
   labor: LaborMarketState,
   structural: HiddenStructuralVariables,
-  previousTariffCoveragePct: number
+  previousTariffCoveragePct: number,
+  options: InflationStepOptions = {}
 ): InflationBreakdown {
   const currentHist = current.inflHist ?? [current.realMonthlyIpcPct];
   const inertiaComponentPp = computeInertiaFromHistory(
     currentHist,
     current.realMonthlyIpcPct,
     structural.anchorCredibilityIndex,
-    structural.indecCredibilityIndex
+    structural.indecCredibilityIndex,
+    options.inertiaFloor
   );
   const passThroughComponentPp = computePassThroughComponent(
     centralBank.crawlingPegMonthlyPct,
@@ -136,7 +159,12 @@ export function computeNextInflationBreakdown(
     energy.userTariffCoveragePct,
     energy.ypfPolicy === 'EXPORT_PARITY'
   );
-  const monetaryDropComponentPp = computeMonetaryDropComponent(centralBank, structural);
+  const monetaryDropComponentPp = computeMonetaryDropComponent(
+    centralBank,
+    structural,
+    options.fiscalDeficitPctGdp,
+    options.deficitMonetizationMult
+  );
 
   const realMonthlyIpcPct = round2(
     clamp(inertiaComponentPp + passThroughComponentPp + tarifazoComponentPp + monetaryDropComponentPp, 0.2, 45)
@@ -144,10 +172,7 @@ export function computeNextInflationBreakdown(
 
   const nextHist = [...currentHist, realMonthlyIpcPct].slice(-12);
   const interannualIpcPct = computeInterannualFromHistory(nextHist);
-
-  // Si el gobierno interviene el INDEC (credibilidad < 60), dibuja el numero oficial a la mitad
-  const officialIndecIpcPct =
-    structural.indecCredibilityIndex < 60 ? round2(Math.min(realMonthlyIpcPct * 0.42, 1.4)) : realMonthlyIpcPct;
+  const officialIndecIpcPct = resolveOfficialIndecIpc(realMonthlyIpcPct, structural.indecCredibilityIndex);
 
   const foodInflationMonthlyPct = round2(clamp(realMonthlyIpcPct + passThroughComponentPp * 0.45, 0.1, 55));
 

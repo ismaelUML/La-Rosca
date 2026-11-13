@@ -3,13 +3,11 @@ import {
   advanceCampaignMonth,
   advanceGovernmentMonth,
   advanceSimulationMonth,
+  applyCampaignBridgeToGovernment,
   applyGovernmentEventChoice,
   applyPolicyAction,
   getGovernmentRuntime,
   executeCampaignAction,
-  advanceRigiMonthlyQueue,
-  approveRigiProject,
-  approveAllRigiProjects,
   type CabinetMinister,
   type CampaignExecutePayload,
   type CampaignSimulationState,
@@ -294,6 +292,22 @@ function applyLeverToMacroEngine(
   actionsByLever[id]?.();
 }
 
+function getCabinetAndMeasures(state: SimulationState) {
+  return {
+    ministers: state.ministers ?? INITIAL_VACANT_CABINET_2027,
+    measures: state.measures ?? INITIAL_SECTOR_MEASURES
+  };
+}
+
+function getDomainCollections(state: SimulationState) {
+  return {
+    ...getCabinetAndMeasures(state),
+    rigiSectors: state.rigiSectors ?? INITIAL_RIGI_SECTORS,
+    rigiPending: state.rigiPending ?? [],
+    customTaxes: state.customTaxes ?? []
+  };
+}
+
 function buildSessionPayload(
   screenMode: ScreenMode,
   setup: GameSetupConfiguration,
@@ -301,13 +315,9 @@ function buildSessionPayload(
   campaignNavSection: CampaignNavSection,
   governmentState: SimulationState,
   activeSection: InGameSidebarSection,
-  ministers: CabinetMinister[],
-  levers: EconomicLeverItem[],
-  measures: SectorMeasureCard[],
-  rigiSectors: RigisectorItem[],
-  customTaxes: CustomTaxProposal[],
-  rigiPending?: RigiPendingProject[]
+  levers: EconomicLeverItem[]
 ): PersistedGameSession {
+  const cols = getDomainCollections(governmentState);
   return {
     version: 1,
     savedAtIso: new Date().toISOString(),
@@ -317,12 +327,8 @@ function buildSessionPayload(
     campaignNavSection,
     governmentState,
     activeSection,
-    ministers,
     levers,
-    measures,
-    rigiSectors,
-    rigiPending,
-    customTaxes
+    ...cols
   };
 }
 
@@ -412,6 +418,44 @@ function checkElectionTransitionToGovernment(
   return stage === 'GENERALES' && !isRunoff;
 }
 
+function resolveInitialRigiSectors(saved?: SimulationState['rigiSectors']): NonNullable<SimulationState['rigiSectors']> {
+  if (saved && saved.length === 29 && saved.filter((r) => r.enabledByDecree).length < 29) {
+    return saved;
+  }
+  return INITIAL_RIGI_SECTORS;
+}
+
+function pickFirstDefined<T>(a: T | undefined, b: T | undefined, fallback: T): T {
+  if (a !== undefined) return a;
+  if (b !== undefined) return b;
+  return fallback;
+}
+
+function hydrateInitialGovernmentState(savedSession: PersistedGameSession | null): SimulationState {
+  const base =
+    savedSession?.governmentState ??
+    createInitialSimulationState2027('PRESIDENTE', 'ESTANDAR_2027', 'CABA');
+  return {
+    ...base,
+    ministers: pickFirstDefined(base.ministers, savedSession?.ministers, INITIAL_VACANT_CABINET_2027),
+    measures: pickFirstDefined(base.measures, savedSession?.measures, INITIAL_SECTOR_MEASURES),
+    rigiSectors: resolveInitialRigiSectors(pickFirstDefined(base.rigiSectors, savedSession?.rigiSectors, INITIAL_RIGI_SECTORS)),
+    rigiPending: pickFirstDefined(base.rigiPending, savedSession?.rigiPending, []),
+    customTaxes: pickFirstDefined(base.customTaxes, savedSession?.customTaxes, [])
+  };
+}
+
+function attachDefaultGovCollections(base: SimulationState): SimulationState {
+  return {
+    ...base,
+    ministers: INITIAL_VACANT_CABINET_2027,
+    measures: INITIAL_SECTOR_MEASURES,
+    rigiSectors: INITIAL_RIGI_SECTORS,
+    rigiPending: [],
+    customTaxes: []
+  };
+}
+
 export function App() {
   const saveRepo = useMemo(() => new CompressedSaveRepository(), []);
   const savedSession = useMemo(() => loadSessionFromStorage(), []);
@@ -438,39 +482,16 @@ export function App() {
   });
   const [activeElectionModal, setActiveElectionModal] = useState<ElectionStageType | null>(null);
 
-  const [state, setState] = useState<SimulationState>(() => {
-    return (
-      savedSession?.governmentState ??
-      createInitialSimulationState2027('PRESIDENTE', 'ESTANDAR_2027', 'CABA')
-    );
-  });
+  const [state, setState] = useState<SimulationState>(() => hydrateInitialGovernmentState(savedSession));
   const [activeSection, setActiveSection] = useState<InGameSidebarSection>(() => {
     return (savedSession?.activeSection as InGameSidebarSection) ?? 'INDICADORES';
   });
   const [portableSaveBanner, setPortableSaveBanner] = useState<string | null>(null);
-
-  const [ministers, setMinisters] = useState<CabinetMinister[]>(() => {
-    return savedSession?.ministers ?? INITIAL_VACANT_CABINET_2027;
-  });
   const [levers, setLevers] = useState<EconomicLeverItem[]>(() => {
     return savedSession?.levers ?? INITIAL_ECONOMIC_LEVERS;
   });
-  const [measures, setMeasures] = useState<SectorMeasureCard[]>(() => {
-    return savedSession?.measures ?? INITIAL_SECTOR_MEASURES;
-  });
-  const [rigiSectors, setRigiSectors] = useState<RigisectorItem[]>(() => {
-    const raw = savedSession?.rigiSectors;
-    if (raw && raw.length === 29 && raw.filter((r) => r.enabledByDecree).length < 29) {
-      return raw;
-    }
-    return INITIAL_RIGI_SECTORS;
-  });
-  const [customTaxes, setCustomTaxes] = useState<CustomTaxProposal[]>(() => {
-    return savedSession?.customTaxes ?? [];
-  });
-  const [rigiPending, setRigiPending] = useState<RigiPendingProject[]>(() => {
-    return savedSession?.rigiPending ?? [];
-  });
+
+  const { ministers, measures, rigiSectors, customTaxes, rigiPending } = getDomainCollections(state);
 
   useEffect(() => {
     if (
@@ -492,12 +513,7 @@ export function App() {
         campaignNavSection,
         state,
         activeSection,
-        ministers,
-        levers,
-        measures,
-        rigiSectors,
-        customTaxes,
-        rigiPending
+        levers
       )
     );
   }, [
@@ -507,20 +523,13 @@ export function App() {
     campaignNavSection,
     state,
     activeSection,
-    ministers,
     levers,
-    measures,
-    rigiSectors,
-    customTaxes,
-    rigiPending,
     savedSession
   ]);
 
   const startPresidentialGovernment = () => {
-    setState(createInitialSimulationState2027(setup.role, setup.difficulty, setup.provinceId));
-    setMinisters(INITIAL_VACANT_CABINET_2027);
-    setRigiSectors(INITIAL_RIGI_SECTORS);
-    setRigiPending([]);
+    const baseGov = createInitialSimulationState2027(setup.role, setup.difficulty, setup.provinceId);
+    setState(attachDefaultGovCollections(applyCampaignBridgeToGovernment(baseGov, campaignState)));
     setActiveSection('GABINETE');
     setScreenMode('GOVERNMENT');
   };
@@ -529,9 +538,11 @@ export function App() {
     setSetup(nextSetup);
     const candidateObj = resolveCandidateFromSetup(nextSetup);
 
-    setMinisters(INITIAL_VACANT_CABINET_2027);
-    setRigiSectors(INITIAL_RIGI_SECTORS);
-    setRigiPending([]);
+    setState(
+      attachDefaultGovCollections(
+        createInitialSimulationState2027(nextSetup.role, nextSetup.difficulty, nextSetup.provinceId)
+      )
+    );
     setActiveSection('GABINETE');
 
     setCampaignState(
@@ -623,12 +634,7 @@ export function App() {
         campaignNavSection,
         state,
         activeSection,
-        ministers,
-        levers,
-        measures,
-        rigiSectors,
-        customTaxes,
-        rigiPending
+        levers
       )
     );
     setPortableSaveBanner(saveRepo.exportPortableCode(state));
@@ -713,43 +719,8 @@ export function App() {
     );
   }
 
-  const handleApproveRigiProject = (projectId: string) => {
-    const res = approveRigiProject(projectId, rigiPending, rigiSectors);
-    setRigiPending(res.nextPending);
-    setRigiSectors(res.nextSectors);
-    if (res.approvedProject) {
-      setState((prev) => ({
-        ...prev,
-        eventLog: [
-          `RIGI: Proyecto aprobado "${res.approvedProject?.name}" (${res.approvedProject?.minProjectMillionUsd} M USD).`,
-          ...prev.eventLog.slice(0, 14)
-        ]
-      }));
-    }
-  };
-
-  const handleRejectRigiProject = (projectId: string) => {
-    const proj = rigiPending.find((p) => p.id === projectId);
-    setRigiPending((prev) => prev.filter((p) => p.id !== projectId));
-    if (proj) {
-      setState((prev) => ({
-        ...prev,
-        eventLog: [`RIGI: Proyecto "${proj.name}" rechazado.`, ...prev.eventLog.slice(0, 14)]
-      }));
-    }
-  };
-
-  const handleApproveAllRigiProjects = () => {
-    const res = approveAllRigiProjects(rigiPending, rigiSectors);
-    setRigiPending(res.nextPending);
-    setRigiSectors(res.nextSectors);
-    setState((prev) => ({
-      ...prev,
-      eventLog: [
-        `RIGI: Aprobados en bloque todos los proyectos pendientes (${res.count} proyectos).`,
-        ...prev.eventLog.slice(0, 14)
-      ]
-    }));
+  const dispatchAction = (action: PolicyAction) => {
+    setState((prev) => applyPolicyAction(prev, action));
   };
 
   const handleChooseGovernmentEvent = (optionId: string) => {
@@ -762,17 +733,6 @@ export function App() {
       return;
     }
     setState((prev) => advanceGovernmentMonth(prev));
-    const rigiQueue = advanceRigiMonthlyQueue(rigiPending, rigiSectors);
-    setRigiPending(rigiQueue.nextPending);
-    if (rigiQueue.desistedProjects.length > 0) {
-      setState((prev) => ({
-        ...prev,
-        eventLog: [
-          `RIGI: Proyectos desistidos por falta de respuesta: ${rigiQueue.desistedProjects.join(', ')}.`,
-          ...prev.eventLog.slice(0, 14)
-        ]
-      }));
-    }
   };
 
   return (
@@ -798,44 +758,22 @@ export function App() {
         rigiSectors={rigiSectors}
         customTaxes={customTaxes}
         rigiPending={rigiPending}
-        onApproveRigiProject={handleApproveRigiProject}
-        onRejectRigiProject={handleRejectRigiProject}
-        onApproveAllRigiProjects={handleApproveAllRigiProjects}
+        onApproveRigiProject={(projectId) => dispatchAction({ type: 'APPROVE_RIGI_PROJECT', projectId })}
+        onRejectRigiProject={(projectId) => dispatchAction({ type: 'REJECT_RIGI_PROJECT', projectId })}
+        onApproveAllRigiProjects={() => dispatchAction({ type: 'APPROVE_ALL_RIGI_PROJECTS' })}
         onNavigate={setActiveSection}
-        onDispatch={(action) => setState((prev) => applyPolicyAction(prev, action))}
+        onDispatch={dispatchAction}
         onAdvanceTurn={handleAdvanceGovernmentTurn}
-        onReinforceMinister={(id) =>
-          setMinisters((prev) =>
-            prev.map((m) =>
-              m.id === id ? { ...m, performance: Math.min(100, m.performance + 8), loyalty: Math.min(100, m.loyalty + 5) } : m
-            )
-          )
-        }
-        onReplaceMinister={(id) =>
-          setMinisters((prev) =>
-            prev.map((m) =>
-              m.id === id ? { ...m, ministerName: `${m.ministerName} (Recambio)`, performance: 62, risk: 12 } : m
-            )
-          )
-        }
-        onAppointMinister={(id, newMinister) =>
-          setMinisters((prev) =>
-            prev.map((m) => (m.id === id ? newMinister : m))
-          )
-        }
+        onReinforceMinister={(ministerId) => dispatchAction({ type: 'REINFORCE_MINISTER', ministerId })}
+        onReplaceMinister={(ministerId) => dispatchAction({ type: 'REPLACE_MINISTER', ministerId })}
+        onAppointMinister={(ministerId, minister) => dispatchAction({ type: 'APPOINT_MINISTER', ministerId, minister })}
         onChangeLever={(id, level) => {
           setLevers((prev) => prev.map((lv) => (lv.id === id ? { ...lv, level } : lv)));
-          applyLeverToMacroEngine(id, level, (action) => setState((prev) => applyPolicyAction(prev, action)));
+          applyLeverToMacroEngine(id, level, dispatchAction);
         }}
-        onToggleMeasure={(id) =>
-          setMeasures((prev) => prev.map((m) => (m.id === id ? { ...m, active: !m.active } : m)))
-        }
-        onAddCustomTax={(tax) => setCustomTaxes((prev) => [tax, ...prev])}
-        onToggleRigi={(id) =>
-          setRigiSectors((prev) =>
-            prev.map((r) => (r.id === id ? { ...r, enabledByDecree: !r.enabledByDecree } : r))
-          )
-        }
+        onToggleMeasure={(measureId) => dispatchAction({ type: 'TOGGLE_MEASURE', measureId })}
+        onAddCustomTax={(proposal) => dispatchAction({ type: 'ADD_CUSTOM_TAX', proposal })}
+        onToggleRigi={(sectorId) => dispatchAction({ type: 'TOGGLE_RIGI_SECTOR', sectorId })}
       />
       <GovernmentOverlays
         state={state}

@@ -1,3 +1,11 @@
+import type {
+  CabinetMinister,
+  CustomTaxProposal,
+  RigiPendingProject,
+  RigisectorItem,
+  SectorMeasureCard
+} from './PartyAndSetupTypes.js';
+
 // Si dejamos estos tipos acoplados a la UI o a respuestas de red, a las dos semanas
 // terminamos importando React adentro del calculo de inflacion. Este archivo es 100% puro.
 
@@ -257,6 +265,13 @@ export interface GovernmentRuntimeState {
   finalScore?: number;
 }
 
+export interface CongressBlocAllocation {
+  id: string;
+  deputiesSeats: number;
+  senateSeats: number;
+  relation: number;
+}
+
 export interface SimulationState {
   turnMonth: number;
   currentYear: number;
@@ -281,6 +296,14 @@ export interface SimulationState {
   structural: HiddenStructuralVariables;
   eventLog: string[];
   government?: GovernmentRuntimeState;
+  coalitionParties?: string[];
+  runningMateId?: string | null;
+  congressBlocs?: CongressBlocAllocation[];
+  ministers?: CabinetMinister[];
+  measures?: SectorMeasureCard[];
+  rigiSectors?: RigisectorItem[];
+  rigiPending?: RigiPendingProject[];
+  customTaxes?: CustomTaxProposal[];
 }
 
 export type PolicyAction =
@@ -299,5 +322,14 @@ export type PolicyAction =
   | { type: 'OPERATE_COMODORO_PY_CASE'; caseId: string; operation: 'PUSH' | 'FREEZE' }
   | { type: 'UPDATE_TAX_RATE'; taxId: string; newRatePct: number }
   | { type: 'INTERVENE_PROVINCE'; provinceId: string; interventorName: string }
-  | { type: 'ENACT_CONGRESS_BILL'; billId: string };
+  | { type: 'ENACT_CONGRESS_BILL'; billId: string }
+  | { type: 'REINFORCE_MINISTER'; ministerId: string }
+  | { type: 'REPLACE_MINISTER'; ministerId: string }
+  | { type: 'APPOINT_MINISTER'; ministerId: string; minister: CabinetMinister }
+  | { type: 'TOGGLE_MEASURE'; measureId: string }
+  | { type: 'TOGGLE_RIGI_SECTOR'; sectorId: string }
+  | { type: 'APPROVE_RIGI_PROJECT'; projectId: string }
+  | { type: 'REJECT_RIGI_PROJECT'; projectId: string }
+  | { type: 'APPROVE_ALL_RIGI_PROJECTS' }
+  | { type: 'ADD_CUSTOM_TAX'; proposal: CustomTaxProposal };
 

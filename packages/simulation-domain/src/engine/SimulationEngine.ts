@@ -1,4 +1,5 @@
-import type { SimulationState } from '../models/SimulationTypes.js';
+import type { DifficultyLevel, SimulationState } from '../models/SimulationTypes.js';
+import { advanceRigiMonthlyQueue } from './rigiEngine.js';
 import { clamp, round2 } from '../economy/mathUtils.js';
 import { computeNextInflationBreakdown } from '../economy/inflationEngine.js';
 import { stepCentralBankBalance, stepPrivateBankingBalance } from '../economy/centralBankAndBankingEngine.js';
@@ -64,10 +65,42 @@ function stepStructuralExpectations(
   };
 }
 
+interface DifficultyDynamics {
+  inertiaFloor: number;
+  deficitMonetizationMult: number;
+  reserveDrainBillionUsd: number;
+  approvalPainMult: number;
+}
+
+const DIFFICULTY_DYNAMICS: Record<DifficultyLevel, DifficultyDynamics> = {
+  VIENTO_DE_COLA: { inertiaFloor: 0.42, deficitMonetizationMult: 0.7, reserveDrainBillionUsd: 0.0, approvalPainMult: 0.8 },
+  ESTANDAR_2027: { inertiaFloor: 0.52, deficitMonetizationMult: 1.0, reserveDrainBillionUsd: 0.15, approvalPainMult: 1.0 },
+  HERENCIA_MALDITA: { inertiaFloor: 0.62, deficitMonetizationMult: 1.25, reserveDrainBillionUsd: 0.45, approvalPainMult: 1.15 },
+  TORMENTA_PERFECTA: { inertiaFloor: 0.68, deficitMonetizationMult: 1.45, reserveDrainBillionUsd: 0.75, approvalPainMult: 1.3 },
+  DICIEMBRE_2001: { inertiaFloor: 0.74, deficitMonetizationMult: 1.75, reserveDrainBillionUsd: 1.05, approvalPainMult: 1.45 }
+};
+
+function stepRigiIfPresent(state: SimulationState): Pick<SimulationState, 'rigiPending' | 'eventLog'> {
+  if (!state.rigiSectors) {
+    return { rigiPending: state.rigiPending, eventLog: state.eventLog };
+  }
+  const rigiQueue = advanceRigiMonthlyQueue(state.rigiPending ?? [], state.rigiSectors);
+  const eventLog =
+    rigiQueue.desistedProjects.length > 0
+      ? [
+          `RIGI: Proyectos desistidos por falta de respuesta: ${rigiQueue.desistedProjects.join(', ')}.`,
+          ...state.eventLog.slice(0, 14)
+        ]
+      : state.eventLog;
+  return { rigiPending: rigiQueue.nextPending, eventLog };
+}
+
 export function advanceSimulationMonth(state: SimulationState): SimulationState {
   const nextTurnMonth = state.turnMonth + 1;
   const nextMonthOfYear = (state.currentMonthOfYear % 12) + 1;
   const nextYear = nextMonthOfYear === 1 ? state.currentYear + 1 : state.currentYear;
+  const dynamics = DIFFICULTY_DYNAMICS[state.difficulty] ?? DIFFICULTY_DYNAMICS.ESTANDAR_2027;
+  const fiscalDeficitPctGdp = Math.max(0, -state.treasury.financialResultPctGdp);
 
   const nextEnergy = stepEnergyAndCammesa(
     state.energy,
@@ -88,7 +121,13 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
     nextBanking,
     state.structural,
     nextEnergy.cammesaMonthlyDeficitMillionUsd,
-    nextMonthOfYear
+    nextMonthOfYear,
+    {
+      fiscalDeficitPctGdp,
+      lastRolloverPct: state.treasury.lastRolloverPct,
+      reserveDrainBillionUsd: dynamics.reserveDrainBillionUsd,
+      deficitMonetizationMult: dynamics.deficitMonetizationMult
+    }
   );
 
   const nextInflation = computeNextInflationBreakdown(
@@ -97,7 +136,12 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
     nextEnergy,
     state.labor,
     state.structural,
-    state.energy.userTariffCoveragePct
+    state.energy.userTariffCoveragePct,
+    {
+      inertiaFloor: dynamics.inertiaFloor,
+      fiscalDeficitPctGdp,
+      deficitMonetizationMult: dynamics.deficitMonetizationMult
+    }
   );
 
   const industrialGasPenalty = nextEnergy.industrialGasCutActive ? -1.4 : 0;
@@ -139,7 +183,13 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
     nextTreasury.discretionaryAtnPctGdp
   );
 
-  const nextOpinion = stepPublicOpinion(state.publicOpinion, nextInflation, nextLabor, nextCentralBank.exchangeBrechaPct);
+  const nextOpinion = stepPublicOpinion(
+    state.publicOpinion,
+    nextInflation,
+    nextLabor,
+    nextCentralBank.exchangeBrechaPct,
+    { gdpGrowthAnnualPct, approvalPainMult: dynamics.approvalPainMult }
+  );
   const nextJudicial = stepJudicialAndLawfare(
     state.judicial,
     nextOpinion.presidentialPersonalImagePct,
@@ -150,6 +200,8 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
     ...stepStructuralExpectations(state, nextInflation.realMonthlyIpcPct, nextCentralBank.exchangeBrechaPct, nextTreasury.primaryResultPctGdp),
     silobolsaStockMillionTons: nextSilobolsaTons
   };
+
+  const rigiStep = stepRigiIfPresent(state);
 
   return {
     ...state,
@@ -170,7 +222,8 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
     publicOpinion: nextOpinion,
     debtPortfolio: nextDebtPortfolio,
     taxes: nextTaxes,
-    structural: nextStructural
+    structural: nextStructural,
+    ...rigiStep
   };
 }
 

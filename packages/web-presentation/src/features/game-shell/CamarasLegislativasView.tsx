@@ -265,37 +265,55 @@ function resolveRelationLabel(relation: number): { label: string; badgeClass: st
   return { label: 'Oposición dura', badgeClass: 'bg-rose-950/80 text-rose-300 border-rose-800' };
 }
 
-function CongressTopMetrics() {
+function computeAlliedSeats(forces: PartySeatShare[]): { dep: number; sen: number; ownDep: number; ownSen: number } {
+  const own = forces.find((f) => f.relation === 100) ?? forces[0]!;
+  const allied = forces.filter((f) => f.relation >= 60);
+  return {
+    ownDep: own.deputiesSeats,
+    ownSen: own.senateSeats,
+    dep: allied.reduce((acc, f) => acc + f.deputiesSeats, 0),
+    sen: allied.reduce((acc, f) => acc + f.senateSeats, 0)
+  };
+}
+
+function CongressTopMetrics({ forces }: { forces: PartySeatShare[] }) {
+  const seats = computeAlliedSeats(forces);
+  const govPct = Math.min(95, Math.round((seats.dep / 129) * 55));
+  const negPct = Math.min(95, Number(((seats.dep / 257) * 100).toFixed(1)));
+  const statusNote = seats.dep >= 129 ? 'Mayoría o quórum propio asegurado' : 'Requiere acuerdos con aliados para quórum';
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div className="p-4 rounded-2xl bg-[#10131b] border border-slate-800/90 shadow-sm flex flex-col justify-between">
         <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
           BLOQUE PROPIO
         </div>
-        <div className="text-3xl font-mono font-extrabold text-white mt-2">38</div>
-        <div className="text-[11px] text-slate-500 mt-1">38 diputados · 7 senadores (Minoría parlamentaria)</div>
+        <div className="text-3xl font-mono font-extrabold text-white mt-2">{seats.ownDep}</div>
+        <div className="text-[11px] text-slate-500 mt-1">
+          {seats.ownDep} diputados · {seats.ownSen} senadores ({seats.dep} con aliados)
+        </div>
       </div>
 
       <div className="p-4 rounded-2xl bg-[#10131b] border border-slate-800/90 shadow-sm flex flex-col justify-between">
         <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
           GOBERNABILIDAD
         </div>
-        <div className="text-3xl font-mono font-extrabold text-white mt-2">36 %</div>
+        <div className="text-3xl font-mono font-extrabold text-white mt-2">{govPct} %</div>
         <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800 mt-2">
-          <div className="bg-amber-500 h-full rounded-full" style={{ width: '36%' }} />
+          <div className="bg-amber-500 h-full rounded-full" style={{ width: `${govPct}%` }} />
         </div>
-        <div className="text-[11px] text-slate-500 mt-1">Baja: requiere acuerdos con aliados para quórum</div>
+        <div className="text-[11px] text-slate-500 mt-1">{statusNote}</div>
       </div>
 
       <div className="p-4 rounded-2xl bg-[#10131b] border border-slate-800/90 shadow-sm flex flex-col justify-between">
         <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
           CAPACIDAD DE NEGOCIACIÓN
         </div>
-        <div className="text-3xl font-mono font-extrabold text-white mt-2">38,5</div>
+        <div className="text-3xl font-mono font-extrabold text-white mt-2">{negPct}</div>
         <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800 mt-2">
-          <div className="bg-purple-600 h-full rounded-full" style={{ width: '38.5%' }} />
+          <div className="bg-purple-600 h-full rounded-full" style={{ width: `${negPct}%` }} />
         </div>
-        <div className="text-[11px] text-slate-500 mt-1">Capacidad inicial limitada por minoría estricta</div>
+        <div className="text-[11px] text-slate-500 mt-1">Base parlamentaria inicial tras la elección</div>
       </div>
     </div>
   );
@@ -452,7 +470,7 @@ function CongressCompositionView({
         />
       </div>
 
-      <CongressTopMetrics />
+      <CongressTopMetrics forces={forces} />
       <CongressForcesTable forces={forces} />
     </div>
   );
@@ -488,12 +506,28 @@ function CongressSubTabContent({
   );
 }
 
+function mergeCongressBlocs(state: SimulationState): PartySeatShare[] {
+  if (!state.congressBlocs || state.congressBlocs.length === 0) {
+    return INITIAL_CONGRESS_FORCES;
+  }
+  return INITIAL_CONGRESS_FORCES.map((base) => {
+    const found = state.congressBlocs?.find((b) => b.id === base.id);
+    if (!found) return base;
+    return {
+      ...base,
+      deputiesSeats: found.deputiesSeats,
+      senateSeats: found.senateSeats,
+      relation: found.relation
+    };
+  });
+}
+
 export function CamarasLegislativasView({
   state,
   onDispatch
 }: CamarasLegislativasViewProps) {
   const [subTab, setSubTab] = useState<CongressSubTab>('ROSCA_LEYES');
-  const [forces] = useState<PartySeatShare[]>(INITIAL_CONGRESS_FORCES);
+  const forces = useMemo(() => mergeCongressBlocs(state), [state]);
 
   const rawDeputiesDots = useMemo(() => generateHemicycleDots(257, 8, 70, 150), []);
   const rawSenateDots = useMemo(() => generateHemicycleDots(72, 4, 70, 140), []);

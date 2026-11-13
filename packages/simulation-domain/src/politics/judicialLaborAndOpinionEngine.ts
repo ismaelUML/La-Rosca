@@ -196,28 +196,65 @@ export function stepProvincesState(
   });
 }
 
+export interface PublicOpinionStepOptions {
+  gdpGrowthAnnualPct?: number;
+  approvalPainMult?: number;
+}
+
+function computeInflationApprovalDelta(realMonthlyIpcPct: number, painMult: number): number {
+  if (realMonthlyIpcPct > 1.8) {
+    return -(realMonthlyIpcPct - 1.8) * 1.15 * painMult;
+  }
+  return (1.8 - realMonthlyIpcPct) * 0.45;
+}
+
+function computeActivityDelta(gdpGrowth: number, painMult: number): number {
+  return gdpGrowth < 0 ? gdpGrowth * 0.35 * painMult : Math.min(0.35, gdpGrowth * 0.1);
+}
+
+function computeExpectationDelta(
+  realMonthlyIpcPct: number,
+  exchangeBrechaPct: number,
+  activityDelta: number,
+  painMult: number
+): number {
+  const inflMult = realMonthlyIpcPct > 2.0 ? painMult : 0.7;
+  return (2.0 - realMonthlyIpcPct) * 1.35 * inflMult - Math.max(0, exchangeBrechaPct - 35) * 0.12 + activityDelta * 0.5;
+}
+
 export function stepPublicOpinion(
   opinion: PublicOpinionState,
   inflation: InflationBreakdown,
   labor: LaborMarketState,
-  exchangeBrechaPct: number
+  exchangeBrechaPct: number,
+  options: PublicOpinionStepOptions = {}
 ): PublicOpinionState {
+  const painMult = options.approvalPainMult ?? 1.0;
+  const gdpGrowth = options.gdpGrowthAnnualPct ?? 0;
+  const inflationDelta = computeInflationApprovalDelta(inflation.realMonthlyIpcPct, painMult);
+  const povertyPain = Math.max(0, inflation.povertyCbtPct - 33) * 0.1 * painMult;
+  const activityDelta = computeActivityDelta(gdpGrowth, painMult);
+  const wageRelief = (labor.realWageIndex - 100) * 0.16;
+
   const segments: PublicOpinionSegment[] = opinion.segments.map((seg) => {
-    const inflationPain = (2.8 - inflation.realMonthlyIpcPct) * 1.4;
-    const wageRelief = (labor.realWageIndex - 100) * 0.18;
-    const approvalPct = round2(clamp(seg.approvalPct + inflationPain + wageRelief, 12, 88));
+    const netDelta = inflationDelta + wageRelief + activityDelta - povertyPain;
+    const approvalPct = round2(clamp(seg.approvalPct + netDelta, 8, 88));
     return { ...seg, approvalPct };
   });
 
   const weightedApproval = segments.reduce((acc, s) => acc + s.approvalPct * (s.populationSharePct / 100), 0);
-  const managementApprovalPct = round2(clamp(weightedApproval, 14, 85));
+  const managementApprovalPct = round2(clamp(weightedApproval, 10, 85));
 
-  // Amortiguador de esperanza a 12 meses: si baja la inflacion la gente banca el ajuste unos meses
-  const expectation12MonthsPct = round2(
-    clamp(opinion.expectation12MonthsPct + (3.2 - inflation.realMonthlyIpcPct) * 1.9 - Math.max(0, exchangeBrechaPct - 45) * 0.08, 15, 86)
+  // La expectativa mejora solo con inflacion claramente domada (< 2%) y sin brecha descontrolada
+  const expectationDelta = computeExpectationDelta(
+    inflation.realMonthlyIpcPct,
+    exchangeBrechaPct,
+    activityDelta,
+    painMult
   );
+  const expectation12MonthsPct = round2(clamp(opinion.expectation12MonthsPct + expectationDelta, 12, 86));
   const presidentialPersonalImagePct = round2(
-    clamp(managementApprovalPct * 0.55 + expectation12MonthsPct * 0.3 + opinion.oppositionRejectionPct * 0.15, 16, 88)
+    clamp(managementApprovalPct * 0.55 + expectation12MonthsPct * 0.3 + opinion.oppositionRejectionPct * 0.15, 12, 88)
   );
 
   const agendaSlot1 = inflation.realMonthlyIpcPct > 5.0 ? 'Inflacion de Alimentos y Tarifas' : 'Estabilidad Macro y Credito';
