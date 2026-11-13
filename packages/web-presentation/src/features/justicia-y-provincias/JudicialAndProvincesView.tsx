@@ -1,146 +1,293 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { PolicyAction, SimulationState } from '@argentina-sim/domain';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ActionStripCard } from '@/features/game-shell/ActionStripCard';
 
-// Comodoro Py, la Corte Suprema de 5 miembros y la guerra por la Coparticipacion Federal
-// con los 24 Gobernadores (con sus propias reglas de reeleccion, Boleta Unica y cuasimonedas).
+// Aca manejas la relacion con la Corte Suprema, los expedientes de Comodoro Py
+// y la caja de ATN con los 24 gobernadores para juntar votos y gobernabilidad.
 
 interface JudicialAndProvincesViewProps {
   state: SimulationState;
   onDispatch: (action: PolicyAction) => void;
 }
 
-function JudiciaryAndLawfareCard({ state, onDispatch }: JudicialAndProvincesViewProps) {
+type JudicialProvincesTab = 'judicial' | 'provinces';
+type ProvinceFilter = 'all' | 'critical' | 'allied';
+
+function buildJudicialAlert(state: SimulationState): string {
   const { judicial } = state;
+  if (judicial.cautelaresBlockingDnuCount > 0) {
+    return `Tenés ${judicial.cautelaresBlockingDnuCount} cautelar(es) frenando DNU o tarifas: necesitás mayoría de 3 votos en la Corte para destrabarlas.`;
+  }
+  if (judicial.judicialInterferenceTraceIndex > 55) {
+    return `Rastro de operadores muy alto (${judicial.judicialInterferenceTraceIndex}%): si seguís apretando jueces, puede explotar un escándalo mediático.`;
+  }
+  return 'Frente judicial sin cautelares activas contra tus decretos; mantené controlado el rastro de operadores.';
+}
 
+function buildProvincesAlert(state: SimulationState): string {
+  const quasiCount = state.provinces.filter((p) => p.quasiCurrencyIssued).length;
+  if (quasiCount > 0) {
+    return `Hay ${quasiCount} provincia(s) emitiendo cuasimonedas: te complica la unificación monetaria y la recaudación.`;
+  }
+  const hostileCount = state.provinces.filter((p) => p.governorLoyaltyToPresident < 45).length;
+  if (hostileCount >= 8) {
+    return `${hostileCount} gobernadores están enfrentados con la Rosada: te pueden trabar leyes clave en el Congreso.`;
+  }
+  return 'Los gobernadores responden a la caja de ATN y la coparticipación: usalos para asegurar votos en el Senado y Diputados.';
+}
+
+function SupremeCourtList({ state }: { state: SimulationState }) {
+  const { judicial } = state;
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Corte Suprema (5 Jueces) y Expedientes en Comodoro Py</CardTitle>
-          <Badge variant={judicial.cautelaresBlockingDnuCount > 0 ? 'danger' : 'success'}>
-            Cautelares contra DNU/Tarifas: {judicial.cautelaresBlockingDnuCount}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3 text-xs">
-        <div className="space-y-1.5 rounded-lg bg-slate-950 p-2.5 border border-slate-800">
-          <div className="font-semibold text-sky-400">Sillones de la Corte Suprema (Regla de 3 votos y Tope 75 años)</div>
-          {judicial.supremeCourt.map((j) => (
-            <div key={j.id} className="flex items-center justify-between border-b border-slate-800/60 pb-1">
-              <div>
-                <span className="font-medium text-slate-200">{j.name}</span>
-                <span className="text-[11px] text-slate-400 block">
-                  {j.age} años · Doctrina {j.doctrine} {j.requiresSenateReconfirmationSoon ? '· [Requiere Pliego Senado Art. 99]' : ''}
-                </span>
-              </div>
-              <Badge variant={j.alignmentWithExecutive > 55 ? 'success' : 'warning'}>
-                Afinidad {j.alignmentWithExecutive}%
-              </Badge>
-            </div>
-          ))}
-        </div>
-
-        <div className="space-y-1.5">
-          <div className="flex justify-between items-center">
-            <span className="font-semibold text-amber-400">Sorteo y Flujo de Causas en Comodoro Py</span>
-            <span className="text-[11px] text-slate-400">Rastro Operadores/SIDE: {judicial.judicialInterferenceTraceIndex}%</span>
+    <div className="space-y-1.5 rounded-xl bg-slate-950/90 p-3 border border-slate-800">
+      <div className="flex items-center justify-between text-xs mb-1">
+        <span className="font-semibold text-sky-400">Corte Suprema (5 Jueces · mayoría de 3)</span>
+        <span className="text-[11px] text-slate-400">Tope 75 años</span>
+      </div>
+      {judicial.supremeCourt.map((j) => (
+        <div key={j.id} className="flex items-center justify-between border-b border-slate-800/60 pb-1.5 last:border-b-0 last:pb-0 text-xs">
+          <div>
+            <span className="font-medium text-slate-200">{j.name}</span>
+            <span className="text-[11px] text-slate-400 block">
+              {j.age} años · Doctrina {j.doctrine}
+              {j.requiresSenateReconfirmationSoon ? ' · Requiere acuerdo Senado' : ''}
+            </span>
           </div>
-          {judicial.activeCases.map((c) => (
-            <div key={c.id} className="flex items-center justify-between rounded border border-slate-800 bg-slate-950 px-2.5 py-2">
-              <div>
-                <div className="font-medium text-slate-200">{c.title}</div>
-                <div className="text-[11px] text-slate-400">
-                  Target: {c.accusedFaction} · Juez Fed. #{c.judgeId} · Estado: <strong className="text-amber-300">{c.stage}</strong>
-                </div>
-              </div>
-              <div className="flex gap-1.5">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onDispatch({ type: 'OPERATE_COMODORO_PY_CASE', caseId: c.id, operation: 'FREEZE' })}
-                >
-                  Dormir (Falta Mérito)
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => onDispatch({ type: 'OPERATE_COMODORO_PY_CASE', caseId: c.id, operation: 'PUSH' })}
-                >
-                  Acelerar
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ProvincesAndOpinionCard({ state, onDispatch }: JudicialAndProvincesViewProps) {
-  const { provinces, publicOpinion, treasury } = state;
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>24 Jurisdicciones, Coparticipación y 7 Segmentos de Opinión</CardTitle>
-          <Badge variant="default">
-            Coparticipable: {treasury.coparticipableRevenuePctGdp}% PBI · Exclusivo Nación: {treasury.nonCoparticipableRevenuePctGdp}%
+          <Badge variant={j.alignmentWithExecutive > 55 ? 'success' : 'warning'}>
+            Afinidad {j.alignmentWithExecutive}%
           </Badge>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-3 text-xs">
-        <div className="rounded-lg bg-slate-950 p-2.5 border border-slate-800 space-y-1">
-          <div className="font-semibold text-sky-400">Agenda-Setting Semanal (Medios + Streaming)</div>
-          {publicOpinion.agendaSlots.map((topic, idx) => (
-            <div key={idx} className="text-slate-300">
-              #{idx + 1}: {topic}
-            </div>
-          ))}
-        </div>
-
-        <div className="max-h-60 overflow-y-auto space-y-1.5 pr-1">
-          {provinces.map((p) => (
-            <div key={p.id} className="flex items-center justify-between rounded border border-slate-800 bg-slate-950/70 px-2.5 py-1.5">
-              <div>
-                <div className="font-medium text-slate-200">
-                  {p.name} ({p.nationalDeputiesCount} Dip.) {!p.reelectionAllowed ? '· [Sin Reelección]' : ''}
-                </div>
-                <div className="text-[11px] text-slate-400">
-                  Dep. Copart: {p.coparticipationDependencyPct}% · Fiscal: {p.fiscalBalancePct}% · Fiscalización: {p.apparatusFiscalizacionPct}%
-                  {p.quasiCurrencyIssued ? ' · [CUASIMONEDA ACTIVA]' : ''}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant={p.governorLoyaltyToPresident > 55 ? 'success' : 'warning'}>
-                  Lealtad {p.governorLoyaltyToPresident}%
-                </Badge>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => onDispatch({ type: 'SEND_ATN_TO_PROVINCE', provinceId: p.id, amountPctGdp: 0.08 })}
-                >
-                  Girar ATN
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-export function JudicialAndProvincesView({ state, onDispatch }: JudicialAndProvincesViewProps) {
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <JudiciaryAndLawfareCard state={state} onDispatch={onDispatch} />
-      <ProvincesAndOpinionCard state={state} onDispatch={onDispatch} />
+      ))}
     </div>
   );
 }
 
+function JudicialTabContent({ state, onDispatch }: JudicialAndProvincesViewProps) {
+  const { judicial } = state;
+
+  return (
+    <div className="space-y-3">
+      <SupremeCourtList state={state} />
+
+      <div className="flex items-center justify-between pt-1">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          Expedientes en Comodoro Py
+        </span>
+        <span className="text-[11px] text-slate-400 font-mono">
+          Rastro operadores: {judicial.judicialInterferenceTraceIndex}%
+        </span>
+      </div>
+
+      <div className="space-y-2">
+        {judicial.activeCases.map((c) => (
+          <ActionStripCard
+            key={c.id}
+            icon="📁"
+            iconTileClass="bg-amber-950/80 text-amber-300"
+            urgentLabel={c.stage}
+            urgentClass="bg-amber-600 text-white"
+            title={c.title}
+            subtitle={`Acusado: ${c.accusedFaction} · Juzgado Federal #${c.judgeId}`}
+            tradeoff="Dormir frena la causa pero suma rastro de operadores; acelerar mete presión política."
+          >
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onDispatch({ type: 'OPERATE_COMODORO_PY_CASE', caseId: c.id, operation: 'FREEZE' })}
+              >
+                Dormir (Falta mérito)
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => onDispatch({ type: 'OPERATE_COMODORO_PY_CASE', caseId: c.id, operation: 'PUSH' })}
+              >
+                Acelerar causa
+              </Button>
+            </div>
+          </ActionStripCard>
+        ))}
+      </div>
+
+      <div className="rounded-xl border border-slate-800 bg-slate-950/90 px-3.5 py-2.5 text-xs">
+        <span className="font-bold text-slate-200 block mb-0.5">Se viene</span>
+        <p className="text-slate-400 leading-relaxed">{buildJudicialAlert(state)}</p>
+      </div>
+    </div>
+  );
+}
+
+function filterProvinces(provinces: SimulationState['provinces'], filter: ProvinceFilter) {
+  if (filter === 'critical') {
+    return provinces.filter((p) => p.governorLoyaltyToPresident <= 50 || p.quasiCurrencyIssued);
+  }
+  if (filter === 'allied') {
+    return provinces.filter((p) => p.governorLoyaltyToPresident > 50);
+  }
+  return provinces;
+}
+
+function resolveProvinceLoyaltyStyle(loyalty: number) {
+  if (loyalty > 55) {
+    return { iconTileClass: 'bg-emerald-950/80 text-emerald-300', variant: 'done' as const };
+  }
+  return { iconTileClass: 'bg-amber-950/80 text-amber-300', variant: 'primary' as const };
+}
+
+function ProvinceStripRow({
+  province,
+  onSendAtn
+}: {
+  province: SimulationState['provinces'][number];
+  onSendAtn: (provinceId: string) => void;
+}) {
+  const loyaltyUi = resolveProvinceLoyaltyStyle(province.governorLoyaltyToPresident);
+  const icon = province.quasiCurrencyIssued ? '🪙' : '🏛️';
+  const urgentLabel = province.quasiCurrencyIssued ? 'Cuasimoneda' : undefined;
+  const reelectionTag = province.reelectionAllowed ? '' : ' · Sin reelección';
+
+  return (
+    <ActionStripCard
+      icon={icon}
+      iconTileClass={loyaltyUi.iconTileClass}
+      urgentLabel={urgentLabel}
+      urgentClass="bg-rose-600 text-white"
+      title={`${province.name} · ${province.nationalDeputiesCount} Dip.`}
+      subtitle={`Lealtad: ${province.governorLoyaltyToPresident}% · Dep. Copart.: ${province.coparticipationDependencyPct}% · Fiscal: ${province.fiscalBalancePct}%${reelectionTag}`}
+      rightAction={{
+        label: 'Girar ATN',
+        sublabel: '0.08% PBI',
+        variant: loyaltyUi.variant,
+        onClick: () => onSendAtn(province.id)
+      }}
+    />
+  );
+}
+
+function ProvincesTabContent({ state, onDispatch }: JudicialAndProvincesViewProps) {
+  const [filter, setFilter] = useState<ProvinceFilter>('all');
+  const { provinces, publicOpinion, treasury } = state;
+  const visibleProvinces = filterProvinces(provinces, filter);
+  const handleSendAtn = (provinceId: string) =>
+    onDispatch({ type: 'SEND_ATN_TO_PROVINCE', provinceId, amountPctGdp: 0.08 });
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl bg-slate-950/90 p-3 border border-slate-800 space-y-1.5 text-xs">
+        <div className="flex items-center justify-between">
+          <span className="font-semibold text-sky-400">Agenda Semanal en Medios y Streaming</span>
+          <span className="text-[11px] text-slate-400 font-mono">
+            Nación {treasury.nonCoparticipableRevenuePctGdp}% · Copart. {treasury.coparticipableRevenuePctGdp}%
+          </span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+          {publicOpinion.agendaSlots.map((topic, idx) => (
+            <div key={idx} className="rounded-lg bg-slate-900/90 border border-slate-800 px-2.5 py-1.5 text-slate-300">
+              <span className="text-sky-400 font-mono mr-1">#{idx + 1}</span>
+              {topic}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          24 Jurisdicciones · Giro de ATN
+        </span>
+        <div className="flex gap-1 text-[11px]">
+          <button
+            type="button"
+            onClick={() => setFilter('all')}
+            className={`px-2.5 py-1 rounded-lg border ${filter === 'all' ? 'bg-sky-600 border-sky-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+          >
+            Todas ({provinces.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter('critical')}
+            className={`px-2.5 py-1 rounded-lg border ${filter === 'critical' ? 'bg-rose-600 border-rose-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+          >
+            Críticas
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter('allied')}
+            className={`px-2.5 py-1 rounded-lg border ${filter === 'allied' ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+          >
+            Aliadas
+          </button>
+        </div>
+      </div>
+
+      <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
+        {visibleProvinces.map((p) => (
+          <ProvinceStripRow key={p.id} province={p} onSendAtn={handleSendAtn} />
+        ))}
+      </div>
+
+      <div className="rounded-xl border border-slate-800 bg-slate-950/90 px-3.5 py-2.5 text-xs">
+        <span className="font-bold text-slate-200 block mb-0.5">Se viene</span>
+        <p className="text-slate-400 leading-relaxed">{buildProvincesAlert(state)}</p>
+      </div>
+    </div>
+  );
+}
+
+export function JudicialAndProvincesView({ state, onDispatch }: JudicialAndProvincesViewProps) {
+  const [activeTab, setActiveTab] = useState<JudicialProvincesTab>('judicial');
+
+  return (
+    <Card className="border-slate-800 bg-slate-900/70">
+      <CardHeader className="pb-3 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle className="text-base">Justicia, Corte y Provincias</CardTitle>
+          <div className="flex items-center gap-1.5">
+            <Badge variant={state.judicial.cautelaresBlockingDnuCount > 0 ? 'danger' : 'success'}>
+              Cautelares DNU: {state.judicial.cautelaresBlockingDnuCount}
+            </Badge>
+            <Badge variant="default">
+              Coparticipable: {state.treasury.coparticipableRevenuePctGdp}% PBI
+            </Badge>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 rounded-xl bg-slate-950 p-1 border border-slate-800">
+          <button
+            type="button"
+            onClick={() => setActiveTab('judicial')}
+            className={`rounded-lg py-1.5 text-xs font-semibold transition-colors ${
+              activeTab === 'judicial'
+                ? 'bg-sky-600 text-white shadow'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            ⚖️ Justicia y Corte
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('provinces')}
+            className={`rounded-lg py-1.5 text-xs font-semibold transition-colors ${
+              activeTab === 'provinces'
+                ? 'bg-sky-600 text-white shadow'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            🗺️ 24 Provincias y Agenda
+          </button>
+        </div>
+      </CardHeader>
+
+      <CardContent>
+        {activeTab === 'judicial' ? (
+          <JudicialTabContent state={state} onDispatch={onDispatch} />
+        ) : (
+          <ProvincesTabContent state={state} onDispatch={onDispatch} />
+        )}
+      </CardContent>
+    </Card>
+  );
+}
