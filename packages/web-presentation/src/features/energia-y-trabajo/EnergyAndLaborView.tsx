@@ -340,12 +340,14 @@ function EnergyLaborHeader({
     ? 'PARO CGT'
     : `Informalidad: ${state.labor.informalityPct}%`;
   const tabClass = (tab: EnergyLaborTab) =>
-    activeTab === tab ? 'bg-sky-600 text-white shadow' : 'text-slate-400 hover:text-slate-200';
+    activeTab === tab
+      ? 'bg-[#1a2b44] text-amber-100 border-b-2 border-amber-400'
+      : 'text-slate-400 hover:text-slate-200 border-b-2 border-transparent';
 
   return (
     <CardHeader className="pb-3 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <CardTitle className="text-base">Energía, Tarifas y Gremios</CardTitle>
+        <CardTitle>Energía, Tarifas y Gremios</CardTitle>
         <div className="flex items-center gap-1.5">
           <Badge variant={state.energy.blackoutRiskPct > 35 ? 'danger' : 'success'}>
             Apagón AMBA: {state.energy.blackoutRiskPct}%
@@ -356,18 +358,18 @@ function EnergyLaborHeader({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 rounded-xl bg-slate-950 p-1 border border-slate-800">
+      <div className="grid grid-cols-2 rounded-sm bg-[#0b1018] border border-[#283447]">
         <button
           type="button"
           onClick={() => onSelectTab('energy')}
-          className={`rounded-lg py-1.5 text-xs font-semibold transition-colors ${tabClass('energy')}`}
+          className={`py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${tabClass('energy')}`}
         >
           ⚡ Energía y Tarifas
         </button>
         <button
           type="button"
           onClick={() => onSelectTab('labor')}
-          className={`rounded-lg py-1.5 text-xs font-semibold transition-colors ${tabClass('labor')}`}
+          className={`py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${tabClass('labor')}`}
         >
           🏭 Paritarias y Empleo
         </button>

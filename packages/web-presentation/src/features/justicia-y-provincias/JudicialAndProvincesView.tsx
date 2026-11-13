@@ -239,12 +239,16 @@ function ProvincesTabContent({ state, onDispatch }: JudicialAndProvincesViewProp
 
 export function JudicialAndProvincesView({ state, onDispatch }: JudicialAndProvincesViewProps) {
   const [activeTab, setActiveTab] = useState<JudicialProvincesTab>('judicial');
+  const tabClass = (tab: JudicialProvincesTab) =>
+    activeTab === tab
+      ? 'bg-[#1a2b44] text-amber-100 border-b-2 border-amber-400'
+      : 'text-slate-400 hover:text-slate-200 border-b-2 border-transparent';
 
   return (
-    <Card className="border-slate-800 bg-slate-900/70">
+    <Card>
       <CardHeader className="pb-3 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-base">Justicia, Corte y Provincias</CardTitle>
+          <CardTitle>Justicia, Corte y Provincias</CardTitle>
           <div className="flex items-center gap-1.5">
             <Badge variant={state.judicial.cautelaresBlockingDnuCount > 0 ? 'danger' : 'success'}>
               Cautelares DNU: {state.judicial.cautelaresBlockingDnuCount}
@@ -255,26 +259,18 @@ export function JudicialAndProvincesView({ state, onDispatch }: JudicialAndProvi
           </div>
         </div>
 
-        <div className="grid grid-cols-2 rounded-xl bg-slate-950 p-1 border border-slate-800">
+        <div className="grid grid-cols-2 rounded-sm bg-[#0b1018] border border-[#283447]">
           <button
             type="button"
             onClick={() => setActiveTab('judicial')}
-            className={`rounded-lg py-1.5 text-xs font-semibold transition-colors ${
-              activeTab === 'judicial'
-                ? 'bg-sky-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${tabClass('judicial')}`}
           >
             ⚖️ Justicia y Corte
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('provinces')}
-            className={`rounded-lg py-1.5 text-xs font-semibold transition-colors ${
-              activeTab === 'provinces'
-                ? 'bg-sky-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${tabClass('provinces')}`}
           >
             🗺️ 24 Provincias y Agenda
           </button>

@@ -171,27 +171,27 @@ function FineTuningSection({
   onDispatch: (action: PolicyAction) => void;
 }) {
   return (
-    <div className="rounded-2xl bg-[#10131b] border border-slate-800/90 p-5 space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-1">
+    <div className="hoi-panel rounded-sm overflow-hidden">
+      <div className="hoi-header-crimson px-5 py-3 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 className="text-base font-extrabold text-white">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-amber-100">
             Mesa de Dinero (BCRA) y Tarifas (Energía)
           </h3>
-          <p className="text-xs text-slate-400">
+          <p className="text-[11px] text-rose-100/80">
             Tocá las 3 perillas principales. Cada ajuste tiene efecto directo en dólares, inflación y calle.
           </p>
         </div>
       </div>
 
-      <div className="space-y-2.5">
+      <div className="p-4 space-y-2.5">
         <PegStrip state={state} onDispatch={onDispatch} />
         <TnaStrip state={state} onDispatch={onDispatch} />
         <TariffStrip state={state} onDispatch={onDispatch} />
-      </div>
 
-      <div className="rounded-xl bg-[#0b0e15] border border-slate-800/80 px-3.5 py-2.5 text-xs text-slate-300">
-        <span className="font-bold text-sky-400 mr-1.5">Se viene:</span>
-        {buildFineTuningAlert(state)}
+        <div className="rounded-sm bg-[#0b1018] border border-[#283447] px-3.5 py-2.5 text-xs text-slate-300">
+          <span className="font-mono font-bold uppercase text-amber-400 mr-1.5">Se viene:</span>
+          {buildFineTuningAlert(state)}
+        </div>
       </div>
     </div>
   );

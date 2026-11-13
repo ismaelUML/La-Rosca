@@ -4,21 +4,28 @@ import { cn } from '@/lib/utils';
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn('rounded-xl border border-slate-800 bg-slate-900/90 text-slate-100 shadow-lg', className)}
+      className={cn('hoi-panel rounded-sm text-slate-100', className)}
       {...props}
     />
   );
 }
 
 export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('flex flex-col space-y-1.5 p-4 border-b border-slate-800/80', className)} {...props} />;
+  return <div className={cn('hoi-header-steel flex flex-col space-y-1.5 px-4 py-3', className)} {...props} />;
 }
 
 export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn('text-sm font-semibold leading-none tracking-tight text-slate-100', className)} {...props} />;
+  return (
+    <h3
+      className={cn(
+        'text-xs sm:text-sm font-bold uppercase leading-none tracking-wider text-amber-100',
+        className
+      )}
+      {...props}
+    />
+  );
 }
 
 export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return <div className={cn('p-4', className)} {...props} />;
 }
-
