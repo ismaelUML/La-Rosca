@@ -75,3 +75,4 @@ describe('Impacto real de Gabinete, RIGI, Medidas e Impuestos Propios en el moto
     expect(modFull.cabinetAnchorBonus).toBeGreaterThan(modVacant.cabinetAnchorBonus);
   });
 });
+

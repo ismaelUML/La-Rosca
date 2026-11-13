@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyCampaignBridgeToGovernment } from '@argentina-sim/domain';
+import { applyCampaignBridgeToGovernment, computeEscrutinio } from '@argentina-sim/domain';
 import {
   createInitialCampaignState,
   createInitialSimulationState2027,
@@ -37,6 +37,29 @@ describe('Puente Campaña -> Gobierno', () => {
     expect(proBloc?.relation).toBeGreaterThanOrEqual(85);
     expect(ucrBloc?.relation).toBeGreaterThanOrEqual(85);
     expect(bridged.eventLog[0]).toContain('52.4%');
+  });
+
+  it('calcula el escrutinio constitucional en dominio (primera vuelta >= 45% vs balotaje)', () => {
+    const campaign = createInitialCampaignState(
+      { id: 'JAVIER_MILEI', name: 'Javier Milei' },
+      POLITICAL_PARTIES_2027[0]!,
+      'PRESIDENTE',
+      'CABA'
+    );
+
+    const directWin = computeEscrutinio('GENERALES', {
+      ...campaign,
+      votingIntention: { ...campaign.votingIntention, intencionVotoGeneral: 46.5 }
+    });
+    expect(directWin.isVictory).toBe(true);
+    expect(directWin.isRunoff).toBe(false);
+
+    const runoff = computeEscrutinio('GENERALES', {
+      ...campaign,
+      votingIntention: { ...campaign.votingIntention, intencionVotoGeneral: 36.0 }
+    });
+    expect(runoff.isVictory).toBe(false);
+    expect(runoff.isRunoff).toBe(true);
   });
 });
 

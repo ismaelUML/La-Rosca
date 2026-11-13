@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import type { CampaignSimulationState } from '@argentina-sim/domain';
+import { seededUnit, type CampaignSimulationState } from '@argentina-sim/domain';
 
 // Vista de POLÍTICO -> Apoyo en Provincias:
 // Negociación y cooptación territorial con intendentes y caudillos locales.
@@ -143,11 +143,12 @@ export interface CampaignApoyoProvinciasViewProps {
 export function CampaignApoyoProvinciasView({ state, onUpdateState }: CampaignApoyoProvinciasViewProps) {
   const [selectedProvince, setSelectedProvince] = useState('Buenos Aires');
   const [partyFilter, setPartyFilter] = useState('TODOS');
-  const [endorsedLeaderIds, setEndorsedLeaderIds] = useState<Set<string>>(new Set());
-  const [rejectedCooldowns, setRejectedCooldowns] = useState<Record<string, number>>({});
   const [bannerMessage, setBannerMessage] = useState<string | null>(null);
 
   const approval = state.countryMood?.governmentApprovalPct ?? 50;
+  const currentMonth = state.stage.currentMonthIndex;
+  const endorsements = state.diplomacy?.endorsements ?? {};
+  const cooldowns = state.politicianCooldowns ?? {};
 
   const filtered = useMemo(() => {
     return LOCAL_LEADERS_PBA.filter(
@@ -157,27 +158,45 @@ export function CampaignApoyoProvinciasView({ state, onUpdateState }: CampaignAp
 
   const handleRequestSupport = (leader: LocalMayorLeader) => {
     const effectiveProb = computeLeaderEffectiveProb(leader, state.partySigla, approval);
-    const roll = Math.floor(Math.random() * 100) + 1;
-    const accepted = roll <= effectiveProb;
+    const accepted = seededUnit(`${currentMonth}:${leader.id}`) * 100 < effectiveProb;
 
     if (accepted) {
-      setEndorsedLeaderIds((prev) => new Set([...prev, leader.id]));
       setBannerMessage(`✓ ${leader.name} aceptó respaldar tu candidatura (+2,5% votos en PBA).`);
-      onUpdateState?.((prev) => ({
-        ...prev,
-        votingIntention: {
-          ...prev.votingIntention,
-          intencionVotoGeneral: Math.min(100, Math.round((prev.votingIntention.intencionVotoGeneral + 0.8) * 10) / 10)
-        },
-        historyLog: [`Apoyo provincial: ${leader.name} (${leader.district}) se sumó a la campaña (+0,8% nacional).`, ...prev.historyLog]
-      }));
+      onUpdateState?.((prev) => {
+        const prevDip = prev.diplomacy ?? { endorsements: {}, defections: {}, coalitions: {}, delegateId: null };
+        return {
+          ...prev,
+          diplomacy: {
+            ...prevDip,
+            endorsements: {
+              ...prevDip.endorsements,
+              [leader.id]: { verdict: 'ACEPTO', monthIndex: currentMonth, probabilityPct: effectiveProb }
+            }
+          },
+          votingIntention: {
+            ...prev.votingIntention,
+            intencionVotoGeneral: Math.min(100, Math.round((prev.votingIntention.intencionVotoGeneral + 0.8) * 10) / 10)
+          },
+          historyLog: [`Apoyo provincial: ${leader.name} (${leader.district}) se sumó a la campaña (+0,8% nacional).`, ...prev.historyLog]
+        };
+      });
     } else {
-      setRejectedCooldowns((prev) => ({ ...prev, [leader.id]: 5 }));
       setBannerMessage(`⚠️ ${leader.name} rechazó tu propuesta. No podrás volver a insistirle por 5 meses.`);
-      onUpdateState?.((prev) => ({
-        ...prev,
-        historyLog: [`${leader.name} (${leader.district}) rechazó el pedido de apoyo político provincial.`, ...prev.historyLog]
-      }));
+      onUpdateState?.((prev) => {
+        const prevDip = prev.diplomacy ?? { endorsements: {}, defections: {}, coalitions: {}, delegateId: null };
+        return {
+          ...prev,
+          politicianCooldowns: { ...(prev.politicianCooldowns ?? {}), [leader.id]: currentMonth + 5 },
+          diplomacy: {
+            ...prevDip,
+            endorsements: {
+              ...prevDip.endorsements,
+              [leader.id]: { verdict: 'RECHAZO', monthIndex: currentMonth, probabilityPct: effectiveProb }
+            }
+          },
+          historyLog: [`${leader.name} (${leader.district}) rechazó el pedido de apoyo político provincial.`, ...prev.historyLog]
+        };
+      });
     }
   };
 
@@ -242,8 +261,8 @@ export function CampaignApoyoProvinciasView({ state, onUpdateState }: CampaignAp
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
         {filtered.map((leader) => {
-          const isEndorsed = endorsedLeaderIds.has(leader.id);
-          const cooldown = rejectedCooldowns[leader.id] ?? 0;
+          const isEndorsed = endorsements[leader.id]?.verdict === 'ACEPTO';
+          const cooldown = Math.max(0, (cooldowns[leader.id] ?? 0) - currentMonth);
           const prob = computeLeaderEffectiveProb(leader, state.partySigla, approval);
 
           return (
