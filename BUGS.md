@@ -189,3 +189,31 @@ Este documento recopila y cataloga todos los bugs, desvíos respecto a *¿Quién
 - **Descripción**: Formulario de texto libre que analiza dirección, variables afectadas, financiamiento y emite alertas de inviabilidad.
 - **Estado**: 🟡 EN PLANIFICACIÓN.
 
+---
+
+## 5. Bugs Electorales y Roles Pendientes (Reportado 2026-11-13)
+
+### [BUG-021] Derrota en el balotaje sigue permitiendo continuar en la elección
+- **Severidad**: Crítica (Flujo Electoral / Fin de Campaña).
+- **Estado**: 🔴 ABIERTO / PENDIENTE.
+- **Descripción**: Cuando perdés la segunda vuelta (`escrutinio.isVictory === false` con título `"Fuiste derrotado en el balotaje"` en `electionEngine.ts`), `handleProceedElection` en `packages/web-presentation/src/App.tsx` simplemente ejecuta `setActiveElectionModal(null)` y te deja seguir adentro del tablero electoral / campaña en lugar de frenar el ciclo y mostrar la pantalla de derrota.
+
+### [BUG-022] Perder el balotaje sigue habilitando la opción de asumir/ejercer como Presidente
+- **Severidad**: Crítica (Noche Electoral / Presentación).
+- **Estado**: 🔴 ABIERTO / PENDIENTE.
+- **Descripción**: En `packages/web-presentation/src/features/campaign/ElectionNightModal.tsx`, `resolveElectionProceedButtonLabel` devuelve siempre `"Asumir la Presidencia de la Nación (10 de diciembre de 2027) ▶"` cuando `stageType === 'BALOTAJE'` sin chequear `escrutinio.isVictory`, así que aunque pierdas te muestra el botón para asumir (y si pasás de mes hacia diciembre igualmente entras a gobernar).
+
+### [FEAT-008] Opción para "Intentar de nuevo" tras perder la elección
+- **Severidad**: Alta (UX / Ciclo de Partida).
+- **Estado**: 🔴 ABIERTO / PENDIENTE.
+- **Descripción**: Falta reemplazar el botón de asumir cuando `escrutinio.isVictory === false` (tanto en Balotaje como en Generales perdidas sin balotaje) por un cierre de derrota electoral con acciones claras: **Intentar de nuevo** (reintentar la campaña con tu configuración actual) o **Volver a Nueva Partida** (`NewGameSetupScreen.tsx`).
+
+### [FEAT-009] Funcionalidad y bucle jugable propio para Gobernador, Diputado y Senador
+- **Severidad**: Alta (Jugabilidad / Roles Constitucionales).
+- **Estado**: 🔴 ABIERTO / PENDIENTE.
+- **Descripción**: Hoy `PlayableRole` deja elegir `GOBERNADOR`, `DIPUTADO` o `SENADOR`, pero al pasar al gobierno termina cargando el despacho nacional de Presidente. Falta armar mecánicas y vistas dedicadas para cada cargo:
+  - **Gobernador**: presupuesto provincial propio, coparticipación y pedido de ATN a Nación, recaudación local (Ingresos Brutos / Inmobiliario / Sellos), legislatura provincial, conflictos gremiales locales y proyección nacional.
+  - **Diputado**: agenda legislativa en la Cámara Baja (257 bancas), dictámenes de comisión, presentación de proyectos, rosca con jefes de bloque y votaciones nominales.
+  - **Senador**: agenda en la Cámara Alta (72 bancas), defensa de intereses provinciales, acuerdos para jueces/pliegos y negociación de leyes federales / coparticipación.
+
+
