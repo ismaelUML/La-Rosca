@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
+import { Scale } from 'lucide-react';
 import type { PolicyAction, TaxCategory, TaxItem } from '@argentina-sim/domain';
+import { SectionPageHeader } from '@/components/ui/SectionPageHeader';
+import { playUiSound } from '@/lib/gameFeedback';
 
 // Aca esta la botonera tributaria real: 17 impuestos clasificados con precision constitucional.
 // Si tocas retenciones o combustibles sos Gardel con una resolucion ministerial;
@@ -25,13 +28,13 @@ const TAX_CATEGORY_COLOR_MAP: Record<TaxCategory, string> = {
   CONSUMO: 'text-orange-400 bg-orange-950/60 border-orange-700/60',
   RENTA: 'text-emerald-400 bg-emerald-950/60 border-emerald-700/60',
   TRABAJO: 'text-sky-400 bg-sky-950/60 border-sky-700/60',
-  FINANCIERO: 'text-cyan-400 bg-cyan-950/60 border-cyan-700/60',
-  PATRIMONIO: 'text-purple-400 bg-purple-950/60 border-purple-700/60'
+  FINANCIERO: 'text-cyan-300 bg-cyan-950/60 border-cyan-700/60',
+  PATRIMONIO: 'text-slate-200 bg-[#182232] border-[#3b4e6b]'
 };
 
 function resolveTaxCategoryColor(cat?: TaxCategory): string {
-  if (!cat) return 'text-purple-400 bg-purple-950/60 border-purple-700/60';
-  return TAX_CATEGORY_COLOR_MAP[cat] ?? 'text-purple-400 bg-purple-950/60 border-purple-700/60';
+  if (!cat) return 'text-slate-200 bg-[#182232] border-[#3b4e6b]';
+  return TAX_CATEGORY_COLOR_MAP[cat] ?? 'text-slate-200 bg-[#182232] border-[#3b4e6b]';
 }
 
 function TaxCardHeader({ tax }: { tax: TaxItem }) {
@@ -52,10 +55,10 @@ function TaxCardHeader({ tax }: { tax: TaxItem }) {
           {tax.category ?? 'TRIBUTO'}
         </span>
         <span
-          className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+          className={`px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold border ${
             isDecreto
               ? 'bg-amber-950/70 border-amber-600/70 text-amber-300'
-              : 'bg-purple-950/70 border-purple-600/70 text-purple-300'
+              : 'bg-[#132033] border-[#334155] text-sky-200'
           }`}
         >
           {isDecreto ? 'Por Decreto' : 'Por Ley'}
@@ -73,7 +76,7 @@ function TaxCardMetrics({ tax }: { tax: TaxItem }) {
   const usdText = `${tax.revenueMillionUsdMonthly ?? Math.round(tax.revenuePctGdp * 575)} M USD/mes`;
 
   return (
-    <div className="flex items-center justify-between text-xs py-1.5 px-3 rounded-lg bg-[#0b0e15] border border-slate-800">
+    <div className="flex items-center justify-between text-xs py-1.5 px-3 rounded-sm bg-[#090d14] border border-[#263142]">
       <span className="text-slate-400">Recaudación proyectada</span>
       <span className="font-mono font-bold text-emerald-400">
         {gdpText} <span className="text-slate-500 font-normal">({usdText})</span>
@@ -121,19 +124,19 @@ function TaxCard({
   const isDecreto = tax.legalMechanism === 'DECRETO_EJECUTIVO';
 
   return (
-    <div className="rounded-2xl bg-[#10131b] border border-slate-800/90 p-4 md:p-5 flex flex-col justify-between gap-3 shadow-md">
+    <div className="hoi-panel rounded-sm p-4 md:p-5 flex flex-col justify-between gap-3">
       <div className="space-y-3">
         <TaxCardHeader tax={tax} />
         <TaxCardMetrics tax={tax} />
         <TaxSliderControl tax={tax} onRateChange={onRateChange} />
       </div>
 
-      <div className="pt-2 border-t border-slate-800/60">
+      <div className="pt-2 border-t border-[#263142]">
         <span
-          className={`inline-block text-[10px] font-bold px-2 py-1 rounded w-full text-center ${
+          className={`inline-block text-[10px] font-mono font-bold px-2 py-1 rounded-sm w-full text-center ${
             isDecreto
-              ? 'bg-amber-950/30 border border-amber-800/50 text-amber-300'
-              : 'bg-purple-950/30 border border-purple-800/50 text-purple-300'
+              ? 'bg-amber-950/30 border border-amber-800/60 text-amber-300'
+              : 'bg-[#132033] border border-[#334155] text-sky-200'
           }`}
         >
           {isDecreto
@@ -161,40 +164,37 @@ export function TaxesManagementSection({ taxes, onDispatch }: TaxesManagementSec
   const lawCount = taxes.filter((t) => t.legalMechanism === 'LEY_CONGRESO').length;
 
   return (
-    <div className="space-y-6">
-      <div className="border-b border-slate-800/80 pb-4">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
-          PRESUPUESTO · MATRIZ TRIBUTARIA NACIONAL
-        </div>
-        <h1 className="text-2xl md:text-3xl font-extrabold text-white mt-0.5">Impuestos</h1>
-        <p className="text-xs text-slate-400 mt-1">
-          La recaudación fiscal total es de {totalGdpPct.toFixed(2).replace('.', ',')} % del PIB ({(totalUsdMonthly / 1000).toFixed(2).replace('.', ',')} mil M USD/mes). 6 tributos se fijan por decreto y 11 por ley del Congreso.
-        </p>
+    <div className="space-y-5 rosca-panel-enter">
+      <SectionPageHeader
+        eyebrow="Presupuesto · Matriz Tributaria Nacional"
+        title="Impuestos"
+        description={`La recaudación fiscal total es de ${totalGdpPct.toFixed(2).replace('.', ',')} % del PIB (${(totalUsdMonthly / 1000).toFixed(2).replace('.', ',')} mil M USD/mes). ${decreeCount} tributos se fijan por decreto y ${lawCount} por ley del Congreso.`}
+        icon={<Scale className="w-4 h-4 text-amber-300" />}
+      />
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 text-xs">
-          <div className="p-3 rounded-xl bg-[#10131b] border border-slate-800">
-            <div className="text-slate-400">Recaudación total</div>
-            <div className="text-lg font-mono font-extrabold text-emerald-400 mt-0.5">
-              {totalGdpPct.toFixed(2).replace('.', ',')} % PIB
-            </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+        <div className="hoi-panel p-3.5 rounded-sm">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Recaudación total</div>
+          <div className="text-lg font-mono font-extrabold text-emerald-400 mt-0.5">
+            {totalGdpPct.toFixed(2).replace('.', ',')} % PIB
           </div>
-          <div className="p-3 rounded-xl bg-[#10131b] border border-slate-800">
-            <div className="text-slate-400">Ingreso mensual</div>
-            <div className="text-lg font-mono font-extrabold text-sky-400 mt-0.5">
-              {totalUsdMonthly.toLocaleString('es-AR')} M USD
-            </div>
+        </div>
+        <div className="hoi-panel p-3.5 rounded-sm">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Ingreso mensual</div>
+          <div className="text-lg font-mono font-extrabold text-sky-400 mt-0.5">
+            {totalUsdMonthly.toLocaleString('es-AR')} M USD
           </div>
-          <div className="p-3 rounded-xl bg-[#10131b] border border-slate-800">
-            <div className="text-slate-400">Por Decreto (Inmediatos)</div>
-            <div className="text-lg font-mono font-extrabold text-amber-400 mt-0.5">
-              {decreeCount} tributos
-            </div>
+        </div>
+        <div className="hoi-panel p-3.5 rounded-sm">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Por Decreto (Inmediatos)</div>
+          <div className="text-lg font-mono font-extrabold text-amber-400 mt-0.5">
+            {decreeCount} tributos
           </div>
-          <div className="p-3 rounded-xl bg-[#10131b] border border-slate-800">
-            <div className="text-slate-400">Por Ley (Congreso)</div>
-            <div className="text-lg font-mono font-extrabold text-purple-400 mt-0.5">
-              {lawCount} tributos
-            </div>
+        </div>
+        <div className="hoi-panel p-3.5 rounded-sm">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Por Ley (Congreso)</div>
+          <div className="text-lg font-mono font-extrabold text-sky-300 mt-0.5">
+            {lawCount} tributos
           </div>
         </div>
       </div>
@@ -204,11 +204,14 @@ export function TaxesManagementSection({ taxes, onDispatch }: TaxesManagementSec
           <button
             key={cat.id}
             type="button"
-            onClick={() => setSelectedCat(cat.id)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+            onClick={() => {
+              playUiSound('tab');
+              setSelectedCat(cat.id);
+            }}
+            className={`px-3 py-1.5 rounded-sm text-xs font-mono font-bold transition border ${
               selectedCat === cat.id
-                ? 'bg-white text-slate-950 shadow'
-                : 'bg-[#10131b] text-slate-400 border border-slate-800 hover:text-white'
+                ? 'bg-[#1d3250] border-[#b89342] text-amber-100'
+                : 'bg-[#090d14] text-slate-400 border-[#263142] hover:text-slate-100'
             }`}
           >
             {cat.label}

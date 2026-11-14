@@ -13,6 +13,8 @@ interface CabinetViewProps {
   onAppointMinister?: (ministryId: string, newMinister: CabinetMinister) => void;
   playerPartySigla?: string;
   coalitionParties?: string[];
+  playerCandidateId?: string;
+  playerCandidateName?: string;
 }
 
 function checkIsMinisterVacant(m: CabinetMinister): boolean {
@@ -210,7 +212,9 @@ export function CabinetView({
   onReplaceMinister,
   onAppointMinister,
   playerPartySigla,
-  coalitionParties
+  coalitionParties,
+  playerCandidateId,
+  playerCandidateName
 }: CabinetViewProps) {
   const [replacingMinistry, setReplacingMinistry] = useState<CabinetMinister | null>(null);
 
@@ -253,6 +257,8 @@ export function CabinetView({
           ministry={replacingMinistry}
           playerPartySigla={playerPartySigla ?? 'LLA'}
           coalitionParties={coalitionParties ?? []}
+          playerCandidateId={playerCandidateId}
+          playerCandidateName={playerCandidateName}
           onConfirm={handleConfirmReplacement}
           onClose={() => setReplacingMinistry(null)}
         />

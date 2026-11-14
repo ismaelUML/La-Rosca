@@ -2,13 +2,24 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { ProvinceSummary } from '@argentina-sim/domain';
-import { AlertTriangle, Landmark, Layers, ShieldCheck, Users } from 'lucide-react';
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Flag,
+  Landmark,
+  Layers,
+  ShieldCheck,
+  UserCheck,
+  Users
+} from 'lucide-react';
 import {
   buildArgentina3DGroup,
   resolveProvinceColor,
   type Map3DMode,
   type ProvinceMeshMeta
 } from './argentina3dGeometry.js';
+import { getProvincePoliticalMeta } from './provincePoliticalMeta.js';
 import { playUiSound } from '../../lib/gameFeedback.js';
 
 interface Argentina3DMapCanvasProps {
@@ -21,10 +32,48 @@ interface Argentina3DMapCanvasProps {
 
 const MODE_OPTIONS: Array<{ id: Map3DMode; label: string; icon: React.ReactNode }> = [
   { id: 'LOYALTY', label: 'Lealtad', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
+  { id: 'GOVERNORS', label: 'Gobernadores', icon: <UserCheck className="w-3.5 h-3.5" /> },
+  { id: 'PARTIES', label: 'Partidos', icon: <Flag className="w-3.5 h-3.5" /> },
   { id: 'FISCAL', label: 'Fiscal', icon: <Landmark className="w-3.5 h-3.5" /> },
   { id: 'SECURITY', label: 'Tensión', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
   { id: 'DEPUTIES', label: 'Congreso', icon: <Users className="w-3.5 h-3.5" /> }
 ];
+
+const LEGEND_BY_MODE: Record<Map3DMode, Array<{ dotClass: string; label: string }>> = {
+  LOYALTY: [
+    { dotClass: 'bg-emerald-500', label: 'Afín (>=60%)' },
+    { dotClass: 'bg-amber-400', label: 'Negociable' },
+    { dotClass: 'bg-rose-500', label: 'Hostil (<45%)' }
+  ],
+  FISCAL: [
+    { dotClass: 'bg-emerald-500', label: 'Equilibrio' },
+    { dotClass: 'bg-amber-400', label: 'Déficit leve' },
+    { dotClass: 'bg-rose-500', label: 'Crítico / Cuasimoneda' }
+  ],
+  SECURITY: [
+    { dotClass: 'bg-emerald-500', label: 'Estable' },
+    { dotClass: 'bg-amber-400', label: 'Tensión media' },
+    { dotClass: 'bg-rose-500', label: 'Crítico / Intervenida' }
+  ],
+  DEPUTIES: [
+    { dotClass: 'bg-emerald-500', label: 'Bancada afín' },
+    { dotClass: 'bg-amber-400', label: 'En duda' },
+    { dotClass: 'bg-rose-500', label: 'Oposición' }
+  ],
+  GOVERNORS: [
+    { dotClass: 'bg-blue-600', label: 'Derecha' },
+    { dotClass: 'bg-teal-500', label: 'Centro' },
+    { dotClass: 'bg-rose-600', label: 'Izquierda' }
+  ],
+  PARTIES: [
+    { dotClass: 'bg-sky-500', label: 'UxP/PJ' },
+    { dotClass: 'bg-yellow-400', label: 'PRO' },
+    { dotClass: 'bg-red-600', label: 'UCR' },
+    { dotClass: 'bg-blue-600', label: 'HxC' },
+    { dotClass: 'bg-emerald-500', label: 'Provinciales' },
+    { dotClass: 'bg-violet-500', label: 'LLA' }
+  ]
+};
 
 function createSceneEnvironment(container: HTMLDivElement) {
   const scene = new THREE.Scene();
@@ -168,6 +217,13 @@ function computeCameraTargetOffset(
 }
 
 function formatTooltipStats(province: ProvinceSummary, mode: Map3DMode): string {
+  const meta = getProvincePoliticalMeta(province.id);
+  if (mode === 'GOVERNORS' && meta) {
+    return `Gob. ${meta.governorName} · ${meta.bloc}`;
+  }
+  if (mode === 'PARTIES' && meta) {
+    return `${meta.partyName} (${meta.partySigla}) · Lealtad ${province.governorLoyaltyToPresident}%`;
+  }
   if (mode === 'FISCAL') {
     const quasi = province.quasiCurrencyIssued ? ' · Cuasimoneda' : '';
     return `Fiscal ${province.fiscalBalancePct}% · Copart. ${province.coparticipationDependencyPct}%${quasi}`;
@@ -202,49 +258,65 @@ function HoveredCursorTooltip({
 
 function MapLayerToolbar({
   mapMode,
+  layersOpen,
+  onToggleOpen,
   onSelectMode
 }: {
   mapMode: Map3DMode;
+  layersOpen: boolean;
+  onToggleOpen: () => void;
   onSelectMode: (mode: Map3DMode) => void;
 }) {
+  const activeOption = MODE_OPTIONS.find((m) => m.id === mapMode) ?? MODE_OPTIONS[0]!;
+  const legendItems = LEGEND_BY_MODE[mapMode];
+
   return (
     <div className="pointer-events-auto flex flex-col items-end gap-1.5">
-      <div className="flex items-center gap-1 rounded-sm bg-[#0c1119]/95 border border-[#344661] p-1 shadow-xl">
-        <span className="hidden sm:inline-flex items-center gap-1 px-2 text-[10px] font-mono uppercase text-slate-400">
-          <Layers className="w-3 h-3 text-amber-400" />
-          Capa
-        </span>
-        {MODE_OPTIONS.map((opt) => (
-          <button
-            key={opt.id}
-            type="button"
-            onClick={() => {
-              playUiSound('tab');
-              onSelectMode(opt.id);
-            }}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-[10px] font-mono font-bold uppercase tracking-wider transition ${
-              mapMode === opt.id
-                ? 'bg-[#b89342] text-[#100e09] shadow'
-                : 'text-slate-300 hover:bg-[#1a2230]'
-            }`}
-          >
-            {opt.icon}
-            <span>{opt.label}</span>
-          </button>
-        ))}
-      </div>
+      <button
+        type="button"
+        onClick={() => {
+          playUiSound('tab');
+          onToggleOpen();
+        }}
+        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-[#0c1119]/95 hover:bg-[#172233] border border-[#8a6d33] text-[11px] font-mono font-bold uppercase tracking-wider text-amber-200 shadow-xl"
+      >
+        <Layers className="w-3.5 h-3.5 text-amber-400" />
+        <span>Capas: {activeOption.label}</span>
+        {layersOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+      </button>
 
-      <div className="flex items-center gap-3 px-2.5 py-1 rounded-sm bg-[#0c1119]/90 border border-[#263142] text-[10px] font-mono text-slate-300">
-        <span className="inline-flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" /> Bueno
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-amber-400" /> Neutro
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-rose-500" /> Crítico
-        </span>
-      </div>
+      {layersOpen ? (
+        <div className="flex flex-col items-end gap-1.5 rosca-panel-enter">
+          <div className="flex flex-wrap justify-end items-center gap-1 rounded-sm bg-[#0c1119]/95 border border-[#344661] p-1 shadow-xl max-w-md">
+            {MODE_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => {
+                  playUiSound('tab');
+                  onSelectMode(opt.id);
+                }}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-[10px] font-mono font-bold uppercase tracking-wider transition ${
+                  mapMode === opt.id
+                    ? 'bg-[#b89342] text-[#100e09] shadow'
+                    : 'text-slate-300 hover:bg-[#1a2230]'
+                }`}
+              >
+                {opt.icon}
+                <span>{opt.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5 px-2.5 py-1 rounded-sm bg-[#0c1119]/90 border border-[#263142] text-[10px] font-mono text-slate-300">
+            {legendItems.map((item) => (
+              <span key={item.label} className="inline-flex items-center gap-1">
+                <span className={`w-2 h-2 rounded-full ${item.dotClass}`} /> {item.label}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -261,6 +333,8 @@ function SelectedProvinceCard({
   onClose: () => void;
 }) {
   if (!province) return null;
+  const polMeta = getProvincePoliticalMeta(province.id);
+
   return (
     <div
       className={`pointer-events-auto w-72 rounded-sm bg-[#0c1119]/95 border border-[#c9a24d] p-3.5 text-xs space-y-2 shadow-2xl rosca-panel-enter ${
@@ -269,11 +343,16 @@ function SelectedProvinceCard({
     >
       <div className="flex items-start justify-between gap-2 border-b border-[#263142] pb-2">
         <div>
-          <div className="text-[10px] font-mono uppercase tracking-wider text-amber-400">{province.region}</div>
+          <div className="text-[10px] font-mono uppercase tracking-wider text-amber-400">
+            {province.region}{polMeta ? ` · ${polMeta.partySigla}` : ''}
+          </div>
           <div className="text-sm font-bold text-slate-100">{province.name}</div>
+          {polMeta ? (
+            <div className="text-[10px] text-slate-400">Gob. {polMeta.governorName}</div>
+          ) : null}
         </div>
         <button type="button" onClick={onClose} className="text-slate-400 hover:text-white font-mono text-xs">
-          X
+          Cerrar
         </button>
       </div>
       <div className="grid grid-cols-2 gap-1.5 font-mono text-[11px]">
@@ -396,6 +475,7 @@ export function Argentina3DMapCanvas({
 }: Argentina3DMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [mapMode, setMapMode] = useState<Map3DMode>('LOYALTY');
+  const [layersOpen, setLayersOpen] = useState(true);
   const [hoveredState, setHoveredState] = useState<{ id: string | null; pos: { x: number; y: number } | null }>({
     id: null,
     pos: null
@@ -460,7 +540,12 @@ export function Argentina3DMapCanvas({
       <HoveredCursorTooltip province={hoveredProvince} mode={mapMode} cursor={hoveredState.pos} />
 
       <div className="pointer-events-none absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
-        <MapLayerToolbar mapMode={mapMode} onSelectMode={setMapMode} />
+        <MapLayerToolbar
+          mapMode={mapMode}
+          layersOpen={layersOpen}
+          onToggleOpen={() => setLayersOpen((o) => !o)}
+          onSelectMode={setMapMode}
+        />
       </div>
 
       <div className="pointer-events-none absolute bottom-4 right-4 z-20 flex flex-col items-end gap-2">

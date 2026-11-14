@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import type { CabinetMinister, RealPoliticianPreset } from '@argentina-sim/domain';
 import { REAL_POLITICIANS_2027 } from '@argentina-sim/infrastructure';
+import { AlertTriangle, Award, Check, UserCheck, X } from 'lucide-react';
+import { playUiSound } from '../../lib/gameFeedback.js';
 
-// Armar gabinete en Argentina es puro equilibrio de rosca: si no le das ministerios
-// a tus socios de coalicion te rompen el bloque en Diputados, pero si pones a alguien
-// en una cartera que no domina (tipo Bullrich en Capital Humano o un radical en Economia)
-// te explota la gestion en tres semanas. Cada nombramiento tiene costo y premio.
+// Relevo de cartera: excluye al propio presidente/jugador y ordena primero
+// a los perfiles idoneos para el ministerio, acoplado a la estetica La Rosca.
 
 const SUITABLE_POLITICIANS_BY_MINISTRY: Record<string, string[]> = {
   SEGURIDAD: ['PATRICIA_BULLRICH', 'CRISTIAN_RITONDO', 'LUIS_PETRI', 'GUILLERMO_MONTENEGRO', 'SERGIO_BERNI'],
@@ -38,31 +38,55 @@ function isSuitableForMinistry(ministryId: string, pol: RealPoliticianPreset): b
   if (directList && directList.includes(pol.id)) {
     return true;
   }
-  const roleLower = pol.roleDescription.toLowerCase();
-  return checkRoleKeywordMatch(ministryId, roleLower);
+  return checkRoleKeywordMatch(ministryId, pol.roleDescription.toLowerCase());
 }
 
-function resolveEligiblePoliticians(playerPartySigla: string, coalitionParties: string[]): RealPoliticianPreset[] {
+function isSelfCandidate(
+  pol: RealPoliticianPreset,
+  playerId?: string,
+  playerName?: string
+): boolean {
+  if (playerId && pol.id === playerId) return true;
+  if (!playerName) return false;
+  return pol.name.trim().toLowerCase() === playerName.trim().toLowerCase();
+}
+
+function scoreCandidateOrder(
+  pol: RealPoliticianPreset,
+  ministryId: string,
+  playerPartySigla: string
+): number {
+  const suitableScore = isSuitableForMinistry(ministryId, pol) ? 100 : 0;
+  const partyScore = pol.partySigla === playerPartySigla ? 10 : 0;
+  return suitableScore + partyScore;
+}
+
+function resolveEligiblePoliticians(
+  ministryId: string,
+  playerPartySigla: string,
+  coalitionParties: string[],
+  playerCandidateId?: string,
+  playerCandidateName?: string
+): RealPoliticianPreset[] {
   const allowed = new Set([playerPartySigla, ...coalitionParties]);
-  const matched = REAL_POLITICIANS_2027.filter((p) => allowed.has(p.partySigla));
-  if (matched.length > 0) return matched;
-  return REAL_POLITICIANS_2027;
+  const pool = REAL_POLITICIANS_2027.filter((p) => !isSelfCandidate(p, playerCandidateId, playerCandidateName));
+  const matched = pool.filter((p) => allowed.has(p.partySigla));
+  const list = matched.length > 0 ? matched : pool;
+  return [...list].sort((a, b) => {
+    const diff = scoreCandidateOrder(b, ministryId, playerPartySigla) - scoreCandidateOrder(a, ministryId, playerPartySigla);
+    return diff !== 0 ? diff : a.name.localeCompare(b.name);
+  });
 }
 
 function computeMinisterCompetence(isSuitable: boolean, pol: RealPoliticianPreset): number {
   const base = pol.difficulty === 'VIENTO_DE_COLA' ? 70 : 60;
-  if (isSuitable) {
-    return Math.min(92, base + 12);
-  }
+  if (isSuitable) return Math.min(92, base + 12);
   return Math.max(38, base - 18);
 }
 
 function computeMinisterRisk(isSuitable: boolean, isQuota: boolean): number {
-  let risk = isSuitable ? 14 : 32;
-  if (isQuota) {
-    risk += 8;
-  }
-  return risk;
+  const base = isSuitable ? 14 : 32;
+  return isQuota ? base + 8 : base;
 }
 
 const TRAIT_LOYALTY_BASE: Record<string, number> = {
@@ -73,13 +97,10 @@ const TRAIT_LOYALTY_BASE: Record<string, number> = {
 
 function computeMinisterLoyalty(pol: RealPoliticianPreset, isQuota: boolean): number {
   const base = TRAIT_LOYALTY_BASE[pol.styleTrait] ?? 55;
-  if (isQuota) {
-    return Math.max(45, base - 15);
-  }
-  return base;
+  return isQuota ? Math.max(45, base - 15) : base;
 }
 
-function buildMonthlyEffect(ministryId: string, isSuitable: boolean, polName: string): string {
+function buildMonthlyEffect(isSuitable: boolean, polName: string): string {
   if (isSuitable) {
     return `Gestión idónea de ${polName}: efectividad +10% en metas ministeriales`;
   }
@@ -93,83 +114,86 @@ export function createCabinetMinister(
 ): CabinetMinister {
   const isQuota = pol.partySigla !== playerPartySigla;
   const suitable = isSuitableForMinistry(ministry.id, pol);
-  const competence = computeMinisterCompetence(suitable, pol);
-  const risk = computeMinisterRisk(suitable, isQuota);
-  const loyalty = computeMinisterLoyalty(pol, isQuota);
-  const performance = suitable ? 72 : 44;
-  const affinity = isQuota ? 85 : 100;
-  const effect = buildMonthlyEffect(ministry.id, suitable, pol.name);
-
   return {
     id: ministry.id,
     ministryName: ministry.ministryName,
     ministerName: pol.name,
     partySigla: pol.partySigla,
-    affinityPct: affinity,
+    affinityPct: isQuota ? 85 : 100,
     isCoalitionQuota: isQuota,
-    competence,
-    loyalty,
-    risk,
-    performance,
-    monthlyEffectText: effect
+    competence: computeMinisterCompetence(suitable, pol),
+    loyalty: computeMinisterLoyalty(pol, isQuota),
+    risk: computeMinisterRisk(suitable, isQuota),
+    performance: suitable ? 72 : 44,
+    monthlyEffectText: buildMonthlyEffect(suitable, pol.name)
   };
 }
 
-interface CandidateItemProps {
+function CandidateItem({
+  pol,
+  ministryId,
+  playerPartySigla,
+  isSelected,
+  onSelect
+}: {
   pol: RealPoliticianPreset;
   ministryId: string;
   playerPartySigla: string;
   isSelected: boolean;
   onSelect: (pol: RealPoliticianPreset) => void;
-}
-
-function CandidateItem({ pol, ministryId, playerPartySigla, isSelected, onSelect }: CandidateItemProps) {
+}) {
   const isSuitable = isSuitableForMinistry(ministryId, pol);
   const isQuota = pol.partySigla !== playerPartySigla;
 
   return (
-    <div
-      onClick={() => onSelect(pol)}
-      className={`p-3.5 rounded-xl border text-left cursor-pointer transition flex flex-col justify-between gap-2 ${
+    <button
+      type="button"
+      onClick={() => {
+        playUiSound('select');
+        onSelect(pol);
+      }}
+      className={`w-full p-3.5 rounded-sm border text-left transition flex flex-col justify-between gap-2 ${
         isSelected
-          ? 'bg-purple-950/40 border-purple-500 shadow-md ring-1 ring-purple-500'
-          : 'bg-[#0b0e15] border-slate-800 hover:border-slate-700'
+          ? 'bg-[#17253b] border-[#c9a24d] shadow-md'
+          : 'bg-[#0b1018] border-[#263142] hover:border-[#415370]'
       }`}
     >
       <div>
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-200 border border-slate-700">
+            <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#141b26] text-slate-200 border border-[#334155]">
               {pol.partySigla}
             </span>
-            <span className="font-extrabold text-sm text-white">{pol.name}</span>
+            <span className="font-extrabold text-sm text-slate-100">{pol.name}</span>
           </div>
           {isQuota ? (
-            <span className="text-[10px] font-semibold text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/60">
-              Cuota de coalición
+            <span className="text-[10px] font-mono font-bold text-amber-300 bg-[#2d210b] px-2 py-0.5 rounded-sm border border-amber-700/60">
+              CUOTA COALICIÓN
             </span>
           ) : (
-            <span className="text-[10px] font-semibold text-purple-300 bg-purple-950/60 px-1.5 py-0.5 rounded border border-purple-800/60">
-              Partido propio
+            <span className="text-[10px] font-mono font-bold text-emerald-300 bg-[#0f291e] px-2 py-0.5 rounded-sm border border-emerald-700/60">
+              PROPIO
             </span>
           )}
         </div>
         <p className="text-[11px] text-slate-400 mt-1 line-clamp-1">{pol.roleDescription}</p>
       </div>
 
-      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
+      <div className="pt-2 border-t border-[#1d2738] flex items-center justify-between text-xs">
         {isSuitable ? (
-          <span className="text-emerald-400 font-bold text-[11px] flex items-center gap-1">
-            ✓ Perfil idóneo (+12 comp.)
+          <span className="text-emerald-400 font-mono font-bold text-[11px] inline-flex items-center gap-1">
+            <Award className="w-3.5 h-3.5" />
+            <span>IDÓNEO (+12 comp.)</span>
           </span>
         ) : (
-          <span className="text-amber-400 font-bold text-[11px] flex items-center gap-1">
-            Incompatibilidad (-18 comp.)
+          <span className="text-amber-400 font-mono font-bold text-[11px] inline-flex items-center gap-1">
+            <AlertTriangle className="w-3.5 h-3.5" />
+            <span>Sin especialidad (-18 comp.)</span>
           </span>
         )}
-        <span className="text-[11px] text-slate-400">Estilo: {pol.styleTrait}</span>
+        <span className="text-[11px] font-mono text-slate-400">Estilo: {pol.styleTrait}</span>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -177,6 +201,8 @@ export interface MinisterReplacementModalProps {
   ministry: CabinetMinister;
   playerPartySigla: string;
   coalitionParties: string[];
+  playerCandidateId?: string;
+  playerCandidateName?: string;
   onConfirm: (newMinister: CabinetMinister) => void;
   onClose: () => void;
 }
@@ -185,12 +211,21 @@ export function MinisterReplacementModal({
   ministry,
   playerPartySigla,
   coalitionParties,
+  playerCandidateId,
+  playerCandidateName,
   onConfirm,
   onClose
 }: MinisterReplacementModalProps) {
   const eligiblePoliticians = useMemo(
-    () => resolveEligiblePoliticians(playerPartySigla, coalitionParties),
-    [playerPartySigla, coalitionParties]
+    () =>
+      resolveEligiblePoliticians(
+        ministry.id,
+        playerPartySigla,
+        coalitionParties,
+        playerCandidateId,
+        playerCandidateName
+      ),
+    [ministry.id, playerPartySigla, coalitionParties, playerCandidateId, playerCandidateName]
   );
 
   const [selectedPol, setSelectedPol] = useState<RealPoliticianPreset | null>(
@@ -199,39 +234,42 @@ export function MinisterReplacementModal({
 
   const handleConfirm = () => {
     if (!selectedPol) return;
-    const newMinister = createCabinetMinister(ministry, selectedPol, playerPartySigla);
-    onConfirm(newMinister);
+    playUiSound('atn');
+    onConfirm(createCabinetMinister(ministry, selectedPol, playerPartySigla));
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 md:p-6 overflow-y-auto">
-      <div className="w-full max-w-2xl bg-[#10131b] border border-slate-800 rounded-3xl shadow-2xl p-5 md:p-6 space-y-4">
-        <div className="flex items-start justify-between border-b border-slate-800/80 pb-3">
+      <div className="w-full max-w-2xl hoi-panel rounded-sm shadow-2xl overflow-hidden rosca-panel-enter">
+        <div className="hoi-header-steel px-5 py-3.5 flex items-start justify-between gap-3">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-purple-400">
-              RELEVO DE CARTERA
+            <div className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-widest text-amber-400">
+              <UserCheck className="w-3.5 h-3.5" />
+              <span>RELEVO DE CARTERA</span>
             </div>
-            <h3 className="text-xl font-extrabold text-white mt-0.5">
+            <h3 className="text-lg font-serif font-black text-amber-50 mt-0.5">
               Designar Ministro de {ministry.ministryName}
             </h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Actual: <span className="text-slate-200 font-semibold">{ministry.ministerName}</span> ({ministry.partySigla}).
-              Elegí una figura de tu partido o de tus socios de coalición ({coalitionParties.length > 0 ? coalitionParties.join(', ') : 'Sin socios'}).
+            <p className="text-xs text-slate-300 mt-1">
+              Actual: <strong className="text-white">{ministry.ministerName}</strong> ({ministry.partySigla}).
+              Perfiles idóneos ordenados arriba.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg text-lg"
+            className="text-slate-400 hover:text-white p-1 rounded-sm border border-transparent hover:border-[#334155]"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="space-y-2">
-          <div className="text-xs font-bold text-slate-300">
-            Figuras disponibles ({eligiblePoliticians.length})
+        <div className="p-5 space-y-3">
+          <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 uppercase tracking-wider">
+            <span>Candidatos habilitados ({eligiblePoliticians.length})</span>
+            <span>Socios: {coalitionParties.length > 0 ? coalitionParties.join(', ') : 'Sin socios'}</span>
           </div>
+
           <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
             {eligiblePoliticians.map((pol) => (
               <CandidateItem
@@ -244,24 +282,25 @@ export function MinisterReplacementModal({
               />
             ))}
           </div>
-        </div>
 
-        <div className="pt-3 border-t border-slate-800/80 flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300 hover:bg-slate-800 transition"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            disabled={!selectedPol}
-            onClick={handleConfirm}
-            className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-xs font-extrabold text-white transition shadow-lg"
-          >
-            Confirmar designación
-          </button>
+          <div className="pt-3 border-t border-[#263142] flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-sm bg-[#0b1018] border border-[#334155] text-xs font-semibold text-slate-300 hover:bg-[#172233] transition"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              disabled={!selectedPol}
+              onClick={handleConfirm}
+              className="hoi-btn-gold inline-flex items-center gap-1.5 px-4 py-2 rounded-sm text-xs font-extrabold uppercase tracking-wider disabled:opacity-50"
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>Confirmar Nombramiento</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

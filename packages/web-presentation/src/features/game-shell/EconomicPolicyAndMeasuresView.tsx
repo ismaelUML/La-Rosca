@@ -6,6 +6,9 @@ import type {
   SimulationState
 } from '@argentina-sim/domain';
 import { SECTOR_CATEGORIES_SUMMARY } from '@argentina-sim/infrastructure';
+import { Check, Play, ScrollText, Sliders } from 'lucide-react';
+import { SectionPageHeader } from '@/components/ui/SectionPageHeader';
+import { playUiSound } from '@/lib/gameFeedback';
 import { ActionStripCard } from './ActionStripCard.js';
 
 // Vistas de ECONOMIA -> Politica economica (palancas -2 a +2 acopladas al motor)
@@ -206,27 +209,25 @@ export function EconomicPolicyView({
 }: EconomicPolicyViewProps) {
   return (
     <div className="space-y-6">
-      <div className="border-b border-slate-800/80 pb-4 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
-            ECONOMÍA · ORIENTACIÓN GENERAL
-          </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white mt-0.5">
-            Política económica
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Las palancas generales orientan la economía de -2 (contractivo / ortodoxo) a +2 (expansivo / heterodoxo) y ajustan las ecuaciones del BCRA, Tesoro y CAMMESA.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={onAdvanceTurn}
-          className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs shadow-lg transition"
-        >
-          Ejecutar Mes Macroeconómico →
-        </button>
-      </div>
+      <SectionPageHeader
+        eyebrow="ECONOMÍA · ORIENTACIÓN GENERAL"
+        title="Política económica"
+        description="Las palancas generales orientan la economía de -2 (contractivo / ortodoxo) a +2 (expansivo / heterodoxo) y ajustan las ecuaciones del BCRA, Tesoro y CAMMESA."
+        icon={<Sliders className="w-3.5 h-3.5" />}
+        rightSlot={
+          <button
+            type="button"
+            onClick={() => {
+              playUiSound('turn');
+              onAdvanceTurn();
+            }}
+            className="hoi-btn-gold inline-flex items-center gap-1.5 px-4 py-2 rounded-sm font-extrabold text-xs uppercase tracking-wider shadow transition active:scale-[0.98]"
+          >
+            <Play className="w-3.5 h-3.5 fill-current" />
+            <span>Ejecutar Mes Macroeconómico</span>
+          </button>
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {levers.map((lever) => {
@@ -234,14 +235,14 @@ export function EconomicPolicyView({
           return (
             <div
               key={lever.id}
-              className="rounded-2xl bg-[#10131b] border border-slate-800/90 p-5 flex flex-col justify-between gap-3"
+              className="hoi-panel rounded-sm p-5 flex flex-col justify-between gap-3"
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <div className="text-sm font-bold text-white">{lever.title}</div>
+                  <div className="text-sm font-bold text-slate-100">{lever.title}</div>
                   <div className="text-xs text-slate-400 mt-0.5">{lever.description}</div>
                 </div>
-                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-900 border border-slate-700 text-amber-300">
+                <span className="px-2.5 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#090d14] border border-[#8a6d33] text-amber-300 shrink-0">
                   {lever.levelLabels[labelIdx]} ({formatLeverNumber(lever.level)})
                 </span>
               </div>
@@ -253,11 +254,14 @@ export function EconomicPolicyView({
                     <button
                       key={lv}
                       type="button"
-                      onClick={() => onChangeLever(lever.id, lv)}
-                      className={`py-1.5 rounded-lg text-xs font-mono font-bold transition border ${
+                      onClick={() => {
+                        playUiSound('select');
+                        onChangeLever(lever.id, lv);
+                      }}
+                      className={`py-1.5 rounded-sm text-xs font-mono font-bold transition border ${
                         isSelected
-                          ? 'bg-white text-slate-950 border-white shadow'
-                          : 'bg-[#0b0e15] text-slate-400 border-slate-800 hover:text-white'
+                          ? 'bg-[#b89342] text-[#100e09] border-[#c9a24d] shadow'
+                          : 'bg-[#090d14] text-slate-400 border-[#263142] hover:text-white hover:border-[#3c4d66]'
                       }`}
                     >
                       {formatLeverNumber(lv)}
@@ -292,28 +296,31 @@ function SectorCategoryItem({
   onSelect: () => void;
 }) {
   const borderClass = isSelected
-    ? 'border-white ring-1 ring-white bg-[#151a26]'
-    : 'border-slate-800/90 hover:border-slate-700';
+    ? 'border-[#c9a24d] bg-[#162233]'
+    : 'border-[#263142] bg-[#0e131c] hover:border-[#3c4d66]';
 
   return (
     <button
       type="button"
-      onClick={onSelect}
-      className={`text-left rounded-2xl bg-[#10131b] border p-4 transition relative flex flex-col justify-between ${borderClass}`}
+      onClick={() => {
+        playUiSound('tab');
+        onSelect();
+      }}
+      className={`text-left rounded-sm border p-4 transition relative flex flex-col justify-between ${borderClass}`}
     >
       <div>
         <div className="flex items-center justify-between mb-1">
-          <span className="text-base text-slate-400">{sec.icon}</span>
+          <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400">{sec.id}</span>
           {activeCount > 0 ? (
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 border border-emerald-700 text-emerald-300">
+            <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#0f291e] border border-emerald-700/70 text-emerald-300">
               {activeCount} VIGENTES
             </span>
           ) : null}
         </div>
-        <div className="text-sm font-bold text-white">{sec.title}</div>
+        <div className="text-sm font-bold text-slate-100">{sec.title}</div>
         <div className="text-xs text-slate-400 mt-1">{sec.subtitle}</div>
       </div>
-      <div className="text-[11px] text-slate-500 mt-3">
+      <div className="text-[11px] font-mono text-slate-500 mt-3">
         {sec.tempCount} temporales · {sec.permCount} permanentes
       </div>
     </button>
@@ -392,16 +399,26 @@ function MeasureActionButton({
   onToggle: () => void;
 }) {
   const btnClass = active
-    ? 'bg-emerald-950 border border-emerald-700 text-emerald-300 hover:bg-emerald-900'
-    : 'bg-white hover:bg-slate-200 text-slate-950';
+    ? 'bg-[#0f291e] border border-emerald-700/70 text-emerald-300 hover:bg-[#153829]'
+    : 'hoi-btn-gold';
 
   return (
     <button
       type="button"
-      onClick={onToggle}
-      className={`w-full py-2 rounded-xl text-xs font-bold transition shadow ${btnClass}`}
+      onClick={() => {
+        playUiSound('select');
+        onToggle();
+      }}
+      className={`w-full py-2 rounded-sm text-xs font-bold uppercase tracking-wider inline-flex items-center justify-center gap-1.5 transition ${btnClass}`}
     >
-      {active ? '✓ Medida Vigente (Clic para derogar)' : 'Adoptar'}
+      {active ? (
+        <>
+          <Check className="w-3.5 h-3.5" />
+          <span>Medida Vigente (Derogar)</span>
+        </>
+      ) : (
+        <span>Adoptar Medida</span>
+      )}
     </button>
   );
 }
@@ -413,14 +430,14 @@ function MeasureItemCard({
   m: SectorMeasureCard;
   onToggle: () => void;
 }) {
-  const accentBorder = m.active ? 'border-l-emerald-500' : 'border-l-rose-500';
+  const accentBorder = m.active ? 'border-l-emerald-500' : 'border-l-[#8a6d33]';
 
   return (
     <div
-      className={`rounded-2xl bg-[#10131b] border border-slate-800/90 border-l-4 ${accentBorder} p-4 flex flex-col justify-between gap-3`}
+      className={`hoi-panel rounded-sm border-l-4 ${accentBorder} p-4 flex flex-col justify-between gap-3`}
     >
       <div className="space-y-2">
-        <div className="text-sm font-bold text-white">{m.title}</div>
+        <div className="text-sm font-bold text-slate-100">{m.title}</div>
         <p className="text-xs text-slate-300 leading-relaxed">{m.description}</p>
 
         <div className="text-[11px] text-slate-400 font-semibold pt-1">
@@ -469,15 +486,12 @@ export function SectorMeasuresView({ measures, onToggleMeasure }: SectorMeasures
 
   return (
     <div className="space-y-6">
-      <div className="border-b border-slate-800/80 pb-4">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
-          ECONOMÍA · DECRETOS Y RESOLUCIONES
-        </div>
-        <h1 className="text-2xl md:text-3xl font-extrabold text-white mt-0.5">Medidas</h1>
-        <p className="text-xs text-slate-400 mt-1">
-          Elegí un sector para ver e implementar medidas concretas temporales o estructurales con su impacto proyectado en IPC, actividad y aprobación.
-        </p>
-      </div>
+      <SectionPageHeader
+        eyebrow="ECONOMÍA · DECRETOS Y RESOLUCIONES"
+        title="Medidas"
+        description="Elegí un sector para implementar medidas concretas temporales o estructurales con impacto proyectado en IPC, actividad y aprobación."
+        icon={<ScrollText className="w-3.5 h-3.5" />}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
         {SECTOR_CATEGORIES_SUMMARY.map((sec) => {
@@ -496,13 +510,13 @@ export function SectorMeasuresView({ measures, onToggleMeasure }: SectorMeasures
       </div>
 
       <div className="space-y-3 pt-2">
-        <div className="flex items-center justify-between">
-          <div className="inline-flex p-1 rounded-xl bg-[#10131b] border border-slate-800">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="inline-flex p-1 rounded-sm bg-[#090d14] border border-[#263142]">
             <button
               type="button"
               onClick={() => setFilterMode('TEMPORAL')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${
-                filterMode === 'TEMPORAL' ? 'bg-white text-slate-950 shadow' : 'text-slate-300'
+              className={`px-3.5 py-1.5 rounded-sm text-xs font-bold transition ${
+                filterMode === 'TEMPORAL' ? 'bg-[#1d3250] text-amber-200 border border-[#b89342]' : 'text-slate-300'
               }`}
             >
               Temporales ({tempCount})
@@ -510,8 +524,8 @@ export function SectorMeasuresView({ measures, onToggleMeasure }: SectorMeasures
             <button
               type="button"
               onClick={() => setFilterMode('PERMANENTE')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${
-                filterMode === 'PERMANENTE' ? 'bg-white text-slate-950 shadow' : 'text-slate-300'
+              className={`px-3.5 py-1.5 rounded-sm text-xs font-bold transition ${
+                filterMode === 'PERMANENTE' ? 'bg-[#1d3250] text-amber-200 border border-[#b89342]' : 'text-slate-300'
               }`}
             >
               Permanentes ({permCount})
@@ -519,22 +533,22 @@ export function SectorMeasuresView({ measures, onToggleMeasure }: SectorMeasures
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-slate-400 mr-2">
-              Sector actual: <strong className="text-white">{selectedSector}</strong>
+            <span className="text-xs font-mono text-slate-400 mr-1">
+              Sector: <strong className="text-amber-300">{selectedSector}</strong>
             </span>
             <button
               type="button"
               onClick={handleApproveAllInSector}
-              className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-slate-200 transition shadow"
+              className="px-3 py-1.5 rounded-sm bg-[#162233] hover:bg-[#1f3047] border border-[#344661] text-xs font-bold text-slate-200 transition"
             >
-              Aprobar todas las del sector
+              Aprobar sector
             </button>
             <button
               type="button"
               onClick={handleApproveAllPossible}
-              className="px-3 py-1.5 rounded-xl bg-purple-950/70 hover:bg-purple-900 border border-purple-700 text-xs font-bold text-purple-200 transition shadow"
+              className="hoi-btn-gold px-3 py-1.5 rounded-sm text-xs font-extrabold uppercase tracking-wider transition"
             >
-              Aprobar todas las posibles
+              Aprobar todas
             </button>
           </div>
         </div>

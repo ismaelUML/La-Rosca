@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { ArrowLeft, ArrowRight, Flag, Landmark } from 'lucide-react';
 import type { CampaignSimulationState } from '@argentina-sim/domain';
+import { SectionPageHeader } from '@/components/ui/SectionPageHeader';
+import { playUiSound } from '@/lib/gameFeedback';
 
 // Comando de campaña provincial profunda (QQG Capturas 2, 3, 4, 5):
 // En Argentina ningún presidente gobierna sin territorio. Las 24 jurisdicciones eligen gobernador
@@ -1228,14 +1231,18 @@ function ProvincialDrilldownView({ prov, onBack, onUpdateProv }: ProvincialDrill
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={onBack}
-            className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs font-bold text-white transition"
+            onClick={() => {
+              playUiSound('tab');
+              onBack();
+            }}
+            className="px-3 py-1.5 rounded-sm bg-[#090d14] border border-[#263142] hover:border-[#b89342] text-xs font-mono font-bold text-white transition inline-flex items-center gap-1.5"
           >
-            ◀ Volver a turnos
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Volver a turnos
           </button>
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-purple-400">
-              ELECCIÓN PROVINCIAL
+            <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-300">
+              Elección Provincial
             </div>
             <h1 className="text-2xl md:text-3xl font-extrabold text-white mt-0.5">{prov.name}</h1>
           </div>
@@ -1267,7 +1274,7 @@ function ProvincialDrilldownView({ prov, onBack, onUpdateProv }: ProvincialDrill
         puede sacar mucho más que su peso en la provincia.
       </div>
 
-      <div className="rounded-2xl bg-[#0b0e15] border border-purple-900/40 p-4 text-xs text-slate-300 leading-relaxed">
+      <div className="rounded-sm bg-[#090d14] border border-[#263142] p-4 text-xs text-slate-300 leading-relaxed">
         Manejás la campaña de este candidato en cualquier fase del juego: si algún mes no hacés
         acciones, el partido hace un par por su cuenta (más débiles que las tuyas). Las acciones
         provinciales rinden más que las nacionales.
@@ -1402,19 +1409,22 @@ function checkIsPlayerLeading(shares: ProvincialPartyShare[]): { playerShare: nu
 
 function TurnCardItem({ prov, onOpen }: TurnCardProps) {
   const { playerShare, isLeading } = checkIsPlayerLeading(prov.shares);
-  const borderClass = isLeading ? 'border-purple-500 shadow-md shadow-purple-500/20' : 'border-slate-800';
+  const borderClass = isLeading ? 'border-[#b89342] shadow-md shadow-amber-950/30' : 'border-[#263142]';
   const shareText = playerShare > 0 ? `${playerShare.toFixed(1).replace('.', ',')} %` : 'sin datos';
 
   return (
     <div
-      onClick={() => onOpen(prov.id)}
-      className="rounded-2xl bg-[#0b0e15] border border-slate-800/90 p-4 flex flex-col justify-between text-center gap-3 shadow-md hover:border-purple-600/80 cursor-pointer transition group"
+      onClick={() => {
+        playUiSound('select');
+        onOpen(prov.id);
+      }}
+      className="hoi-panel rounded-sm p-4 flex flex-col justify-between text-center gap-3 hover:border-[#b89342] cursor-pointer transition group"
     >
       <div>
-        <h4 className="font-extrabold text-white text-sm group-hover:text-purple-300 transition leading-tight">
+        <h4 className="font-extrabold text-white text-sm group-hover:text-amber-200 transition leading-tight">
           {prov.name}
         </h4>
-        <div className="text-[10px] text-slate-400 mt-0.5">{prov.electionDate}</div>
+        <div className="text-[10px] font-mono text-slate-400 mt-0.5">{prov.electionDate}</div>
       </div>
 
       <div className="relative w-20 h-20 mx-auto flex items-center justify-center">
@@ -1425,17 +1435,18 @@ function TurnCardItem({ prov, onOpen }: TurnCardProps) {
       </div>
 
       {isLeading ? (
-        <div className="text-[9px] font-extrabold text-emerald-400 bg-emerald-950/80 border border-emerald-800/60 rounded px-1.5 py-0.5 inline-block mx-auto">
-          ¡Tu fórmula lidera!
+        <div className="text-[9px] font-mono font-extrabold text-emerald-300 bg-emerald-950/80 border border-emerald-700/70 rounded-sm px-1.5 py-0.5 inline-block mx-auto">
+          Lidera tu fórmula
         </div>
       ) : null}
 
-      <div className="border-t border-slate-800/70 pt-2 space-y-1">
-        <div className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">
-          FÓRMULA DESDE {prov.formulaOpensDate.toUpperCase()}
+      <div className="border-t border-[#263142] pt-2 space-y-1">
+        <div className="text-[9px] font-mono uppercase font-bold text-slate-400 tracking-wider">
+          Fórmula desde {prov.formulaOpensDate.toUpperCase()}
         </div>
-        <div className="text-[10px] font-bold text-purple-400 group-hover:underline">
-          Ver campaña y fórmula ▶
+        <div className="text-[10px] font-mono font-bold text-amber-300 group-hover:underline inline-flex items-center justify-center gap-1">
+          Ver campaña y fórmula
+          <ArrowRight className="w-3 h-3" />
         </div>
       </div>
     </div>
@@ -1499,28 +1510,18 @@ export function CampaignPartidoProvinciasView({ state }: CampaignPartidoProvinci
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800/80 pb-4 gap-2">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-purple-500" />
-            <span className="text-[11px] font-bold uppercase tracking-wider text-purple-400">
-              POLÍTICO
-            </span>
-          </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white mt-0.5">
-            Partido en las provincias
-          </h1>
-        </div>
-        <div className="text-xs text-slate-400">
-          Guardado · cronograma constitucional de las 24 gobernaciones
-        </div>
-      </div>
+    <div className="space-y-5 rosca-panel-enter">
+      <SectionPageHeader
+        eyebrow="Político · Estructura Federal"
+        title="Partido en las provincias"
+        description="Cronograma constitucional de las 24 gobernaciones y comandos locales."
+        icon={<Flag className="w-4 h-4 text-amber-300" />}
+      />
 
-      <div className="rounded-2xl bg-[#10131b] border border-purple-900/40 p-5 space-y-4 shadow-xl">
+      <div className="hoi-panel hoi-header-steel rounded-sm p-5 space-y-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-950 border border-purple-700/60 flex items-center justify-center font-bold text-lg text-purple-300">
-            🕊️
+          <div className="w-10 h-10 rounded-sm bg-[#162233] border border-[#344661] flex items-center justify-center shrink-0">
+            <Landmark className="w-5 h-5 text-amber-300" />
           </div>
           <div>
             <h3 className="text-base font-extrabold text-white">Comando de campaña provincial</h3>
@@ -1530,7 +1531,7 @@ export function CampaignPartidoProvinciasView({ state }: CampaignPartidoProvinci
           </div>
         </div>
 
-        <p className="text-[11px] text-slate-400 leading-relaxed border-t border-slate-800/60 pt-3">
+        <p className="text-[11px] text-slate-400 leading-relaxed border-t border-[#263142] pt-3">
           Las 24 jurisdicciones votan en cuatro turnos de 6 (2028, 2029, 2030 y 2031, y cada cuatro
           años después): en 2027 no se elige ningún gobernador. La fórmula se elige un año antes de
           cada elección. Hacé clic en cualquier provincia para gestionar su binomio y sus acciones.
@@ -1549,11 +1550,14 @@ export function CampaignPartidoProvinciasView({ state }: CampaignPartidoProvinci
               <button
                 key={tabLabel}
                 type="button"
-                onClick={() => setSelectedTurn(tabKey)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition border ${
+                onClick={() => {
+                  playUiSound('tab');
+                  setSelectedTurn(tabKey);
+                }}
+                className={`px-4 py-2 rounded-sm text-xs font-mono font-bold transition border ${
                   isSelected
-                    ? 'bg-white text-slate-950 border-white shadow'
-                    : 'bg-[#10131b] text-slate-300 border-slate-800 hover:border-slate-700'
+                    ? 'bg-[#1d3250] text-amber-100 border-[#b89342]'
+                    : 'bg-[#090d14] text-slate-300 border-[#263142] hover:border-slate-500'
                 }`}
               >
                 {tabLabel}
@@ -1564,9 +1568,9 @@ export function CampaignPartidoProvinciasView({ state }: CampaignPartidoProvinci
       </div>
 
       {selectedTurn === 'MAPA' ? (
-        <div className="rounded-2xl bg-[#0b0e15] border border-slate-800 overflow-hidden shadow-lg">
-          <div className="p-4 border-b border-slate-800">
-            <h3 className="text-base font-extrabold text-white">
+        <div className="hoi-panel rounded-sm overflow-hidden">
+          <div className="p-4 border-b border-[#263142]">
+            <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-white">
               Mapa de los 24 Gobernadores e Intervención Federal (Art. 6 CN)
             </h3>
             <p className="text-xs text-slate-400 mt-1">
@@ -1575,27 +1579,30 @@ export function CampaignPartidoProvinciasView({ state }: CampaignPartidoProvinci
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#080a10] border-b border-slate-800 text-[10px] font-bold uppercase text-slate-400">
+              <thead className="bg-[#090d14] border-b border-[#263142] text-[10px] font-mono font-bold uppercase text-slate-400">
                 <tr>
-                  <th className="py-3 px-4">PROVINCIA</th>
-                  <th className="py-3 px-4">TURNO ELECTORAL</th>
-                  <th className="py-3 px-4">GOBERNADOR ACTUAL</th>
-                  <th className="py-3 px-4">ESPACIO POLÍTICO</th>
-                  <th className="py-3 px-4 text-center">LEALTAD ROSADA</th>
+                  <th className="py-3 px-4">Provincia</th>
+                  <th className="py-3 px-4">Turno Electoral</th>
+                  <th className="py-3 px-4">Gobernador Actual</th>
+                  <th className="py-3 px-4">Espacio Político</th>
+                  <th className="py-3 px-4 text-center">Lealtad Rosca</th>
                 </tr>
               </thead>
               <tbody>
                 {allProvinces.map((prov) => (
                   <tr
                     key={prov.id}
-                    onClick={() => setSelectedProvinceId(prov.id)}
-                    className="border-b border-slate-800/50 hover:bg-slate-900/50 cursor-pointer"
+                    onClick={() => {
+                      playUiSound('select');
+                      setSelectedProvinceId(prov.id);
+                    }}
+                    className="border-b border-[#263142]/60 hover:bg-[#131d2d] cursor-pointer transition"
                   >
                     <td className="py-3 px-4 font-bold text-white">{prov.name}</td>
-                    <td className="py-3 px-4 font-mono text-purple-400">{prov.turnYear}</td>
+                    <td className="py-3 px-4 font-mono text-amber-300">{prov.turnYear}</td>
                     <td className="py-3 px-4 text-slate-300">{prov.currentGovernor}</td>
                     <td className="py-3 px-4">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-900 border border-slate-700 text-slate-300">
+                      <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#090d14] border border-[#263142] text-slate-300">
                         {prov.governingParty}
                       </span>
                     </td>

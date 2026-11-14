@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
+import { Building2, Check, X } from 'lucide-react';
 import type { RigisectorItem, RigiPendingProject } from '@argentina-sim/domain';
+import { SectionPageHeader } from '@/components/ui/SectionPageHeader';
+import { playUiSound } from '@/lib/gameFeedback';
 
 // El RIGI no es un chiste de barritas: aca estan los 29 sectores reales de la Ley Bases
 // con sus 200/500 palos verdes de piso, madurez de proyectos y el costo fiscal
@@ -38,9 +41,9 @@ function RigiPendingCard({
 }) {
   const remaining = Math.max(1, project.expiresInMonths - project.monthsWaiting);
   return (
-    <div className="p-4 rounded-2xl bg-[#0b0e15] border border-amber-900/50 flex flex-col justify-between space-y-3 shadow-md">
+    <div className="hoi-panel p-4 rounded-sm border-amber-800/60 flex flex-col justify-between space-y-3">
       <div className="space-y-1.5">
-        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider bg-amber-950/70 border border-amber-800/60 px-2 py-0.5 rounded">
+        <span className="text-[10px] font-mono font-bold text-amber-300 uppercase tracking-wider bg-amber-950/70 border border-amber-700/60 px-2 py-0.5 rounded-sm inline-block">
           {project.sectorName}
         </span>
         <h4 className="text-sm font-extrabold text-white mt-1">{project.name}</h4>
@@ -51,20 +54,28 @@ function RigiPendingCard({
           Estado: espera resolución (<strong className="text-amber-300">{remaining} meses</strong> para desistir).
         </div>
       </div>
-      <div className="flex gap-2 pt-1 border-t border-slate-800/60">
+      <div className="flex gap-2 pt-2 border-t border-[#263142]">
         <button
           type="button"
-          onClick={() => onApprove?.(project.id)}
-          className="flex-1 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white transition shadow"
+          onClick={() => {
+            playUiSound('select');
+            onApprove?.(project.id);
+          }}
+          className="flex-1 py-1.5 rounded-sm bg-emerald-700 hover:bg-emerald-600 border border-emerald-500/70 text-xs font-mono font-bold text-white transition inline-flex items-center justify-center gap-1"
         >
-          ✓ Aprobar
+          <Check className="w-3.5 h-3.5" />
+          Aprobar
         </button>
         <button
           type="button"
-          onClick={() => onReject?.(project.id)}
-          className="px-3 py-1.5 rounded-xl bg-rose-950/60 border border-rose-800 text-xs font-bold text-rose-300 hover:bg-rose-900/60 transition"
+          onClick={() => {
+            playUiSound('tab');
+            onReject?.(project.id);
+          }}
+          className="px-3 py-1.5 rounded-sm bg-rose-950/60 border border-rose-800 text-xs font-mono font-bold text-rose-300 hover:bg-rose-900/60 transition inline-flex items-center justify-center gap-1"
         >
-          ✕ Rechazar
+          <X className="w-3.5 h-3.5" />
+          Rechazar
         </button>
       </div>
     </div>
@@ -99,24 +110,24 @@ function RigiMetricsGrid({ sector }: { sector: RigisectorItem }) {
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs pt-1">
-      <div className="p-2 rounded-lg bg-[#0b0e15] border border-slate-800/80">
-        <div className="text-[10px] text-slate-500 uppercase">Proyecto mínimo</div>
+      <div className="p-2 rounded-sm bg-[#090d14] border border-[#263142]">
+        <div className="text-[10px] font-mono text-slate-400 uppercase">Proyecto mínimo</div>
         <div className="font-mono font-bold text-slate-200 mt-0.5">{sector.minProjectMillionUsd} M USD</div>
       </div>
-      <div className="p-2 rounded-lg bg-[#0b0e15] border border-slate-800/80">
-        <div className="text-[10px] text-slate-500 uppercase">Inversión a régimen</div>
+      <div className="p-2 rounded-sm bg-[#090d14] border border-[#263142]">
+        <div className="text-[10px] font-mono text-slate-400 uppercase">Inversión a régimen</div>
         <div className="font-mono font-bold text-emerald-400 mt-0.5">{invLabel}</div>
       </div>
-      <div className="p-2 rounded-lg bg-[#0b0e15] border border-slate-800/80">
-        <div className="text-[10px] text-slate-500 uppercase">Exportaciones</div>
+      <div className="p-2 rounded-sm bg-[#090d14] border border-[#263142]">
+        <div className="text-[10px] font-mono text-slate-400 uppercase">Exportaciones</div>
         <div className="font-mono font-bold text-sky-400 mt-0.5">{expLabel}</div>
       </div>
-      <div className="p-2 rounded-lg bg-[#0b0e15] border border-slate-800/80">
-        <div className="text-[10px] text-slate-500 uppercase">Empleo</div>
+      <div className="p-2 rounded-sm bg-[#090d14] border border-[#263142]">
+        <div className="text-[10px] font-mono text-slate-400 uppercase">Empleo</div>
         <div className="font-mono font-bold text-emerald-300 mt-0.5">{empLabel}</div>
       </div>
-      <div className="p-2 rounded-lg bg-[#0b0e15] border border-slate-800/80">
-        <div className="text-[10px] text-slate-500 uppercase">Costo fiscal</div>
+      <div className="p-2 rounded-sm bg-[#090d14] border border-[#263142]">
+        <div className="text-[10px] font-mono text-slate-400 uppercase">Costo fiscal</div>
         <div className="font-mono font-bold text-rose-300 mt-0.5">{costLabel}</div>
       </div>
       <div className="p-2 rounded-lg bg-[#0b0e15] border border-slate-800/80">
@@ -165,20 +176,20 @@ function RigiSectorCard({
   const dateText = sector.enabledDateLabel ?? 'Habilitado desde 10 de diciembre de 2027';
   const accumulated = sector.accumulatedInvestmentMillionUsd.toLocaleString('es-AR');
   const btnClass = sector.enabledByDecree
-    ? 'bg-rose-950/40 border border-rose-700/70 text-rose-300 hover:bg-rose-900/50'
-    : 'bg-white hover:bg-slate-200 text-slate-950';
+    ? 'bg-rose-950/50 border border-rose-700/70 text-rose-200 hover:bg-rose-900/50'
+    : 'hoi-btn-gold';
 
   return (
-    <div className="rounded-2xl bg-[#10131b] border border-slate-800/90 p-4 md:p-5 flex flex-col justify-between gap-3 shadow-lg">
+    <div className="hoi-panel rounded-sm p-4 md:p-5 flex flex-col justify-between gap-3">
       <div className="space-y-2">
         <div className="flex items-start justify-between gap-2">
           <div>
             <h3 className="text-base font-extrabold text-white leading-snug">{sector.name}</h3>
-            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold border mt-1 ${badgeClass}`}>
+            <span className={`inline-block px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold border mt-1 ${badgeClass}`}>
               {sector.branch}
             </span>
           </div>
-          <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-300">
+          <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-sm bg-[#090d14] border border-[#263142] text-slate-300 shrink-0">
             Piso: {sector.minProjectMillionUsd} M USD
           </span>
         </div>
@@ -196,8 +207,11 @@ function RigiSectorCard({
       <div className="pt-2">
         <button
           type="button"
-          onClick={onToggle}
-          className={`w-full py-2.5 rounded-xl text-xs font-extrabold tracking-wide transition shadow ${btnClass}`}
+          onClick={() => {
+            playUiSound('select');
+            onToggle();
+          }}
+          className={`w-full py-2 rounded-sm text-xs font-mono font-extrabold uppercase tracking-wide transition ${btnClass}`}
         >
           {sector.enabledByDecree ? 'Quitar el régimen' : 'Habilitar el régimen'}
         </button>
@@ -222,27 +236,27 @@ function RigiHeaderOverview({
   totalMUsd: number;
 }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 text-xs">
-      <div className="p-3 rounded-xl bg-[#10131b] border border-slate-800">
-        <div className="text-slate-400">Sectores habilitados</div>
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+      <div className="hoi-panel p-3.5 rounded-sm">
+        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Sectores habilitados</div>
         <div className="text-lg font-mono font-extrabold text-emerald-400 mt-0.5">
           {enabledCount} de {totalSectors}
         </div>
       </div>
-      <div className="p-3 rounded-xl bg-[#10131b] border border-slate-800">
-        <div className="text-slate-400">Inversión a régimen</div>
+      <div className="hoi-panel p-3.5 rounded-sm">
+        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Inversión a régimen</div>
         <div className="text-lg font-mono font-extrabold text-sky-400 mt-0.5">
           +{totalInvPp.toFixed(2).replace('.', ',')} pp PIB
         </div>
       </div>
-      <div className="p-3 rounded-xl bg-[#10131b] border border-slate-800">
-        <div className="text-slate-400">Exportaciones proyectadas</div>
+      <div className="hoi-panel p-3.5 rounded-sm">
+        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Exportaciones proyectadas</div>
         <div className="text-lg font-mono font-extrabold text-amber-400 mt-0.5">
           +{totalExpMilM.toFixed(1).replace('.', ',')} mil M USD
         </div>
       </div>
-      <div className="p-3 rounded-xl bg-[#10131b] border border-slate-800">
-        <div className="text-slate-400">Proyectos aprobados</div>
+      <div className="hoi-panel p-3.5 rounded-sm">
+        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Proyectos aprobados</div>
         <div className="text-lg font-mono font-extrabold text-white mt-0.5">
           {totalProjects} / 29 ({totalMUsd.toLocaleString('es-AR')} M USD)
         </div>
@@ -273,11 +287,14 @@ function RigiSectorsTab({
           <button
             key={b}
             type="button"
-            onClick={() => onSelectBranch(b)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+            onClick={() => {
+              playUiSound('tab');
+              onSelectBranch(b);
+            }}
+            className={`px-3 py-1.5 rounded-sm text-xs font-mono font-bold transition border ${
               selectedBranch === b
-                ? 'bg-purple-600 text-white shadow'
-                : 'bg-[#10131b] text-slate-400 border border-slate-800 hover:text-white'
+                ? 'bg-[#1d3250] border-[#b89342] text-amber-100'
+                : 'bg-[#090d14] text-slate-400 border-[#263142] hover:text-slate-100'
             }`}
           >
             {b}
@@ -305,7 +322,7 @@ function RigiPendingTab({
 }) {
   if (pendingProjects.length === 0) {
     return (
-      <div className="rounded-2xl bg-[#0b0e15] border border-slate-800 p-8 text-center text-xs text-slate-400">
+      <div className="hoi-panel rounded-sm p-8 text-center text-xs text-slate-400">
         No hay proyectos pendientes en este momento. Habilitá sectores del RIGI para atraer inversiones estratégicas.
       </div>
     );
@@ -360,8 +377,11 @@ function RigiApproveAllButton({ pendingCount, onApproveAll }: { pendingCount: nu
   return (
     <button
       type="button"
-      onClick={onApproveAll}
-      className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow transition"
+      onClick={() => {
+        playUiSound('select');
+        onApproveAll?.();
+      }}
+      className="hoi-btn-gold px-3 py-1.5 rounded-sm font-mono font-bold text-xs uppercase tracking-wide"
     >
       Aprobar todos ({pendingCount})
     </button>
@@ -371,7 +391,7 @@ function RigiApproveAllButton({ pendingCount, onApproveAll }: { pendingCount: nu
 function RigiPendingBadge({ count }: { count: number }) {
   if (count <= 0) return null;
   return (
-    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500 text-slate-950 font-extrabold">
+    <span className="px-1.5 py-0.2 rounded-sm text-[10px] bg-amber-500 text-slate-950 font-mono font-extrabold">
       {count}
     </span>
   );
@@ -392,23 +412,33 @@ function RigiNavigationHeader({
 }) {
   const showApprove = canShowApproveAll(subTab, pendingCount, onApproveAll);
   const isSectores = subTab === 'SECTORES';
-  const secClass = isSectores ? 'bg-white text-slate-950 shadow' : 'text-slate-400 hover:text-white';
-  const pendClass = !isSectores ? 'bg-white text-slate-950 shadow' : 'text-slate-400 hover:text-white';
+  const secClass = isSectores
+    ? 'bg-[#1d3250] border border-[#b89342] text-amber-100'
+    : 'bg-[#090d14] border border-[#263142] text-slate-400 hover:text-slate-100';
+  const pendClass = !isSectores
+    ? 'bg-[#1d3250] border border-[#b89342] text-amber-100'
+    : 'bg-[#090d14] border border-[#263142] text-slate-400 hover:text-slate-100';
 
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-slate-800 pb-2">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#263142] pb-3">
       <div className="flex gap-2">
         <button
           type="button"
-          onClick={() => onSelectTab('SECTORES')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition ${secClass}`}
+          onClick={() => {
+            playUiSound('tab');
+            onSelectTab('SECTORES');
+          }}
+          className={`px-4 py-2 rounded-sm text-xs font-mono font-bold uppercase tracking-wide transition ${secClass}`}
         >
           Sectores ({enabledCount} de 29)
         </button>
         <button
           type="button"
-          onClick={() => onSelectTab('PENDIENTES')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${pendClass}`}
+          onClick={() => {
+            playUiSound('tab');
+            onSelectTab('PENDIENTES');
+          }}
+          className={`px-4 py-2 rounded-sm text-xs font-mono font-bold uppercase tracking-wide transition flex items-center gap-2 ${pendClass}`}
         >
           <span>Proyectos pendientes</span>
           <RigiPendingBadge count={pendingCount} />
@@ -433,25 +463,22 @@ export function RigiSectorsSection({
   const totals = computeRigiTotals(rigiSectors);
 
   return (
-    <div className="space-y-6">
-      <div className="border-b border-slate-800/80 pb-4">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
-          PRESUPUESTO · RÉGIMEN DE GRANDES INVERSIONES (RIGI)
-        </div>
-        <h1 className="text-2xl md:text-3xl font-extrabold text-white mt-0.5">RIGI (Ley 27.742)</h1>
-        <p className="text-xs text-slate-400 mt-1">
-          Beneficios aduaneros, tributarios y libre disponibilidad de divisas a 30 años para proyectos estratégicos de más de 200 M USD.
-        </p>
+    <div className="space-y-5 rosca-panel-enter">
+      <SectionPageHeader
+        eyebrow="Presupuesto · Régimen de Grandes Inversiones (RIGI)"
+        title="RIGI (Ley 27.742)"
+        description="Beneficios aduaneros, tributarios y libre disponibilidad de divisas a 30 años para proyectos estratégicos de más de 200 M USD."
+        icon={<Building2 className="w-4 h-4 text-amber-300" />}
+      />
 
-        <RigiHeaderOverview
-          enabledCount={totals.enabledCount}
-          totalSectors={rigiSectors.length}
-          totalInvPp={totals.totalInvPp}
-          totalExpMilM={totals.totalExpMilM}
-          totalProjects={totals.totalProjects}
-          totalMUsd={totals.totalMUsd}
-        />
-      </div>
+      <RigiHeaderOverview
+        enabledCount={totals.enabledCount}
+        totalSectors={rigiSectors.length}
+        totalInvPp={totals.totalInvPp}
+        totalExpMilM={totals.totalExpMilM}
+        totalProjects={totals.totalProjects}
+        totalMUsd={totals.totalMUsd}
+      />
 
       <RigiNavigationHeader
         subTab={subTab}

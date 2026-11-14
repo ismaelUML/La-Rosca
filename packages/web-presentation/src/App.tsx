@@ -239,6 +239,8 @@ function ActiveSectionRenderer(props: ActiveSectionRendererProps) {
         onAppointMinister={props.onAppointMinister}
         playerPartySigla={props.setup.party.sigla}
         coalitionParties={props.campaignState.coalitionParties}
+        playerCandidateId={props.setup.selectedPoliticianId}
+        playerCandidateName={props.campaignState.candidateName || props.setup.characterName}
       />
     ),
     REGISTRO: <RegistroHistoryView historyLog={props.state.eventLog} />,

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { Check, X } from 'lucide-react';
 import {
   INITIAL_FIXED_REFORMS,
   toggleFixedReformState,
   type FixedReformItem,
   type ReformCategory
 } from '@argentina-sim/domain';
+import { playUiSound } from '@/lib/gameFeedback';
 
 // Vista de Reformas Institucionales y Electorales fijas (ea(...) en QQG):
 // Catálogo constitucional y electoral de 20 reformas estructurales con reglas
@@ -20,11 +22,14 @@ function ReformFilterButton({ label, isSelected, onClick }: ReformFilterButtonPr
   return (
     <button
       type="button"
-      onClick={onClick}
-      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition border ${
+      onClick={() => {
+        playUiSound('tab');
+        onClick();
+      }}
+      className={`px-3 py-1.5 rounded-sm text-xs font-mono font-bold transition border ${
         isSelected
-          ? 'bg-white text-slate-950 border-white shadow-md'
-          : 'bg-[#10131b] border-slate-800 text-slate-400 hover:text-white'
+          ? 'bg-[#1d3250] text-amber-100 border-[#b89342]'
+          : 'bg-[#090d14] border-[#263142] text-slate-400 hover:text-slate-100'
       }`}
     >
       {label}
@@ -35,32 +40,32 @@ function ReformFilterButton({ label, isSelected, onClick }: ReformFilterButtonPr
 function ReformMajorityBadge({ majority }: { majority: 'ORDINARIA' | 'CONSTITUCIONAL' }) {
   if (majority === 'CONSTITUCIONAL') {
     return (
-      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-950/80 border border-purple-700 text-purple-300">
+      <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-amber-950/70 border border-amber-700/70 text-amber-300 inline-block">
         Constitucional (2/3: 172 Dip · 48 Sen)
       </span>
     );
   }
   return (
-    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-950/80 border border-sky-700 text-sky-300">
+    <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#132033] border border-[#334155] text-sky-200 inline-block">
       Ordinaria (Mayoría absoluta: 129 · 37)
     </span>
   );
 }
 
 function resolveCardBorder(active: boolean): string {
-  if (active) return 'bg-[#121826] border-purple-800/80';
-  return 'bg-[#10131b] border-slate-800/90';
+  if (active) return 'bg-[#111928] border-[#b89342]/70';
+  return 'bg-[#0e131c] border-[#263142]';
 }
 
 function resolveCardBadge(active: boolean): { className: string; text: string } {
   if (active) {
     return {
-      className: 'bg-emerald-950 border border-emerald-700 text-emerald-300',
+      className: 'bg-emerald-950/80 border border-emerald-700 text-emerald-300',
       text: 'VIGENTE'
     };
   }
   return {
-    className: 'bg-slate-900 border border-slate-800 text-slate-400',
+    className: 'bg-[#090d14] border border-[#263142] text-slate-400',
     text: 'INACTIVA'
   };
 }
@@ -73,7 +78,7 @@ function resolveCardButton(active: boolean): { className: string; text: string }
     };
   }
   return {
-    className: 'bg-white hover:bg-slate-200 text-slate-950',
+    className: 'hoi-btn-gold',
     text: 'Promulgar reforma'
   };
 }
@@ -92,11 +97,11 @@ function ReformCard({ reform, onToggle }: ReformCardProps) {
     : 'Sin incompatibilidad';
 
   return (
-    <div className={`rounded-2xl border p-5 flex flex-col justify-between gap-4 transition shadow-md ${borderClass}`}>
+    <div className={`rounded-sm border p-5 flex flex-col justify-between gap-4 transition ${borderClass}`}>
       <div className="space-y-2.5">
         <div className="flex items-start justify-between gap-2">
           <h3 className="text-base font-extrabold text-white leading-tight">{reform.name}</h3>
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${badgeInfo.className}`}>
+          <span className={`px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold shrink-0 ${badgeInfo.className}`}>
             {badgeInfo.text}
           </span>
         </div>
@@ -106,23 +111,28 @@ function ReformCard({ reform, onToggle }: ReformCardProps) {
         <p className="text-xs text-slate-300 leading-relaxed pt-1">{reform.description}</p>
 
         <div className="grid grid-cols-2 gap-2 pt-2 text-xs font-mono">
-          <div className="p-2 rounded-xl bg-[#0b0e15] border border-slate-800/80">
+          <div className="p-2 rounded-sm bg-[#090d14] border border-[#263142]">
             <div className="text-[10px] text-slate-400 uppercase">Apoyo social</div>
             <div className="font-bold text-white text-sm mt-0.5">{reform.publicSupportPct} %</div>
           </div>
-          <div className="p-2 rounded-xl bg-[#0b0e15] border border-slate-800/80">
+          <div className="p-2 rounded-sm bg-[#090d14] border border-[#263142]">
             <div className="text-[10px] text-slate-400 uppercase">Polémica</div>
             <div className="font-bold text-amber-400 text-sm mt-0.5">{reform.polemicaPct} %</div>
           </div>
         </div>
       </div>
 
-      <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
-        <span className="text-[11px] text-slate-400">{exclusiveLabel}</span>
+      <div className="pt-3 border-t border-[#263142] flex items-center justify-between gap-2">
+        <span className="text-[11px] text-slate-400 truncate max-w-[160px]" title={exclusiveLabel}>
+          {exclusiveLabel}
+        </span>
         <button
           type="button"
-          onClick={() => onToggle(reform.id)}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition shadow ${buttonInfo.className}`}
+          onClick={() => {
+            playUiSound('select');
+            onToggle(reform.id);
+          }}
+          className={`px-4 py-2 rounded-sm text-xs font-mono font-bold uppercase tracking-wide transition ${buttonInfo.className}`}
         >
           {buttonInfo.text}
         </button>
@@ -154,7 +164,7 @@ export function ReformasInstitucionalesSection() {
     const target = updatedReforms.find((r) => r.id === id);
     if (target?.active) {
       const mutualText = deactivatedMutualId ? ` (se derogó automáticamente ${deactivatedMutualId}).` : '.';
-      setBannerNotice(`✓ Se promulgó la reforma: ${target.name}${mutualText}`);
+      setBannerNotice(`Se promulgó la reforma: ${target.name}${mutualText}`);
     } else {
       setBannerNotice(`Se derogó la reforma: ${target?.name ?? id}.`);
     }
@@ -168,32 +178,36 @@ export function ReformasInstitucionalesSection() {
 
   return (
     <div className="space-y-5">
-      <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/60 via-[#10141e] to-sky-950/60 border border-purple-800/60 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="hoi-panel hoi-header-steel p-4 rounded-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-          <div className="text-xs font-bold uppercase tracking-wider text-purple-400">
-            SISTEMA ELECTORAL Y CONSTITUCIÓN NACIONAL (ea)
+          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300">
+            Sistema Electoral y Constitución Nacional
           </div>
-          <h2 className="text-xl font-extrabold text-white mt-0.5">
+          <h2 className="text-lg md:text-xl font-extrabold text-white mt-0.5">
             Reformas Institucionales y Electorales
           </h2>
           <p className="text-xs text-slate-300 mt-1 max-w-2xl">
             Catálogo fijo de reglas constitucionales de sufragio, mandatos presidenciales, balotaje y representación parlamentaria con mayorías ordinarias y de dos tercios.
           </p>
         </div>
-        <div className="shrink-0 px-3.5 py-2 rounded-xl bg-purple-900/50 border border-purple-700/80 font-mono text-xs font-extrabold text-purple-200 text-center">
+        <div className="shrink-0 px-3.5 py-2 rounded-sm bg-[#090d14] border border-[#b89342]/60 font-mono text-xs font-extrabold text-amber-200 text-center">
           {activeCount} de {reforms.length} vigentes
         </div>
       </div>
 
       {bannerNotice ? (
-        <div className="flex items-center justify-between p-3.5 rounded-xl bg-emerald-950/50 border border-emerald-800 text-emerald-200 text-xs">
-          <span>{bannerNotice}</span>
+        <div className="flex items-center justify-between p-3.5 rounded-sm bg-emerald-950/50 border border-emerald-800 text-emerald-200 text-xs">
+          <span className="inline-flex items-center gap-2">
+            <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            {bannerNotice}
+          </span>
           <button
             type="button"
             onClick={() => setBannerNotice(null)}
-            className="text-emerald-400 hover:text-white font-bold ml-2"
+            aria-label="Cerrar aviso"
+            className="text-emerald-400 hover:text-white font-bold ml-2 p-1"
           >
-            ✕
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       ) : null}

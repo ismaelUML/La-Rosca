@@ -44,31 +44,31 @@ function EnergyMixHeader({ state }: { state: SimulationState }) {
   const { energy } = state;
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-xl bg-slate-950/90 p-2.5 border border-slate-800 text-center text-xs">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-sm bg-[#090d14] p-2.5 border border-[#263142] text-center text-xs">
         <div>
           <span className="text-slate-400 block text-[11px]">Térmica (Gas)</span>
           <span className="font-bold text-amber-300 font-mono">{energy.thermalSharePct}%</span>
         </div>
         <div>
           <span className="text-slate-400 block text-[11px]">Hidroeléctrica</span>
-          <span className="font-bold text-sky-300 font-mono">{energy.hydroSharePct}%</span>
+          <span className="font-bold text-slate-200 font-mono">{energy.hydroSharePct}%</span>
         </div>
         <div>
           <span className="text-slate-400 block text-[11px]">Nuclear</span>
-          <span className="font-bold text-purple-300 font-mono">{energy.nuclearSharePct}%</span>
+          <span className="font-bold text-amber-200 font-mono">{energy.nuclearSharePct}%</span>
         </div>
         <div>
           <span className="text-slate-400 block text-[11px]">Renovable</span>
-          <span className="font-bold text-emerald-300 font-mono">{energy.renewableSharePct}%</span>
+          <span className="font-bold text-emerald-400 font-mono">{energy.renewableSharePct}%</span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-        <div className="flex items-center justify-between rounded-lg bg-slate-950/70 border border-slate-800/80 px-3 py-2">
+        <div className="flex items-center justify-between rounded-sm bg-[#090d14] border border-[#263142] px-3 py-2">
           <span className="text-slate-400">Subsidio mensual del Tesoro</span>
           <span className="font-mono font-bold text-rose-400">-{energy.cammesaMonthlyDeficitMillionUsd} M USD/mes</span>
         </div>
-        <div className="flex items-center justify-between rounded-lg bg-slate-950/70 border border-slate-800/80 px-3 py-2">
+        <div className="flex items-center justify-between rounded-sm bg-[#090d14] border border-[#263142] px-3 py-2">
           <span className="text-slate-400">Costo generar energía</span>
           <span className="font-mono font-bold text-slate-200">{energy.generationCostUsdPerMwh} USD/MWh</span>
         </div>
@@ -227,7 +227,7 @@ function EnergyTabContent({ state, onDispatch }: EnergyAndLaborViewProps) {
 function LaborStatsStrip({ state }: { state: SimulationState }) {
   const { labor } = state;
   return (
-    <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-950/90 p-2.5 border border-slate-800 text-xs">
+    <div className="grid grid-cols-3 gap-2 rounded-sm bg-[#090d14] p-2.5 border border-[#263142] text-xs">
       <div>
         <span className="text-slate-400 block text-[11px]">Salario real</span>
         <span className="font-bold text-slate-100 font-mono">{labor.realWageIndex} pts</span>

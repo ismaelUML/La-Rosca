@@ -3,8 +3,15 @@ import { geoMercator } from 'd3-geo';
 import * as topojson from 'topojson-client';
 import type { ProvinceSummary } from '@argentina-sim/domain';
 import { resolveFeatureProvinceId } from '../campaign/ArgentinaRealVectorMap.js';
+import { getProvincePoliticalMeta } from './provincePoliticalMeta.js';
 
-export type Map3DMode = 'LOYALTY' | 'FISCAL' | 'SECURITY' | 'DEPUTIES';
+export type Map3DMode =
+  | 'LOYALTY'
+  | 'FISCAL'
+  | 'SECURITY'
+  | 'GOVERNORS'
+  | 'PARTIES'
+  | 'DEPUTIES';
 
 export interface ProvinceMeshMeta {
   provinceId: string;
@@ -19,6 +26,12 @@ const COLOR_GOOD = 0x158053;
 const COLOR_NEUTRAL = 0xc7922c;
 const COLOR_BAD = 0xc4314b;
 const COLOR_FALLBACK = 0x334155;
+
+const BLOC_COLORS: Record<string, number> = {
+  DERECHA: 0x2563eb,
+  CENTRO: 0x14b8a6,
+  IZQUIERDA: 0xe11d48
+};
 
 function buildMapProjection() {
   return geoMercator().center([-64, -39.5]).scale(78).translate([0, 0]);
@@ -118,10 +131,24 @@ function resolveSecurityColor(province?: ProvinceSummary): number {
   return alerts >= 2 ? COLOR_NEUTRAL : COLOR_GOOD;
 }
 
+function resolveGovernorsColor(province?: ProvinceSummary): number {
+  if (!province) return COLOR_FALLBACK;
+  const meta = getProvincePoliticalMeta(province.id);
+  return meta ? (BLOC_COLORS[meta.bloc] ?? COLOR_FALLBACK) : COLOR_FALLBACK;
+}
+
+function resolvePartiesColor(province?: ProvinceSummary): number {
+  if (!province) return COLOR_FALLBACK;
+  const meta = getProvincePoliticalMeta(province.id);
+  return meta ? meta.partyColorHex : COLOR_FALLBACK;
+}
+
 const MODE_COLOR_RESOLVERS: Record<Map3DMode, (p?: ProvinceSummary) => number> = {
   LOYALTY: resolveLoyaltyColor,
   FISCAL: resolveFiscalColor,
   SECURITY: resolveSecurityColor,
+  GOVERNORS: resolveGovernorsColor,
+  PARTIES: resolvePartiesColor,
   DEPUTIES: resolveLoyaltyColor
 };
 
@@ -130,7 +157,7 @@ export function resolveProvinceColor(province: ProvinceSummary | undefined, mode
 }
 
 function resolveSecurityDepth(province: ProvinceSummary): number {
-  const alerts = province.problematicas?.length ?? 0;
+  const alerts = countAlerts(province);
   return Math.min(4.2, 0.95 + alerts * 0.55);
 }
 

@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from 'react';
+import { ArrowRight, Check, X } from 'lucide-react';
+import { playUiSound } from '@/lib/gameFeedback';
 import type {
   BlocStance,
   ChamberVoteDetail,
@@ -54,17 +56,17 @@ function ChamberProjectionCard({
   const pct = Math.min(100, Math.round((projectedYes / totalSeats) * 100));
 
   return (
-    <div className="p-4 rounded-2xl bg-[#10131b] border border-slate-800 shadow-sm flex flex-col justify-between">
+    <div className="hoi-panel p-4 rounded-sm flex flex-col justify-between">
       <div className="flex justify-between items-center text-xs">
-        <span className="font-extrabold text-white">{title}</span>
+        <span className="font-mono font-bold uppercase tracking-wider text-white">{title}</span>
         <span
-          className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+          className={`px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold border ${
             passes
               ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800'
               : 'bg-rose-950/80 text-rose-300 border-rose-800'
           }`}
         >
-          {passes ? 'Mayoria asegurada' : 'Faltan votos'}
+          {passes ? 'Mayoría asegurada' : 'Faltan votos'}
         </span>
       </div>
 
@@ -75,9 +77,9 @@ function ChamberProjectionCard({
             / {totalSeats} (Quórum: {quorumNeeded})
           </span>
         </div>
-        <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800 mt-1.5">
+        <div className="w-full bg-[#090d14] h-2 rounded-sm overflow-hidden border border-[#263142] mt-1.5">
           <div
-            className={`h-full rounded-full transition-all duration-300 ${
+            className={`h-full transition-all duration-300 ${
               passes ? 'bg-emerald-500' : 'bg-amber-500'
             }`}
             style={{ width: `${pct}%` }}
@@ -104,28 +106,31 @@ function BillSelectorTab({
   onSelectBill: (id: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2 border-b border-slate-800 pb-3">
+    <div className="flex flex-wrap gap-2 border-b border-[#263142] pb-3">
       {bills.map((b) => {
         const isSelected = b.id === selectedBillId;
         return (
           <button
             key={b.id}
             type="button"
-            onClick={() => onSelectBill(b.id)}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 border ${
+            onClick={() => {
+              playUiSound('tab');
+              onSelectBill(b.id);
+            }}
+            className={`px-3.5 py-2 rounded-sm text-xs font-mono font-bold transition flex items-center gap-2 border ${
               isSelected
-                ? 'bg-white text-slate-950 border-white shadow-md'
-                : 'bg-[#10131b] text-slate-400 border-slate-800 hover:text-white'
+                ? 'bg-[#1d3250] text-amber-100 border-[#b89342]'
+                : 'bg-[#090d14] text-slate-400 border-[#263142] hover:text-slate-100'
             }`}
           >
             <span>{b.title}</span>
             {b.status === 'APROBADA' && (
-              <span className="px-1.5 py-0.2 rounded text-[9px] bg-emerald-950 border border-emerald-700 text-emerald-300 font-extrabold">
+              <span className="px-1.5 py-0.2 rounded-sm text-[9px] bg-emerald-950 border border-emerald-700 text-emerald-300 font-extrabold">
                 SANCIONADA
               </span>
             )}
             {b.status === 'RECHAZADA' && (
-              <span className="px-1.5 py-0.2 rounded text-[9px] bg-rose-950 border border-rose-700 text-rose-300 font-extrabold">
+              <span className="px-1.5 py-0.2 rounded-sm text-[9px] bg-rose-950 border border-rose-700 text-rose-300 font-extrabold">
                 RECHAZADA
               </span>
             )}
@@ -138,7 +143,7 @@ function BillSelectorTab({
 
 function ConsequencePill({ label, value, cls }: { label: string; value: string; cls: string }) {
   return (
-    <span className={`px-2.5 py-1 rounded-lg bg-[#0b0e15] border border-slate-800 font-mono ${cls}`}>
+    <span className={`px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#263142] font-mono ${cls}`}>
       {label}: {value}
     </span>
   );
@@ -161,7 +166,7 @@ function IpcPill({ delta }: { delta?: number }) {
 
 function RiesgoPill({ delta }: { delta?: number }) {
   if (!delta) return null;
-  return <ConsequencePill label="Riesgo país" value={`${delta} pb`} cls="text-purple-400" />;
+  return <ConsequencePill label="Riesgo país" value={`${delta} pb`} cls="text-amber-300" />;
 }
 
 function ApprovalPill({ delta }: { delta?: number }) {
@@ -189,13 +194,21 @@ function BillSoftenedButton({
   isSoftened?: boolean;
   onSoftToggle: () => void;
 }) {
-  const label = isSoftened ? '✓ Artículos Suavizados (+15% afinidad)' : 'Suavizar artículos (+15% afinidad)';
+  const label = isSoftened ? 'Artículos Suavizados (+15% afinidad)' : 'Suavizar artículos (+15% afinidad)';
   const cls = isSoftened
-    ? 'bg-amber-950/80 text-amber-300 border-amber-600'
-    : 'bg-[#0b0e15] text-slate-400 border-slate-800 hover:text-white';
+    ? 'bg-amber-950/80 text-amber-200 border-[#b89342]'
+    : 'bg-[#090d14] text-slate-300 border-[#263142] hover:text-white';
 
   return (
-    <button type="button" onClick={onSoftToggle} className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${cls}`}>
+    <button
+      type="button"
+      onClick={() => {
+        playUiSound('select');
+        onSoftToggle();
+      }}
+      className={`px-3 py-1.5 rounded-sm text-xs font-mono font-bold border transition inline-flex items-center gap-1.5 ${cls}`}
+    >
+      {isSoftened ? <Check className="w-3.5 h-3.5 text-amber-300" /> : null}
       {label}
     </button>
   );
@@ -209,11 +222,11 @@ function BillOverviewCard({
   onSoftToggle: () => void;
 }) {
   return (
-    <div className="p-5 rounded-2xl bg-[#10131b] border border-slate-800 shadow-md space-y-3">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+    <div className="hoi-panel p-5 rounded-sm space-y-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-[#263142] pb-3">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-wider text-purple-400 font-bold">
-            PROYECTO DE LEY · {bill.category}
+          <span className="text-[10px] font-mono uppercase tracking-wider text-amber-300 font-bold">
+            Proyecto de Ley · {bill.category}
           </span>
           <h2 className="text-xl font-extrabold text-white mt-0.5">{bill.title}</h2>
         </div>
@@ -241,14 +254,18 @@ function ConcessionItemButton({
     <button
       type="button"
       disabled={hasConcession}
-      onClick={onClick}
-      className={`px-2 py-1.5 rounded-lg text-[10px] font-bold border transition ${
+      onClick={() => {
+        playUiSound('atn');
+        onClick();
+      }}
+      className={`px-2 py-1.5 rounded-sm text-[10px] font-mono font-bold border transition inline-flex items-center justify-center gap-1 ${
         hasConcession
-          ? 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed'
-          : 'bg-[#10131b] border-slate-700 text-slate-300 hover:text-white hover:border-slate-500'
+          ? 'bg-[#090d14] border-[#263142] text-emerald-400/70 cursor-not-allowed'
+          : 'bg-[#111824] border-[#344661] text-slate-200 hover:text-amber-200 hover:border-[#b89342]'
       }`}
     >
-      {hasConcession ? activeLabel : label}
+      {hasConcession ? <Check className="w-3 h-3 shrink-0" /> : null}
+      <span>{hasConcession ? activeLabel : label}</span>
     </button>
   );
 }
@@ -280,19 +297,19 @@ function BlocConcessionButtons({
         <ConcessionItemButton
           hasConcession={hasArgentums}
           label="Obra Pública (-30¥)"
-          activeLabel="✓ Obra asignada"
+          activeLabel="Obra asignada"
           onClick={() => onConcession(bloc.id, 'ARGENTUMS')}
         />
         <ConcessionItemButton
           hasConcession={hasGabinete}
           label="Cupo Gabinete"
-          activeLabel="✓ Cargo cedido"
+          activeLabel="Cargo cedido"
           onClick={() => onConcession(bloc.id, 'GABINETE')}
         />
         <ConcessionItemButton
           hasConcession={hasGobernadores}
           label="Pacto Gobernadores"
-          activeLabel="✓ Gobernadores"
+          activeLabel="Gobernadores"
           onClick={() => onConcession(bloc.id, 'GOBERNADORES')}
         />
       </div>
@@ -304,27 +321,27 @@ function BlocNegotiationCard({ bloc, onConcession }: BlocNegotiationCardProps) {
   const stanceInfo = resolveStanceBadge(bloc.currentStance);
 
   return (
-    <div className="p-4 rounded-2xl bg-[#0b0e15] border border-slate-800 flex flex-col justify-between space-y-3 shadow">
+    <div className="hoi-panel p-4 rounded-sm flex flex-col justify-between space-y-3">
       <div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${bloc.badgeBg}`}>
+            <span className={`px-2 py-0.5 rounded-sm text-[10px] font-extrabold ${bloc.badgeBg}`}>
               {bloc.shortLabel}
             </span>
             <span className="text-xs font-bold text-white truncate max-w-[150px]">{bloc.name}</span>
           </div>
-          <span className={`px-2 py-0.5 rounded border text-[10px] font-bold ${stanceInfo.cls}`}>
+          <span className={`px-2 py-0.5 rounded-sm border text-[10px] font-mono font-bold ${stanceInfo.cls}`}>
             {stanceInfo.label}
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 mt-3 pt-2 border-t border-slate-800/80 text-[11px] font-mono">
+        <div className="grid grid-cols-2 gap-2 mt-3 pt-2 border-t border-[#263142] text-[11px] font-mono">
           <div>
-            <span className="text-slate-500">Diputados:</span>{' '}
+            <span className="text-slate-400">Diputados:</span>{' '}
             <strong className="text-white">{bloc.deputiesSeats}</strong>
           </div>
           <div>
-            <span className="text-slate-500">Senado:</span>{' '}
+            <span className="text-slate-400">Senado:</span>{' '}
             <strong className="text-white">{bloc.senateSeats}</strong>
           </div>
         </div>
@@ -343,7 +360,7 @@ function BlocNegotiationCard({ bloc, onConcession }: BlocNegotiationCardProps) {
 function ChamberVoteBreakdownTable({ detail }: { detail: ChamberVoteDetail }) {
   const isDip = detail.chamber === 'DIPUTADOS';
   return (
-    <div className="p-4 rounded-xl bg-[#0b0e15] border border-slate-800 space-y-2">
+    <div className="p-4 rounded-sm bg-[#090d14] border border-[#263142] space-y-2">
       <div className="flex justify-between items-center text-xs font-bold">
         <span className="text-white">{isDip ? 'Cámara de Diputados' : 'Senado de la Nación'}</span>
         <span className={detail.passed ? 'text-emerald-400 font-mono' : 'text-rose-400 font-mono'}>
@@ -352,15 +369,15 @@ function ChamberVoteBreakdownTable({ detail }: { detail: ChamberVoteDetail }) {
       </div>
 
       <div className="grid grid-cols-3 gap-2 text-center text-xs font-mono pt-1">
-        <div className="p-2 rounded-lg bg-emerald-950/40 border border-emerald-800/60 text-emerald-300">
+        <div className="p-2 rounded-sm bg-emerald-950/40 border border-emerald-800/60 text-emerald-300">
           <div>Afirmativos</div>
           <div className="text-lg font-bold">{detail.yesVotes}</div>
         </div>
-        <div className="p-2 rounded-lg bg-rose-950/40 border border-rose-800/60 text-rose-300">
+        <div className="p-2 rounded-sm bg-rose-950/40 border border-rose-800/60 text-rose-300">
           <div>Negativos</div>
           <div className="text-lg font-bold">{detail.noVotes}</div>
         </div>
-        <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400">
+        <div className="p-2 rounded-sm bg-[#111824] border border-[#263142] text-slate-400">
           <div>Abstenciones</div>
           <div className="text-lg font-bold">{detail.abstentions}</div>
         </div>
@@ -380,11 +397,11 @@ function VoteResultModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl bg-[#10131b] border border-slate-800 p-6 space-y-4 shadow-2xl">
-        <div className="flex justify-between items-start border-b border-slate-800 pb-3">
+      <div className="w-full max-w-lg hoi-panel rounded-sm p-6 space-y-4 shadow-2xl">
+        <div className="flex justify-between items-start border-b border-[#263142] pb-3">
           <div>
             <span
-              className={`px-2 py-0.5 rounded text-[10px] font-bold border uppercase ${
+              className={`px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold border uppercase ${
                 outcome.passed
                   ? 'bg-emerald-950 text-emerald-300 border-emerald-700'
                   : 'bg-rose-950 text-rose-300 border-rose-700'
@@ -397,9 +414,10 @@ function VoteResultModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white font-bold text-sm px-2 py-1"
+            aria-label="Cerrar recinto"
+            className="text-slate-400 hover:text-white p-1"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -414,7 +432,7 @@ function VoteResultModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-2.5 rounded-xl bg-white hover:bg-slate-200 text-slate-950 font-bold text-xs shadow transition"
+            className="hoi-btn-gold w-full py-2.5 rounded-sm font-mono font-bold text-xs uppercase tracking-wide"
           >
             Entendido · Cerrar recinto
           </button>
@@ -498,20 +516,23 @@ export function CongressBillsNegotiationSection({
 
       <BillOverviewCard bill={selectedBill} onSoftToggle={handleToggleSoftened} />
 
-      <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#263142] pb-3">
         <div>
-          <h3 className="text-base font-extrabold text-white">Negociación bloque por bloque</h3>
+          <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-white">Negociación bloque por bloque</h3>
           <p className="text-xs text-slate-400 mt-0.5">
             Cede obras, cargos o suaviza articulados con los bloques en duda para llegar al quórum.
           </p>
         </div>
         <button
           type="button"
-          onClick={handleExecuteRecintoVote}
-          className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs shadow-lg shadow-purple-900/30 transition flex items-center gap-2"
+          onClick={() => {
+            playUiSound('turn');
+            handleExecuteRecintoVote();
+          }}
+          className="hoi-btn-gold px-4 py-2 rounded-sm font-mono font-extrabold text-xs uppercase tracking-wide flex items-center gap-2"
         >
           <span>Llevar a votación en el recinto</span>
-          <span>➜</span>
+          <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>
 

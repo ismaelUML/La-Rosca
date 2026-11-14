@@ -42,10 +42,10 @@ function buildProvincesAlert(state: SimulationState): string {
 function SupremeCourtList({ state }: { state: SimulationState }) {
   const { judicial } = state;
   return (
-    <div className="space-y-1.5 rounded-xl bg-slate-950/90 p-3 border border-slate-800">
+    <div className="space-y-1.5 rounded-sm bg-[#090d14] p-3 border border-[#263142]">
       <div className="flex items-center justify-between text-xs mb-1">
-        <span className="font-semibold text-sky-400">Corte Suprema (5 Jueces · mayoría de 3)</span>
-        <span className="text-[11px] text-slate-400">Tope 75 años</span>
+        <span className="font-mono font-bold uppercase tracking-wider text-amber-300">Corte Suprema (5 Jueces · mayoría de 3)</span>
+        <span className="text-[11px] font-mono text-slate-400">Tope 75 años</span>
       </div>
       {judicial.supremeCourt.map((j) => (
         <div key={j.id} className="flex items-center justify-between border-b border-slate-800/60 pb-1.5 last:border-b-0 last:pb-0 text-xs">
@@ -177,17 +177,17 @@ function ProvincesTabContent({ state, onDispatch }: JudicialAndProvincesViewProp
 
   return (
     <div className="space-y-3">
-      <div className="rounded-xl bg-slate-950/90 p-3 border border-slate-800 space-y-1.5 text-xs">
+      <div className="rounded-sm bg-[#090d14] p-3 border border-[#263142] space-y-1.5 text-xs">
         <div className="flex items-center justify-between">
-          <span className="font-semibold text-sky-400">Agenda Semanal en Medios y Streaming</span>
+          <span className="font-mono font-bold uppercase tracking-wider text-amber-300">Agenda Semanal en Medios y Streaming</span>
           <span className="text-[11px] text-slate-400 font-mono">
             Nación {treasury.nonCoparticipableRevenuePctGdp}% · Copart. {treasury.coparticipableRevenuePctGdp}%
           </span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
           {publicOpinion.agendaSlots.map((topic, idx) => (
-            <div key={idx} className="rounded-lg bg-slate-900/90 border border-slate-800 px-2.5 py-1.5 text-slate-300">
-              <span className="text-sky-400 font-mono mr-1">#{idx + 1}</span>
+            <div key={idx} className="rounded-sm bg-[#11161f] border border-[#263142] px-2.5 py-1.5 text-slate-300">
+              <span className="text-amber-400 font-mono mr-1">#{idx + 1}</span>
               {topic}
             </div>
           ))}
@@ -195,28 +195,28 @@ function ProvincesTabContent({ state, onDispatch }: JudicialAndProvincesViewProp
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+        <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-400">
           24 Jurisdicciones · Giro de ATN
         </span>
-        <div className="flex gap-1 text-[11px]">
+        <div className="flex gap-1 text-[11px] font-mono">
           <button
             type="button"
             onClick={() => setFilter('all')}
-            className={`px-2.5 py-1 rounded-lg border ${filter === 'all' ? 'bg-sky-600 border-sky-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+            className={`px-2.5 py-1 rounded-sm border ${filter === 'all' ? 'bg-[#b89342] border-[#c9a24d] text-[#100e09] font-bold' : 'bg-[#090d14] border-[#263142] text-slate-400'}`}
           >
             Todas ({provinces.length})
           </button>
           <button
             type="button"
             onClick={() => setFilter('critical')}
-            className={`px-2.5 py-1 rounded-lg border ${filter === 'critical' ? 'bg-rose-600 border-rose-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+            className={`px-2.5 py-1 rounded-sm border ${filter === 'critical' ? 'bg-rose-800 border-rose-600 text-white font-bold' : 'bg-[#090d14] border-[#263142] text-slate-400'}`}
           >
             Críticas
           </button>
           <button
             type="button"
             onClick={() => setFilter('allied')}
-            className={`px-2.5 py-1 rounded-lg border ${filter === 'allied' ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'}`}
+            className={`px-2.5 py-1 rounded-sm border ${filter === 'allied' ? 'bg-emerald-800 border-emerald-600 text-white font-bold' : 'bg-[#090d14] border-[#263142] text-slate-400'}`}
           >
             Aliadas
           </button>

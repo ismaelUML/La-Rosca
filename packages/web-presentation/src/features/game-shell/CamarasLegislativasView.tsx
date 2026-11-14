@@ -1,5 +1,8 @@
 import React, { useMemo, useState } from 'react';
+import { Landmark } from 'lucide-react';
 import type { PolicyAction, SimulationState } from '@argentina-sim/domain';
+import { SectionPageHeader } from '@/components/ui/SectionPageHeader';
+import { playUiSound } from '@/lib/gameFeedback';
 import { CongressBillsNegotiationSection } from './CongressBillsNegotiationSection.js';
 import { ReformasInstitucionalesSection } from './ReformasInstitucionalesSection.js';
 
@@ -198,10 +201,10 @@ function HemicycleCard({
   labelSub: string;
 }) {
   return (
-    <div className="rounded-2xl bg-[#10131b] border border-slate-800/90 p-5 flex flex-col justify-between gap-4 shadow-lg">
-      <div className="flex items-center justify-between border-b border-slate-800/70 pb-3">
-        <h3 className="text-base font-extrabold text-white">{title}</h3>
-        <span className="font-mono text-xs px-2.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-sky-300">
+    <div className="hoi-panel rounded-sm p-5 flex flex-col justify-between gap-4">
+      <div className="flex items-center justify-between border-b border-[#263142] pb-3">
+        <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-white">{title}</h3>
+        <span className="font-mono text-xs px-2.5 py-0.5 rounded-sm bg-[#090d14] border border-[#263142] text-amber-300">
           Quórum: {quorumNeeded}
         </span>
       </div>
@@ -227,16 +230,16 @@ function HemicycleCard({
         </svg>
       </div>
 
-      <div className="flex flex-wrap justify-center gap-2 pt-2 border-t border-slate-800/60">
+      <div className="flex flex-wrap justify-center gap-2 pt-2 border-t border-[#263142]">
         {legendList.map((f) => {
           const seats = title.includes('Diputados') ? f.deputiesSeats : f.senateSeats;
           if (seats === 0) return null;
           return (
             <div
               key={f.id}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0b0e15] border border-slate-800 text-xs"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#263142] text-xs"
             >
-              <span className={`px-1.5 py-0.2 rounded text-[10px] font-extrabold ${f.badgeBg}`}>
+              <span className={`px-1.5 py-0.2 rounded-sm text-[10px] font-extrabold ${f.badgeBg}`}>
                 {f.shortLabel}
               </span>
               <span className="font-mono font-bold text-white">{seats}</span>
@@ -284,36 +287,36 @@ function CongressTopMetrics({ forces }: { forces: PartySeatShare[] }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div className="p-4 rounded-2xl bg-[#10131b] border border-slate-800/90 shadow-sm flex flex-col justify-between">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-          BLOQUE PROPIO
+      <div className="hoi-panel p-4 rounded-sm flex flex-col justify-between">
+        <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+          Bloque propio
         </div>
         <div className="text-3xl font-mono font-extrabold text-white mt-2">{seats.ownDep}</div>
-        <div className="text-[11px] text-slate-500 mt-1">
+        <div className="text-[11px] text-slate-400 mt-1">
           {seats.ownDep} diputados · {seats.ownSen} senadores ({seats.dep} con aliados)
         </div>
       </div>
 
-      <div className="p-4 rounded-2xl bg-[#10131b] border border-slate-800/90 shadow-sm flex flex-col justify-between">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-          GOBERNABILIDAD
+      <div className="hoi-panel p-4 rounded-sm flex flex-col justify-between">
+        <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+          Gobernabilidad
         </div>
-        <div className="text-3xl font-mono font-extrabold text-white mt-2">{govPct} %</div>
-        <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800 mt-2">
-          <div className="bg-amber-500 h-full rounded-full" style={{ width: `${govPct}%` }} />
+        <div className="text-3xl font-mono font-extrabold text-amber-300 mt-2">{govPct} %</div>
+        <div className="w-full bg-[#090d14] h-2 rounded-sm overflow-hidden border border-[#263142] mt-2">
+          <div className="bg-amber-500 h-full" style={{ width: `${govPct}%` }} />
         </div>
-        <div className="text-[11px] text-slate-500 mt-1">{statusNote}</div>
+        <div className="text-[11px] text-slate-400 mt-1">{statusNote}</div>
       </div>
 
-      <div className="p-4 rounded-2xl bg-[#10131b] border border-slate-800/90 shadow-sm flex flex-col justify-between">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-          CAPACIDAD DE NEGOCIACIÓN
+      <div className="hoi-panel p-4 rounded-sm flex flex-col justify-between">
+        <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+          Capacidad de negociación
         </div>
-        <div className="text-3xl font-mono font-extrabold text-white mt-2">{negPct}</div>
-        <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800 mt-2">
-          <div className="bg-purple-600 h-full rounded-full" style={{ width: `${negPct}%` }} />
+        <div className="text-3xl font-mono font-extrabold text-sky-300 mt-2">{negPct}</div>
+        <div className="w-full bg-[#090d14] h-2 rounded-sm overflow-hidden border border-[#263142] mt-2">
+          <div className="bg-[#b89342] h-full" style={{ width: `${negPct}%` }} />
         </div>
-        <div className="text-[11px] text-slate-500 mt-1">Base parlamentaria inicial tras la elección</div>
+        <div className="text-[11px] text-slate-400 mt-1">Base parlamentaria inicial tras la elección</div>
       </div>
     </div>
   );
@@ -374,21 +377,30 @@ function CongressSubTabHeader({
     <div className="flex flex-wrap gap-1 border-b border-[#263142] pb-1">
       <button
         type="button"
-        onClick={() => onSelectTab('ROSCA_LEYES')}
+        onClick={() => {
+          playUiSound('tab');
+          onSelectTab('ROSCA_LEYES');
+        }}
         className={`px-3.5 py-2 rounded-t-sm text-xs font-mono font-bold uppercase tracking-wide transition ${tabCls('ROSCA_LEYES')}`}
       >
         Rosca y votación de leyes
       </button>
       <button
         type="button"
-        onClick={() => onSelectTab('REFORMAS')}
+        onClick={() => {
+          playUiSound('tab');
+          onSelectTab('REFORMAS');
+        }}
         className={`px-3.5 py-2 rounded-t-sm text-xs font-mono font-bold uppercase tracking-wide transition ${tabCls('REFORMAS')}`}
       >
         Reformas del Sistema Político
       </button>
       <button
         type="button"
-        onClick={() => onSelectTab('COMPOSICION')}
+        onClick={() => {
+          playUiSound('tab');
+          onSelectTab('COMPOSICION');
+        }}
         className={`px-3.5 py-2 rounded-t-sm text-xs font-mono font-bold uppercase tracking-wide transition ${tabCls('COMPOSICION')}`}
       >
         Relación por bloques
@@ -399,10 +411,10 @@ function CongressSubTabHeader({
 
 function CongressForcesTable({ forces }: { forces: PartySeatShare[] }) {
   return (
-    <div className="rounded-2xl bg-[#10131b] border border-slate-800/90 overflow-hidden shadow-lg">
-      <div className="p-4 md:p-5 border-b border-slate-800/80">
-        <h3 className="text-base font-extrabold text-white leading-tight">
-          | Relación con cada fuerza
+    <div className="hoi-panel rounded-sm overflow-hidden">
+      <div className="p-4 md:p-5 border-b border-[#263142]">
+        <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-white leading-tight">
+          Relación con cada fuerza
         </h3>
         <p className="text-xs text-slate-400 mt-1">
           Nivel de afinidad y disciplina parlamentaria con los bloques. Determina si bajan a dar quórum y cómo votan en particular.
@@ -411,7 +423,7 @@ function CongressForcesTable({ forces }: { forces: PartySeatShare[] }) {
 
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
-          <thead className="bg-[#0b0e15] border-b border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <thead className="bg-[#090d14] border-b border-[#263142] text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
             <tr>
               <th className="py-3 px-4">FUERZA</th>
               <th className="py-3 px-4 text-center">CÁMARA DE DIPUTADOS</th>
@@ -514,21 +526,13 @@ export function CamarasLegislativasView({
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800/80 pb-4 gap-2">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-rose-600" />
-            <span className="text-[11px] font-bold uppercase tracking-wider text-rose-400">
-              POLÍTICO
-            </span>
-          </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white mt-0.5">Cámaras</h1>
-        </div>
-        <div className="text-xs text-slate-400">
-          Negociación por bloques · Quórum 129 Diputados y 37 Senadores
-        </div>
-      </div>
+    <div className="space-y-5 rosca-panel-enter">
+      <SectionPageHeader
+        eyebrow="Político · Poder Legislativo"
+        title="Cámaras"
+        description="Negociación por bloques · Quórum 129 Diputados y 37 Senadores"
+        icon={<Landmark className="w-4 h-4 text-rose-300" />}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <HemicycleCard
