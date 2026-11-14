@@ -1,6 +1,8 @@
 import type { PolicyAction, SimulationState } from '../models/SimulationTypes.js';
+import type { SectorMeasureCard } from '../models/PartyAndSetupTypes.js';
 import { clamp, round2 } from '../economy/mathUtils.js';
 import { INITIAL_CONGRESS_BILLS } from '../politics/congressEngine.js';
+import { INITIAL_FIXED_REFORMS, toggleFixedReformState } from '../politics/reformasInstitucionalesEngine.js';
 import { approveAllRigiProjects, approveRigiProject } from './rigiEngine.js';
 
 // Partimos el despacho de acciones en handlers chiquitos por dominio para mantener CC <= 5
@@ -81,7 +83,22 @@ function applyEnergyAndLaborAction(state: SimulationState, action: PolicyAction)
   return null;
 }
 
+function applyIndecIntervention(state: SimulationState, intervene: boolean): SimulationState {
+  const indecCredibilityIndex = intervene ? 32 : 86;
+  const msg = intervene
+    ? `Intervencion del INDEC: nace la doble contabilidad con el IPC Congreso y se desploman los bonos CER.`
+    : `Normalizacion tecnica del INDEC: se auditan las series estadisticas.`;
+  return {
+    ...state,
+    structural: { ...state.structural, indecCredibilityIndex },
+    eventLog: [msg, ...state.eventLog.slice(0, 14)]
+  };
+}
+
 function applyStateReformOrIndecAction(state: SimulationState, action: PolicyAction): SimulationState | null {
+  if (action.type === 'TOGGLE_INSTITUTIONAL_REFORM') {
+    return applyInstitutionalReformToggle(state, action.reformId);
+  }
   if (action.type === 'EXECUTE_LABOR_REFORM') {
     return {
       ...state,
@@ -93,15 +110,7 @@ function applyStateReformOrIndecAction(state: SimulationState, action: PolicyAct
     };
   }
   if (action.type === 'TOGGLE_INDEC_INTERVENTION') {
-    const indecCredibilityIndex = action.intervene ? 32 : 86;
-    const msg = action.intervene
-      ? `Intervencion del INDEC: nace la doble contabilidad con el IPC Congreso y se desploman los bonos CER.`
-      : `Normalizacion tecnica del INDEC: se auditan las series estadisticas.`;
-    return {
-      ...state,
-      structural: { ...state.structural, indecCredibilityIndex },
-      eventLog: [msg, ...state.eventLog.slice(0, 14)]
-    };
+    return applyIndecIntervention(state, action.intervene);
   }
   return null;
 }
@@ -202,25 +211,127 @@ function computeBillApproval(prevApproval: number, delta: number | undefined): n
   return clamp(round2(prevApproval + delta), 5, 95);
 }
 
-function applyCongressBillAction(state: SimulationState, action: PolicyAction): SimulationState | null {
-  if (action.type !== 'ENACT_CONGRESS_BILL') return null;
-  const bill = INITIAL_CONGRESS_BILLS.find((b) => b.id === action.billId);
-  const title = bill ? bill.title : action.billId;
-  const c = bill?.consequences;
+interface NormalizedBillMeta {
+  title: string;
+  gdpGrowthDelta: number;
+  countryRiskDelta: number;
+  publicApprovalDelta: number;
+  inflationDelta: number;
+  primaryBalanceDelta: number;
+}
 
-  const nextGdp = round2(state.gdpGrowthAnnualPct + (c?.gdpGrowthDelta ?? 0));
-  const nextRisk = Math.max(200, state.countryRiskEmbiPb + (c?.countryRiskDelta ?? 0));
-  const nextApproval = computeBillApproval(state.publicOpinion.managementApprovalPct, c?.publicApprovalDelta);
+function resolveNormalizedBillMeta(billId: string): NormalizedBillMeta {
+  const bill = INITIAL_CONGRESS_BILLS.find((b) => b.id === billId);
+  const defaults = { gdpGrowthDelta: 0, countryRiskDelta: 0, publicApprovalDelta: 0, inflationDelta: 0, primaryBalanceDelta: 0 };
+  const c = Object.assign(defaults, bill?.consequences ?? {});
+  return { title: bill ? bill.title : billId, ...c };
+}
 
+function applyEnactBillAction(state: SimulationState, billId: string): SimulationState {
+  const enacted = state.enactedBillIds ?? [];
+  if (enacted.includes(billId)) return state;
+  const meta = resolveNormalizedBillMeta(billId);
+  const nextApproval = computeBillApproval(state.publicOpinion.managementApprovalPct, meta.publicApprovalDelta);
   return {
     ...state,
-    gdpGrowthAnnualPct: nextGdp,
-    countryRiskEmbiPb: nextRisk,
+    gdpGrowthAnnualPct: round2(state.gdpGrowthAnnualPct + meta.gdpGrowthDelta),
+    countryRiskEmbiPb: Math.max(200, state.countryRiskEmbiPb + meta.countryRiskDelta),
+    treasury: { ...state.treasury, primaryResultPctGdp: round2(state.treasury.primaryResultPctGdp + meta.primaryBalanceDelta) },
+    inflation: { ...state.inflation, realMonthlyIpcPct: round2(clamp(state.inflation.realMonthlyIpcPct + meta.inflationDelta, 0.2, 45)) },
     publicOpinion: { ...state.publicOpinion, managementApprovalPct: nextApproval },
-    eventLog: [
-      `Congreso Nacional: Se promulgó formalmente "${title}" tras su sanción en el recinto.`,
-      ...state.eventLog.slice(0, 14)
-    ]
+    enactedBillIds: [...enacted, billId],
+    rejectedBillIds: (state.rejectedBillIds ?? []).filter((id) => id !== billId),
+    eventLog: [`Congreso Nacional: Se promulgó formalmente "${meta.title}" tras su sanción en el recinto.`, ...state.eventLog.slice(0, 14)]
+  };
+}
+
+function applyRejectBillAction(state: SimulationState, billId: string): SimulationState {
+  const rejected = state.rejectedBillIds ?? [];
+  const bill = INITIAL_CONGRESS_BILLS.find((b) => b.id === billId);
+  const title = bill ? bill.title : billId;
+  return {
+    ...state,
+    rejectedBillIds: rejected.includes(billId) ? rejected : [...rejected, billId],
+    publicOpinion: {
+      ...state.publicOpinion,
+      managementApprovalPct: clamp(round2(state.publicOpinion.managementApprovalPct - 0.8), 5, 95)
+    },
+    eventLog: [`Congreso Nacional: Fracasó en el recinto el proyecto "${title}".`, ...state.eventLog.slice(0, 14)]
+  };
+}
+
+function applyGovernorConcessionLoyalty(provinces: SimulationState['provinces']): SimulationState['provinces'] {
+  return provinces.map((prov, idx) =>
+    idx < 6 ? { ...prov, governorLoyaltyToPresident: clamp(prov.governorLoyaltyToPresident + 5, 0, 100) } : prov
+  );
+}
+
+const CONCESSION_ATN_COST: Record<'ARGENTUMS' | 'GABINETE' | 'SUAVIZAR' | 'GOBERNADORES', number> = {
+  GOBERNADORES: 0.06,
+  ARGENTUMS: 0.04,
+  GABINETE: 0,
+  SUAVIZAR: 0
+};
+
+function updateCongressBlocRelations(
+  blocs: SimulationState['congressBlocs'],
+  blocId: string
+): SimulationState['congressBlocs'] {
+  return (blocs ?? []).map((b) => (b.id === blocId ? { ...b, relation: clamp(b.relation + 8, 0, 100) } : b));
+}
+
+function applyBlocConcessionAction(
+  state: SimulationState,
+  blocId: string,
+  concession: 'ARGENTUMS' | 'GABINETE' | 'SUAVIZAR' | 'GOBERNADORES'
+): SimulationState {
+  const atnCost = CONCESSION_ATN_COST[concession];
+  const approvalDelta = concession === 'GABINETE' ? -0.5 : 0;
+  const provinces = concession === 'GOBERNADORES' ? applyGovernorConcessionLoyalty(state.provinces) : state.provinces;
+  return {
+    ...state,
+    provinces,
+    treasury: { ...state.treasury, discretionaryAtnPctGdp: round2(state.treasury.discretionaryAtnPctGdp + atnCost) },
+    publicOpinion: { ...state.publicOpinion, managementApprovalPct: clamp(round2(state.publicOpinion.managementApprovalPct + approvalDelta), 5, 95) },
+    congressBlocs: updateCongressBlocRelations(state.congressBlocs, blocId),
+    eventLog: [`Rosca Parlamentaria: Concesión "${concession}" otorgada al bloque ${blocId}.`, ...state.eventLog.slice(0, 14)]
+  };
+}
+
+function applyCongressBillAction(state: SimulationState, action: PolicyAction): SimulationState | null {
+  if (action.type === 'ENACT_CONGRESS_BILL') return applyEnactBillAction(state, action.billId);
+  if (action.type === 'REJECT_CONGRESS_BILL') return applyRejectBillAction(state, action.billId);
+  if (action.type === 'GRANT_BLOC_CONCESSION') return applyBlocConcessionAction(state, action.blocId, action.concession);
+  return null;
+}
+
+function computeReformDeltas(target: (typeof INITIAL_FIXED_REFORMS)[number]): { approvalShift: number; riskShift: number } {
+  if (!target.active) return { approvalShift: -0.6, riskShift: 0 };
+  const approvalShift = (target.publicSupportPct - target.polemicaPct) * 0.03;
+  const riskShift = target.majorityType === 'CONSTITUCIONAL' ? -25 : 0;
+  return { approvalShift, riskShift };
+}
+
+function formatReformLogLine(target: (typeof INITIAL_FIXED_REFORMS)[number], deactivatedMutualId?: string): string {
+  const verb = target.active ? 'Promulgada reforma institucional' : 'Derogada reforma institucional';
+  const suffix = deactivatedMutualId ? ` (reemplazó a ${deactivatedMutualId})` : '';
+  return `${verb}: ${target.name}${suffix}.`;
+}
+
+function applyInstitutionalReformToggle(state: SimulationState, reformId: string): SimulationState {
+  const activeSet = new Set(state.activeReformIds ?? []);
+  const currentList = INITIAL_FIXED_REFORMS.map((r) => ({ ...r, active: activeSet.has(r.id) }));
+  const { updatedReforms, deactivatedMutualId } = toggleFixedReformState(currentList, reformId);
+  const target = updatedReforms.find((r) => r.id === reformId);
+  if (!target) return state;
+
+  const { approvalShift, riskShift } = computeReformDeltas(target);
+  return {
+    ...state,
+    activeReformIds: updatedReforms.filter((r) => r.active).map((r) => r.id),
+    countryRiskEmbiPb: Math.max(200, state.countryRiskEmbiPb + riskShift),
+    publicOpinion: { ...state.publicOpinion, managementApprovalPct: clamp(round2(state.publicOpinion.managementApprovalPct + approvalShift), 5, 95) },
+    eventLog: [formatReformLogLine(target, deactivatedMutualId), ...state.eventLog.slice(0, 14)]
   };
 }
 
@@ -255,12 +366,21 @@ function applyCabinetAction(state: SimulationState, action: PolicyAction): Simul
   return null;
 }
 
+function isMeasureExcluded(candidate: SectorMeasureCard, target: SectorMeasureCard): boolean {
+  return candidate.id === target.mutuallyExclusiveWith || candidate.mutuallyExclusiveWith === target.id;
+}
+
 function handleToggleMeasure(state: SimulationState, measureId: string): SimulationState {
   const measures = state.measures ?? [];
-  return {
-    ...state,
-    measures: measures.map((m) => (m.id === measureId ? { ...m, active: !m.active } : m))
-  };
+  const target = measures.find((m) => m.id === measureId);
+  if (!target) return state;
+  const activating = !target.active;
+  const nextMeasures = measures.map((m) => {
+    if (m.id === measureId) return { ...m, active: activating };
+    if (activating && isMeasureExcluded(m, target)) return { ...m, active: false };
+    return m;
+  });
+  return { ...state, measures: nextMeasures };
 }
 
 function handleToggleRigiSector(state: SimulationState, sectorId: string): SimulationState {

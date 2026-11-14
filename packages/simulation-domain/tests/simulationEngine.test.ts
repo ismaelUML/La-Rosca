@@ -14,9 +14,14 @@ import {
   applyConcessionToBloc,
   simulateChamberVote,
   executeFullCongressVote,
+  buildDynamicParliamentaryBlocs,
   type CongressNegotiationBloc
 } from '@argentina-sim/domain';
-import { createInitialSimulationState2027, PROVINCES_2027_DATASET } from '@argentina-sim/infrastructure';
+import {
+  INITIAL_SECTOR_MEASURES,
+  createInitialSimulationState2027,
+  PROVINCES_2027_DATASET
+} from '@argentina-sim/infrastructure';
 
 describe('Motor Macroeconomico, Judicial y Laboral Argentino 2027', () => {
   it('verifica que las 24 jurisdicciones sumen exactamente las 257 bancas de la Camara de Diputados', () => {
@@ -161,12 +166,42 @@ describe('Motor Macroeconomico, Judicial y Laboral Argentino 2027', () => {
     expect(outcome.billId).toBe('LEY_BASES_2');
     expect(typeof outcome.passed).toBe('boolean');
 
-    // Promulgación en SimulationState
+    // Promulgación en SimulationState (idempotente y con impacto fiscal/IPC completo)
     let state = createInitialSimulationState2027('PRESIDENTE', 'ESTANDAR_2027', 'CABA');
     const prevGdp = state.gdpGrowthAnnualPct;
     state = applyPolicyAction(state, { type: 'ENACT_CONGRESS_BILL', billId: 'LEY_BASES_2' });
     expect(state.gdpGrowthAnnualPct).toBeGreaterThan(prevGdp);
+    expect(state.enactedBillIds).toContain('LEY_BASES_2');
     expect(state.eventLog[0]).toContain('Ley Bases 2.0');
+
+    const gdpAfterOnce = state.gdpGrowthAnnualPct;
+    state = applyPolicyAction(state, { type: 'ENACT_CONGRESS_BILL', billId: 'LEY_BASES_2' });
+    expect(state.gdpGrowthAnnualPct).toBe(gdpAfterOnce);
+
+    // Reformas institucionales persistidas con exclusión mutua
+    state = applyPolicyAction(state, { type: 'TOGGLE_INSTITUTIONAL_REFORM', reformId: 'con_paso' });
+    expect(state.activeReformIds).toContain('con_paso');
+    state = applyPolicyAction(state, { type: 'TOGGLE_INSTITUTIONAL_REFORM', reformId: 'sin_paso' });
+    expect(state.activeReformIds).toContain('sin_paso');
+    expect(state.activeReformIds).not.toContain('con_paso');
+
+    // Girar ATN mejora afinidad parlamentaria de bloques provinciales
+    const beforeBlocs = buildDynamicParliamentaryBlocs(state);
+    const provBefore = beforeBlocs.find((b) => b.id === 'PROVINCIALES')!.probabilityYes;
+    for (const p of state.provinces.slice(0, 6)) {
+      state = applyPolicyAction(state, { type: 'SEND_ATN_TO_PROVINCE', provinceId: p.id, amountPctGdp: 0.08 });
+    }
+    const afterBlocs = buildDynamicParliamentaryBlocs(state);
+    const provAfter = afterBlocs.find((b) => b.id === 'PROVINCIALES')!.probabilityYes;
+    expect(provAfter).toBeGreaterThanOrEqual(provBefore);
+
+    // Medidas mutuamente excluyentes se desactivan entre sí
+    state = { ...state, measures: INITIAL_SECTOR_MEASURES.map((m) => ({ ...m })) };
+    state = applyPolicyAction(state, { type: 'TOGGLE_MEASURE', measureId: 'CONGELAMIENTO_TARIFAS_TRANSPORTE_AMBA' });
+    expect(state.measures?.find((m) => m.id === 'CONGELAMIENTO_TARIFAS_TRANSPORTE_AMBA')?.active).toBe(true);
+    state = applyPolicyAction(state, { type: 'TOGGLE_MEASURE', measureId: 'QUITA_SUBSIDIO_AMBA_AUMENTO_BOLETO' });
+    expect(state.measures?.find((m) => m.id === 'QUITA_SUBSIDIO_AMBA_AUMENTO_BOLETO')?.active).toBe(true);
+    expect(state.measures?.find((m) => m.id === 'CONGELAMIENTO_TARIFAS_TRANSPORTE_AMBA')?.active).toBe(false);
   });
 });
 

@@ -479,7 +479,7 @@ function CongressSubTabContent({
     return <CongressBillsNegotiationSection state={state} onDispatch={onDispatch} />;
   }
   if (subTab === 'REFORMAS') {
-    return <ReformasInstitucionalesSection />;
+    return <ReformasInstitucionalesSection state={state} onDispatch={onDispatch} />;
   }
   return (
     <CongressCompositionView

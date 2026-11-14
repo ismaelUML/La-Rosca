@@ -138,3 +138,4 @@ export const CONGRESS_BILLS_EXPANSION_105: CongressBillProject[] = [
   mkBill('LEY_PRIVACIDAD_CAMARAS_URBANAS_ANPR', 'Red Federal de Lectores de Patentes ANPR', 'Integra lectores municipales y privados bajo orden judicial para búsqueda de robados.', 'SEGURIDAD_JUSTICIA', 'MEDIA', { publicApprovalDelta: 2.2 }),
   mkBill('LEY_REGIMEN_ESPACIAL_Y_SATELITAL_INVAP', 'Programa Espacial y Satelital Mixto INVAP', 'Contrato marco plurianual para lanzadores y constelaciones en alianza con capital privado.', 'ENERGIA_INFRAESTRUCTURA', 'ESTRUCTURAL', { gdpGrowthDelta: 0.35, countryRiskDelta: -15, publicApprovalDelta: 2.5 })
 ];
+

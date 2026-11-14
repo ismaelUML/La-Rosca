@@ -163,6 +163,7 @@ export interface SectorMeasureCard {
   cooldownMonths?: number;
   ideologyTag?: 'IZQUIERDA' | 'CENTRO' | 'DERECHA';
   effectsBadges?: MeasureEffectBadge[];
+  mutuallyExclusiveWith?: string;
   active: boolean;
   fiscalCostPctGdp: number;
   inflationEffectPp: number;

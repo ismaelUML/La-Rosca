@@ -141,3 +141,4 @@ export const REFORMS_EXPANSION_105: FixedReformItem[] = [
   mkReform('COMPRA_PUBLICA_SUBASTA_INVERSA', 'Subasta inversa pública obligatoria online', 'ESTADO_EDUCACION', 'ORDINARIA', 'Toda compra estandarizada nacional se adjudica en vivo al menor precio transparente.', 88, 25),
   mkReform('PLAN_NACIONAL_RESIDUOS_ENERGIA', 'Generación energética privada desde residuos', 'ESTADO_EDUCACION', 'ORDINARIA', 'Marco legal para plantas waste-to-energy en áreas metropolitanas cerrando basurales abiertos.', 79, 26)
 ];
+

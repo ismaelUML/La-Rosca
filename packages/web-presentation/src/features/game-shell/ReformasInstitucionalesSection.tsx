@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Check, Search, X } from 'lucide-react';
 import {
   INITIAL_FIXED_REFORMS,
-  toggleFixedReformState,
   type FixedReformItem,
-  type ReformCategory
+  type PolicyAction,
+  type ReformCategory,
+  type SimulationState
 } from '@argentina-sim/domain';
 import { playUiSound } from '@/lib/gameFeedback';
 
@@ -161,22 +162,33 @@ function matchesReformQuery(reform: FixedReformItem, query: string): boolean {
   return reform.name.toLowerCase().includes(q) || reform.description.toLowerCase().includes(q);
 }
 
-export function ReformasInstitucionalesSection() {
-  const [reforms, setReforms] = useState<FixedReformItem[]>(INITIAL_FIXED_REFORMS);
+interface ReformasInstitucionalesSectionProps {
+  state: SimulationState;
+  onDispatch: (action: PolicyAction) => void;
+}
+
+export function ReformasInstitucionalesSection({
+  state,
+  onDispatch
+}: ReformasInstitucionalesSectionProps) {
   const [selectedCat, setSelectedCat] = useState<'TODAS' | ReformCategory>('TODAS');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [bannerNotice, setBannerNotice] = useState<string | null>(null);
 
-  const handleToggle = (id: string) => {
-    const { updatedReforms, deactivatedMutualId } = toggleFixedReformState(reforms, id);
-    setReforms(updatedReforms);
+  const activeSet = useMemo(() => new Set(state.activeReformIds ?? []), [state.activeReformIds]);
+  const reforms = useMemo(
+    () => INITIAL_FIXED_REFORMS.map((r) => ({ ...r, active: activeSet.has(r.id) })),
+    [activeSet]
+  );
 
-    const target = updatedReforms.find((r) => r.id === id);
-    if (target?.active) {
-      const mutualText = deactivatedMutualId ? ` (se derogó automáticamente ${deactivatedMutualId}).` : '.';
-      setBannerNotice(`Se promulgó la reforma: ${target.name}${mutualText}`);
-    } else {
-      setBannerNotice(`Se derogó la reforma: ${target?.name ?? id}.`);
+  const handleToggle = (id: string) => {
+    const prevTarget = reforms.find((r) => r.id === id);
+    onDispatch({ type: 'TOGGLE_INSTITUTIONAL_REFORM', reformId: id });
+    if (prevTarget && !prevTarget.active) {
+      const mutual = prevTarget.mutuallyExclusiveWith ? ` (derogando ${prevTarget.mutuallyExclusiveWith})` : '';
+      setBannerNotice(`Se promulgó y guardó la reforma: ${prevTarget.name}${mutual}.`);
+    } else if (prevTarget) {
+      setBannerNotice(`Se derogó la reforma: ${prevTarget.name}.`);
     }
   };
 

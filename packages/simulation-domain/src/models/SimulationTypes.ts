@@ -304,6 +304,9 @@ export interface SimulationState {
   rigiSectors?: RigisectorItem[];
   rigiPending?: RigiPendingProject[];
   customTaxes?: CustomTaxProposal[];
+  activeReformIds?: string[];
+  enactedBillIds?: string[];
+  rejectedBillIds?: string[];
 }
 
 export type PolicyAction =
@@ -331,5 +334,8 @@ export type PolicyAction =
   | { type: 'APPROVE_RIGI_PROJECT'; projectId: string }
   | { type: 'REJECT_RIGI_PROJECT'; projectId: string }
   | { type: 'APPROVE_ALL_RIGI_PROJECTS' }
-  | { type: 'ADD_CUSTOM_TAX'; proposal: CustomTaxProposal };
+  | { type: 'ADD_CUSTOM_TAX'; proposal: CustomTaxProposal }
+  | { type: 'TOGGLE_INSTITUTIONAL_REFORM'; reformId: string }
+  | { type: 'REJECT_CONGRESS_BILL'; billId: string }
+  | { type: 'GRANT_BLOC_CONCESSION'; blocId: string; concession: 'ARGENTUMS' | 'GABINETE' | 'SUAVIZAR' | 'GOBERNADORES' };
 

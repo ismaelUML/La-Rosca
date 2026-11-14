@@ -1,5 +1,6 @@
 import type { SimulationState } from '../models/SimulationTypes.js';
 import { clamp, round2 } from '../economy/mathUtils.js';
+import { INITIAL_CONGRESS_BILLS } from '../politics/congressEngine.js';
 
 export interface DomainPolicyModifiers {
   rigiMonthlyExportsBillionUsd: number;
@@ -9,6 +10,7 @@ export interface DomainPolicyModifiers {
   measuresInflationDeltaPp: number;
   measuresApprovalDeltaPp: number;
   customTaxesRevenuePctGdp: number;
+  congressBillsNetRevenuePctGdp: number;
   cabinetExecutionIndex: number | null;
   cabinetAnchorBonus: number;
 }
@@ -83,6 +85,17 @@ function computeCabinetModifiers(state: SimulationState): Pick<
   };
 }
 
+function computeCongressBillsRevenueDelta(state: SimulationState): number {
+  const enactedIds = state.enactedBillIds ?? [];
+  if (enactedIds.length === 0) return 0;
+  let total = 0;
+  for (const id of enactedIds) {
+    const bill = INITIAL_CONGRESS_BILLS.find((b) => b.id === id);
+    total += bill?.consequences.primaryBalanceDelta ?? 0;
+  }
+  return round2(clamp(total * 0.35, -2.5, 2.5));
+}
+
 export function computeDomainPolicyModifiers(state: SimulationState): DomainPolicyModifiers {
   const customTaxesRevenuePctGdp = round2(
     (state.customTaxes ?? []).filter((t) => t.approvedByCongress).reduce((acc, t) => acc + t.estimatedRevenuePctGdp, 0)
@@ -91,6 +104,7 @@ export function computeDomainPolicyModifiers(state: SimulationState): DomainPoli
     ...computeRigiModifiers(state),
     ...computeMeasuresModifiers(state),
     ...computeCabinetModifiers(state),
-    customTaxesRevenuePctGdp
+    customTaxesRevenuePctGdp,
+    congressBillsNetRevenuePctGdp: computeCongressBillsRevenueDelta(state)
   };
 }

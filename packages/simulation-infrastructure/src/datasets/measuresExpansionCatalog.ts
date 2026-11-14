@@ -10,6 +10,7 @@ interface RawMeasureSpec {
   fiscalCostPctGdp: number;
   inflationEffectPp: number;
   approvalEffectPp: number;
+  mutuallyExclusiveWith?: string;
   extraBadge?: MeasureEffectBadge;
 }
 
@@ -49,6 +50,7 @@ function mkMeasure(spec: RawMeasureSpec): SectorMeasureCard {
     cooldownMonths: spec.durationType === 'TEMPORAL' ? 3 : undefined,
     ideologyTag: spec.ideologyTag,
     effectsBadges: buildEffectsBadges(spec),
+    mutuallyExclusiveWith: spec.mutuallyExclusiveWith,
     active: false,
     fiscalCostPctGdp: spec.fiscalCostPctGdp,
     inflationEffectPp: spec.inflationEffectPp,
@@ -76,17 +78,17 @@ const RAW_MEASURES_EXPANSION: RawMeasureSpec[] = [
 
   // B. Comercio Interior, Precios y Consumo (M16-M28)
   { id: 'IMPORTACION_PUERTA_A_PUERTA_3000', sectorId: 'PRECIOS', title: 'Franquicia courier hasta USD 3.000', description: 'Amplía el límite de envíos internacionales puerta a puerta sin aranceles para uso personal.', durationType: 'PERMANENTE', ideologyTag: 'DERECHA', fiscalCostPctGdp: 0.08, inflationEffectPp: -0.3, approvalEffectPp: 1.6 },
-  { id: 'ELIMINAR_SIRAS_TEXTIL_CALZADO', sectorId: 'PRODUCCION', title: 'Apertura total textil y calzado', description: 'Elimina licencias no automáticas en indumentaria y calzado para bajar precios de vidriera.', durationType: 'PERMANENTE', ideologyTag: 'DERECHA', fiscalCostPctGdp: 0.04, inflationEffectPp: -0.35, approvalEffectPp: 0.4 },
-  { id: 'CUOTA_SIMPLE_PRODUCTOS_NACIONALES', sectorId: 'PRODUCCION', title: 'Cuota Simple en 12 pagos subsidiada', description: 'Financiación blanda con tarjeta para línea blanca, materiales y textiles fabricados en el país.', durationType: 'TEMPORAL', ideologyTag: 'IZQUIERDA', fiscalCostPctGdp: 0.22, inflationEffectPp: 0.2, approvalEffectPp: 1.5 },
+  { id: 'ELIMINAR_SIRAS_TEXTIL_CALZADO', sectorId: 'PRODUCCION', title: 'Apertura total textil y calzado', description: 'Elimina licencias no automáticas en indumentaria y calzado para bajar precios de vidriera.', durationType: 'PERMANENTE', ideologyTag: 'DERECHA', fiscalCostPctGdp: 0.04, inflationEffectPp: -0.35, approvalEffectPp: 0.4, mutuallyExclusiveWith: 'CUOTA_SIMPLE_PRODUCTOS_NACIONALES' },
+  { id: 'CUOTA_SIMPLE_PRODUCTOS_NACIONALES', sectorId: 'PRODUCCION', title: 'Cuota Simple en 12 pagos subsidiada', description: 'Financiación blanda con tarjeta para línea blanca, materiales y textiles fabricados en el país.', durationType: 'TEMPORAL', ideologyTag: 'IZQUIERDA', fiscalCostPctGdp: 0.22, inflationEffectPp: 0.2, approvalEffectPp: 1.5, mutuallyExclusiveWith: 'ELIMINAR_SIRAS_TEXTIL_CALZADO' },
   { id: 'TRANSPARENCIA_PRECIO_NETO_GONDOLA', sectorId: 'IMPUESTOS', title: 'Discriminación impositiva en ticket', description: 'Obliga a exhibir IVA, Ingresos Brutos y tasas municipales desglosados en cada compra minorista.', durationType: 'PERMANENTE', ideologyTag: 'DERECHA', fiscalCostPctGdp: 0.0, inflationEffectPp: -0.1, approvalEffectPp: 1.3 },
   { id: 'DESREGULACION_MEDICAMENTOS_LIBRES', sectorId: 'PRECIOS', title: 'Venta libre fuera de farmacias', description: 'Autoriza supermercados y kioscos a vender analgésicos y medicamentos de venta libre.', durationType: 'PERMANENTE', ideologyTag: 'DERECHA', fiscalCostPctGdp: -0.02, inflationEffectPp: -0.2, approvalEffectPp: 0.8 },
   { id: 'IMPORTACION_MEDICAMENTOS_INDIA_GEN', sectorId: 'PRECIOS', title: 'Vía rápida ANMAT a genéricos externos', description: 'Homologación exprés de genéricos aprobados por FDA o EMA para bajar costos de PAMI y farmacias.', durationType: 'PERMANENTE', ideologyTag: 'CENTRO', fiscalCostPctGdp: -0.18, inflationEffectPp: -0.25, approvalEffectPp: 1.4 },
   { id: 'PREPAGAS_LIBRE_COMPETENCIA_PLANES', sectorId: 'PRECIOS', title: 'Multa automática a cartel de prepagas', description: 'Desregula cuotas de medicina privada bajo sanción severa por aumentos coordinados.', durationType: 'TEMPORAL', ideologyTag: 'CENTRO', fiscalCostPctGdp: 0.0, inflationEffectPp: -0.2, approvalEffectPp: 0.9 },
   { id: 'MERCADO_CENTRAL_MAYORISTA_DIRECTO', sectorId: 'AGRO', title: 'Nodos mayoristas directos sin acopio', description: 'Habilita logística federal directa de cooperativas frutihortícolas a comercios de cercanía.', durationType: 'PERMANENTE', ideologyTag: 'IZQUIERDA', fiscalCostPctGdp: 0.09, inflationEffectPp: -0.25, approvalEffectPp: 1.0 },
-  { id: 'FIDEICOMISO_HARINA_CERO', sectorId: 'AGRO', title: 'Cierre de fideicomisos de harina y aceite', description: 'Suprime fondos compensadores cruzados financiados con retenciones y libera molinos.', durationType: 'PERMANENTE', ideologyTag: 'DERECHA', fiscalCostPctGdp: -0.1, inflationEffectPp: 0.25, approvalEffectPp: -0.6 },
+  { id: 'FIDEICOMISO_HARINA_CERO', sectorId: 'AGRO', title: 'Cierre de fideicomisos de harina y aceite', description: 'Suprime fondos compensadores cruzados financiados con retenciones y libera molinos.', durationType: 'PERMANENTE', ideologyTag: 'DERECHA', fiscalCostPctGdp: -0.1, inflationEffectPp: 0.25, approvalEffectPp: -0.6, mutuallyExclusiveWith: 'LEY_GONDOLAS' },
   { id: 'ETIQUETADO_SIMPLIFICADO_MERCOSUR', sectorId: 'PRECIOS', title: 'Homologación bromatológica Mercosur', description: 'Reconoce rótulos sanitarios de Brasil, Uruguay y Chile para importar alimentos en 48 horas.', durationType: 'PERMANENTE', ideologyTag: 'DERECHA', fiscalCostPctGdp: 0.02, inflationEffectPp: -0.3, approvalEffectPp: 0.5 },
-  { id: 'CONGELAMIENTO_TARIFAS_TRANSPORTE_AMBA', sectorId: 'PRECIOS', title: 'Tope 120 días al boleto AMBA', description: 'Frena aumentos de colectivos y trenes metropolitanos cubriendo el desfasaje con Tesoro.', durationType: 'TEMPORAL', ideologyTag: 'IZQUIERDA', fiscalCostPctGdp: 0.35, inflationEffectPp: -0.35, approvalEffectPp: 1.9 },
-  { id: 'QUITA_SUBSIDIO_AMBA_AUMENTO_BOLETO', sectorId: 'IMPUESTOS', title: 'Sinceramiento total de boleto AMBA', description: 'Pasa tarifas del Conurbano a valor pleno manteniendo solo atributo social nominal por SUBE.', durationType: 'PERMANENTE', ideologyTag: 'DERECHA', fiscalCostPctGdp: -0.45, inflationEffectPp: 0.45, approvalEffectPp: -1.8 },
+  { id: 'CONGELAMIENTO_TARIFAS_TRANSPORTE_AMBA', sectorId: 'PRECIOS', title: 'Tope 120 días al boleto AMBA', description: 'Frena aumentos de colectivos y trenes metropolitanos cubriendo el desfasaje con Tesoro.', durationType: 'TEMPORAL', ideologyTag: 'IZQUIERDA', fiscalCostPctGdp: 0.35, inflationEffectPp: -0.35, approvalEffectPp: 1.9, mutuallyExclusiveWith: 'QUITA_SUBSIDIO_AMBA_AUMENTO_BOLETO' },
+  { id: 'QUITA_SUBSIDIO_AMBA_AUMENTO_BOLETO', sectorId: 'IMPUESTOS', title: 'Sinceramiento total de boleto AMBA', description: 'Pasa tarifas del Conurbano a valor pleno manteniendo solo atributo social nominal por SUBE.', durationType: 'PERMANENTE', ideologyTag: 'DERECHA', fiscalCostPctGdp: -0.45, inflationEffectPp: 0.45, approvalEffectPp: -1.8, mutuallyExclusiveWith: 'CONGELAMIENTO_TARIFAS_TRANSPORTE_AMBA' },
   { id: 'BILLETERAS_INTEROPERABILIDAD_SUBE', sectorId: 'OBRA_PUBLICA', title: 'Apertura total SUBE a QR y NFC', description: 'Permite pagar colectivos, trenes y subtes con cualquier tarjeta bancaria o billetera virtual.', durationType: 'PERMANENTE', ideologyTag: 'CENTRO', fiscalCostPctGdp: 0.03, inflationEffectPp: 0.0, approvalEffectPp: 1.7 },
 
   // C. Industria, PyMEs, Exportaciones y Aduana (M29-M42)

@@ -174,7 +174,7 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
     gdpNominalBillionUsd,
     state.structural.anchorCredibilityIndex,
     {
-      extraRevenuePctGdp: mod.customTaxesRevenuePctGdp,
+      extraRevenuePctGdp: mod.customTaxesRevenuePctGdp + mod.congressBillsNetRevenuePctGdp,
       extraSpendingPctGdp: mod.measuresFiscalCostPctGdp + mod.rigiFiscalCostPctGdp
     }
   );

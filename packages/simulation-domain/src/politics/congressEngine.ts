@@ -3,6 +3,7 @@
 // y los gobernadores. Sin los votos en duda de radicales, provinciales y peronismo federal,
 // cualquier ley de fondo naufraga antes de llegar al recinto.
 
+import type { SimulationState } from '../models/SimulationTypes.js';
 import { CONGRESS_BILLS_EXPANSION_105 } from './congressBillsExpansionCatalog.js';
 
 export type CongressBillCategory =
@@ -280,6 +281,39 @@ function resolveStanceByProbability(prob: number): BlocStance {
   if (prob >= 60) return 'A_FAVOR';
   if (prob >= 35) return 'EN_DUDA';
   return 'EN_CONTRA';
+}
+
+export function computeProvincialLoyaltyCongressDelta(state: SimulationState): number {
+  const list = state.provinces;
+  if (!list || list.length === 0) return 0;
+  const avgLoyalty = list.reduce((acc, p) => acc + p.governorLoyaltyToPresident, 0) / list.length;
+  const quasiPenalty = list.filter((p) => p.quasiCurrencyIssued).length * 4;
+  return Math.round((avgLoyalty - 50) * 0.45 - quasiPenalty);
+}
+
+function resolveBlocBaseAffinity(bloc: CongressNegotiationBloc, state: SimulationState, provDelta: number): number {
+  const stateBloc = state.congressBlocs?.find((item) => item.id === bloc.id);
+  const relationShift = stateBloc ? Math.round((stateBloc.relation - 50) * 0.25) : 0;
+  const coalitionBonus = state.coalitionParties?.includes(bloc.id) ? 14 : 0;
+  const isRegional = bloc.id === 'PF' || bloc.id === 'PROVINCIALES';
+  return Math.max(2, Math.min(99, bloc.baseAffinityPct + relationShift + coalitionBonus + (isRegional ? provDelta : 0)));
+}
+
+export function buildDynamicParliamentaryBlocs(state: SimulationState): CongressNegotiationBloc[] {
+  const provDelta = computeProvincialLoyaltyCongressDelta(state);
+  const approval = state.publicOpinion?.managementApprovalPct ?? 50;
+  return INITIAL_PARLIAMENTARY_BLOCS.map((bloc) => {
+    const stateBloc = state.congressBlocs?.find((item) => item.id === bloc.id);
+    const updatedBase = resolveBlocBaseAffinity(bloc, state, provDelta);
+    const merged: CongressNegotiationBloc = {
+      ...bloc,
+      deputiesSeats: stateBloc?.deputiesSeats ?? bloc.deputiesSeats,
+      senateSeats: stateBloc?.senateSeats ?? bloc.senateSeats,
+      baseAffinityPct: updatedBase
+    };
+    const probabilityYes = computeBlocProbability(merged, approval, false);
+    return { ...merged, probabilityYes, currentStance: resolveStanceByProbability(probabilityYes) };
+  });
 }
 
 export function computeBlocProbability(

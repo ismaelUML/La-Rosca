@@ -14,9 +14,10 @@ import type {
 } from '@argentina-sim/domain';
 import {
   applyConcessionToBloc,
+  buildDynamicParliamentaryBlocs,
+  computeProvincialLoyaltyCongressDelta,
   executeFullCongressVote,
-  INITIAL_CONGRESS_BILLS,
-  INITIAL_PARLIAMENTARY_BLOCS
+  INITIAL_CONGRESS_BILLS
 } from '@argentina-sim/domain';
 
 interface CongressBillsNegotiationSectionProps {
@@ -618,14 +619,35 @@ function VoteResultModal({
   );
 }
 
+function resolveBillPersistedStatus(
+  id: string,
+  enactedSet: Set<string>,
+  rejectedSet: Set<string>
+): CongressBillProject['status'] {
+  if (enactedSet.has(id)) return 'APROBADA';
+  if (rejectedSet.has(id)) return 'RECHAZADA';
+  return 'PENDIENTE';
+}
+
 export function CongressBillsNegotiationSection({
   state,
   onDispatch
 }: CongressBillsNegotiationSectionProps) {
-  const [bills, setBills] = useState<CongressBillProject[]>(INITIAL_CONGRESS_BILLS);
+  const [softenedIds, setSoftenedIds] = useState<string[]>([]);
   const [selectedBillId, setSelectedBillId] = useState<string>(INITIAL_CONGRESS_BILLS[0]!.id);
-  const [blocs, setBlocs] = useState<CongressNegotiationBloc[]>(INITIAL_PARLIAMENTARY_BLOCS);
+  const [blocs, setBlocs] = useState<CongressNegotiationBloc[]>(() => buildDynamicParliamentaryBlocs(state));
   const [voteOutcome, setVoteOutcome] = useState<CongressVoteOutcome | null>(null);
+
+  const bills = useMemo(() => {
+    const enacted = new Set(state.enactedBillIds ?? []);
+    const rejected = new Set(state.rejectedBillIds ?? []);
+    const soft = new Set(softenedIds);
+    return INITIAL_CONGRESS_BILLS.map((b) => ({
+      ...b,
+      isSoftened: soft.has(b.id),
+      status: resolveBillPersistedStatus(b.id, enacted, rejected)
+    }));
+  }, [state.enactedBillIds, state.rejectedBillIds, softenedIds]);
 
   const selectedBill = useMemo(
     () => bills.find((b) => b.id === selectedBillId) ?? bills[0]!,
@@ -633,37 +655,30 @@ export function CongressBillsNegotiationSection({
   );
 
   const approval = state.publicOpinion?.managementApprovalPct ?? 50;
+  const provCongressDelta = computeProvincialLoyaltyCongressDelta(state);
   const projectedDeputiesYes = useMemo(() => sumProjectedYesVotes(blocs, 'deputies'), [blocs]);
   const projectedSenateYes = useMemo(() => sumProjectedYesVotes(blocs, 'senate'), [blocs]);
 
   const handleToggleSoftened = () => {
-    setBills((prev) =>
-      prev.map((b) => (b.id === selectedBillId ? { ...b, isSoftened: !b.isSoftened } : b))
+    setSoftenedIds((prev) =>
+      prev.includes(selectedBillId) ? prev.filter((id) => id !== selectedBillId) : [...prev, selectedBillId]
     );
   };
 
   const handleApplyConcession = (blocId: string, concession: ConcessionType) => {
     setBlocs((prev) =>
-      prev.map((b) => {
-        if (b.id !== blocId) return b;
-        return applyConcessionToBloc(b, concession, approval, selectedBill.isSoftened);
-      })
+      prev.map((b) => (b.id === blocId ? applyConcessionToBloc(b, concession, approval, selectedBill.isSoftened) : b))
     );
+    onDispatch({ type: 'GRANT_BLOC_CONCESSION', blocId, concession });
   };
 
   const handleExecuteRecintoVote = () => {
     const outcome = executeFullCongressVote(selectedBill, blocs, Date.now());
     setVoteOutcome(outcome);
-
-    setBills((prev) =>
-      prev.map((b) => {
-        if (b.id !== selectedBill.id) return b;
-        return { ...b, status: outcome.passed ? 'APROBADA' : 'RECHAZADA' };
-      })
-    );
-
     if (outcome.passed) {
       onDispatch({ type: 'ENACT_CONGRESS_BILL', billId: selectedBill.id });
+    } else {
+      onDispatch({ type: 'REJECT_CONGRESS_BILL', billId: selectedBill.id });
     }
   };
 
@@ -696,18 +711,22 @@ export function CongressBillsNegotiationSection({
         <div>
           <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-white">Negociación bloque por bloque</h3>
           <p className="text-xs text-slate-400 mt-0.5">
-            Cede obras, cargos o suaviza articulados con los bloques en duda para llegar al quórum.
+            Cede obras, cargos o suaviza articulados con los bloques en duda. Clima provincial PF/PROV:{' '}
+            <strong className={provCongressDelta >= 0 ? 'text-emerald-300' : 'text-rose-300'}>
+              {provCongressDelta >= 0 ? `+${provCongressDelta}` : provCongressDelta}%
+            </strong>
           </p>
         </div>
         <button
           type="button"
+          disabled={selectedBill.status === 'APROBADA'}
           onClick={() => {
             playUiSound('turn');
             handleExecuteRecintoVote();
           }}
-          className="hoi-btn-gold px-4 py-2 rounded-sm font-mono font-extrabold text-xs uppercase tracking-wide flex items-center gap-2"
+          className="hoi-btn-gold px-4 py-2 rounded-sm font-mono font-extrabold text-xs uppercase tracking-wide flex items-center gap-2 disabled:opacity-45 disabled:cursor-not-allowed"
         >
-          <span>Llevar a votación en el recinto</span>
+          <span>{selectedBill.status === 'APROBADA' ? 'Ley ya sancionada' : 'Llevar a votación en el recinto'}</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>

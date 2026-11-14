@@ -497,3 +497,4 @@ export const GOVERNMENT_EVENTS_EXPANSION_105: GovernmentEventDefinition[] = [
     opt('REDOBLAR_MANDATO', 'Redoblar mandato duro sin negociar cargos', 'Cohesiona núcleo propio elevando fricción con cámaras.', { approvalPts: 2, governorLoyaltyPts: -5, countryRiskPb: 35 })
   ])
 ];
+

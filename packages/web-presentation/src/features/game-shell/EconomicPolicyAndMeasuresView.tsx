@@ -487,12 +487,17 @@ export function SectorMeasuresView({ measures, onToggleMeasure }: SectorMeasures
     }
   };
 
-  const handleApproveAllPossible = () => {
-    const toActivate = measures.filter((m) => !m.active);
-    for (const m of toActivate) {
+  const handleClearActiveInSector = () => {
+    const toDeactivate = visibleMeasures.filter((m) => m.active);
+    for (const m of toDeactivate) {
       onToggleMeasure(m.id);
     }
   };
+
+  const activeFiscalSum = measures
+    .filter((m) => m.active)
+    .reduce((acc, m) => acc + m.fiscalCostPctGdp, 0);
+  const activeMeasureCount = measures.filter((m) => m.active).length;
 
   return (
     <div className="space-y-6">
@@ -554,21 +559,24 @@ export function SectorMeasuresView({ measures, onToggleMeasure }: SectorMeasures
               />
             </label>
             <span className="text-xs font-mono text-slate-400 mr-1">
-              Sector: <strong className="text-amber-300">{selectedSector}</strong>
+              {activeMeasureCount} activas · Costo{' '}
+              <strong className={activeFiscalSum > 0 ? 'text-rose-300' : 'text-emerald-300'}>
+                {activeFiscalSum.toFixed(2)}% PBI
+              </strong>
             </span>
             <button
               type="button"
-              onClick={handleApproveAllInSector}
-              className="px-3 py-1.5 rounded-sm bg-[#162233] hover:bg-[#1f3047] border border-[#344661] text-xs font-bold text-slate-200 transition"
+              onClick={handleClearActiveInSector}
+              className="px-3 py-1.5 rounded-sm bg-[#0b1018] hover:bg-[#162233] border border-[#263142] text-xs font-bold text-slate-300 transition"
             >
-              Aprobar sector
+              Derogar sector
             </button>
             <button
               type="button"
-              onClick={handleApproveAllPossible}
+              onClick={handleApproveAllInSector}
               className="hoi-btn-gold px-3 py-1.5 rounded-sm text-xs font-extrabold uppercase tracking-wider transition"
             >
-              Aprobar todas
+              Aprobar sector
             </button>
           </div>
         </div>

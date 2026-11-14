@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { PolicyAction, SimulationState } from '@argentina-sim/domain';
+import { computeProvincialLoyaltyCongressDelta, type PolicyAction, type SimulationState } from '@argentina-sim/domain';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -168,9 +168,22 @@ function ProvinceStripRow({
   );
 }
 
+function CongressRoscaSummary({ state }: { state: SimulationState }) {
+  const { treasury } = state;
+  const congressDelta = computeProvincialLoyaltyCongressDelta(state);
+  const congressSign = congressDelta >= 0 ? `+${congressDelta}` : String(congressDelta);
+  const deltaCls = congressDelta >= 0 ? 'text-emerald-300' : 'text-rose-300';
+  return (
+    <span className="text-[11px] text-slate-400 font-mono">
+      Nación {treasury.nonCoparticipableRevenuePctGdp}% · Copart. {treasury.coparticipableRevenuePctGdp}% · Rosca PF/PROV{' '}
+      <strong className={deltaCls}>{congressSign}%</strong>
+    </span>
+  );
+}
+
 function ProvincesTabContent({ state, onDispatch }: JudicialAndProvincesViewProps) {
   const [filter, setFilter] = useState<ProvinceFilter>('all');
-  const { provinces, publicOpinion, treasury } = state;
+  const { provinces, publicOpinion } = state;
   const visibleProvinces = filterProvinces(provinces, filter);
   const handleSendAtn = (provinceId: string) =>
     onDispatch({ type: 'SEND_ATN_TO_PROVINCE', provinceId, amountPctGdp: 0.08 });
@@ -180,9 +193,7 @@ function ProvincesTabContent({ state, onDispatch }: JudicialAndProvincesViewProp
       <div className="rounded-sm bg-[#090d14] p-3 border border-[#263142] space-y-1.5 text-xs">
         <div className="flex items-center justify-between">
           <span className="font-mono font-bold uppercase tracking-wider text-amber-300">Agenda Semanal en Medios y Streaming</span>
-          <span className="text-[11px] text-slate-400 font-mono">
-            Nación {treasury.nonCoparticipableRevenuePctGdp}% · Copart. {treasury.coparticipableRevenuePctGdp}%
-          </span>
+          <CongressRoscaSummary state={state} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
           {publicOpinion.agendaSlots.map((topic, idx) => (
