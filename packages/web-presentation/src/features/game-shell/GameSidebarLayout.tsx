@@ -365,6 +365,7 @@ export function GameSidebarLayout({
           <Argentina3DMapCanvas
             provinces={state.provinces}
             selectedProvinceId={selectedProvId}
+            panelOpen={panelVisible}
             onSelectProvince={(id) => setSelectedProvId(id || null)}
             onSendAtn={onSendAtn}
           />
@@ -372,7 +373,7 @@ export function GameSidebarLayout({
 
         {panelVisible ? (
           <main className="relative z-10 h-full overflow-y-auto pointer-events-none">
-            <div className="max-w-4xl mx-3 sm:mx-6 my-4 p-4 sm:p-5 rounded-sm bg-[#0c1119]/92 backdrop-blur-md border border-[#263142] pointer-events-auto shadow-2xl">
+            <div className="max-w-3xl mx-3 sm:mx-5 my-4 p-4 sm:p-5 rounded-sm bg-[#0c1119]/92 backdrop-blur-md border border-[#263142] pointer-events-auto shadow-2xl">
               {portableSaveBanner ? (
                 <div className="mb-4 p-3 rounded-sm bg-[#0f291e] border border-emerald-700/70 flex items-center justify-between gap-4">
                   <div className="text-xs text-emerald-200 truncate font-mono">

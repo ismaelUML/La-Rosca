@@ -12,6 +12,7 @@ import {
 interface Argentina3DMapCanvasProps {
   provinces: ProvinceSummary[];
   selectedProvinceId: string | null;
+  panelOpen?: boolean;
   onSelectProvince: (provinceId: string) => void;
   onSendAtn?: (provinceId: string) => void;
 }
@@ -24,12 +25,12 @@ const MODE_OPTIONS: Array<{ id: Map3DMode; label: string }> = [
 
 function createSceneEnvironment(container: HTMLDivElement) {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x090d13);
+  scene.background = new THREE.Color(0x070a0f);
 
   const width = container.clientWidth || 960;
   const height = container.clientHeight || 600;
-  const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 300);
-  camera.position.set(10, 26, 28);
+  const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 350);
+  camera.position.set(14, 42, 46);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   renderer.setSize(width, height);
@@ -40,17 +41,25 @@ function createSceneEnvironment(container: HTMLDivElement) {
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
   controls.maxPolarAngle = Math.PI / 2.15;
-  controls.minDistance = 12;
-  controls.maxDistance = 65;
-  controls.target.set(-1, 0, 1);
+  controls.minDistance = 16;
+  controls.maxDistance = 95;
+  controls.target.set(-10, 0, 2);
 
-  scene.add(new THREE.AmbientLight(0x9fb3cc, 0.85));
+  scene.add(new THREE.HemisphereLight(0xbcd0ea, 0x101824, 0.9));
   const keyLight = new THREE.DirectionalLight(0xfff1d6, 1.35);
-  keyLight.position.set(18, 34, 22);
+  keyLight.position.set(22, 42, 26);
   scene.add(keyLight);
 
-  const grid = new THREE.GridHelper(90, 45, 0x1c2636, 0x121923);
-  grid.position.y = -0.05;
+  const table = new THREE.Mesh(
+    new THREE.PlaneGeometry(140, 140),
+    new THREE.MeshStandardMaterial({ color: 0x090e15, roughness: 0.9, metalness: 0.1 })
+  );
+  table.rotation.x = -Math.PI / 2;
+  table.position.y = -0.06;
+  scene.add(table);
+
+  const grid = new THREE.GridHelper(120, 50, 0x223044, 0x131b26);
+  grid.position.y = -0.04;
   scene.add(grid);
 
   return { scene, camera, renderer, controls };
@@ -76,8 +85,8 @@ function findIntersectedProvince(
 }
 
 function resolveEmissiveState(isSelected: boolean, isHovered: boolean): { hex: number; intensity: number } {
-  if (isSelected) return { hex: 0xb89342, intensity: 0.35 };
-  if (isHovered) return { hex: 0x3b82f6, intensity: 0.25 };
+  if (isSelected) return { hex: 0xc9a24d, intensity: 0.45 };
+  if (isHovered) return { hex: 0x60a5fa, intensity: 0.32 };
   return { hex: 0x000000, intensity: 0 };
 }
 
@@ -99,6 +108,18 @@ function updateGroupMaterials(
     mat.emissive.setHex(emissive.hex);
     mat.emissiveIntensity = emissive.intensity;
   }
+}
+
+function HoveredProvincePill({ province }: { province: ProvinceSummary | undefined }) {
+  if (!province) return null;
+  return (
+    <div className="pointer-events-none rounded-sm bg-[#11161f]/95 border border-[#283447] px-3 py-1.5 text-xs font-mono">
+      <span className="font-bold text-amber-200">{province.name}</span>
+      <span className="text-slate-400 ml-2">
+        Dip. {province.nationalDeputiesCount} · Lealtad {province.governorLoyaltyToPresident}%
+      </span>
+    </div>
+  );
 }
 
 function SelectedProvinceCard({
@@ -146,11 +167,13 @@ function useArgentina3DSetup(
   containerRef: React.RefObject<HTMLDivElement | null>,
   provincesRef: React.MutableRefObject<ProvinceSummary[]>,
   modeRef: React.MutableRefObject<Map3DMode>,
-  onHoverId: (id: string | null) => void,
-  onSelectId: (id: string) => void
+  onHoverRef: React.MutableRefObject<(id: string | null) => void>,
+  onSelectRef: React.MutableRefObject<(id: string) => void>
 ) {
   const groupRef = useRef<THREE.Group | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
+  const controlsRef = useRef<OrbitControls | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const hoveredRef = useRef<string | null>(null);
   const selectedRef = useRef<string | null>(null);
 
@@ -159,6 +182,8 @@ function useArgentina3DSetup(
     if (!container) return undefined;
     const { scene, camera, renderer, controls } = createSceneEnvironment(container);
     sceneRef.current = scene;
+    controlsRef.current = controls;
+    cameraRef.current = camera;
 
     let animId = 0;
     const renderLoop = () => {
@@ -177,7 +202,7 @@ function useArgentina3DSetup(
       const nextId = hit?.provinceId ?? null;
       if (hoveredRef.current !== nextId) {
         hoveredRef.current = nextId;
-        onHoverId(nextId);
+        onHoverRef.current(nextId);
         updateGroupMaterials(groupRef.current, provincesRef.current, modeRef.current, nextId, selectedRef.current);
       }
       renderer.domElement.style.cursor = nextId ? 'pointer' : 'grab';
@@ -187,7 +212,7 @@ function useArgentina3DSetup(
       const hit = findIntersectedProvince(e, renderer.domElement, camera, groupRef.current);
       if (!hit) return;
       selectedRef.current = hit.provinceId;
-      onSelectId(hit.provinceId);
+      onSelectRef.current(hit.provinceId);
       updateGroupMaterials(groupRef.current, provincesRef.current, modeRef.current, hoveredRef.current, hit.provinceId);
     };
 
@@ -215,14 +240,15 @@ function useArgentina3DSetup(
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [containerRef, provincesRef, modeRef, onHoverId, onSelectId]);
+  }, [containerRef, provincesRef, modeRef, onHoverRef, onSelectRef]);
 
-  return { groupRef, sceneRef, hoveredRef, selectedRef };
+  return { groupRef, sceneRef, controlsRef, cameraRef, hoveredRef, selectedRef };
 }
 
 export function Argentina3DMapCanvas({
   provinces,
   selectedProvinceId,
+  panelOpen = false,
   onSelectProvince,
   onSendAtn
 }: Argentina3DMapCanvasProps) {
@@ -235,13 +261,17 @@ export function Argentina3DMapCanvas({
   provincesRef.current = provinces;
   const modeRef = useRef(mapMode);
   modeRef.current = mapMode;
+  const onHoverRef = useRef(setHoveredId);
+  onHoverRef.current = setHoveredId;
+  const onSelectRef = useRef(onSelectProvince);
+  onSelectRef.current = onSelectProvince;
 
-  const { groupRef, sceneRef, hoveredRef, selectedRef } = useArgentina3DSetup(
+  const { groupRef, sceneRef, controlsRef, hoveredRef, selectedRef } = useArgentina3DSetup(
     containerRef,
     provincesRef,
     modeRef,
-    setHoveredId,
-    onSelectProvince
+    onHoverRef,
+    onSelectRef
   );
 
   useEffect(() => {
@@ -250,6 +280,13 @@ export function Argentina3DMapCanvas({
       .then((data) => setTopoData(data))
       .catch(() => undefined);
   }, []);
+
+  useEffect(() => {
+    const controls = controlsRef.current;
+    if (!controls) return;
+    controls.target.set(panelOpen ? -12 : 0, 0, 2);
+    controls.update();
+  }, [panelOpen, controlsRef]);
 
   useEffect(() => {
     const scene = sceneRef.current;
@@ -263,10 +300,15 @@ export function Argentina3DMapCanvas({
   }, [topoData, mapMode, provinces, selectedProvinceId, groupRef, sceneRef, hoveredRef, selectedRef]);
 
   const activeProvince = provinces.find((p) => p.id === (selectedProvinceId ?? hoveredId));
+  const hoveredProvince = provinces.find((p) => p.id === hoveredId);
 
   return (
     <div className="relative w-full h-full overflow-hidden select-none">
       <div ref={containerRef} className="w-full h-full" />
+
+      <div className="pointer-events-none absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
+        <HoveredProvincePill province={hoveredProvince} />
+      </div>
 
       <div className="pointer-events-none absolute bottom-4 right-4 z-20 flex flex-col items-end gap-2">
         <div className="pointer-events-auto flex items-center gap-1 rounded-sm bg-[#11161f]/95 border border-[#263142] p-1">

@@ -114,14 +114,14 @@ export function resolveProvinceColor(province: ProvinceSummary | undefined, mode
 }
 
 export function resolveProvinceExtrudeDepth(province: ProvinceSummary | undefined, mode: Map3DMode): number {
-  if (!province) return 0.45;
+  if (!province) return 0.7;
   if (mode === 'DEPUTIES') {
-    return Math.min(2.6, 0.35 + province.nationalDeputiesCount * 0.045);
+    return Math.min(3.4, 0.55 + province.nationalDeputiesCount * 0.055);
   }
   if (mode === 'FISCAL') {
-    return province.quasiCurrencyIssued ? 1.55 : 0.45 + Math.abs(province.fiscalBalancePct) * 0.3;
+    return province.quasiCurrencyIssued ? 2.1 : 0.65 + Math.abs(province.fiscalBalancePct) * 0.35;
   }
-  return 0.4 + (province.governorLoyaltyToPresident / 100) * 0.9;
+  return 0.6 + (province.governorLoyaltyToPresident / 100) * 1.15;
 }
 
 function createExtrudedProvinceMesh(
@@ -136,14 +136,14 @@ function createExtrudedProvinceMesh(
   const geometry = new THREE.ExtrudeGeometry(shapes, {
     depth,
     bevelEnabled: true,
-    bevelThickness: 0.06,
-    bevelSize: 0.05,
-    bevelSegments: 1
+    bevelThickness: 0.08,
+    bevelSize: 0.06,
+    bevelSegments: 2
   });
   const material = new THREE.MeshStandardMaterial({
     color,
-    roughness: 0.65,
-    metalness: 0.22
+    roughness: 0.52,
+    metalness: 0.25
   });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.rotation.x = -Math.PI / 2;
@@ -154,10 +154,10 @@ function createExtrudedProvinceMesh(
     baseHeight: depth
   } satisfies ProvinceMeshMeta;
 
-  const edges = new THREE.EdgesGeometry(geometry, 25);
+  const edges = new THREE.EdgesGeometry(geometry, 24);
   const line = new THREE.LineSegments(
     edges,
-    new THREE.LineBasicMaterial({ color: 0x0b0f14, transparent: true, opacity: 0.75 })
+    new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.45 })
   );
   mesh.add(line);
   return mesh;
