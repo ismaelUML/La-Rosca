@@ -102,21 +102,33 @@ function resolveRivalTickets(playerPartySigla: string, coalitionParties: string[
   return NATIONAL_TICKETS_POOL.filter((t) => !allied.has(t.partySigla));
 }
 
+function resolveDynamicWeight(
+  ticket: NationalPresetTicket,
+  partyPolling?: Record<string, number>
+): number {
+  const polled = partyPolling?.[ticket.partySigla];
+  if (typeof polled !== 'number') return ticket.baseWeight;
+  return Math.max(1, ticket.baseWeight * 0.3 + polled * 0.7);
+}
+
 function distributeRivalShares(
   rivals: NationalPresetTicket[],
   remainingPct: number,
-  votosValidos: number
+  votosValidos: number,
+  partyPolling?: Record<string, number>
 ): CandidateVoteResult[] {
-  const sumWeights = rivals.reduce((acc, r) => acc + r.baseWeight, 0) || 1;
+  const weighted = rivals.map((r) => ({ ticket: r, weight: resolveDynamicWeight(r, partyPolling) }));
+  const sumWeights = weighted.reduce((acc, item) => acc + item.weight, 0) || 1;
   let allocatedPct = 0;
   const results: CandidateVoteResult[] = [];
 
-  for (let i = 0; i < rivals.length; i++) {
-    const r = rivals[i]!;
-    const isLast = i === rivals.length - 1;
+  for (let i = 0; i < weighted.length; i++) {
+    const item = weighted[i]!;
+    const r = item.ticket;
+    const isLast = i === weighted.length - 1;
     const share = isLast
       ? Math.max(0.5, Math.round((remainingPct - allocatedPct) * 10) / 10)
-      : Math.round((r.baseWeight / sumWeights) * remainingPct * 10) / 10;
+      : Math.round((item.weight / sumWeights) * remainingPct * 10) / 10;
     allocatedPct += share;
     results.push({
       fuerza: r.fuerza,
@@ -167,7 +179,11 @@ function computeBalotajeEscrutinio(
   const isPlayerWinner = playerPct > rivalPct;
 
   const rivals = resolveRivalTickets(state.partySigla, state.coalitionParties);
-  const topRival = rivals[0] ?? NATIONAL_TICKETS_POOL[0]!;
+  const polling = state.countryMood?.partyPolling;
+  const sortedRivals = [...rivals].sort(
+    (a, b) => resolveDynamicWeight(b, polling) - resolveDynamicWeight(a, polling)
+  );
+  const topRival = sortedRivals[0] ?? NATIONAL_TICKETS_POOL[0]!;
   const results: CandidateVoteResult[] = [
     buildPlayerResult(state, coalitionLabel, playerPct, playerVotes),
     {
@@ -211,7 +227,7 @@ function computeGeneralesEscrutinio(
   const playerVotes = Math.round((votosValidos * playerPct) / 100);
 
   const rivals = resolveRivalTickets(state.partySigla, state.coalitionParties);
-  const rivalResults = distributeRivalShares(rivals, remainingPct, votosValidos);
+  const rivalResults = distributeRivalShares(rivals, remainingPct, votosValidos, state.countryMood?.partyPolling);
   const rawResults = [buildPlayerResult(state, coalitionLabel, playerPct, playerVotes), ...rivalResults].sort(
     (a, b) => b.pct - a.pct
   );

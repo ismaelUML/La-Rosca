@@ -272,6 +272,15 @@ export interface CongressBlocAllocation {
   relation: number;
 }
 
+export interface LaggedMacroShock {
+  id: string;
+  sourceLabel: string;
+  monthsRemaining: number;
+  inflationDeltaPerMonth: number;
+  gdpGrowthDeltaPerMonth: number;
+  approvalDeltaPerMonth: number;
+}
+
 export interface SimulationState {
   turnMonth: number;
   currentYear: number;
@@ -307,6 +316,9 @@ export interface SimulationState {
   activeReformIds?: string[];
   enactedBillIds?: string[];
   rejectedBillIds?: string[];
+  // Opcionales para no romper partidas guardadas previas
+  trustLedger?: Record<string, number>;
+  laggedMacroShocks?: LaggedMacroShock[];
 }
 
 export type PolicyAction =

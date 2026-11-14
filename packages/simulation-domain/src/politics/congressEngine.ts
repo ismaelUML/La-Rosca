@@ -4,6 +4,7 @@
 // cualquier ley de fondo naufraga antes de llegar al recinto.
 
 import type { SimulationState } from '../models/SimulationTypes.js';
+import { readTrustScore } from '../engine/trustAndLagEngine.js';
 import { CONGRESS_BILLS_EXPANSION_105 } from './congressBillsExpansionCatalog.js';
 
 export type CongressBillCategory =
@@ -299,9 +300,78 @@ function resolveBlocBaseAffinity(bloc: CongressNegotiationBloc, state: Simulatio
   return Math.max(2, Math.min(99, bloc.baseAffinityPct + relationShift + coalitionBonus + (isRegional ? provDelta : 0)));
 }
 
-export function buildDynamicParliamentaryBlocs(state: SimulationState): CongressNegotiationBloc[] {
+// Matriz programatica por bloque y tematica de ley: se acabo votar todo igual como robots.
+const BLOC_CATEGORY_AFFINITY: Record<string, Partial<Record<CongressBillCategory, number>>> = {
+  LLA: {
+    REFORMA_ESTRUCTURAL: 12,
+    FISCAL_PRESUPUESTO: 10,
+    LABORAL: 12,
+    TRIBUTARIA: 8,
+    SEGURIDAD_JUSTICIA: 10,
+    ENERGIA_INFRAESTRUCTURA: 8,
+    INSTITUCIONAL: -6,
+    PRODUCCION_SOCIAL: -28
+  },
+  PRO: {
+    REFORMA_ESTRUCTURAL: 8,
+    FISCAL_PRESUPUESTO: 10,
+    LABORAL: 9,
+    TRIBUTARIA: 7,
+    SEGURIDAD_JUSTICIA: 12,
+    ENERGIA_INFRAESTRUCTURA: 8,
+    INSTITUCIONAL: 4,
+    PRODUCCION_SOCIAL: -16
+  },
+  PF: {
+    ENERGIA_INFRAESTRUCTURA: 14,
+    PRODUCCION_SOCIAL: 14,
+    FISCAL_PRESUPUESTO: 4,
+    TRIBUTARIA: 6,
+    LABORAL: -10,
+    SEGURIDAD_JUSTICIA: -4
+  },
+  PROVINCIALES: {
+    ENERGIA_INFRAESTRUCTURA: 18,
+    TRIBUTARIA: 12,
+    FISCAL_PRESUPUESTO: 8,
+    PRODUCCION_SOCIAL: 8,
+    INSTITUCIONAL: -12
+  },
+  UCR: {
+    INSTITUCIONAL: 16,
+    PRODUCCION_SOCIAL: 10,
+    FISCAL_PRESUPUESTO: 4,
+    LABORAL: -12,
+    SEGURIDAD_JUSTICIA: -6
+  },
+  UXP: {
+    PRODUCCION_SOCIAL: 26,
+    ENERGIA_INFRAESTRUCTURA: 10,
+    INSTITUCIONAL: 6,
+    LABORAL: -18,
+    REFORMA_ESTRUCTURAL: -16,
+    FISCAL_PRESUPUESTO: -14
+  },
+  FIT: {
+    PRODUCCION_SOCIAL: 16,
+    INSTITUCIONAL: 6,
+    LABORAL: -20,
+    SEGURIDAD_JUSTICIA: -20
+  }
+};
+
+function resolveCategoryShift(blocId: string, billCategory?: CongressBillCategory): number {
+  if (!billCategory) return 0;
+  return BLOC_CATEGORY_AFFINITY[blocId]?.[billCategory] ?? 0;
+}
+
+export function buildDynamicParliamentaryBlocs(
+  state: SimulationState,
+  billCategory?: CongressBillCategory
+): CongressNegotiationBloc[] {
   const provDelta = computeProvincialLoyaltyCongressDelta(state);
   const approval = state.publicOpinion?.managementApprovalPct ?? 50;
+  const congressTrust = readTrustScore(state.trustLedger, 'CONGRESO');
   return INITIAL_PARLIAMENTARY_BLOCS.map((bloc) => {
     const stateBloc = state.congressBlocs?.find((item) => item.id === bloc.id);
     const updatedBase = resolveBlocBaseAffinity(bloc, state, provDelta);
@@ -311,46 +381,56 @@ export function buildDynamicParliamentaryBlocs(state: SimulationState): Congress
       senateSeats: stateBloc?.senateSeats ?? bloc.senateSeats,
       baseAffinityPct: updatedBase
     };
-    const probabilityYes = computeBlocProbability(merged, approval, false);
+    const probabilityYes = computeBlocProbability(merged, approval, false, billCategory, congressTrust);
     return { ...merged, probabilityYes, currentStance: resolveStanceByProbability(probabilityYes) };
   });
+}
+
+function sumConcessionsWithFatigue(concessions: ConcessionType[], blocId: string): number {
+  return concessions.reduce((acc, c, idx) => {
+    const fatigueFactor = 1 / (1 + idx * 0.35);
+    return acc + Math.round(calculateConcessionBoost(c, blocId) * fatigueFactor);
+  }, 0);
 }
 
 export function computeBlocProbability(
   bloc: CongressNegotiationBloc,
   approvalPct: number = 50,
-  billIsSoftened: boolean = false
+  billIsSoftened: boolean = false,
+  billCategory?: CongressBillCategory,
+  congressTrustPct: number = 52
 ): number {
-  if (bloc.id === 'LLA') return 99;
-  if (bloc.id === 'FIT') return 2;
-
-  let base = bloc.baseAffinityPct;
+  const categoryShift = resolveCategoryShift(bloc.id, billCategory);
   const moodDelta = Math.round((approvalPct - 45) * 0.25);
-  base += moodDelta;
+  const trustDelta = Math.round((congressTrustPct - 52) * 0.28);
+  const softenedBonus = billIsSoftened ? 15 : 0;
+  const concessionBoost = sumConcessionsWithFatigue(bloc.concessionsReceived, bloc.id);
 
-  if (billIsSoftened) {
-    base += 15;
-  }
+  // Bloque oficialista responde fuerte igual salvo leyes abiertamente contrarias a su programa
+  const isOfficialist = bloc.id === 'LLA';
+  const raw = isOfficialist
+    ? bloc.baseAffinityPct + categoryShift + softenedBonus * 0.3 + moodDelta * 0.2
+    : bloc.baseAffinityPct + categoryShift + moodDelta + trustDelta + softenedBonus + concessionBoost;
 
-  for (const c of bloc.concessionsReceived) {
-    base += calculateConcessionBoost(c, bloc.id);
-  }
-
-  return Math.max(3, Math.min(95, base));
+  const upperBound = isOfficialist ? 99 : 95;
+  const lowerBound = bloc.id === 'FIT' ? 2 : 3;
+  return Math.max(lowerBound, Math.min(upperBound, Math.round(raw)));
 }
 
 export function applyConcessionToBloc(
   bloc: CongressNegotiationBloc,
   concession: ConcessionType,
   approvalPct: number = 50,
-  billIsSoftened: boolean = false
+  billIsSoftened: boolean = false,
+  billCategory?: CongressBillCategory,
+  congressTrustPct: number = 52
 ): CongressNegotiationBloc {
   if (bloc.concessionsReceived.includes(concession)) {
     return bloc;
   }
   const nextConcessions = [...bloc.concessionsReceived, concession];
   const updatedBloc = { ...bloc, concessionsReceived: nextConcessions };
-  const nextProb = computeBlocProbability(updatedBloc, approvalPct, billIsSoftened);
+  const nextProb = computeBlocProbability(updatedBloc, approvalPct, billIsSoftened, billCategory, congressTrustPct);
   const nextStance = resolveStanceByProbability(nextProb);
 
   return {

@@ -7,7 +7,8 @@ import type {
   ProvinceSummary,
   PublicOpinionSegment,
   PublicOpinionState,
-  SectorParitaria
+  SectorParitaria,
+  SupremeCourtJustice
 } from '../models/SimulationTypes.js';
 import { clamp, round2 } from './../economy/mathUtils.js';
 
@@ -33,35 +34,79 @@ function advanceStageByOne(currentStage: JudicialStage): JudicialStage {
   return STAGE_ORDER[nextIdx] ?? currentStage;
 }
 
-export function computeNextJudicialStage(
-  docket: ComodoroPyCase,
-  executiveStrengthPct: number
-): JudicialStage {
-  if (docket.accusedFaction !== 'OFICIALISMO') {
-    return docket.stage;
-  }
-  if (executiveStrengthPct > 45 && docket.stage === 'INDAGATORIA') {
+export interface JudicialStepContext {
+  activeNationalStrike?: boolean;
+  trustCongress?: number;
+  trustMarkets?: number;
+}
+
+function stepOfficialistCase(stage: JudicialStage, executiveStrengthPct: number): JudicialStage {
+  if (executiveStrengthPct > 45 && stage === 'INDAGATORIA') {
     return 'FALTA_DE_MERITO';
   }
   if (executiveStrengthPct < 36) {
-    return advanceStageByOne(docket.stage);
+    return advanceStageByOne(stage);
   }
-  return docket.stage;
+  return stage;
 }
 
-export function stepJudicialAndLawfare(
-  judicial: JudicialState,
-  presidentialImagePct: number,
-  coparticipableRevenuePctGdp: number
-): JudicialState {
-  const governorsSupport = clamp(coparticipableRevenuePctGdp * 6.2, 20, 85);
-  const institutionalCorrelation = round2(presidentialImagePct * 0.6 + governorsSupport * 0.4);
+function stepUnionCase(stage: JudicialStage, executiveStrengthPct: number, activeStrike: boolean): JudicialStage {
+  if (activeStrike && executiveStrengthPct > 42) {
+    return advanceStageByOne(stage);
+  }
+  return stage;
+}
 
-  const supremeCourt = judicial.supremeCourt.map((justice) => {
+function stepOppositionCase(stage: JudicialStage, executiveStrengthPct: number, interferenceTrace: number): JudicialStage {
+  if (executiveStrengthPct > 54 && interferenceTrace < 50) {
+    return advanceStageByOne(stage);
+  }
+  if (executiveStrengthPct < 40 && stage === 'INDAGATORIA') {
+    return 'FALTA_DE_MERITO';
+  }
+  return stage;
+}
+
+export function computeNextJudicialStage(
+  docket: ComodoroPyCase,
+  executiveStrengthPct: number,
+  activeNationalStrike: boolean = false,
+  judicialInterferenceTraceIndex: number = 0
+): JudicialStage {
+  if (docket.accusedFaction === 'OFICIALISMO') {
+    return stepOfficialistCase(docket.stage, executiveStrengthPct);
+  }
+  if (docket.accusedFaction === 'SINDICATOS') {
+    return stepUnionCase(docket.stage, executiveStrengthPct, activeNationalStrike);
+  }
+  return stepOppositionCase(docket.stage, executiveStrengthPct, judicialInterferenceTraceIndex);
+}
+
+interface DoctrineSignalInput {
+  institutionalCorrelation: number;
+  governorsSupport: number;
+  trustCongress: number;
+  trustMarkets: number;
+  interferenceTrace: number;
+}
+
+const DOCTRINE_SIGNAL_CALC: Record<SupremeCourtJustice['doctrine'], (s: DoctrineSignalInput) => number> = {
+  INSTITUCIONALISTA: (s) => s.institutionalCorrelation * 0.5 + s.trustCongress * 0.5 - s.interferenceTrace * 0.25,
+  GARANTISTA: (s) => s.institutionalCorrelation * 0.4 + s.trustCongress * 0.35 + 10 - s.interferenceTrace * 0.35,
+  PRO_MERCADO: (s) => s.institutionalCorrelation * 0.45 + s.trustMarkets * 0.55,
+  FEDERALISTA: (s) => s.governorsSupport * 0.65 + s.trustCongress * 0.25 + s.institutionalCorrelation * 0.1
+};
+
+function stepSupremeCourtMembers(
+  supremeCourt: SupremeCourtJustice[],
+  signalInput: DoctrineSignalInput
+): SupremeCourtJustice[] {
+  return supremeCourt.map((justice) => {
     // A los 74-75 anos por el fallo Schiffrin el juez necesita acuerdo del Senado para seguir 5 anos mas
     const ageNegotiationBonus = justice.age >= 74 ? 8 : 0;
+    const doctrineTarget = DOCTRINE_SIGNAL_CALC[justice.doctrine](signalInput);
     const alignmentWithExecutive = round2(
-      clamp(justice.alignmentWithExecutive * 0.7 + institutionalCorrelation * 0.3 + ageNegotiationBonus, 10, 92)
+      clamp(justice.alignmentWithExecutive * 0.7 + doctrineTarget * 0.3 + ageNegotiationBonus, 10, 92)
     );
     return {
       ...justice,
@@ -69,21 +114,48 @@ export function stepJudicialAndLawfare(
       alignmentWithExecutive
     };
   });
+}
 
-  const activeCases = judicial.activeCases.map((docket) => ({
-    ...docket,
-    stage: computeNextJudicialStage(docket, institutionalCorrelation),
-    monthsStalled: docket.stage === 'FALTA_DE_MERITO' ? docket.monthsStalled + 1 : 0
-  }));
-
+function resolveCautelaresBlockingCount(supremeCourt: SupremeCourtJustice[]): number {
   const avgCourtAlignment =
     supremeCourt.reduce((acc, j) => acc + j.alignmentWithExecutive, 0) / Math.max(1, supremeCourt.length);
-  const cautelaresBlockingDnuCount = avgCourtAlignment < 45 ? 3 : avgCourtAlignment < 60 ? 1 : 0;
+  if (avgCourtAlignment < 45) return 3;
+  return avgCourtAlignment < 60 ? 1 : 0;
+}
+
+export function stepJudicialAndLawfare(
+  judicial: JudicialState,
+  presidentialImagePct: number,
+  coparticipableRevenuePctGdp: number,
+  context: JudicialStepContext = {}
+): JudicialState {
+  const governorsSupport = clamp(coparticipableRevenuePctGdp * 6.2, 20, 85);
+  const institutionalCorrelation = round2(presidentialImagePct * 0.6 + governorsSupport * 0.4);
+  const signalInput: DoctrineSignalInput = {
+    institutionalCorrelation,
+    governorsSupport,
+    trustCongress: context.trustCongress ?? 52,
+    trustMarkets: context.trustMarkets ?? 55,
+    interferenceTrace: judicial.judicialInterferenceTraceIndex
+  };
+
+  const supremeCourt = stepSupremeCourtMembers(judicial.supremeCourt, signalInput);
+  const activeStrike = context.activeNationalStrike ?? false;
+  const activeCases = judicial.activeCases.map((docket) => ({
+    ...docket,
+    stage: computeNextJudicialStage(
+      docket,
+      institutionalCorrelation,
+      activeStrike,
+      judicial.judicialInterferenceTraceIndex
+    ),
+    monthsStalled: docket.stage === 'FALTA_DE_MERITO' ? docket.monthsStalled + 1 : 0
+  }));
 
   return {
     ...judicial,
     supremeCourt,
-    cautelaresBlockingDnuCount,
+    cautelaresBlockingDnuCount: resolveCautelaresBlockingCount(supremeCourt),
     activeCases
   };
 }

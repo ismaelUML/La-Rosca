@@ -1,6 +1,7 @@
 import type { DifficultyLevel, SimulationState } from '../models/SimulationTypes.js';
 import { advanceRigiMonthlyQueue } from './rigiEngine.js';
 import { computeDomainPolicyModifiers } from './domainModifiersEngine.js';
+import { consumeMonthlyMacroLags, decayTrustLedger, readTrustScore } from './trustAndLagEngine.js';
 import { clamp, round2 } from '../economy/mathUtils.js';
 import { computeNextInflationBreakdown } from '../economy/inflationEngine.js';
 import { stepCentralBankBalance, stepPrivateBankingBalance } from '../economy/centralBankAndBankingEngine.js';
@@ -103,6 +104,7 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
   const dynamics = DIFFICULTY_DYNAMICS[state.difficulty] ?? DIFFICULTY_DYNAMICS.ESTANDAR_2027;
   const fiscalDeficitPctGdp = Math.max(0, -state.treasury.financialResultPctGdp);
   const mod = computeDomainPolicyModifiers(state);
+  const macroLags = consumeMonthlyMacroLags(state.laggedMacroShocks);
 
   const nextEnergy = stepEnergyAndCammesa(
     state.energy,
@@ -144,7 +146,7 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
       inertiaFloor: dynamics.inertiaFloor,
       fiscalDeficitPctGdp,
       deficitMonetizationMult: dynamics.deficitMonetizationMult,
-      measuresInflationDeltaPp: mod.measuresInflationDeltaPp
+      measuresInflationDeltaPp: mod.measuresInflationDeltaPp + macroLags.inflationDeltaPp
     }
   );
 
@@ -155,7 +157,8 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
       state.gdpGrowthAnnualPct * 0.75 +
         creditBoost +
         industrialGasPenalty +
-        mod.rigiGdpGrowthBoostPp -
+        mod.rigiGdpGrowthBoostPp +
+        macroLags.gdpGrowthDeltaPp -
         (nextInflation.realMonthlyIpcPct - 2.2) * 0.45,
       -9.5,
       8.5
@@ -207,13 +210,18 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
     {
       gdpGrowthAnnualPct,
       approvalPainMult: dynamics.approvalPainMult,
-      measuresApprovalDeltaPp: mod.measuresApprovalDeltaPp
+      measuresApprovalDeltaPp: mod.measuresApprovalDeltaPp + macroLags.approvalDeltaPp
     }
   );
   const nextJudicial = stepJudicialAndLawfare(
     state.judicial,
     nextOpinion.presidentialPersonalImagePct,
-    nextTreasury.coparticipableRevenuePctGdp
+    nextTreasury.coparticipableRevenuePctGdp,
+    {
+      activeNationalStrike: nextLabor.activeNationalStrike,
+      trustCongress: readTrustScore(state.trustLedger, 'CONGRESO'),
+      trustMarkets: readTrustScore(state.trustLedger, 'MERCADOS')
+    }
   );
 
   const steppedStructural = stepStructuralExpectations(
@@ -251,6 +259,8 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
     debtPortfolio: nextDebtPortfolio,
     taxes: nextTaxes,
     structural: nextStructural,
+    trustLedger: decayTrustLedger(state.trustLedger),
+    laggedMacroShocks: macroLags.nextShocks,
     ...rigiStep
   };
 }

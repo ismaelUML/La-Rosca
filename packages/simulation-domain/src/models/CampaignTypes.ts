@@ -195,6 +195,7 @@ export interface CampaignSimulationState {
   actionsRemainingThisMonth: number;
   actionsTotalThisMonth: number;
   historyLog: string[];
+  rivalLastTurnSummary?: string[];
 }
 
 export type CampaignExecutePayload =

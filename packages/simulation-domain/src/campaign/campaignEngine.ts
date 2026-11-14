@@ -8,6 +8,7 @@ import type {
 } from '../models/CampaignTypes.js';
 import { clamp, round2 } from '../economy/mathUtils.js';
 import { evolveCountryMood } from './countryMoodEngine.js';
+import { stepRivalCampaignAi } from './campaignRivalAiEngine.js';
 
 // Motor puro de campana electoral: ejecucion de las 9 acciones,
 // actualizacion de imagen y transicion de etapas (Interna -> PASO -> General -> Balotaje -> Gobierno).
@@ -341,20 +342,37 @@ function decayLocalZonesFatigue(zones?: LocalJurisdictionZone[]): LocalJurisdict
   }));
 }
 
+function runOptionalRivalTurn(
+  state: CampaignSimulationState,
+  evolvedMood: CampaignSimulationState['countryMood'],
+  decayedProvinces: ProvinceCampaignInfo[],
+  nextMonthIndex: number
+) {
+  if (!evolvedMood) {
+    return { nextMood: undefined, nextProvinces: decayedProvinces, headlines: [] as string[], summary: undefined };
+  }
+  const out = stepRivalCampaignAi(state, evolvedMood, decayedProvinces, nextMonthIndex);
+  return {
+    nextMood: out.nextMood,
+    nextProvinces: out.nextProvinces,
+    headlines: out.topHeadlines,
+    summary: out.rivalLastTurnSummary
+  };
+}
+
 export function advanceCampaignMonth(state: CampaignSimulationState): CampaignSimulationState {
   const nextMonthIndex = state.stage.currentMonthIndex + 1;
   const milestone = STAGE_MILESTONES[nextMonthIndex] ?? STAGE_MILESTONES[12]!;
 
   const replenishedBudget = round2(state.budgetArgentums + 40.0);
+  const evolvedMood = state.countryMood ? evolveCountryMood(state.countryMood, nextMonthIndex) : undefined;
+  const decayedProvinces = decayProvincesFatigue(state.provinces);
+  const rivalOut = runOptionalRivalTurn(state, evolvedMood, decayedProvinces, nextMonthIndex);
   const nextHistory = [
+    ...rivalOut.headlines,
     `Mes ${nextMonthIndex} (${milestone.date}): Se asignaron 4 nuevas acciones y presupuesto de campaña.`,
     ...state.historyLog
   ];
-  const nextMood = state.countryMood ? evolveCountryMood(state.countryMood, nextMonthIndex) : undefined;
-  const nextActionUsage = decayActionFatigue(state.actionUsageCount);
-  const nextCooldowns = decayPoliticianCooldowns(state.politicianCooldowns);
-  const nextProvinces = decayProvincesFatigue(state.provinces);
-  const nextLocalZones = decayLocalZonesFatigue(state.localZones);
 
   return {
     ...state,
@@ -365,13 +383,14 @@ export function advanceCampaignMonth(state: CampaignSimulationState): CampaignSi
       currentMonthIndex: nextMonthIndex,
       formattedDate: milestone.date
     },
-    countryMood: nextMood,
-    actionUsageCount: nextActionUsage,
-    politicianCooldowns: nextCooldowns,
-    provinces: nextProvinces,
-    localZones: nextLocalZones,
+    countryMood: rivalOut.nextMood,
+    actionUsageCount: decayActionFatigue(state.actionUsageCount),
+    politicianCooldowns: decayPoliticianCooldowns(state.politicianCooldowns),
+    provinces: rivalOut.nextProvinces,
+    localZones: decayLocalZonesFatigue(state.localZones),
     budgetArgentums: replenishedBudget,
     actionsRemainingThisMonth: 4,
-    historyLog: nextHistory
+    historyLog: nextHistory,
+    rivalLastTurnSummary: rivalOut.summary
   };
 }

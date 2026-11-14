@@ -4,6 +4,7 @@ import { clamp, round2 } from '../economy/mathUtils.js';
 import { INITIAL_CONGRESS_BILLS } from '../politics/congressEngine.js';
 import { INITIAL_FIXED_REFORMS, toggleFixedReformState } from '../politics/reformasInstitucionalesEngine.js';
 import { approveAllRigiProjects, approveRigiProject } from './rigiEngine.js';
+import { adjustTrustLedger, enqueueMacroShock } from './trustAndLagEngine.js';
 
 // Partimos el despacho de acciones en handlers chiquitos por dominio para mantener CC <= 5
 // y que cada medida explique exactamente que cable toca y que rompe de rebote.
@@ -18,10 +19,19 @@ function applyMonetaryAction(state: SimulationState, action: PolicyAction): Simu
     };
   }
   if (action.type === 'DISCRETE_DEVALUATION') {
-    const factor = 1 + clamp(action.devaluationPct, 5, 120) / 100;
+    const pct = clamp(action.devaluationPct, 5, 120);
+    const factor = 1 + pct / 100;
     const officialDollarArs = round2(state.centralBank.officialDollarArs * factor);
     // Devaluar de golpe te rompe la credibilidad del ancla en el acto (-28 puntos, ley de histeresis)
     const anchorCredibilityIndex = clamp(state.structural.anchorCredibilityIndex - 28, 5, 100);
+    const laggedMacroShocks = enqueueMacroShock(state.laggedMacroShocks, {
+      id: `deval-${state.turnMonth}`,
+      sourceLabel: `Pass-through devaluatorio (${pct}%)`,
+      monthsRemaining: 3,
+      inflationDeltaPerMonth: round2(clamp(pct * 0.045, 0.4, 4.5)),
+      gdpGrowthDeltaPerMonth: round2(-clamp(pct * 0.015, 0.2, 1.4)),
+      approvalDeltaPerMonth: -0.35
+    });
     return {
       ...state,
       centralBank: {
@@ -30,8 +40,10 @@ function applyMonetaryAction(state: SimulationState, action: PolicyAction): Simu
         exchangeBrechaPct: round2(Math.max(2, state.centralBank.exchangeBrechaPct - action.devaluationPct * 0.65))
       },
       structural: { ...state.structural, anchorCredibilityIndex, expectedDevaluation3mPct: 12 },
+      trustLedger: adjustTrustLedger(state.trustLedger, { MERCADOS: -12 }),
+      laggedMacroShocks,
       eventLog: [
-        `Shock cambiario: el Dolar Oficial salto a $${officialDollarArs}. Cae la brecha pero se dispara el pass-through a alimentos y el costo de CAMMESA.`,
+        `Shock cambiario: el Dolar Oficial salto a $${officialDollarArs}. Cae la brecha pero se dispara el pass-through a alimentos y el costo de CAMMESA (rezago de 3 meses).`,
         ...state.eventLog.slice(0, 14)
       ]
     };
@@ -91,6 +103,10 @@ function applyIndecIntervention(state: SimulationState, intervene: boolean): Sim
   return {
     ...state,
     structural: { ...state.structural, indecCredibilityIndex },
+    trustLedger: adjustTrustLedger(state.trustLedger, {
+      MERCADOS: intervene ? -18 : 8,
+      CONGRESO: intervene ? -8 : 4
+    }),
     eventLog: [msg, ...state.eventLog.slice(0, 14)]
   };
 }
@@ -148,6 +164,7 @@ function applyFiscalOrFederalAction(state: SimulationState, action: PolicyAction
         discretionaryAtnPctGdp: round2(state.treasury.discretionaryAtnPctGdp + action.amountPctGdp)
       },
       provinces,
+      trustLedger: adjustTrustLedger(state.trustLedger, { PROVINCIAS: 4 }),
       eventLog: [`Giro discrecional de ATN enviado a ${action.provinceId} a cambio de votos en el Congreso.`, ...state.eventLog.slice(0, 14)]
     };
   }
@@ -166,6 +183,7 @@ function applyFiscalOrFederalAction(state: SimulationState, action: PolicyAction
     return {
       ...state,
       provinces,
+      trustLedger: adjustTrustLedger(state.trustLedger, { PROVINCIAS: -14, CONGRESO: -6 }),
       eventLog: [
         `Intervención Federal: el Congreso destituyó al gobernador de ${action.provinceId} y designó a ${action.interventorName}. Elecciones en 6 meses.`,
         ...state.eventLog.slice(0, 14)
@@ -191,6 +209,7 @@ function applyJudicialOrTaxAction(state: SimulationState, action: PolicyAction):
         judicialInterferenceTraceIndex: clamp(state.judicial.judicialInterferenceTraceIndex + 12, 0, 100),
         activeCases
       },
+      trustLedger: adjustTrustLedger(state.trustLedger, { CONGRESO: -5, MERCADOS: -4 }),
       eventLog: [
         `Operadores judiciales intervinieron sobre el expediente ${action.caseId} en Comodoro Py (sube rastro de lawfare).`,
         ...state.eventLog.slice(0, 14)
@@ -227,11 +246,16 @@ function resolveNormalizedBillMeta(billId: string): NormalizedBillMeta {
   return { title: bill ? bill.title : billId, ...c };
 }
 
+function resolveEnactMarketTrustDelta(countryRiskDelta: number, primaryBalanceDelta: number): number {
+  return countryRiskDelta < 0 || primaryBalanceDelta > 0 ? 5 : 1;
+}
+
 function applyEnactBillAction(state: SimulationState, billId: string): SimulationState {
   const enacted = state.enactedBillIds ?? [];
   if (enacted.includes(billId)) return state;
   const meta = resolveNormalizedBillMeta(billId);
   const nextApproval = computeBillApproval(state.publicOpinion.managementApprovalPct, meta.publicApprovalDelta);
+  const marketDelta = resolveEnactMarketTrustDelta(meta.countryRiskDelta, meta.primaryBalanceDelta);
   return {
     ...state,
     gdpGrowthAnnualPct: round2(state.gdpGrowthAnnualPct + meta.gdpGrowthDelta),
@@ -241,6 +265,7 @@ function applyEnactBillAction(state: SimulationState, billId: string): Simulatio
     publicOpinion: { ...state.publicOpinion, managementApprovalPct: nextApproval },
     enactedBillIds: [...enacted, billId],
     rejectedBillIds: (state.rejectedBillIds ?? []).filter((id) => id !== billId),
+    trustLedger: adjustTrustLedger(state.trustLedger, { CONGRESO: 4, MERCADOS: marketDelta }),
     eventLog: [`Congreso Nacional: Se promulgó formalmente "${meta.title}" tras su sanción en el recinto.`, ...state.eventLog.slice(0, 14)]
   };
 }
@@ -256,6 +281,7 @@ function applyRejectBillAction(state: SimulationState, billId: string): Simulati
       ...state.publicOpinion,
       managementApprovalPct: clamp(round2(state.publicOpinion.managementApprovalPct - 0.8), 5, 95)
     },
+    trustLedger: adjustTrustLedger(state.trustLedger, { CONGRESO: -6, MERCADOS: -4 }),
     eventLog: [`Congreso Nacional: Fracasó en el recinto el proyecto "${title}".`, ...state.eventLog.slice(0, 14)]
   };
 }
@@ -294,6 +320,10 @@ function applyBlocConcessionAction(
     treasury: { ...state.treasury, discretionaryAtnPctGdp: round2(state.treasury.discretionaryAtnPctGdp + atnCost) },
     publicOpinion: { ...state.publicOpinion, managementApprovalPct: clamp(round2(state.publicOpinion.managementApprovalPct + approvalDelta), 5, 95) },
     congressBlocs: updateCongressBlocRelations(state.congressBlocs, blocId),
+    trustLedger: adjustTrustLedger(state.trustLedger, {
+      CONGRESO: 3,
+      ...(concession === 'GOBERNADORES' ? { PROVINCIAS: 4 } : {})
+    }),
     eventLog: [`Rosca Parlamentaria: Concesión "${concession}" otorgada al bloque ${blocId}.`, ...state.eventLog.slice(0, 14)]
   };
 }

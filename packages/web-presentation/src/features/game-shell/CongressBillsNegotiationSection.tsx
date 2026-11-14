@@ -635,7 +635,9 @@ export function CongressBillsNegotiationSection({
 }: CongressBillsNegotiationSectionProps) {
   const [softenedIds, setSoftenedIds] = useState<string[]>([]);
   const [selectedBillId, setSelectedBillId] = useState<string>(INITIAL_CONGRESS_BILLS[0]!.id);
-  const [blocs, setBlocs] = useState<CongressNegotiationBloc[]>(() => buildDynamicParliamentaryBlocs(state));
+  const [blocs, setBlocs] = useState<CongressNegotiationBloc[]>(() =>
+    buildDynamicParliamentaryBlocs(state, INITIAL_CONGRESS_BILLS[0]?.category)
+  );
   const [voteOutcome, setVoteOutcome] = useState<CongressVoteOutcome | null>(null);
 
   const bills = useMemo(() => {
@@ -666,10 +668,22 @@ export function CongressBillsNegotiationSection({
   };
 
   const handleApplyConcession = (blocId: string, concession: ConcessionType) => {
+    const congressTrust = state.trustLedger?.CONGRESO ?? 52;
     setBlocs((prev) =>
-      prev.map((b) => (b.id === blocId ? applyConcessionToBloc(b, concession, approval, selectedBill.isSoftened) : b))
+      prev.map((b) =>
+        b.id === blocId
+          ? applyConcessionToBloc(b, concession, approval, selectedBill.isSoftened, selectedBill.category, congressTrust)
+          : b
+      )
     );
     onDispatch({ type: 'GRANT_BLOC_CONCESSION', blocId, concession });
+  };
+
+  const handleSelectBill = (billId: string) => {
+    setSelectedBillId(billId);
+    const nextBill = bills.find((b) => b.id === billId);
+    setBlocs(buildDynamicParliamentaryBlocs(state, nextBill?.category));
+    setVoteOutcome(null);
   };
 
   const handleExecuteRecintoVote = () => {
@@ -687,7 +701,7 @@ export function CongressBillsNegotiationSection({
       <BillSelectorTab
         bills={bills}
         selectedBillId={selectedBill.id}
-        onSelectBill={setSelectedBillId}
+        onSelectBill={handleSelectBill}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
