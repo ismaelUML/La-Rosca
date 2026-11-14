@@ -365,40 +365,33 @@ function CongressSubTabHeader({
   subTab: CongressSubTab;
   onSelectTab: (t: CongressSubTab) => void;
 }) {
+  const tabCls = (t: CongressSubTab) =>
+    subTab === t
+      ? 'bg-[#17253b] text-amber-100 border-b-2 border-[#b89342]'
+      : 'text-slate-400 hover:text-slate-200 border-b-2 border-transparent';
+
   return (
-    <div className="flex flex-wrap gap-2 border-b border-slate-800 pb-2">
+    <div className="flex flex-wrap gap-1 border-b border-[#263142] pb-1">
       <button
         type="button"
         onClick={() => onSelectTab('ROSCA_LEYES')}
-        className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
-          subTab === 'ROSCA_LEYES'
-            ? 'bg-white text-slate-950 shadow'
-            : 'text-slate-400 hover:text-white'
-        }`}
+        className={`px-3.5 py-2 rounded-t-sm text-xs font-mono font-bold uppercase tracking-wide transition ${tabCls('ROSCA_LEYES')}`}
       >
         Rosca y votación de leyes
       </button>
       <button
         type="button"
         onClick={() => onSelectTab('REFORMAS')}
-        className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
-          subTab === 'REFORMAS'
-            ? 'bg-white text-slate-950 shadow'
-            : 'text-slate-400 hover:text-white'
-        }`}
+        className={`px-3.5 py-2 rounded-t-sm text-xs font-mono font-bold uppercase tracking-wide transition ${tabCls('REFORMAS')}`}
       >
-        Reformas del Sistema Político (ea)
+        Reformas del Sistema Político
       </button>
       <button
         type="button"
         onClick={() => onSelectTab('COMPOSICION')}
-        className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
-          subTab === 'COMPOSICION'
-            ? 'bg-white text-slate-950 shadow'
-            : 'text-slate-400 hover:text-white'
-        }`}
+        className={`px-3.5 py-2 rounded-t-sm text-xs font-mono font-bold uppercase tracking-wide transition ${tabCls('COMPOSICION')}`}
       >
-        Composición y bancas (257 Dip / 72 Sen)
+        Relación por bloques
       </button>
     </div>
   );
@@ -441,35 +434,14 @@ function CongressForcesTable({ forces }: { forces: PartySeatShare[] }) {
 }
 
 function CongressCompositionView({
-  forces,
-  deputiesColored,
-  senateColored
+  forces
 }: {
   forces: PartySeatShare[];
   deputiesColored: Array<{ x: number; y: number; color: string }>;
   senateColored: Array<{ x: number; y: number; color: string }>;
 }) {
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <HemicycleCard
-          title="Cámara de Diputados"
-          count={257}
-          dots={deputiesColored}
-          legendList={forces}
-          quorumNeeded={129}
-          labelSub="DIPUTADOS"
-        />
-        <HemicycleCard
-          title="Senado"
-          count={72}
-          dots={senateColored}
-          legendList={forces}
-          quorumNeeded={37}
-          labelSub="SENADORES"
-        />
-      </div>
-
+    <div className="space-y-4">
       <CongressTopMetrics forces={forces} />
       <CongressForcesTable forces={forces} />
     </div>
@@ -556,6 +528,25 @@ export function CamarasLegislativasView({
         <div className="text-xs text-slate-400">
           Negociación por bloques · Quórum 129 Diputados y 37 Senadores
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <HemicycleCard
+          title="Cámara de Diputados"
+          count={257}
+          dots={deputiesColored}
+          legendList={forces}
+          quorumNeeded={129}
+          labelSub="DIPUTADOS"
+        />
+        <HemicycleCard
+          title="Senado de la Nación"
+          count={72}
+          dots={senateColored}
+          legendList={forces}
+          quorumNeeded={37}
+          labelSub="SENADORES"
+        />
       </div>
 
       <CongressSubTabHeader subTab={subTab} onSelectTab={setSubTab} />

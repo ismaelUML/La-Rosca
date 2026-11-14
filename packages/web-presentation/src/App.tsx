@@ -746,6 +746,7 @@ export function App() {
       onExportSaveCode={handleExportSaveCode}
       onCloseSaveBanner={() => setPortableSaveBanner(null)}
       onExitToMenu={() => setScreenMode('LANDING')}
+      onSendAtn={(provinceId) => dispatchAction({ type: 'SEND_ATN_TO_PROVINCE', provinceId, amountPctGdp: 0.08 })}
     >
       <ActiveSectionRenderer
         section={activeSection}
