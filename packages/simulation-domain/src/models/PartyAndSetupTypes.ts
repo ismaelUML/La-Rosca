@@ -212,6 +212,21 @@ export interface CustomTaxProposal {
   approvedByCongress: boolean;
 }
 
+export type CharacterArchetypeId =
+  | 'ECONOMISTA_ORTODOXO'
+  | 'CAUDILLO_TERRITORIAL'
+  | 'OUTSIDER_MEDIATICO'
+  | 'GESTOR_TECNICO'
+  | 'SINDICAL_POPULAR';
+
+export type CongressStartScenario =
+  | 'ESTANDAR_2027'
+  | 'MINORIA_EXTREMA'
+  | 'COALICION_DIALOGUISTA'
+  | 'MAYORIA_PROPIA';
+
+export type GameStartMode = 'CAMPAIGN' | 'DIRECT_GOVERNMENT';
+
 export interface GameSetupConfiguration {
   sessionId: string;
   characterMode: 'MI_PERSONAJE' | 'UN_POLITICO_REAL';
@@ -222,6 +237,9 @@ export interface GameSetupConfiguration {
   partyMode: 'PARTIDO_EXISTENTE' | 'CREAR_MI_PARTIDO';
   party: PoliticalPartyPreset;
   difficulty: DifficultyLevel;
+  startMode?: GameStartMode;
+  characterArchetype?: CharacterArchetypeId;
+  congressScenario?: CongressStartScenario;
 }
 
 export type PlayableScreenMode = 'LANDING' | 'NEW_GAME_SETUP' | 'CAMPAIGN' | 'GOVERNMENT';

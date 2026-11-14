@@ -15,10 +15,15 @@ import {
   simulateChamberVote,
   executeFullCongressVote,
   buildDynamicParliamentaryBlocs,
-  type CongressNegotiationBloc
+  applySetupConfigurationToState,
+  buildCongressBlocsForScenario,
+  deriveIdeologicalAllies,
+  type CongressNegotiationBloc,
+  type GameSetupConfiguration
 } from '@argentina-sim/domain';
 import {
   INITIAL_SECTOR_MEASURES,
+  POLITICAL_PARTIES_2027,
   createInitialSimulationState2027,
   PROVINCES_2027_DATASET
 } from '@argentina-sim/infrastructure';
@@ -202,6 +207,59 @@ describe('Motor Macroeconomico, Judicial y Laboral Argentino 2027', () => {
     state = applyPolicyAction(state, { type: 'TOGGLE_MEASURE', measureId: 'QUITA_SUBSIDIO_AMBA_AUMENTO_BOLETO' });
     expect(state.measures?.find((m) => m.id === 'QUITA_SUBSIDIO_AMBA_AUMENTO_BOLETO')?.active).toBe(true);
     expect(state.measures?.find((m) => m.id === 'CONGELAMIENTO_TARIFAS_TRANSPORTE_AMBA')?.active).toBe(false);
+  });
+
+  it('aplica configuracion de nueva partida: arquetipos, aliados ideologicos y escenarios de Camaras 257/72', () => {
+    const party = POLITICAL_PARTIES_2027[0]!;
+    const allies = deriveIdeologicalAllies(party);
+    expect(allies.length).toBeGreaterThan(0);
+
+    for (const scenario of ['ESTANDAR_2027', 'MINORIA_EXTREMA', 'COALICION_DIALOGUISTA', 'MAYORIA_PROPIA'] as const) {
+      const blocs = buildCongressBlocsForScenario(scenario, party.sigla, allies);
+      const totalDep = blocs.reduce((acc, b) => acc + b.deputiesSeats, 0);
+      const totalSen = blocs.reduce((acc, b) => acc + b.senateSeats, 0);
+      expect(totalDep).toBe(257);
+      expect(totalSen).toBe(72);
+    }
+
+    const base = createInitialSimulationState2027('PRESIDENTE', 'ESTANDAR_2027', 'CORDOBA');
+    const setupConfig: GameSetupConfiguration = {
+      sessionId: 'test-session',
+      characterMode: 'MI_PERSONAJE',
+      characterName: 'Gobernador Cordobes',
+      selectedPoliticianId: 'JAVIER_MILEI',
+      role: 'PRESIDENTE',
+      provinceId: 'CORDOBA',
+      partyMode: 'PARTIDO_EXISTENTE',
+      party,
+      difficulty: 'ESTANDAR_2027',
+      startMode: 'DIRECT_GOVERNMENT',
+      characterArchetype: 'ECONOMISTA_ORTODOXO',
+      congressScenario: 'MAYORIA_PROPIA'
+    };
+
+    const configured = applySetupConfigurationToState(base, setupConfig);
+    expect(configured.countryRiskEmbiPb).toBe(base.countryRiskEmbiPb - 110);
+    expect(configured.structural.anchorCredibilityIndex).toBe(base.structural.anchorCredibilityIndex + 10);
+    const cordobaAfter = configured.provinces.find((p) => p.id === 'CORDOBA')!;
+    const cordobaBefore = base.provinces.find((p) => p.id === 'CORDOBA')!;
+    expect(cordobaAfter.governorLoyaltyToPresident).toBeCloseTo(cordobaBefore.governorLoyaltyToPresident + 4, 1);
+    expect(configured.congressBlocs?.find((b) => b.id === 'LLA')?.deputiesSeats).toBe(132);
+
+    // Compatibilidad retroactiva sin campos opcionales
+    const legacySetup: GameSetupConfiguration = {
+      sessionId: 'legacy',
+      characterMode: 'UN_POLITICO_REAL',
+      characterName: 'Javier Milei',
+      selectedPoliticianId: 'JAVIER_MILEI',
+      role: 'PRESIDENTE',
+      provinceId: 'CABA',
+      partyMode: 'PARTIDO_EXISTENTE',
+      party,
+      difficulty: 'ESTANDAR_2027'
+    };
+    const legacyConfigured = applySetupConfigurationToState(base, legacySetup);
+    expect(legacyConfigured.congressBlocs?.reduce((acc, b) => acc + b.deputiesSeats, 0)).toBe(257);
   });
 });
 
