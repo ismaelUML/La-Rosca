@@ -3,12 +3,17 @@
 // y los gobernadores. Sin los votos en duda de radicales, provinciales y peronismo federal,
 // cualquier ley de fondo naufraga antes de llegar al recinto.
 
+import { CONGRESS_BILLS_EXPANSION_105 } from './congressBillsExpansionCatalog.js';
+
 export type CongressBillCategory =
   | 'REFORMA_ESTRUCTURAL'
   | 'FISCAL_PRESUPUESTO'
   | 'LABORAL'
   | 'TRIBUTARIA'
-  | 'INSTITUCIONAL';
+  | 'INSTITUCIONAL'
+  | 'SEGURIDAD_JUSTICIA'
+  | 'ENERGIA_INFRAESTRUCTURA'
+  | 'PRODUCCION_SOCIAL';
 
 export type BlocStance = 'A_FAVOR' | 'EN_DUDA' | 'EN_CONTRA';
 
@@ -177,7 +182,7 @@ export const INITIAL_PARLIAMENTARY_BLOCS: CongressNegotiationBloc[] = [
   }
 ];
 
-export const INITIAL_CONGRESS_BILLS: CongressBillProject[] = [
+const BASE_CONGRESS_BILLS: CongressBillProject[] = [
   {
     id: 'LEY_BASES_2',
     title: 'Ley Bases 2.0 y Facultades Delegadas',
@@ -247,6 +252,11 @@ export const INITIAL_CONGRESS_BILLS: CongressBillProject[] = [
       countryRiskDelta: -30
     }
   }
+];
+
+export const INITIAL_CONGRESS_BILLS: CongressBillProject[] = [
+  ...BASE_CONGRESS_BILLS,
+  ...CONGRESS_BILLS_EXPANSION_105
 ];
 
 function resolveGovernorBoost(blocId: string): number {

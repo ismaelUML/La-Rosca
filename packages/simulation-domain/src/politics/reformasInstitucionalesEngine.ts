@@ -2,6 +2,8 @@
 // Catálogo cerrado de reformas del sistema político, electoral, judicial y constitucional,
 // con reglas de mayoría (Ordinaria: 129/37 vs Constitucional: dos tercios 172/48) y exclusión mutua.
 
+import { REFORMS_EXPANSION_105 } from './reformasExpansionCatalog.js';
+
 export type ReformCategory =
   | 'CALENDARIO_ELECTORAL'
   | 'REELECCION_MANDATOS'
@@ -9,7 +11,10 @@ export type ReformCategory =
   | 'PADRON_SUFRAGIO'
   | 'INSTRUMENTOS_CAMPANA'
   | 'CONGRESO_REPRESENTACION'
-  | 'JUSTICIA';
+  | 'JUSTICIA'
+  | 'FEDERALISMO'
+  | 'TRABAJO_PREVISIONAL'
+  | 'ESTADO_EDUCACION';
 
 export type ReformMajorityType = 'ORDINARIA' | 'CONSTITUCIONAL';
 
@@ -25,7 +30,7 @@ export interface FixedReformItem {
   polemicaPct: number;
 }
 
-export const INITIAL_FIXED_REFORMS: FixedReformItem[] = [
+export const BASE_FIXED_REFORMS: FixedReformItem[] = [
   // 1. Calendario electoral
   {
     id: 'con_paso',
@@ -258,6 +263,11 @@ export const INITIAL_FIXED_REFORMS: FixedReformItem[] = [
     publicSupportPct: 41,
     polemicaPct: 85
   }
+];
+
+export const INITIAL_FIXED_REFORMS: FixedReformItem[] = [
+  ...BASE_FIXED_REFORMS,
+  ...REFORMS_EXPANSION_105
 ];
 
 function checkShouldDeactivateMutual(

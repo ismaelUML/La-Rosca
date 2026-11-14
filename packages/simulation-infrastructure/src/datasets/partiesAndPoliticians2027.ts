@@ -6,6 +6,7 @@ import type {
   RigisectorItem,
   SectorMeasureCard
 } from '@argentina-sim/domain';
+import { MEASURES_EXPANSION_105 } from './measuresExpansionCatalog.js';
 
 // Dataset real de los espacios politicos, figuras de la politica argentina 2027,
 // gabinete ministerial y palancas sectoriales tal cual se ven en el juego pero conectados al motor.
@@ -1037,7 +1038,7 @@ export const INITIAL_RIGI_SECTORS: RigisectorItem[] = RAW_RIGI_SECTORS.map((sec)
   enabledDateLabel: 'No habilitado por decreto'
 }));
 
-export const SECTOR_CATEGORIES_SUMMARY: Array<{
+const BASE_SECTOR_CATEGORIES_SUMMARY: Array<{
   id: string;
   icon: string;
   title: string;
@@ -1059,7 +1060,7 @@ export const SECTOR_CATEGORIES_SUMMARY: Array<{
   { id: 'SEGURIDAD', icon: '⛨', title: 'Seguridad y justicia', subtitle: 'Delito, Rosario, Comodoro Py, Corte Suprema y cautelares.', tempCount: 8, permCount: 8 }
 ];
 
-export const INITIAL_SECTOR_MEASURES: SectorMeasureCard[] = [
+const BASE_SECTOR_MEASURES: SectorMeasureCard[] = [
   {
     id: 'LEY_GONDOLAS',
     sectorId: 'PRECIOS',
@@ -1247,4 +1248,24 @@ export const INITIAL_SECTOR_MEASURES: SectorMeasureCard[] = [
   { id: 'M_SEGURIDAD_ANTIMAFIA', sectorId: 'SEGURIDAD', title: 'Ley Antimafia y Despliegue en Rosario', description: 'Aplica penas de asociación ilícita a bandas narco.', durationType: 'PERMANENTE', active: true, fiscalCostPctGdp: 0.18, inflationEffectPp: 0.0, approvalEffectPp: 3.4 },
   { id: 'M_DEUDA_DESARME_PUTS', sectorId: 'DEUDA', title: 'Recompra de PUTs Bancarios y LEFIs', description: 'Elimina el seguro de emisión endógena bancaria.', durationType: 'PERMANENTE', active: false, fiscalCostPctGdp: 0.4, inflationEffectPp: -0.6, approvalEffectPp: 1.5 }
 ];
+
+export const INITIAL_SECTOR_MEASURES: SectorMeasureCard[] = [
+  ...BASE_SECTOR_MEASURES,
+  ...MEASURES_EXPANSION_105
+];
+
+function countSectorMeasuresByType(
+  sectorId: string,
+  durationType: 'TEMPORAL' | 'PERMANENTE'
+): number {
+  return INITIAL_SECTOR_MEASURES.filter(
+    (measure) => measure.sectorId === sectorId && measure.durationType === durationType
+  ).length;
+}
+
+export const SECTOR_CATEGORIES_SUMMARY = BASE_SECTOR_CATEGORIES_SUMMARY.map((category) => ({
+  ...category,
+  tempCount: countSectorMeasuresByType(category.id, 'TEMPORAL'),
+  permCount: countSectorMeasuresByType(category.id, 'PERMANENTE')
+}));
 

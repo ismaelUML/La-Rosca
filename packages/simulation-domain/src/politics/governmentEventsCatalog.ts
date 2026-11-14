@@ -1,4 +1,5 @@
 import type { SimulationState } from '../models/SimulationTypes.js';
+import { GOVERNMENT_EVENTS_EXPANSION_105 } from './governmentEventsExpansionCatalog.js';
 
 // Catálogo de "Situaciones de Gobierno": lo que le pasa a un presidente argentino mientras
 // él cree que gobierna. Cada evento tiene un peso situacional (0 = no puede aparecer), así
@@ -76,7 +77,7 @@ function opt(
   return { id, title, description, effects };
 }
 
-export const GOVERNMENT_EVENTS: GovernmentEventDefinition[] = [
+const BASE_GOVERNMENT_EVENTS: GovernmentEventDefinition[] = [
   {
     id: 'PARO_GENERAL_CGT',
     title: 'Paro general de la CGT',
@@ -244,6 +245,11 @@ export const GOVERNMENT_EVENTS: GovernmentEventDefinition[] = [
       opt('EMPLEO_LOCAL', 'Condicionar a empleo y proveedores locales', 'Menos monto inicial, más arraigo.', { unemploymentPct: -0.4, grossReservesBillionUsd: 0.8, approvalPts: 2 })
     ]
   }
+];
+
+export const GOVERNMENT_EVENTS: GovernmentEventDefinition[] = [
+  ...BASE_GOVERNMENT_EVENTS,
+  ...GOVERNMENT_EVENTS_EXPANSION_105
 ];
 
 interface EffectMeta {

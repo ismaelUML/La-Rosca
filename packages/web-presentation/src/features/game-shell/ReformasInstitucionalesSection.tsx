@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, Search, X } from 'lucide-react';
 import {
   INITIAL_FIXED_REFORMS,
   toggleFixedReformState,
@@ -149,12 +149,22 @@ const CATEGORY_FILTERS: Array<{ id: 'TODAS' | ReformCategory; label: string }> =
   { id: 'PADRON_SUFRAGIO', label: 'Padrón y voto' },
   { id: 'INSTRUMENTOS_CAMPANA', label: 'Boleta y campaña' },
   { id: 'CONGRESO_REPRESENTACION', label: 'Bancas del Congreso' },
-  { id: 'JUSTICIA', label: 'Justicia y Corte' }
+  { id: 'JUSTICIA', label: 'Justicia y Corte' },
+  { id: 'FEDERALISMO', label: 'Federalismo y Coparticipación' },
+  { id: 'TRABAJO_PREVISIONAL', label: 'Laboral y Previsional' },
+  { id: 'ESTADO_EDUCACION', label: 'Estado y Educación' }
 ];
+
+function matchesReformQuery(reform: FixedReformItem, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return reform.name.toLowerCase().includes(q) || reform.description.toLowerCase().includes(q);
+}
 
 export function ReformasInstitucionalesSection() {
   const [reforms, setReforms] = useState<FixedReformItem[]>(INITIAL_FIXED_REFORMS);
   const [selectedCat, setSelectedCat] = useState<'TODAS' | ReformCategory>('TODAS');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [bannerNotice, setBannerNotice] = useState<string | null>(null);
 
   const handleToggle = (id: string) => {
@@ -171,7 +181,7 @@ export function ReformasInstitucionalesSection() {
   };
 
   const filtered = reforms.filter(
-    (r) => selectedCat === 'TODAS' || r.category === selectedCat
+    (r) => (selectedCat === 'TODAS' || r.category === selectedCat) && matchesReformQuery(r, searchQuery)
   );
 
   const activeCount = reforms.filter((r) => r.active).length;
@@ -212,15 +222,29 @@ export function ReformasInstitucionalesSection() {
         </div>
       ) : null}
 
-      <div className="flex flex-wrap gap-2 pb-1">
-        {CATEGORY_FILTERS.map((cat) => (
-          <ReformFilterButton
-            key={cat.id}
-            label={cat.label}
-            isSelected={selectedCat === cat.id}
-            onClick={() => setSelectedCat(cat.id)}
-          />
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-1">
+        <div className="flex flex-wrap gap-2">
+          {CATEGORY_FILTERS.map((cat) => (
+            <ReformFilterButton
+              key={cat.id}
+              label={cat.label}
+              isSelected={selectedCat === cat.id}
+              onClick={() => setSelectedCat(cat.id)}
+            />
+          ))}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <label className="relative flex items-center">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={`Buscar (${filtered.length}/${reforms.length})...`}
+              className="pl-8 pr-3 py-1.5 w-52 rounded-sm bg-[#090d14] border border-[#263142] focus:border-[#b89342] focus:outline-none text-xs text-slate-200 placeholder:text-slate-500 font-mono"
+            />
+          </label>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

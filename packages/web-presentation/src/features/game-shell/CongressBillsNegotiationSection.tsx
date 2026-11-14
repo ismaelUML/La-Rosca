@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowRight, Check, X } from 'lucide-react';
+import { ArrowRight, Check, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import { playUiSound } from '@/lib/gameFeedback';
 import type {
   BlocStance,
   ChamberVoteDetail,
   ConcessionType,
+  CongressBillCategory,
   CongressBillProject,
   CongressVoteOutcome,
   CongressNegotiationBloc,
@@ -96,6 +97,126 @@ function ChamberProjectionCard({
   );
 }
 
+const BILLS_PER_PAGE = 9;
+
+const BILL_CATEGORY_FILTERS: Array<{ id: 'TODAS' | CongressBillCategory; label: string }> = [
+  { id: 'TODAS', label: 'Todas' },
+  { id: 'FISCAL_PRESUPUESTO', label: 'Fiscal' },
+  { id: 'TRIBUTARIA', label: 'Tributaria' },
+  { id: 'LABORAL', label: 'Laboral' },
+  { id: 'REFORMA_ESTRUCTURAL', label: 'Estructural' },
+  { id: 'SEGURIDAD_JUSTICIA', label: 'Seguridad' },
+  { id: 'ENERGIA_INFRAESTRUCTURA', label: 'Energía e Infra' },
+  { id: 'PRODUCCION_SOCIAL', label: 'Producción' },
+  { id: 'INSTITUCIONAL', label: 'Institucional' }
+];
+
+function matchesBillQuery(bill: CongressBillProject, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return bill.title.toLowerCase().includes(q) || bill.shortDescription.toLowerCase().includes(q);
+}
+
+function matchesBillFilters(
+  bill: CongressBillProject,
+  category: 'TODAS' | CongressBillCategory,
+  status: string,
+  query: string
+): boolean {
+  const catOk = category === 'TODAS' || bill.category === category;
+  const statusOk = status === 'TODAS' || bill.status === status;
+  return catOk && statusOk && matchesBillQuery(bill, query);
+}
+
+function BillStatusBadge({ status }: { status: CongressBillProject['status'] }) {
+  if (status === 'APROBADA') {
+    return (
+      <span className="px-1.5 py-0.2 rounded-sm text-[9px] bg-emerald-950 border border-emerald-700 text-emerald-300 font-extrabold shrink-0">
+        SANCIONADA
+      </span>
+    );
+  }
+  if (status === 'RECHAZADA') {
+    return (
+      <span className="px-1.5 py-0.2 rounded-sm text-[9px] bg-rose-950 border border-rose-700 text-rose-300 font-extrabold shrink-0">
+        RECHAZADA
+      </span>
+    );
+  }
+  return null;
+}
+
+function BillOptionButton({
+  bill,
+  isSelected,
+  onSelect
+}: {
+  bill: CongressBillProject;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        playUiSound('tab');
+        onSelect();
+      }}
+      className={`px-3 py-2 rounded-sm text-xs font-mono font-bold transition flex items-center justify-between gap-2 border text-left ${
+        isSelected
+          ? 'bg-[#1d3250] text-amber-100 border-[#b89342]'
+          : 'bg-[#090d14] text-slate-400 border-[#263142] hover:text-slate-100 hover:border-slate-500'
+      }`}
+    >
+      <span className="truncate">{bill.title}</span>
+      <BillStatusBadge status={bill.status} />
+    </button>
+  );
+}
+
+function BillPaginationBar({
+  page,
+  totalPages,
+  totalFiltered,
+  onPrev,
+  onNext
+}: {
+  page: number;
+  totalPages: number;
+  totalFiltered: number;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2 pt-1 text-[11px] font-mono text-slate-400">
+      <span>{totalFiltered} proyectos coincidentes</span>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={onPrev}
+          disabled={page <= 0}
+          className="p-1 rounded-sm border border-[#263142] bg-[#090d14] text-slate-300 disabled:opacity-35 hover:border-[#b89342]"
+          aria-label="Página anterior"
+        >
+          <ChevronLeft className="w-3.5 h-3.5" />
+        </button>
+        <span className="px-2 text-slate-300">
+          {page + 1} / {totalPages}
+        </span>
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={page + 1 >= totalPages}
+          className="p-1 rounded-sm border border-[#263142] bg-[#090d14] text-slate-300 disabled:opacity-35 hover:border-[#b89342]"
+          aria-label="Página siguiente"
+        >
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function BillSelectorTab({
   bills,
   selectedBillId,
@@ -105,38 +226,93 @@ function BillSelectorTab({
   selectedBillId: string;
   onSelectBill: (id: string) => void;
 }) {
+  const [selectedCat, setSelectedCat] = useState<'TODAS' | CongressBillCategory>('TODAS');
+  const [statusFilter, setStatusFilter] = useState<string>('TODAS');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [page, setPage] = useState<number>(0);
+
+  const filteredBills = useMemo(
+    () => bills.filter((b) => matchesBillFilters(b, selectedCat, statusFilter, searchQuery)),
+    [bills, selectedCat, statusFilter, searchQuery]
+  );
+
+  const totalPages = Math.max(1, Math.ceil(filteredBills.length / BILLS_PER_PAGE));
+  const safePage = Math.min(page, totalPages - 1);
+  const pageBills = filteredBills.slice(safePage * BILLS_PER_PAGE, (safePage + 1) * BILLS_PER_PAGE);
+
   return (
-    <div className="flex flex-wrap gap-2 border-b border-[#263142] pb-3">
-      {bills.map((b) => {
-        const isSelected = b.id === selectedBillId;
-        return (
-          <button
-            key={b.id}
-            type="button"
-            onClick={() => {
-              playUiSound('tab');
-              onSelectBill(b.id);
+    <div className="space-y-3 border-b border-[#263142] pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-1.5">
+          {BILL_CATEGORY_FILTERS.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => {
+                setSelectedCat(cat.id);
+                setPage(0);
+              }}
+              className={`px-2.5 py-1 rounded-sm text-[11px] font-mono font-bold border transition ${
+                selectedCat === cat.id
+                  ? 'bg-[#1d3250] text-amber-200 border-[#b89342]'
+                  : 'bg-[#090d14] text-slate-400 border-[#263142] hover:text-slate-200'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(0);
             }}
-            className={`px-3.5 py-2 rounded-sm text-xs font-mono font-bold transition flex items-center gap-2 border ${
-              isSelected
-                ? 'bg-[#1d3250] text-amber-100 border-[#b89342]'
-                : 'bg-[#090d14] text-slate-400 border-[#263142] hover:text-slate-100'
-            }`}
+            aria-label="Filtrar proyectos por estado"
+            className="px-2.5 py-1.5 rounded-sm bg-[#090d14] border border-[#263142] text-xs text-slate-200 font-mono focus:border-[#b89342] focus:outline-none"
           >
-            <span>{b.title}</span>
-            {b.status === 'APROBADA' && (
-              <span className="px-1.5 py-0.2 rounded-sm text-[9px] bg-emerald-950 border border-emerald-700 text-emerald-300 font-extrabold">
-                SANCIONADA
-              </span>
-            )}
-            {b.status === 'RECHAZADA' && (
-              <span className="px-1.5 py-0.2 rounded-sm text-[9px] bg-rose-950 border border-rose-700 text-rose-300 font-extrabold">
-                RECHAZADA
-              </span>
-            )}
-          </button>
-        );
-      })}
+            <option value="TODAS">Todos ({bills.length})</option>
+            <option value="PENDIENTE">Pendientes</option>
+            <option value="APROBADA">Sancionadas</option>
+            <option value="RECHAZADA">Rechazadas</option>
+          </select>
+
+          <label className="relative flex items-center">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(0);
+              }}
+              placeholder="Buscar proyecto de ley..."
+              className="pl-8 pr-3 py-1.5 w-52 rounded-sm bg-[#090d14] border border-[#263142] focus:border-[#b89342] focus:outline-none text-xs text-slate-200 placeholder:text-slate-500 font-mono"
+            />
+          </label>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        {pageBills.map((b) => (
+          <BillOptionButton
+            key={b.id}
+            bill={b}
+            isSelected={b.id === selectedBillId}
+            onSelect={() => onSelectBill(b.id)}
+          />
+        ))}
+      </div>
+
+      <BillPaginationBar
+        page={safePage}
+        totalPages={totalPages}
+        totalFiltered={filteredBills.length}
+        onPrev={() => setPage(Math.max(0, safePage - 1))}
+        onNext={() => setPage(Math.min(totalPages - 1, safePage + 1))}
+      />
     </div>
   );
 }

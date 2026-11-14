@@ -593,3 +593,4 @@ Si los vas a meter en fases dentro de **La Rosca**:
 2. **Reformas** (`R01–R105`): entran en `INITIAL_FIXED_REFORMS` de `reformasInstitucionalesEngine.ts` agregando `mutuallyExclusiveWith` en pares lógicos (ej. `BALOTAJE_45_10_STRICT` vs `ELIMINAR_BALOTAJE`, `DEVOLUCION_IVA_Y_GANANCIAS_CAJAS_PROV` vs `FONDO_CONURBANO_INDEXADO_POBLACION`).
 3. **Leyes** (`L01–L105`): entran en `INITIAL_CONGRESS_BILLS` con filtros por categoría/mandato o un mazo de "agenda legislativa activa" (ej. 12 proyectos disponibles por año para no saturar las pestañas horizontales).
 4. **Eventos** (`E01–E105`): entran en `GOVERNMENT_EVENTS` + `CAMPAIGN_DILEMMAS_CATALOG` con disparadores condicionados por estado real (reservas bajas, EMBI alto, paro gremial, año electoral), así cada partida se siente distinta.
+

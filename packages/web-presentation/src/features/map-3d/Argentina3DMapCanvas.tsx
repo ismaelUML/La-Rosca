@@ -216,23 +216,37 @@ function computeCameraTargetOffset(
   return new THREE.Vector3(meta.centerX + (panelOpen ? -7 : 0), 0.5, meta.centerZ);
 }
 
+function formatGovernorTooltip(p: ProvinceSummary): string {
+  const meta = getProvincePoliticalMeta(p.id);
+  return meta ? `Gob. ${meta.governorName} · ${meta.bloc}` : `Lealtad ${p.governorLoyaltyToPresident}%`;
+}
+
+function formatPartyTooltip(p: ProvinceSummary): string {
+  const meta = getProvincePoliticalMeta(p.id);
+  return meta ? `${meta.partyName} (${meta.partySigla}) · Lealtad ${p.governorLoyaltyToPresident}%` : `Lealtad ${p.governorLoyaltyToPresident}%`;
+}
+
+function formatFiscalTooltip(p: ProvinceSummary): string {
+  const quasi = p.quasiCurrencyIssued ? ' · Cuasimoneda' : '';
+  return `Fiscal ${p.fiscalBalancePct}% · Copart. ${p.coparticipationDependencyPct}%${quasi}`;
+}
+
+function formatSecurityTooltip(p: ProvinceSummary): string {
+  const alerts = p.problematicas?.length ?? 0;
+  return `Problemáticas: ${alerts} · Lealtad ${p.governorLoyaltyToPresident}%`;
+}
+
+const TOOLTIP_FORMATTERS: Record<Map3DMode, (p: ProvinceSummary) => string> = {
+  LOYALTY: (p) => `Lealtad ${p.governorLoyaltyToPresident}% · Dip. ${p.nationalDeputiesCount}`,
+  DEPUTIES: (p) => `Diputados ${p.nationalDeputiesCount} · Lealtad ${p.governorLoyaltyToPresident}%`,
+  FISCAL: formatFiscalTooltip,
+  SECURITY: formatSecurityTooltip,
+  GOVERNORS: formatGovernorTooltip,
+  PARTIES: formatPartyTooltip
+};
+
 function formatTooltipStats(province: ProvinceSummary, mode: Map3DMode): string {
-  const meta = getProvincePoliticalMeta(province.id);
-  if (mode === 'GOVERNORS' && meta) {
-    return `Gob. ${meta.governorName} · ${meta.bloc}`;
-  }
-  if (mode === 'PARTIES' && meta) {
-    return `${meta.partyName} (${meta.partySigla}) · Lealtad ${province.governorLoyaltyToPresident}%`;
-  }
-  if (mode === 'FISCAL') {
-    const quasi = province.quasiCurrencyIssued ? ' · Cuasimoneda' : '';
-    return `Fiscal ${province.fiscalBalancePct}% · Copart. ${province.coparticipationDependencyPct}%${quasi}`;
-  }
-  if (mode === 'SECURITY') {
-    const alerts = province.problematicas?.length ?? 0;
-    return `Problemáticas: ${alerts} · Lealtad ${province.governorLoyaltyToPresident}%`;
-  }
-  return `Lealtad ${province.governorLoyaltyToPresident}% · Dip. ${province.nationalDeputiesCount}`;
+  return TOOLTIP_FORMATTERS[mode](province);
 }
 
 function HoveredCursorTooltip({
@@ -321,6 +335,31 @@ function MapLayerToolbar({
   );
 }
 
+function SelectedProvinceHeader({
+  province,
+  onClose
+}: {
+  province: ProvinceSummary;
+  onClose: () => void;
+}) {
+  const polMeta = getProvincePoliticalMeta(province.id);
+  const sigla = polMeta ? ` · ${polMeta.partySigla}` : '';
+  return (
+    <div className="flex items-start justify-between gap-2 border-b border-[#263142] pb-2">
+      <div>
+        <div className="text-[10px] font-mono uppercase tracking-wider text-amber-400">
+          {province.region}{sigla}
+        </div>
+        <div className="text-sm font-bold text-slate-100">{province.name}</div>
+        {polMeta ? <div className="text-[10px] text-slate-400">Gob. {polMeta.governorName}</div> : null}
+      </div>
+      <button type="button" onClick={onClose} className="text-slate-400 hover:text-white font-mono text-xs">
+        Cerrar
+      </button>
+    </div>
+  );
+}
+
 function SelectedProvinceCard({
   province,
   atnFlash,
@@ -333,7 +372,6 @@ function SelectedProvinceCard({
   onClose: () => void;
 }) {
   if (!province) return null;
-  const polMeta = getProvincePoliticalMeta(province.id);
 
   return (
     <div
@@ -341,20 +379,7 @@ function SelectedProvinceCard({
         atnFlash ? 'rosca-turn-flash' : ''
       }`}
     >
-      <div className="flex items-start justify-between gap-2 border-b border-[#263142] pb-2">
-        <div>
-          <div className="text-[10px] font-mono uppercase tracking-wider text-amber-400">
-            {province.region}{polMeta ? ` · ${polMeta.partySigla}` : ''}
-          </div>
-          <div className="text-sm font-bold text-slate-100">{province.name}</div>
-          {polMeta ? (
-            <div className="text-[10px] text-slate-400">Gob. {polMeta.governorName}</div>
-          ) : null}
-        </div>
-        <button type="button" onClick={onClose} className="text-slate-400 hover:text-white font-mono text-xs">
-          Cerrar
-        </button>
-      </div>
+      <SelectedProvinceHeader province={province} onClose={onClose} />
       <div className="grid grid-cols-2 gap-1.5 font-mono text-[11px]">
         <div className="text-slate-400">Diputados: <strong className="text-slate-100">{province.nationalDeputiesCount}</strong></div>
         <div className="text-slate-400">Lealtad: <strong className="text-amber-300">{province.governorLoyaltyToPresident}%</strong></div>

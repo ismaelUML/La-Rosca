@@ -6,7 +6,7 @@ import type {
   SimulationState
 } from '@argentina-sim/domain';
 import { SECTOR_CATEGORIES_SUMMARY } from '@argentina-sim/infrastructure';
-import { Check, Play, ScrollText, Sliders } from 'lucide-react';
+import { Check, Play, ScrollText, Search, Sliders } from 'lucide-react';
 import { SectionPageHeader } from '@/components/ui/SectionPageHeader';
 import { playUiSound } from '@/lib/gameFeedback';
 import { ActionStripCard } from './ActionStripCard.js';
@@ -457,13 +457,23 @@ function MeasureItemCard({
   );
 }
 
+function matchesMeasureQuery(measure: SectorMeasureCard, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return measure.title.toLowerCase().includes(q) || measure.description.toLowerCase().includes(q);
+}
+
+function matchesMeasureFilter(measure: SectorMeasureCard, sector: string, query: string): boolean {
+  const sectorOk = sector === 'TODOS' || measure.sectorId === sector;
+  return sectorOk && matchesMeasureQuery(measure, query);
+}
+
 export function SectorMeasuresView({ measures, onToggleMeasure }: SectorMeasuresViewProps) {
   const [filterMode, setFilterMode] = useState<'TEMPORAL' | 'PERMANENTE'>('TEMPORAL');
   const [selectedSector, setSelectedSector] = useState<string>('PRECIOS');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
-  const sectorMeasures = measures.filter(
-    (m) => selectedSector === 'TODOS' || m.sectorId === selectedSector
-  );
+  const sectorMeasures = measures.filter((m) => matchesMeasureFilter(m, selectedSector, searchQuery));
 
   const tempCount = sectorMeasures.filter((m) => m.durationType === 'TEMPORAL').length;
   const permCount = sectorMeasures.filter((m) => m.durationType === 'PERMANENTE').length;
@@ -533,6 +543,16 @@ export function SectorMeasuresView({ measures, onToggleMeasure }: SectorMeasures
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <label className="relative flex items-center">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar entre 121 medidas..."
+                className="pl-8 pr-3 py-1.5 w-56 rounded-sm bg-[#090d14] border border-[#263142] focus:border-[#b89342] focus:outline-none text-xs text-slate-200 placeholder:text-slate-500 font-mono"
+              />
+            </label>
             <span className="text-xs font-mono text-slate-400 mr-1">
               Sector: <strong className="text-amber-300">{selectedSector}</strong>
             </span>
