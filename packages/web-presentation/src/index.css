@@ -26,8 +26,25 @@
 }
 
 .hoi-paper-event {
-  background-color: #f3f0e8;
-  border: 1px solid #2a313d;
+  background-color: #efeade;
+  border: 2px solid #1e242e;
+}
+
+.hoi-newspaper-fold {
+  background-image: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.04) 0%,
+    rgba(255, 255, 255, 0) 22%,
+    rgba(0, 0, 0, 0) 48%,
+    rgba(0, 0, 0, 0.06) 50%,
+    rgba(255, 255, 255, 0.08) 51%,
+    rgba(0, 0, 0, 0) 78%,
+    rgba(0, 0, 0, 0.04) 100%
+  );
+}
+
+.hoi-newspaper-photo {
+  filter: grayscale(100%) contrast(120%) sepia(14%);
 }
 
 .hoi-btn-gold {

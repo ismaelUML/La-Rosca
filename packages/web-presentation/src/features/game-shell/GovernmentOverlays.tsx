@@ -11,9 +11,10 @@ import {
   type SimulationState
 } from '@argentina-sim/domain';
 
-// Capas que se montan por encima del tablero de gobierno: la "Situación de Gobierno" que
-// frena el avance del mes hasta que el Presidente decide, y la pantalla final del mandato.
-// Se dejan juntas en un solo componente para que App.tsx no sume ramas de render.
+import { NewspaperEventModal } from '../events-newspaper/NewspaperEventModal.js';
+
+// Capas que se montan por encima del tablero de gobierno: la "Situación de Gobierno" en formato
+// tapa de diario argentino estilo HOI4, y la pantalla final del mandato.
 
 const OUTCOME_TITLES: Record<Exclude<MandateStatus, 'EN_CURSO'>, { title: string; isVictory: boolean }> = {
   MANDATO_COMPLETADO: { title: 'Cumpliste el mandato', isVictory: true },
@@ -22,38 +23,6 @@ const OUTCOME_TITLES: Record<Exclude<MandateStatus, 'EN_CURSO'>, { title: string
   DEFAULT_SOBERANO: { title: 'El país entró en default', isVictory: false },
   HIPERINFLACION: { title: 'Hiperinflación: perdiste el control', isVictory: false }
 };
-
-function EventOptionCard({ option, onChoose }: { option: GovernmentEventOption; onChoose: (id: string) => void }) {
-  return (
-    <div className="rounded-sm bg-[#ebe4d5] border border-[#b9ae98] p-4 flex flex-col justify-between space-y-3 hover:border-[#8b6318] transition">
-      <div className="space-y-2.5">
-        <h4 className="text-sm font-extrabold text-[#161920] leading-snug">{option.title}</h4>
-        <p className="text-xs text-[#3b414f] leading-relaxed">{option.description}</p>
-        <div className="flex flex-wrap gap-1.5">
-          {describeEventEffects(option.effects).map((b) => (
-            <span
-              key={b.label}
-              className={`px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold tracking-tight border ${
-                b.isPositive
-                  ? 'bg-emerald-900/15 text-emerald-900 border-emerald-800/40'
-                  : 'bg-rose-900/15 text-rose-900 border-rose-800/40'
-              }`}
-            >
-              {b.label}
-            </span>
-          ))}
-        </div>
-      </div>
-      <button
-        type="button"
-        onClick={() => onChoose(option.id)}
-        className="w-full py-2 rounded-sm bg-[#181d26] hover:bg-[#232a37] text-[#f3f0e8] border border-[#2a313d] text-xs font-bold uppercase tracking-wider transition"
-      >
-        Ejecutar decisión
-      </button>
-    </div>
-  );
-}
 
 function GovernmentEventModal({
   event,
@@ -64,35 +33,26 @@ function GovernmentEventModal({
   monthLabel: string;
   onChoose: (optionId: string) => void;
 }) {
+  const options = event.options.map((o: GovernmentEventOption) => ({
+    id: o.id,
+    title: o.title,
+    description: o.description,
+    badges: describeEventEffects(o.effects)
+  }));
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="hoi-paper-event rounded-sm w-full max-w-4xl overflow-hidden">
-        <div className="hoi-header-crimson px-6 py-2.5 flex items-center justify-between text-[11px] font-mono font-bold uppercase tracking-widest text-amber-200">
-          <span>PARTE OFICIAL · CASA ROSADA · {monthLabel}</span>
-          <span className="px-2 py-0.5 bg-black/30 border border-amber-400/30 rounded-sm">{event.category}</span>
-        </div>
-
-        <div className="p-6 md:p-7 space-y-5">
-          <div className="border-b-2 border-[#c8bfae] pb-4 space-y-2">
-            <h2 className="text-2xl md:text-3xl font-serif font-black text-[#14171f] leading-tight">
-              {event.title}
-            </h2>
-            <p className="text-xs md:text-sm text-[#2d323e] leading-relaxed">{event.description}</p>
-          </div>
-
-          <div className={`grid grid-cols-1 gap-3.5 ${event.options.length > 2 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
-            {event.options.map((o) => (
-              <EventOptionCard key={o.id} option={o} onChoose={onChoose} />
-            ))}
-          </div>
-
-          <div className="pt-2 border-t border-[#c8bfae] flex items-center justify-between text-[11px] font-mono text-[#525866]">
-            <span>EXPEDIENTE URGENTE · REQUIERE RESOLUCIÓN PRESIDENCIAL</span>
-            <span>EL MES NO AVANZA HASTA DECIDIR</span>
-          </div>
-        </div>
-      </div>
-    </div>
+    <NewspaperEventModal
+      eventId={event.id}
+      category={event.category}
+      dateLabel={monthLabel}
+      title={event.title}
+      description={event.description}
+      footerLeft="EXPEDIENTE URGENTE · REQUIERE RESOLUCIÓN PRESIDENCIAL"
+      footerRight="EL MES NO AVANZA HASTA DECIDIR"
+      ctaLabel="Ejecutar decisión"
+      options={options}
+      onChoose={onChoose}
+    />
   );
 }
 
