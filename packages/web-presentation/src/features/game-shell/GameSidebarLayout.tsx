@@ -8,12 +8,17 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Play,
+  RefreshCw,
   Save,
   Scale,
+  Volume2,
+  VolumeX,
   Wallet
 } from 'lucide-react';
 import { PartyEmblemSvg } from '../party-setup/PartyEmblemSvg.js';
 import { Argentina3DMapCanvas } from '../map-3d/Argentina3DMapCanvas.js';
+import { isSoundEnabled, playUiSound, setSoundEnabled } from '../../lib/gameFeedback.js';
+import { resolveRangeTone, SEMANTIC_TEXT_CLASS } from '../../lib/semanticColors.js';
 
 // Shell estilo estrategia sobre mapa 3D vivo:
 // barra superior de telemetria macro, dock horizontal de Ministerios con iconos lucide
@@ -113,10 +118,24 @@ function TelemetryBox({ label, value, toneClass }: { label: string; value: strin
   );
 }
 
-function reservesTone(netUsd: number): string {
-  if (netUsd < 0) return 'text-rose-400';
-  if (netUsd < 6) return 'text-amber-300';
-  return 'text-emerald-400';
+function SoundToggleButton() {
+  const [enabled, setEnabled] = useState(() => isSoundEnabled());
+  const toggle = () => {
+    const next = !enabled;
+    setSoundEnabled(next);
+    setEnabled(next);
+    if (next) playUiSound('tab');
+  };
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      title={enabled ? 'Silenciar efectos sutiles' : 'Activar efectos sutiles'}
+      className="inline-flex items-center justify-center p-1.5 rounded-sm bg-[#0b1018] hover:bg-[#172233] border border-[#334155] text-slate-300"
+    >
+      {enabled ? <Volume2 className="w-3.5 h-3.5 text-amber-300" /> : <VolumeX className="w-3.5 h-3.5 text-slate-500" />}
+    </button>
+  );
 }
 
 function TopTelemetryBar({
@@ -133,6 +152,11 @@ function TopTelemetryBar({
   onExitToMenu: () => void;
 }) {
   const netUsd = state.centralBank.netLiquidReservesBillionUsd;
+  const brechaTone = resolveRangeTone(state.centralBank.exchangeBrechaPct, 15, 40, true);
+  const reservesToneClass = SEMANTIC_TEXT_CLASS[resolveRangeTone(netUsd, 6, 0)];
+  const ipcTone = resolveRangeTone(state.inflation.realMonthlyIpcPct, 3, 6, true);
+  const riskTone = resolveRangeTone(state.countryRiskEmbiPb, 700, 1200, true);
+  const imageTone = resolveRangeTone(state.publicOpinion.presidentialPersonalImagePct, 50, 35);
 
   return (
     <header className="hoi-header-steel px-4 py-2 z-30 shrink-0">
@@ -151,51 +175,58 @@ function TopTelemetryBar({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div key={state.turnMonth} className="flex flex-wrap items-center gap-1.5 rosca-turn-flash rounded-sm">
           <TelemetryBox
             label="Dólar CCL"
             value={`$${state.centralBank.cclDollarArs} (${state.centralBank.exchangeBrechaPct.toFixed(0)}%)`}
-            toneClass="text-sky-300"
+            toneClass={SEMANTIC_TEXT_CLASS[brechaTone]}
           />
           <TelemetryBox
             label="Res. Netas"
             value={`${netUsd.toFixed(1)}B USD`}
-            toneClass={reservesTone(netUsd)}
+            toneClass={reservesToneClass}
           />
           <TelemetryBox
             label="Inflación"
             value={`${state.inflation.realMonthlyIpcPct.toFixed(1)}%/m`}
-            toneClass="text-rose-300"
+            toneClass={SEMANTIC_TEXT_CLASS[ipcTone]}
           />
           <TelemetryBox
             label="Riesgo País"
             value={`${state.countryRiskEmbiPb} pb`}
-            toneClass="text-amber-300"
+            toneClass={SEMANTIC_TEXT_CLASS[riskTone]}
           />
           <TelemetryBox
             label="Imagen"
             value={`${state.publicOpinion.presidentialPersonalImagePct.toFixed(0)}%`}
-            toneClass="text-emerald-300"
+            toneClass={SEMANTIC_TEXT_CLASS[imageTone]}
           />
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
-            onClick={onAdvanceTurn}
-            className="hoi-btn-gold inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-sm font-extrabold text-xs uppercase tracking-wider transition"
+            onClick={() => {
+              playUiSound('turn');
+              onAdvanceTurn();
+            }}
+            className="hoi-btn-gold inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-sm font-extrabold text-xs uppercase tracking-wider transition active:scale-[0.97]"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
             <span>Avanzar Mes</span>
           </button>
           <button
             type="button"
-            onClick={onExportSaveCode}
+            onClick={() => {
+              playUiSound('tab');
+              onExportSaveCode();
+            }}
             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-sm bg-[#0b1018] hover:bg-[#172233] border border-[#334155] text-xs font-semibold text-slate-200"
           >
             <Save className="w-3.5 h-3.5" />
             <span>Guardar</span>
           </button>
+          <SoundToggleButton />
           <button
             type="button"
             onClick={onExitToMenu}
@@ -317,13 +348,62 @@ interface GameSidebarLayoutProps {
   state: SimulationState;
   activeSection: InGameSidebarSection;
   portableSaveBanner: string | null;
+  saveError?: string | null;
   onSelectSection: (sec: InGameSidebarSection) => void;
   onAdvanceTurn: () => void;
   onExportSaveCode: () => void;
+  onRetrySave?: () => void;
   onCloseSaveBanner: () => void;
   onExitToMenu: () => void;
   onSendAtn?: (provinceId: string) => void;
   children: React.ReactNode;
+}
+
+function SaveStatusBanners({
+  portableSaveBanner,
+  saveError,
+  onRetrySave,
+  onCloseSaveBanner
+}: {
+  portableSaveBanner: string | null;
+  saveError?: string | null;
+  onRetrySave?: () => void;
+  onCloseSaveBanner: () => void;
+}) {
+  return (
+    <>
+      {saveError ? (
+        <div className="mb-4 p-3 rounded-sm bg-rose-950/70 border border-rose-700/70 flex items-center justify-between gap-3 rosca-toast-pop">
+          <div className="text-xs text-rose-200">{saveError}</div>
+          {onRetrySave ? (
+            <button
+              type="button"
+              onClick={onRetrySave}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm bg-rose-800 hover:bg-rose-700 text-xs font-bold text-white shrink-0"
+            >
+              <RefreshCw className="w-3 h-3" />
+              <span>Reintentar</span>
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {portableSaveBanner ? (
+        <div className="mb-4 p-3 rounded-sm bg-[#0f291e] border border-emerald-700/70 flex items-center justify-between gap-4 rosca-toast-pop">
+          <div className="text-xs text-emerald-200 truncate font-mono">
+            Código portable listo para copiar: <code className="text-emerald-300">{portableSaveBanner}</code>
+          </div>
+          <button
+            type="button"
+            onClick={onCloseSaveBanner}
+            className="text-xs font-bold uppercase text-emerald-300 hover:text-white shrink-0"
+          >
+            Cerrar
+          </button>
+        </div>
+      ) : null}
+    </>
+  );
 }
 
 export function GameSidebarLayout({
@@ -331,9 +411,11 @@ export function GameSidebarLayout({
   state,
   activeSection,
   portableSaveBanner,
+  saveError,
   onSelectSection,
   onAdvanceTurn,
   onExportSaveCode,
+  onRetrySave,
   onCloseSaveBanner,
   onExitToMenu,
   onSendAtn,
@@ -341,6 +423,11 @@ export function GameSidebarLayout({
 }: GameSidebarLayoutProps) {
   const [panelVisible, setPanelVisible] = useState(true);
   const [selectedProvId, setSelectedProvId] = useState<string | null>(state.selectedProvinceId);
+
+  const selectSectionWithFx = (sec: InGameSidebarSection) => {
+    playUiSound('tab');
+    onSelectSection(sec);
+  };
 
   return (
     <div className="h-screen overflow-hidden text-slate-100 flex flex-col">
@@ -355,9 +442,12 @@ export function GameSidebarLayout({
       <CommandDockNav
         activeSection={activeSection}
         panelVisible={panelVisible}
-        onSelectSection={onSelectSection}
+        onSelectSection={selectSectionWithFx}
         onOpenPanel={() => setPanelVisible(true)}
-        onTogglePanel={() => setPanelVisible((v) => !v)}
+        onTogglePanel={() => {
+          playUiSound('tab');
+          setPanelVisible((v) => !v);
+        }}
       />
 
       <div className="relative flex-1 overflow-hidden">
@@ -373,21 +463,16 @@ export function GameSidebarLayout({
 
         {panelVisible ? (
           <main className="relative z-10 h-full overflow-y-auto pointer-events-none">
-            <div className="max-w-3xl mx-3 sm:mx-5 my-4 p-4 sm:p-5 rounded-sm bg-[#0c1119]/92 backdrop-blur-md border border-[#263142] pointer-events-auto shadow-2xl">
-              {portableSaveBanner ? (
-                <div className="mb-4 p-3 rounded-sm bg-[#0f291e] border border-emerald-700/70 flex items-center justify-between gap-4">
-                  <div className="text-xs text-emerald-200 truncate font-mono">
-                    Partida guardada (Zlib): <code className="text-emerald-300">{portableSaveBanner}</code>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={onCloseSaveBanner}
-                    className="text-xs font-bold uppercase text-emerald-300 hover:text-white shrink-0"
-                  >
-                    Cerrar
-                  </button>
-                </div>
-              ) : null}
+            <div
+              key={activeSection}
+              className="max-w-3xl mx-3 sm:mx-5 my-4 p-4 sm:p-5 rounded-sm bg-[#0c1119]/92 backdrop-blur-md border border-[#263142] pointer-events-auto shadow-2xl rosca-panel-enter"
+            >
+              <SaveStatusBanners
+                portableSaveBanner={portableSaveBanner}
+                saveError={saveError}
+                onRetrySave={onRetrySave}
+                onCloseSaveBanner={onCloseSaveBanner}
+              />
 
               {children}
             </div>

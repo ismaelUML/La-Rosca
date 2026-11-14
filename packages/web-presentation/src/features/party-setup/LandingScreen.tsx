@@ -6,9 +6,11 @@ import React, { useState } from 'react';
 
 interface LandingScreenProps {
   hasSavedSession: boolean;
+  importError?: string | null;
   onStartNewGame: () => void;
   onContinueGame: () => void;
-  onImportPortableCode: (code: string) => void;
+  onImportPortableCode: (code: string) => boolean;
+  onClearImportError?: () => void;
 }
 
 const BRIEFING_ITEMS = [
@@ -19,46 +21,67 @@ const BRIEFING_ITEMS = [
 
 function CodeImportBox({
   codeText,
+  importError,
   onChangeCode,
-  onSubmit
+  onSubmit,
+  onRetry
 }: {
   codeText: string;
+  importError?: string | null;
   onChangeCode: (val: string) => void;
   onSubmit: () => void;
+  onRetry: () => void;
 }) {
   return (
-    <div className="mt-4 p-3 rounded-sm bg-[#0b1018] border border-[#334155] flex flex-col sm:flex-row gap-2">
-      <input
-        type="text"
-        value={codeText}
-        onChange={(e) => onChangeCode(e.target.value)}
-        placeholder="Pegá acá tu código ARG2027Z:..."
-        className="flex-1 bg-[#070a0f] border border-[#283447] rounded-sm px-3 py-2 text-xs font-mono text-amber-200"
-      />
-      <button
-        type="button"
-        onClick={onSubmit}
-        className="hoi-btn-gold px-4 py-2 rounded-sm text-xs font-extrabold uppercase tracking-wider"
-      >
-        Cargar
-      </button>
+    <div className="mt-4 p-3 rounded-sm bg-[#0b1018] border border-[#334155] space-y-2">
+      <div className="flex flex-col sm:flex-row gap-2">
+        <input
+          type="text"
+          value={codeText}
+          onChange={(e) => onChangeCode(e.target.value)}
+          placeholder="Pegá acá tu código ARG2027Z:..."
+          className="flex-1 bg-[#070a0f] border border-[#283447] rounded-sm px-3 py-2 text-xs font-mono text-amber-200"
+        />
+        <button
+          type="button"
+          onClick={onSubmit}
+          className="hoi-btn-gold px-4 py-2 rounded-sm text-xs font-extrabold uppercase tracking-wider"
+        >
+          Cargar
+        </button>
+      </div>
+      {importError ? (
+        <div className="p-2.5 rounded-sm bg-rose-950/70 border border-rose-700/70 flex items-center justify-between gap-2 text-xs text-rose-200">
+          <span>{importError}</span>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="px-2 py-1 rounded-sm bg-rose-800 hover:bg-rose-700 text-white font-semibold shrink-0"
+          >
+            Reintentar
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
 
 export function LandingScreen({
   hasSavedSession,
+  importError,
   onStartNewGame,
   onContinueGame,
-  onImportPortableCode
+  onImportPortableCode,
+  onClearImportError
 }: LandingScreenProps) {
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [codeText, setCodeText] = useState('');
 
   const handleLoadCode = () => {
     if (!codeText.trim()) return;
-    onImportPortableCode(codeText.trim());
-    setShowCodeModal(false);
+    if (onImportPortableCode(codeText.trim())) {
+      setShowCodeModal(false);
+    }
   };
 
   const continueLabel = hasSavedSession ? 'Continuar Operación' : 'Escenario Rápido (2027)';
@@ -123,7 +146,16 @@ export function LandingScreen({
             </div>
 
             {showCodeModal ? (
-              <CodeImportBox codeText={codeText} onChangeCode={setCodeText} onSubmit={handleLoadCode} />
+              <CodeImportBox
+                codeText={codeText}
+                importError={importError}
+                onChangeCode={(val) => {
+                  setCodeText(val);
+                  onClearImportError?.();
+                }}
+                onSubmit={handleLoadCode}
+                onRetry={handleLoadCode}
+              />
             ) : null}
           </div>
 

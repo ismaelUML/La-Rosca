@@ -1,8 +1,15 @@
 import React, { useState } from 'react';
 import type { IndicatorPoint, IndicatorSeriesCard } from '@argentina-sim/domain';
+import {
+  resolveDeltaTone,
+  resolveIndicatorCardTone,
+  SEMANTIC_BG_BADGE,
+  SEMANTIC_HEX,
+  SEMANTIC_TEXT_CLASS
+} from '../../lib/semanticColors.js';
 
-// Tarjeta de indicador con grafico SVG de linea + area sombreada (naranja/verde)
-// calcada de la captura 1, dividida en subcomponentes chicos para mantener CC <= 4.
+// Tarjeta de indicador con jerarquia clara: numero principal dominante,
+// variacion semantica consistente (verde/dorado/rojo-rosa) y sparkline secundario.
 
 function buildSvgPolyline(points: IndicatorPoint[], minVal: number, maxVal: number): {
   linePoints: string;
@@ -10,9 +17,9 @@ function buildSvgPolyline(points: IndicatorPoint[], minVal: number, maxVal: numb
   coords: Array<{ x: number; y: number; point: IndicatorPoint }>;
 } {
   const width = 440;
-  const height = 120;
-  const padX = 24;
-  const padY = 14;
+  const height = 104;
+  const padX = 20;
+  const padY = 12;
   const span = Math.max(0.5, maxVal - minVal);
   const stepX = (width - padX * 2) / Math.max(1, points.length - 1);
 
@@ -32,28 +39,9 @@ function buildSvgPolyline(points: IndicatorPoint[], minVal: number, maxVal: numb
   return { linePoints, areaPoints, coords };
 }
 
-function resolveVariationColorClass(delta: number, invertColorLogic?: boolean): string {
-  const isFavorable = invertColorLogic ? delta <= 0 : delta >= 0;
-  return isFavorable ? 'text-emerald-400' : 'text-rose-400';
-}
-
 function formatSignedDelta(delta: number): string {
   return delta > 0 ? `+${delta}` : String(delta);
 }
-
-export const CATEGORY_COLORS: Record<string, string> = {
-  PRECIOS: '#f97316',          // Naranja fuego / Precios
-  EMPLEO: '#0ea5e9',           // Celeste cielo / Empleo
-  ACTIVIDAD: '#10b981',        // Esmeralda vibrante / Actividad
-  INGRESOS: '#a855f7',         // Púrpura frambuesa / Ingresos y Jubilaciones
-  SOCIEDAD: '#ec4899',         // Rosa fuerte / Pobreza
-  SEGURIDAD: '#eab308',        // Ámbar dorado / Seguridad
-  SECTOR_EXTERNO: '#3b82f6',   // Azul marino / Sector externo
-  FINANZAS: '#14b8a6',         // Turquesa / Finanzas y Emisión
-  FINANZAS_PUBLICAS: '#f59e0b',// Ámbar cobrizo / Finanzas públicas y Deuda
-  OPINION_PUBLICA: '#8b5cf6',  // Violeta / Opinión pública
-  DEFENSA: '#64748b'           // Pizarra / Soberanía
-};
 
 interface IndicatorCardFooterProps {
   card: IndicatorSeriesCard;
@@ -63,22 +51,22 @@ interface IndicatorCardFooterProps {
 
 function IndicatorCardFooter({ card, showDetail, onToggleDetail }: IndicatorCardFooterProps) {
   return (
-    <div className="pt-2 border-t border-slate-800/60 mt-1">
-      {card.subtitle ? <p className="text-[11px] text-slate-400 mb-2">{card.subtitle}</p> : null}
+    <div className="pt-3 border-t border-slate-800/60 mt-2">
+      {card.subtitle ? <p className="text-[11px] text-slate-400 mb-2 leading-relaxed">{card.subtitle}</p> : null}
       <button
         type="button"
         onClick={onToggleDetail}
-        className="text-xs font-semibold text-white hover:text-orange-400 transition"
+        className="text-xs font-semibold text-slate-200 hover:text-amber-300 transition"
       >
         {showDetail ? 'Ocultar detalle mensual' : 'Ver detalle mensual'}
       </button>
 
       {showDetail ? (
-        <div className="mt-2.5 grid grid-cols-3 sm:grid-cols-4 gap-1.5 text-[11px]">
+        <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 gap-2 text-[11px] rosca-panel-enter">
           {card.points.map((pt) => (
             <div
               key={pt.label}
-              className="px-2 py-1 rounded bg-[#0b0e15] border border-slate-800 flex justify-between"
+              className="px-2.5 py-1.5 rounded bg-[#090d14] border border-slate-800 flex justify-between"
             >
               <span className="text-slate-400">{pt.label}</span>
               <span className="font-mono text-slate-200">{pt.value}</span>
@@ -101,58 +89,56 @@ export function IndicatorChartCard({ card }: IndicatorChartCardProps) {
   const padMin = Math.floor(card.minValue - Math.abs(card.minValue) * 0.08);
   const padMax = Math.ceil(card.maxValue + Math.abs(card.maxValue) * 0.08 + 0.5);
   const { linePoints, areaPoints, coords } = buildSvgPolyline(card.points, padMin, padMax);
-  const deltaColor = resolveVariationColorClass(card.monthlyVariation, card.invertColorLogic);
-  const accentColor = card.accentColor ?? CATEGORY_COLORS[card.category] ?? '#f97316';
+
+  const heroTone = resolveIndicatorCardTone(card);
+  const deltaTone = resolveDeltaTone(card.monthlyVariation, card.invertColorLogic);
+  const accentHex = SEMANTIC_HEX[heroTone];
 
   return (
-    <div className="rounded-2xl bg-[#10131b] border border-slate-800/90 p-5 flex flex-col justify-between">
+    <div className="rounded-xl bg-[#0e131c] border border-[#232e40] p-6 flex flex-col justify-between gap-4">
       <div>
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="text-xs font-medium text-slate-300">{card.title}</div>
-            <div className="mt-1 flex items-baseline gap-1.5">
-              <span
-                style={{ color: accentColor }}
-                className="text-3xl font-extrabold tracking-tight"
-              >
+          <div className="space-y-1.5">
+            <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">{card.title}</div>
+            <div className="flex items-baseline gap-2">
+              <span className={`text-4xl sm:text-5xl font-black tracking-tight tabular-nums ${SEMANTIC_TEXT_CLASS[heroTone]}`}>
                 {card.currentValue}
               </span>
-              <span className="text-sm text-slate-400 font-medium">{card.unit}</span>
+              <span className="text-sm text-slate-400 font-semibold">{card.unit}</span>
             </div>
           </div>
 
-          <div className="text-right">
-            <div className="text-[11px] text-slate-400">Variación mensual</div>
-            <div className={`text-sm font-bold mt-0.5 ${deltaColor}`}>
+          <div className="text-right space-y-1 shrink-0">
+            <span className={`inline-block px-2 py-0.5 rounded-sm border text-xs font-mono font-bold ${SEMANTIC_BG_BADGE[deltaTone]}`}>
               {formatSignedDelta(card.monthlyVariation)} {card.variationUnit}
-            </div>
-            <div className="text-[11px] text-slate-500 mt-0.5">
+            </span>
+            <div className="text-[11px] font-mono text-slate-500">
               mín {card.minValue} · máx {card.maxValue}
             </div>
           </div>
         </div>
 
-        <div className="mt-4 relative">
-          <svg viewBox="0 0 440 135" className="w-full h-36 overflow-visible">
-            <line x1="24" y1="20" x2="416" y2="20" stroke="#1e2433" strokeDasharray="3 3" />
-            <line x1="24" y1="62" x2="416" y2="62" stroke="#1e2433" strokeDasharray="3 3" />
-            <line x1="24" y1="106" x2="416" y2="106" stroke="#1e2433" />
+        <div className="mt-5 pt-3 border-t border-slate-800/50 relative opacity-80 hover:opacity-100 transition-opacity">
+          <svg viewBox="0 0 440 118" className="w-full h-24 overflow-visible">
+            <line x1="20" y1="16" x2="420" y2="16" stroke="#1b2333" strokeDasharray="3 3" />
+            <line x1="20" y1="54" x2="420" y2="54" stroke="#1b2333" strokeDasharray="3 3" />
+            <line x1="20" y1="92" x2="420" y2="92" stroke="#1b2333" />
 
-            <polygon points={areaPoints} fill={accentColor} fillOpacity="0.13" />
-            <polyline fill="none" stroke={accentColor} strokeWidth="2.2" points={linePoints} />
+            <polygon points={areaPoints} fill={accentHex} fillOpacity="0.08" />
+            <polyline fill="none" stroke={accentHex} strokeWidth="1.7" points={linePoints} />
 
             {coords.map((c) => (
               <g key={c.point.label}>
                 <circle
                   cx={c.x}
                   cy={c.y}
-                  r={3.2}
-                  fill={accentColor}
+                  r={3}
+                  fill={accentHex}
                   className="cursor-pointer"
                   onMouseEnter={() => setHoveredPoint(c.point)}
                   onMouseLeave={() => setHoveredPoint(null)}
                 />
-                <text x={c.x} y={126} textAnchor="middle" className="fill-slate-500 text-[9px]">
+                <text x={c.x} y={110} textAnchor="middle" className="fill-slate-500 text-[9px]">
                   {c.point.label}
                 </text>
               </g>
@@ -160,9 +146,9 @@ export function IndicatorChartCard({ card }: IndicatorChartCardProps) {
           </svg>
 
           {hoveredPoint ? (
-            <div className="absolute top-1 right-2 px-2.5 py-1 rounded-lg bg-slate-950/95 border border-slate-700 text-[11px] text-slate-200 shadow">
+            <div className="absolute top-2 right-1 px-2.5 py-1 rounded bg-slate-950/95 border border-slate-700 text-[11px] text-slate-200 shadow">
               {hoveredPoint.label}:{' '}
-              <strong style={{ color: accentColor }}>
+              <strong style={{ color: accentHex }}>
                 {hoveredPoint.value} {card.unit}
               </strong>
             </div>

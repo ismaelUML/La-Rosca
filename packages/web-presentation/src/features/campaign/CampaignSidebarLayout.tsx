@@ -17,10 +17,14 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Play,
-  Save
+  RefreshCw,
+  Save,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { PartyEmblemSvg } from '../party-setup/PartyEmblemSvg.js';
 import { Argentina3DMapCanvas } from '../map-3d/Argentina3DMapCanvas.js';
+import { isSoundEnabled, playUiSound, setSoundEnabled } from '../../lib/gameFeedback.js';
 
 // Shell de campana electoral 2027 sobre el mismo mapa 3D interactivo de Argentina.
 
@@ -43,10 +47,12 @@ interface CampaignSidebarLayoutProps {
   state: CampaignSimulationState;
   activeSection: CampaignNavSection;
   portableSaveBanner: string | null;
+  saveError?: string | null;
   onSelectSection: (sec: CampaignNavSection) => void;
   onAdvanceMonth: () => void;
   onSkipToGovernment: () => void;
   onExportSaveCode: () => void;
+  onRetrySave?: () => void;
   onCloseSaveBanner: () => void;
   onExitToMenu: () => void;
   children: React.ReactNode;
@@ -126,6 +132,26 @@ function findActiveCampaignGroup(activeSection: CampaignNavSection) {
   return found ?? CAMPAIGN_NAV_GROUPS[0]!;
 }
 
+function CampaignSoundButton() {
+  const [enabled, setEnabled] = useState(() => isSoundEnabled());
+  const toggle = () => {
+    const next = !enabled;
+    setSoundEnabled(next);
+    setEnabled(next);
+    if (next) playUiSound('tab');
+  };
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      title={enabled ? 'Silenciar efectos sutiles' : 'Activar efectos sutiles'}
+      className="inline-flex items-center justify-center p-1.5 rounded-sm bg-[#0b1018] hover:bg-[#172233] border border-[#334155] text-slate-300"
+    >
+      {enabled ? <Volume2 className="w-3.5 h-3.5 text-amber-300" /> : <VolumeX className="w-3.5 h-3.5 text-slate-500" />}
+    </button>
+  );
+}
+
 function CampaignTopBar({
   setup,
   state,
@@ -135,7 +161,7 @@ function CampaignTopBar({
   onExitToMenu
 }: Omit<
   CampaignSidebarLayoutProps,
-  'activeSection' | 'portableSaveBanner' | 'onSelectSection' | 'onCloseSaveBanner' | 'children'
+  'activeSection' | 'portableSaveBanner' | 'saveError' | 'onSelectSection' | 'onRetrySave' | 'onCloseSaveBanner' | 'children'
 >) {
   return (
     <header className="hoi-header-steel px-4 py-2 z-30 shrink-0">
@@ -155,7 +181,10 @@ function CampaignTopBar({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <div className="px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#283447] text-xs font-mono">
+          <div
+            key={state.stage.formattedDate}
+            className="px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#283447] text-xs font-mono rosca-turn-flash"
+          >
             <span className="text-slate-400 mr-1">CAJA:</span>
             <strong className="text-amber-300">${state.budgetArgentums.toFixed(1)}M</strong>
           </div>
@@ -169,20 +198,27 @@ function CampaignTopBar({
           </button>
           <button
             type="button"
-            onClick={onAdvanceMonth}
-            className="hoi-btn-gold inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-sm font-extrabold text-xs uppercase tracking-wider transition"
+            onClick={() => {
+              playUiSound('turn');
+              onAdvanceMonth();
+            }}
+            className="hoi-btn-gold inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-sm font-extrabold text-xs uppercase tracking-wider transition active:scale-[0.97]"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
             <span>Avanzar Mes</span>
           </button>
           <button
             type="button"
-            onClick={onExportSaveCode}
+            onClick={() => {
+              playUiSound('tab');
+              onExportSaveCode();
+            }}
             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-sm bg-[#0b1018] hover:bg-[#172233] border border-[#334155] text-xs font-semibold text-slate-200"
           >
             <Save className="w-3.5 h-3.5" />
             <span>Guardar</span>
           </button>
+          <CampaignSoundButton />
           <button
             type="button"
             onClick={onExitToMenu}
@@ -330,25 +366,47 @@ function CampaignProvinceCard({
 
 function PortableSaveBanner({
   code,
+  saveError,
+  onRetrySave,
   onClose
 }: {
   code: string | null;
+  saveError?: string | null;
+  onRetrySave?: () => void;
   onClose: () => void;
 }) {
-  if (!code) return null;
   return (
-    <div className="mb-4 p-3 rounded-sm bg-[#0f291e] border border-emerald-700/70 flex items-center justify-between gap-4">
-      <div className="text-xs text-emerald-200 truncate font-mono">
-        Código portable de campaña: <code className="text-emerald-300">{code}</code>
-      </div>
-      <button
-        type="button"
-        onClick={onClose}
-        className="text-xs font-bold uppercase text-emerald-300 hover:text-white shrink-0"
-      >
-        Cerrar
-      </button>
-    </div>
+    <>
+      {saveError ? (
+        <div className="mb-4 p-3 rounded-sm bg-rose-950/70 border border-rose-700/70 flex items-center justify-between gap-3 rosca-toast-pop">
+          <div className="text-xs text-rose-200">{saveError}</div>
+          {onRetrySave ? (
+            <button
+              type="button"
+              onClick={onRetrySave}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm bg-rose-800 hover:bg-rose-700 text-xs font-bold text-white shrink-0"
+            >
+              <RefreshCw className="w-3 h-3" />
+              <span>Reintentar</span>
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      {code ? (
+        <div className="mb-4 p-3 rounded-sm bg-[#0f291e] border border-emerald-700/70 flex items-center justify-between gap-4 rosca-toast-pop">
+          <div className="text-xs text-emerald-200 truncate font-mono">
+            Código portable listo para copiar: <code className="text-emerald-300">{code}</code>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-xs font-bold uppercase text-emerald-300 hover:text-white shrink-0"
+          >
+            Cerrar
+          </button>
+        </div>
+      ) : null}
+    </>
   );
 }
 
@@ -357,10 +415,12 @@ export function CampaignSidebarLayout({
   state,
   activeSection,
   portableSaveBanner,
+  saveError,
   onSelectSection,
   onAdvanceMonth,
   onSkipToGovernment,
   onExportSaveCode,
+  onRetrySave,
   onCloseSaveBanner,
   onExitToMenu,
   children
@@ -377,6 +437,11 @@ export function CampaignSidebarLayout({
     ? state.provinces.find((p) => p.provinceId === selectedProvId) ?? null
     : null;
 
+  const selectSectionWithFx = (sec: CampaignNavSection) => {
+    playUiSound('tab');
+    onSelectSection(sec);
+  };
+
   return (
     <div className="h-screen overflow-hidden bg-[#070a10] text-slate-100 flex flex-col">
       <CampaignTopBar
@@ -392,8 +457,11 @@ export function CampaignSidebarLayout({
         activeSection={activeSection}
         objectiveTitle={state.stage.objectiveTitle}
         panelVisible={panelVisible}
-        onSelectSection={onSelectSection}
-        onTogglePanel={() => setPanelVisible((prev) => !prev)}
+        onSelectSection={selectSectionWithFx}
+        onTogglePanel={() => {
+          playUiSound('tab');
+          setPanelVisible((prev) => !prev);
+        }}
       />
 
       <div className="relative flex-1 overflow-hidden">
@@ -408,8 +476,16 @@ export function CampaignSidebarLayout({
 
         {panelVisible ? (
           <main className="relative z-10 h-full overflow-y-auto pointer-events-none">
-            <div className="max-w-3xl mx-3 sm:mx-5 my-4 p-4 sm:p-5 rounded-sm bg-[#0c1119]/92 backdrop-blur-md border border-[#263142] pointer-events-auto shadow-2xl">
-              <PortableSaveBanner code={portableSaveBanner} onClose={onCloseSaveBanner} />
+            <div
+              key={activeSection}
+              className="max-w-3xl mx-3 sm:mx-5 my-4 p-4 sm:p-5 rounded-sm bg-[#0c1119]/92 backdrop-blur-md border border-[#263142] pointer-events-auto shadow-2xl rosca-panel-enter"
+            >
+              <PortableSaveBanner
+                code={portableSaveBanner}
+                saveError={saveError}
+                onRetrySave={onRetrySave}
+                onClose={onCloseSaveBanner}
+              />
 
               {children}
             </div>

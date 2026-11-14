@@ -2,12 +2,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { ProvinceSummary } from '@argentina-sim/domain';
+import { AlertTriangle, Landmark, Layers, ShieldCheck, Users } from 'lucide-react';
 import {
   buildArgentina3DGroup,
   resolveProvinceColor,
   type Map3DMode,
   type ProvinceMeshMeta
 } from './argentina3dGeometry.js';
+import { playUiSound } from '../../lib/gameFeedback.js';
 
 interface Argentina3DMapCanvasProps {
   provinces: ProvinceSummary[];
@@ -17,10 +19,11 @@ interface Argentina3DMapCanvasProps {
   onSendAtn?: (provinceId: string) => void;
 }
 
-const MODE_OPTIONS: Array<{ id: Map3DMode; label: string }> = [
-  { id: 'LOYALTY', label: 'Lealtad' },
-  { id: 'FISCAL', label: 'Fiscal / Cuasimonedas' },
-  { id: 'DEPUTIES', label: 'Diputados' }
+const MODE_OPTIONS: Array<{ id: Map3DMode; label: string; icon: React.ReactNode }> = [
+  { id: 'LOYALTY', label: 'Lealtad', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
+  { id: 'FISCAL', label: 'Fiscal', icon: <Landmark className="w-3.5 h-3.5" /> },
+  { id: 'SECURITY', label: 'Tensión', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
+  { id: 'DEPUTIES', label: 'Congreso', icon: <Users className="w-3.5 h-3.5" /> }
 ];
 
 function createSceneEnvironment(container: HTMLDivElement) {
@@ -29,33 +32,46 @@ function createSceneEnvironment(container: HTMLDivElement) {
 
   const width = container.clientWidth || 960;
   const height = container.clientHeight || 600;
-  const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 350);
-  camera.position.set(14, 42, 46);
+  const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 350);
+  camera.position.set(18, 33, 46);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   renderer.setSize(width, height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   container.appendChild(renderer.domElement);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
   controls.maxPolarAngle = Math.PI / 2.15;
-  controls.minDistance = 16;
+  controls.minDistance = 15;
   controls.maxDistance = 95;
   controls.target.set(-10, 0, 2);
 
-  scene.add(new THREE.HemisphereLight(0xbcd0ea, 0x101824, 0.9));
-  const keyLight = new THREE.DirectionalLight(0xfff1d6, 1.35);
-  keyLight.position.set(22, 42, 26);
+  scene.add(new THREE.HemisphereLight(0xcbe0ff, 0x0f172a, 0.78));
+  const keyLight = new THREE.DirectionalLight(0xfff1d6, 1.45);
+  keyLight.position.set(26, 46, 24);
+  keyLight.castShadow = true;
+  keyLight.shadow.mapSize.set(1024, 1024);
+  keyLight.shadow.camera.left = -45;
+  keyLight.shadow.camera.right = 45;
+  keyLight.shadow.camera.top = 45;
+  keyLight.shadow.camera.bottom = -45;
   scene.add(keyLight);
 
+  const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.45);
+  rimLight.position.set(-28, 22, -24);
+  scene.add(rimLight);
+
   const table = new THREE.Mesh(
-    new THREE.PlaneGeometry(140, 140),
-    new THREE.MeshStandardMaterial({ color: 0x090e15, roughness: 0.9, metalness: 0.1 })
+    new THREE.PlaneGeometry(150, 150),
+    new THREE.MeshStandardMaterial({ color: 0x080d14, roughness: 0.92, metalness: 0.08 })
   );
   table.rotation.x = -Math.PI / 2;
   table.position.y = -0.06;
+  table.receiveShadow = true;
   scene.add(table);
 
   const grid = new THREE.GridHelper(120, 50, 0x223044, 0x131b26);
@@ -85,9 +101,29 @@ function findIntersectedProvince(
 }
 
 function resolveEmissiveState(isSelected: boolean, isHovered: boolean): { hex: number; intensity: number } {
-  if (isSelected) return { hex: 0xc9a24d, intensity: 0.45 };
-  if (isHovered) return { hex: 0x60a5fa, intensity: 0.32 };
+  if (isSelected) return { hex: 0xfbbf24, intensity: 0.58 };
+  if (isHovered) return { hex: 0x7dd3fc, intensity: 0.48 };
   return { hex: 0x000000, intensity: 0 };
+}
+
+function resolveTargetLift(isSelected: boolean, isHovered: boolean): number {
+  if (isSelected) return 0.95;
+  if (isHovered) return 0.48;
+  return 0;
+}
+
+function animateGroupFrame(
+  group: THREE.Group | null,
+  hoveredId: string | null,
+  selectedId: string | null
+) {
+  if (!group) return;
+  for (const child of group.children) {
+    const mesh = child as THREE.Mesh;
+    const meta = mesh.userData as ProvinceMeshMeta;
+    const targetY = resolveTargetLift(meta.provinceId === selectedId, meta.provinceId === hoveredId);
+    mesh.position.y += (targetY - mesh.position.y) * 0.16;
+  }
 }
 
 function updateGroupMaterials(
@@ -110,30 +146,127 @@ function updateGroupMaterials(
   }
 }
 
-function HoveredProvincePill({ province }: { province: ProvinceSummary | undefined }) {
-  if (!province) return null;
+function findSelectedMeshMeta(
+  group: THREE.Group | null,
+  selectedId: string | null
+): ProvinceMeshMeta | null {
+  if (!group || !selectedId) return null;
+  const found = group.children.find(
+    (c) => ((c as THREE.Mesh).userData as ProvinceMeshMeta).provinceId === selectedId
+  ) as THREE.Mesh | undefined;
+  return found ? (found.userData as ProvinceMeshMeta) : null;
+}
+
+function computeCameraTargetOffset(
+  group: THREE.Group | null,
+  selectedId: string | null,
+  panelOpen: boolean
+): THREE.Vector3 {
+  const meta = findSelectedMeshMeta(group, selectedId);
+  if (!meta) return new THREE.Vector3(panelOpen ? -12 : 0, 0, 2);
+  return new THREE.Vector3(meta.centerX + (panelOpen ? -7 : 0), 0.5, meta.centerZ);
+}
+
+function formatTooltipStats(province: ProvinceSummary, mode: Map3DMode): string {
+  if (mode === 'FISCAL') {
+    const quasi = province.quasiCurrencyIssued ? ' · Cuasimoneda' : '';
+    return `Fiscal ${province.fiscalBalancePct}% · Copart. ${province.coparticipationDependencyPct}%${quasi}`;
+  }
+  if (mode === 'SECURITY') {
+    const alerts = province.problematicas?.length ?? 0;
+    return `Problemáticas: ${alerts} · Lealtad ${province.governorLoyaltyToPresident}%`;
+  }
+  return `Lealtad ${province.governorLoyaltyToPresident}% · Dip. ${province.nationalDeputiesCount}`;
+}
+
+function HoveredCursorTooltip({
+  province,
+  mode,
+  cursor
+}: {
+  province: ProvinceSummary | undefined;
+  mode: Map3DMode;
+  cursor: { x: number; y: number } | null;
+}) {
+  if (!province || !cursor) return null;
   return (
-    <div className="pointer-events-none rounded-sm bg-[#11161f]/95 border border-[#283447] px-3 py-1.5 text-xs font-mono">
-      <span className="font-bold text-amber-200">{province.name}</span>
-      <span className="text-slate-400 ml-2">
-        Dip. {province.nationalDeputiesCount} · Lealtad {province.governorLoyaltyToPresident}%
-      </span>
+    <div
+      style={{ left: cursor.x + 14, top: cursor.y - 12 }}
+      className="pointer-events-none fixed z-40 rounded-sm bg-[#0b1018]/95 border border-sky-400/60 px-3 py-1.5 shadow-xl"
+    >
+      <div className="text-xs font-bold text-slate-100">{province.name}</div>
+      <div className="text-[10px] font-mono text-amber-300 mt-0.5">{formatTooltipStats(province, mode)}</div>
+    </div>
+  );
+}
+
+function MapLayerToolbar({
+  mapMode,
+  onSelectMode
+}: {
+  mapMode: Map3DMode;
+  onSelectMode: (mode: Map3DMode) => void;
+}) {
+  return (
+    <div className="pointer-events-auto flex flex-col items-end gap-1.5">
+      <div className="flex items-center gap-1 rounded-sm bg-[#0c1119]/95 border border-[#344661] p-1 shadow-xl">
+        <span className="hidden sm:inline-flex items-center gap-1 px-2 text-[10px] font-mono uppercase text-slate-400">
+          <Layers className="w-3 h-3 text-amber-400" />
+          Capa
+        </span>
+        {MODE_OPTIONS.map((opt) => (
+          <button
+            key={opt.id}
+            type="button"
+            onClick={() => {
+              playUiSound('tab');
+              onSelectMode(opt.id);
+            }}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-[10px] font-mono font-bold uppercase tracking-wider transition ${
+              mapMode === opt.id
+                ? 'bg-[#b89342] text-[#100e09] shadow'
+                : 'text-slate-300 hover:bg-[#1a2230]'
+            }`}
+          >
+            {opt.icon}
+            <span>{opt.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-3 px-2.5 py-1 rounded-sm bg-[#0c1119]/90 border border-[#263142] text-[10px] font-mono text-slate-300">
+        <span className="inline-flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-emerald-500" /> Bueno
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-amber-400" /> Neutro
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-rose-500" /> Crítico
+        </span>
+      </div>
     </div>
   );
 }
 
 function SelectedProvinceCard({
   province,
+  atnFlash,
   onSendAtn,
   onClose
 }: {
   province: ProvinceSummary | undefined;
-  onSendAtn?: (provinceId: string) => void;
+  atnFlash: boolean;
+  onSendAtn?: () => void;
   onClose: () => void;
 }) {
   if (!province) return null;
   return (
-    <div className="pointer-events-auto w-72 rounded-sm bg-[#11161f]/95 border border-[#8a6d33] p-3.5 text-xs space-y-2">
+    <div
+      className={`pointer-events-auto w-72 rounded-sm bg-[#0c1119]/95 border border-[#c9a24d] p-3.5 text-xs space-y-2 shadow-2xl rosca-panel-enter ${
+        atnFlash ? 'rosca-turn-flash' : ''
+      }`}
+    >
       <div className="flex items-start justify-between gap-2 border-b border-[#263142] pb-2">
         <div>
           <div className="text-[10px] font-mono uppercase tracking-wider text-amber-400">{province.region}</div>
@@ -153,10 +286,10 @@ function SelectedProvinceCard({
       {onSendAtn ? (
         <button
           type="button"
-          onClick={() => onSendAtn(province.id)}
-          className="hoi-btn-gold w-full py-1.5 rounded-sm text-[11px] font-bold uppercase tracking-wider"
+          onClick={onSendAtn}
+          className="hoi-btn-gold w-full py-1.5 rounded-sm text-[11px] font-bold uppercase tracking-wider transition active:scale-[0.98]"
         >
-          Girar ATN (0.08% PBI)
+          {atnFlash ? 'ATN Girado (+Lealtad)' : 'Girar ATN (0.08% PBI)'}
         </button>
       ) : null}
     </div>
@@ -167,13 +300,13 @@ function useArgentina3DSetup(
   containerRef: React.RefObject<HTMLDivElement | null>,
   provincesRef: React.MutableRefObject<ProvinceSummary[]>,
   modeRef: React.MutableRefObject<Map3DMode>,
-  onHoverRef: React.MutableRefObject<(id: string | null) => void>,
+  onHoverChangeRef: React.MutableRefObject<(id: string | null, pos: { x: number; y: number } | null) => void>,
   onSelectRef: React.MutableRefObject<(id: string) => void>
 ) {
   const groupRef = useRef<THREE.Group | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const targetGoalRef = useRef(new THREE.Vector3(-10, 0, 2));
   const hoveredRef = useRef<string | null>(null);
   const selectedRef = useRef<string | null>(null);
 
@@ -183,11 +316,12 @@ function useArgentina3DSetup(
     const { scene, camera, renderer, controls } = createSceneEnvironment(container);
     sceneRef.current = scene;
     controlsRef.current = controls;
-    cameraRef.current = camera;
 
     let animId = 0;
     const renderLoop = () => {
       animId = requestAnimationFrame(renderLoop);
+      controls.target.lerp(targetGoalRef.current, 0.12);
+      animateGroupFrame(groupRef.current, hoveredRef.current, selectedRef.current);
       controls.update();
       renderer.render(scene, camera);
     };
@@ -200,17 +334,23 @@ function useArgentina3DSetup(
     const onPointerMove = (e: PointerEvent) => {
       const hit = findIntersectedProvince(e, renderer.domElement, camera, groupRef.current);
       const nextId = hit?.provinceId ?? null;
+      const pos = nextId ? { x: e.clientX, y: e.clientY } : null;
       if (hoveredRef.current !== nextId) {
         hoveredRef.current = nextId;
-        onHoverRef.current(nextId);
         updateGroupMaterials(groupRef.current, provincesRef.current, modeRef.current, nextId, selectedRef.current);
       }
+      onHoverChangeRef.current(nextId, pos);
       renderer.domElement.style.cursor = nextId ? 'pointer' : 'grab';
+    };
+    const onPointerLeave = () => {
+      hoveredRef.current = null;
+      onHoverChangeRef.current(null, null);
     };
     const onPointerUp = (e: PointerEvent) => {
       if (Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) > 5) return;
       const hit = findIntersectedProvince(e, renderer.domElement, camera, groupRef.current);
       if (!hit) return;
+      playUiSound('select');
       selectedRef.current = hit.provinceId;
       onSelectRef.current(hit.provinceId);
       updateGroupMaterials(groupRef.current, provincesRef.current, modeRef.current, hoveredRef.current, hit.provinceId);
@@ -228,6 +368,7 @@ function useArgentina3DSetup(
 
     renderer.domElement.addEventListener('pointerdown', onPointerDown);
     renderer.domElement.addEventListener('pointermove', onPointerMove);
+    renderer.domElement.addEventListener('pointerleave', onPointerLeave);
     renderer.domElement.addEventListener('pointerup', onPointerUp);
 
     return () => {
@@ -235,14 +376,15 @@ function useArgentina3DSetup(
       resizeObs.disconnect();
       renderer.domElement.removeEventListener('pointerdown', onPointerDown);
       renderer.domElement.removeEventListener('pointermove', onPointerMove);
+      renderer.domElement.removeEventListener('pointerleave', onPointerLeave);
       renderer.domElement.removeEventListener('pointerup', onPointerUp);
       controls.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [containerRef, provincesRef, modeRef, onHoverRef, onSelectRef]);
+  }, [containerRef, provincesRef, modeRef, onHoverChangeRef, onSelectRef]);
 
-  return { groupRef, sceneRef, controlsRef, cameraRef, hoveredRef, selectedRef };
+  return { groupRef, sceneRef, targetGoalRef, hoveredRef, selectedRef };
 }
 
 export function Argentina3DMapCanvas({
@@ -254,23 +396,28 @@ export function Argentina3DMapCanvas({
 }: Argentina3DMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [mapMode, setMapMode] = useState<Map3DMode>('LOYALTY');
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [hoveredState, setHoveredState] = useState<{ id: string | null; pos: { x: number; y: number } | null }>({
+    id: null,
+    pos: null
+  });
+  const [atnFlash, setAtnFlash] = useState(false);
   const [topoData, setTopoData] = useState<any>(null);
 
   const provincesRef = useRef(provinces);
   provincesRef.current = provinces;
   const modeRef = useRef(mapMode);
   modeRef.current = mapMode;
-  const onHoverRef = useRef(setHoveredId);
-  onHoverRef.current = setHoveredId;
+  const onHoverChangeRef = useRef((id: string | null, pos: { x: number; y: number } | null) =>
+    setHoveredState({ id, pos })
+  );
   const onSelectRef = useRef(onSelectProvince);
   onSelectRef.current = onSelectProvince;
 
-  const { groupRef, sceneRef, controlsRef, hoveredRef, selectedRef } = useArgentina3DSetup(
+  const { groupRef, sceneRef, targetGoalRef, hoveredRef, selectedRef } = useArgentina3DSetup(
     containerRef,
     provincesRef,
     modeRef,
-    onHoverRef,
+    onHoverChangeRef,
     onSelectRef
   );
 
@@ -282,11 +429,8 @@ export function Argentina3DMapCanvas({
   }, []);
 
   useEffect(() => {
-    const controls = controlsRef.current;
-    if (!controls) return;
-    controls.target.set(panelOpen ? -12 : 0, 0, 2);
-    controls.update();
-  }, [panelOpen, controlsRef]);
+    targetGoalRef.current.copy(computeCameraTargetOffset(groupRef.current, selectedProvinceId, panelOpen));
+  }, [panelOpen, selectedProvinceId, topoData, targetGoalRef, groupRef]);
 
   useEffect(() => {
     const scene = sceneRef.current;
@@ -299,38 +443,31 @@ export function Argentina3DMapCanvas({
     updateGroupMaterials(nextGroup, provinces, mapMode, hoveredRef.current, selectedProvinceId);
   }, [topoData, mapMode, provinces, selectedProvinceId, groupRef, sceneRef, hoveredRef, selectedRef]);
 
-  const activeProvince = provinces.find((p) => p.id === (selectedProvinceId ?? hoveredId));
-  const hoveredProvince = provinces.find((p) => p.id === hoveredId);
+  const activeProvince = provinces.find((p) => p.id === (selectedProvinceId ?? hoveredState.id));
+  const hoveredProvince = provinces.find((p) => p.id === hoveredState.id);
+
+  const handleAtnClick = activeProvince && onSendAtn ? () => {
+    playUiSound('atn');
+    setAtnFlash(true);
+    onSendAtn(activeProvince.id);
+    window.setTimeout(() => setAtnFlash(false), 900);
+  } : undefined;
 
   return (
     <div className="relative w-full h-full overflow-hidden select-none">
       <div ref={containerRef} className="w-full h-full" />
 
+      <HoveredCursorTooltip province={hoveredProvince} mode={mapMode} cursor={hoveredState.pos} />
+
       <div className="pointer-events-none absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
-        <HoveredProvincePill province={hoveredProvince} />
+        <MapLayerToolbar mapMode={mapMode} onSelectMode={setMapMode} />
       </div>
 
       <div className="pointer-events-none absolute bottom-4 right-4 z-20 flex flex-col items-end gap-2">
-        <div className="pointer-events-auto flex items-center gap-1 rounded-sm bg-[#11161f]/95 border border-[#263142] p-1">
-          {MODE_OPTIONS.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => setMapMode(opt.id)}
-              className={`px-2.5 py-1 rounded-sm text-[10px] font-mono font-bold uppercase tracking-wider transition ${
-                mapMode === opt.id
-                  ? 'bg-[#b89342] text-[#100e09]'
-                  : 'text-slate-300 hover:bg-[#1a2230]'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-
         <SelectedProvinceCard
           province={activeProvince}
-          onSendAtn={onSendAtn}
+          atnFlash={atnFlash}
+          onSendAtn={handleAtnClick}
           onClose={() => onSelectProvince('')}
         />
       </div>

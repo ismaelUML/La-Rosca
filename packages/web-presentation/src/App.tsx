@@ -82,6 +82,35 @@ import {
 import { EnergyAndLaborView } from './features/energia-y-trabajo/EnergyAndLaborView.js';
 import { JudicialAndProvincesView } from './features/justicia-y-provincias/JudicialAndProvincesView.js';
 import { CamarasLegislativasView } from './features/game-shell/CamarasLegislativasView.js';
+import { playUiSound, reportSaveFailure } from './lib/gameFeedback.js';
+
+function tryExportStateWithRepo(
+  repo: CompressedSaveRepository,
+  payload: PersistedGameSession,
+  state: SimulationState
+): { code: string | null; error: string | null } {
+  try {
+    const ok = saveSessionToStorage(payload);
+    if (!ok) {
+      return { code: null, error: reportSaveFailure('storage', new Error('localStorage unavailable')) };
+    }
+    return { code: repo.exportPortableCode(state), error: null };
+  } catch (err) {
+    return { code: null, error: reportSaveFailure('export', err) };
+  }
+}
+
+function tryImportStateWithRepo(
+  repo: CompressedSaveRepository,
+  code: string
+): { state: SimulationState | null; error: string | null } {
+  try {
+    return { state: repo.importPortableCode(code), error: null };
+  } catch (err) {
+    playUiSound('error');
+    return { state: null, error: reportSaveFailure('import', err) };
+  }
+}
 
 // Flujo electoral y gubernamental completo:
 // 1) LandingScreen -> 2) NewGameSetupScreen -> 3) Campaña Electoral 2027 -> 4) Asunción y Gobierno.
@@ -187,6 +216,8 @@ interface ActiveSectionRendererProps {
   onToggleMeasure: (id: string) => void;
   onAddCustomTax: (tax: CustomTaxProposal) => void;
   onToggleRigi: (id: string) => void;
+  saveError?: string | null;
+  onRetrySave?: () => void;
 }
 
 function ActiveSectionRenderer(props: ActiveSectionRendererProps) {
@@ -211,7 +242,13 @@ function ActiveSectionRenderer(props: ActiveSectionRendererProps) {
       />
     ),
     REGISTRO: <RegistroHistoryView historyLog={props.state.eventLog} />,
-    INDICADORES: <IndicatorsDashboardView state={props.state} />,
+    INDICADORES: (
+      <IndicatorsDashboardView
+        state={props.state}
+        saveError={props.saveError}
+        onRetrySave={props.onRetrySave}
+      />
+    ),
     POLITICA_ECONOMICA: (
       <EconomicPolicyView
         levers={props.levers}
@@ -487,6 +524,8 @@ export function App() {
     return (savedSession?.activeSection as InGameSidebarSection) ?? 'INDICADORES';
   });
   const [portableSaveBanner, setPortableSaveBanner] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
   const [levers, setLevers] = useState<EconomicLeverItem[]>(() => {
     return savedSession?.levers ?? INITIAL_ECONOMIC_LEVERS;
   });
@@ -626,18 +665,20 @@ export function App() {
   };
 
   const handleExportSaveCode = () => {
-    saveSessionToStorage(
-      buildSessionPayload(
-        screenMode,
-        setup,
-        campaignState,
-        campaignNavSection,
-        state,
-        activeSection,
-        levers
-      )
+    const payload = buildSessionPayload(
+      screenMode,
+      setup,
+      campaignState,
+      campaignNavSection,
+      state,
+      activeSection,
+      levers
     );
-    setPortableSaveBanner(saveRepo.exportPortableCode(state));
+    const result = tryExportStateWithRepo(saveRepo, payload, state);
+    setSaveError(result.error);
+    if (result.code) {
+      setPortableSaveBanner(result.code);
+    }
   };
 
   const handleContinueGame = () => {
@@ -649,11 +690,16 @@ export function App() {
     setScreenMode(nextMode);
   };
 
-  const handleImportPortableCode = (code: string) => {
-    const imported = saveRepo.importPortableCode(code);
-    setState(imported);
+  const handleImportPortableCode = (code: string): boolean => {
+    const result = tryImportStateWithRepo(saveRepo, code);
+    setImportError(result.error);
+    if (!result.state) {
+      return false;
+    }
+    setState(result.state);
     setScreenMode('GOVERNMENT');
     setActiveSection('INDICADORES');
+    return true;
   };
 
   const hasActiveSave = computeHasActiveSave(
@@ -666,9 +712,11 @@ export function App() {
     return (
       <LandingScreen
         hasSavedSession={hasActiveSave}
+        importError={importError}
         onStartNewGame={() => setScreenMode('NEW_GAME_SETUP')}
         onContinueGame={handleContinueGame}
         onImportPortableCode={handleImportPortableCode}
+        onClearImportError={() => setImportError(null)}
       />
     );
   }
@@ -690,10 +738,12 @@ export function App() {
         state={campaignState}
         activeSection={campaignNavSection}
         portableSaveBanner={portableSaveBanner}
+        saveError={saveError}
         onSelectSection={setCampaignNavSection}
         onAdvanceMonth={handleAdvanceCampaign}
         onSkipToGovernment={startPresidentialGovernment}
         onExportSaveCode={handleExportSaveCode}
+        onRetrySave={handleExportSaveCode}
         onCloseSaveBanner={() => setPortableSaveBanner(null)}
         onExitToMenu={() => setScreenMode('LANDING')}
       >
@@ -741,9 +791,11 @@ export function App() {
       state={state}
       activeSection={activeSection}
       portableSaveBanner={portableSaveBanner}
+      saveError={saveError}
       onSelectSection={setActiveSection}
       onAdvanceTurn={handleAdvanceGovernmentTurn}
       onExportSaveCode={handleExportSaveCode}
+      onRetrySave={handleExportSaveCode}
       onCloseSaveBanner={() => setPortableSaveBanner(null)}
       onExitToMenu={() => setScreenMode('LANDING')}
       onSendAtn={(provinceId) => dispatchAction({ type: 'SEND_ATN_TO_PROVINCE', provinceId, amountPctGdp: 0.08 })}
@@ -759,6 +811,8 @@ export function App() {
         rigiSectors={rigiSectors}
         customTaxes={customTaxes}
         rigiPending={rigiPending}
+        saveError={saveError}
+        onRetrySave={handleExportSaveCode}
         onApproveRigiProject={(projectId) => dispatchAction({ type: 'APPROVE_RIGI_PROJECT', projectId })}
         onRejectRigiProject={(projectId) => dispatchAction({ type: 'REJECT_RIGI_PROJECT', projectId })}
         onApproveAllRigiProjects={() => dispatchAction({ type: 'APPROVE_ALL_RIGI_PROJECTS' })}

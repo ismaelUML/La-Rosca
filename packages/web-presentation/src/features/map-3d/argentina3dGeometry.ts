@@ -4,14 +4,21 @@ import * as topojson from 'topojson-client';
 import type { ProvinceSummary } from '@argentina-sim/domain';
 import { resolveFeatureProvinceId } from '../campaign/ArgentinaRealVectorMap.js';
 
-export type Map3DMode = 'LOYALTY' | 'FISCAL' | 'DEPUTIES';
+export type Map3DMode = 'LOYALTY' | 'FISCAL' | 'SECURITY' | 'DEPUTIES';
 
 export interface ProvinceMeshMeta {
   provinceId: string;
   name: string;
   baseColor: number;
   baseHeight: number;
+  centerX: number;
+  centerZ: number;
 }
+
+const COLOR_GOOD = 0x158053;
+const COLOR_NEUTRAL = 0xc7922c;
+const COLOR_BAD = 0xc4314b;
+const COLOR_FALLBACK = 0x334155;
 
 function buildMapProjection() {
   return geoMercator().center([-64, -39.5]).scale(78).translate([0, 0]);
@@ -87,41 +94,69 @@ function extractGeometryShapes(
 }
 
 function resolveLoyaltyColor(province?: ProvinceSummary): number {
-  if (!province) return 0x334155;
-  if (province.governorLoyaltyToPresident >= 60) return 0x1e6f43;
-  if (province.governorLoyaltyToPresident >= 45) return 0xb89342;
-  return 0x93252d;
+  if (!province) return COLOR_FALLBACK;
+  if (province.governorLoyaltyToPresident >= 60) return COLOR_GOOD;
+  if (province.governorLoyaltyToPresident >= 45) return COLOR_NEUTRAL;
+  return COLOR_BAD;
 }
 
 function resolveFiscalColor(province?: ProvinceSummary): number {
-  if (!province) return 0x334155;
-  if (province.quasiCurrencyIssued) return 0xc92a2a;
-  if (province.fiscalBalancePct < -0.5) return 0xb8762c;
-  return 0x1d6a5a;
+  if (!province) return COLOR_FALLBACK;
+  if (province.quasiCurrencyIssued || province.fiscalBalancePct <= -2) return COLOR_BAD;
+  if (province.fiscalBalancePct < -0.4) return COLOR_NEUTRAL;
+  return COLOR_GOOD;
 }
 
-function resolveDeputiesColor(province?: ProvinceSummary): number {
-  const count = province?.nationalDeputiesCount ?? 5;
-  if (count >= 25) return 0x2f74b5;
-  if (count >= 12) return 0x245585;
-  return 0x1b3b5c;
+function countAlerts(province: ProvinceSummary): number {
+  return province.problematicas ? province.problematicas.length : 0;
 }
+
+function resolveSecurityColor(province?: ProvinceSummary): number {
+  if (!province) return COLOR_FALLBACK;
+  const alerts = countAlerts(province);
+  if (province.intervenida || alerts >= 4) return COLOR_BAD;
+  return alerts >= 2 ? COLOR_NEUTRAL : COLOR_GOOD;
+}
+
+const MODE_COLOR_RESOLVERS: Record<Map3DMode, (p?: ProvinceSummary) => number> = {
+  LOYALTY: resolveLoyaltyColor,
+  FISCAL: resolveFiscalColor,
+  SECURITY: resolveSecurityColor,
+  DEPUTIES: resolveLoyaltyColor
+};
 
 export function resolveProvinceColor(province: ProvinceSummary | undefined, mode: Map3DMode): number {
-  if (mode === 'FISCAL') return resolveFiscalColor(province);
-  if (mode === 'DEPUTIES') return resolveDeputiesColor(province);
-  return resolveLoyaltyColor(province);
+  return MODE_COLOR_RESOLVERS[mode](province);
+}
+
+function resolveSecurityDepth(province: ProvinceSummary): number {
+  const alerts = province.problematicas?.length ?? 0;
+  return Math.min(4.2, 0.95 + alerts * 0.55);
+}
+
+function resolveFiscalDepth(province: ProvinceSummary): number {
+  if (province.quasiCurrencyIssued) return 3.6;
+  return Math.min(4.2, 0.95 + Math.abs(province.fiscalBalancePct) * 0.55);
 }
 
 export function resolveProvinceExtrudeDepth(province: ProvinceSummary | undefined, mode: Map3DMode): number {
-  if (!province) return 0.7;
+  if (!province) return 0.95;
   if (mode === 'DEPUTIES') {
-    return Math.min(3.4, 0.55 + province.nationalDeputiesCount * 0.055);
+    return Math.min(4.6, 0.85 + province.nationalDeputiesCount * 0.065);
   }
-  if (mode === 'FISCAL') {
-    return province.quasiCurrencyIssued ? 2.1 : 0.65 + Math.abs(province.fiscalBalancePct) * 0.35;
-  }
-  return 0.6 + (province.governorLoyaltyToPresident / 100) * 1.15;
+  if (mode === 'FISCAL') return resolveFiscalDepth(province);
+  if (mode === 'SECURITY') return resolveSecurityDepth(province);
+  return 0.9 + (province.governorLoyaltyToPresident / 100) * 1.65;
+}
+
+function computeMeshHorizontalCenter(geometry: THREE.ExtrudeGeometry): { x: number; z: number } {
+  geometry.computeBoundingBox();
+  const box = geometry.boundingBox;
+  if (!box) return { x: 0, z: 0 };
+  return {
+    x: (box.min.x + box.max.x) / 2,
+    z: -(box.min.y + box.max.y) / 2
+  };
 }
 
 function createExtrudedProvinceMesh(
@@ -136,28 +171,33 @@ function createExtrudedProvinceMesh(
   const geometry = new THREE.ExtrudeGeometry(shapes, {
     depth,
     bevelEnabled: true,
-    bevelThickness: 0.08,
-    bevelSize: 0.06,
-    bevelSegments: 2
+    bevelThickness: 0.14,
+    bevelSize: 0.08,
+    bevelSegments: 3
   });
+  const center = computeMeshHorizontalCenter(geometry);
   const material = new THREE.MeshStandardMaterial({
     color,
-    roughness: 0.52,
-    metalness: 0.25
+    roughness: 0.44,
+    metalness: 0.28
   });
   const mesh = new THREE.Mesh(geometry, material);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
   mesh.rotation.x = -Math.PI / 2;
   mesh.userData = {
     provinceId,
     name: province?.name ?? name,
     baseColor: color,
-    baseHeight: depth
+    baseHeight: depth,
+    centerX: center.x,
+    centerZ: center.z
   } satisfies ProvinceMeshMeta;
 
   const edges = new THREE.EdgesGeometry(geometry, 24);
   const line = new THREE.LineSegments(
     edges,
-    new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.45 })
+    new THREE.LineBasicMaterial({ color: 0xcbd5e1, transparent: true, opacity: 0.42 })
   );
   mesh.add(line);
   return mesh;
