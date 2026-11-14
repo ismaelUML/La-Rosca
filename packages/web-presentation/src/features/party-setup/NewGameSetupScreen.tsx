@@ -1,409 +1,35 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import {
+  ArrowLeft,
+  Compass,
+  MapPin,
+  Search,
+  UserCheck,
+  Users
+} from 'lucide-react';
 import type {
+  CharacterArchetypeId,
+  CongressStartScenario,
   DifficultyLevel,
   GameSetupConfiguration,
+  GameStartMode,
   PlayableRole,
   PoliticalPartyPreset,
   ProvinceSummary,
   RealPoliticianPreset
 } from '@argentina-sim/domain';
-import { POLITICAL_PARTIES_2027, REAL_POLITICIANS_2027 } from '@argentina-sim/infrastructure';
+import { deriveIdeologicalAllies } from '@argentina-sim/domain';
+import {
+  POLITICAL_PARTIES_2027,
+  REAL_POLITICIANS_2027
+} from '@argentina-sim/infrastructure';
 import { PartyEmblemSvg } from './PartyEmblemSvg.js';
 import { PartyDesignerStudio } from './PartyDesignerStudio.js';
-
-// Pantalla de configuracion de partida previa al juego (capturas 3, 5 y 6):
-// dividida en secciones modulares para mantener CC <= 4 en cada funcion.
-
-const IDEOLOGY_CHOICES: Array<{ label: string; summary: string }> = [
-  { label: 'Centrismo', summary: 'Moderación, equilibrio institucional y búsqueda de consensos.' },
-  { label: 'Liberalismo', summary: 'Superávit fiscal innegociable, desregulación y apertura comercial.' },
-  { label: 'Conservadurismo', summary: 'Orden público, institucionalidad republicana y clima de negocios.' },
-  { label: 'Desarrollismo Federal', summary: 'Alianza con el complejo agro-minero-energético e infraestructura.' },
-  { label: 'Socialdemocracia', summary: 'Educación pública, federalismo fiscal y Estado regulador.' },
-  { label: 'Peronismo / Kirchnerismo', summary: 'Mercado interno, paritarias libres, obra pública y soberanía.' },
-  { label: 'Socialismo Trotskista', summary: 'Ruptura con el FMI, nacionalización energética y banca estatal.' }
-];
-
-function describePositionLabel(value: number): string {
-  if (value < 35) {
-    return 'izquierda';
-  }
-  if (value > 65) {
-    return 'derecha';
-  }
-  return 'centro';
-}
-
-interface RealPoliticiansSelectorProps {
-  selectedId: string;
-  spaceFilter: string;
-  onFilterChange: (space: string) => void;
-  onSelectPolitician: (pol: RealPoliticianPreset) => void;
-}
-
-function RealPoliticiansSelector({
-  selectedId,
-  spaceFilter,
-  onFilterChange,
-  onSelectPolitician
-}: RealPoliticiansSelectorProps) {
-  const filtered = REAL_POLITICIANS_2027.filter(
-    (pol) => spaceFilter === 'TODOS' || pol.partySigla === spaceFilter
-  );
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <label className="block text-xs text-slate-300 mb-1.5 font-medium">Filtrar por espacio</label>
-        <select
-          value={spaceFilter}
-          onChange={(e) => onFilterChange(e.target.value)}
-          className="w-full bg-[#10131c] border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white"
-        >
-          <option value="TODOS">Todos</option>
-          <option value="LLA">LLA · La Libertad Avanza</option>
-          <option value="PRO">PRO · Propuesta Republicana</option>
-          <option value="PF">PF · Peronismo Federal / Provincias Unidas</option>
-          <option value="UCR">UCR · Unión Cívica Radical</option>
-          <option value="UxP">UxP · Unión por la Patria</option>
-          <option value="FIT">FIT · Frente de Izquierda</option>
-        </select>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-h-[410px] overflow-y-auto pr-1">
-        {filtered.map((pol) => {
-          const isSelected = pol.id === selectedId;
-          return (
-            <button
-              key={pol.id}
-              type="button"
-              onClick={() => onSelectPolitician(pol)}
-              style={{ borderTopColor: pol.accentColor }}
-              className={`text-left rounded-xl bg-[#121520] border border-slate-800 border-t-4 p-4 transition ${
-                isSelected ? 'ring-2 ring-white bg-[#171c2b]' : 'hover:bg-[#161a26]'
-              }`}
-            >
-              <div className="font-bold text-white text-sm">{pol.name}</div>
-              <div className="text-xs text-slate-400 mt-0.5">
-                {pol.partySigla} · {pol.ideology}
-              </div>
-              <div className="text-xs text-slate-300 mt-2 line-clamp-2">{pol.roleDescription}</div>
-              <div className="text-xs text-slate-400 mt-2">
-                Dificultad: <strong className="text-white">{pol.difficultyLabel}</strong> · {pol.styleTrait}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="rounded-xl bg-[#181612] border border-amber-800/50 px-4 py-2.5 text-xs text-amber-200/90">
-        Los datos de cada figura son una simulación del juego. La dificultad de Javier Milei es <strong>Fácil</strong> y viene preconfigurada con el escenario inicial.
-      </div>
-    </div>
-  );
-}
-
-interface IdeologicalSpectrumBarProps {
-  customParty: PoliticalPartyPreset;
-}
-
-function IdeologicalSpectrumBar({ customParty }: IdeologicalSpectrumBarProps) {
-  const playerAxis = Math.round((customParty.economicPosition + customParty.culturalPosition) / 2);
-
-  return (
-    <div className="py-5 px-3">
-      <div className="relative h-14 flex items-center">
-        <div className="w-full h-0.5 bg-slate-700 relative">
-          {POLITICAL_PARTIES_2027.map((preset) => (
-            <div
-              key={preset.id}
-              style={{ left: `${preset.economicPosition}%` }}
-              className="absolute -top-7 -translate-x-1/2 flex flex-col items-center"
-            >
-              <span
-                style={{ borderColor: preset.primaryColor }}
-                className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#111520] border text-slate-200"
-              >
-                {preset.sigla}
-              </span>
-              <span
-                style={{ backgroundColor: preset.primaryColor }}
-                className="w-2.5 h-2.5 rounded-full mt-1"
-              />
-            </div>
-          ))}
-
-          <div
-            style={{ left: `${playerAxis}%` }}
-            className="absolute -top-2 -translate-x-1/2 flex flex-col items-center z-10"
-          >
-            <span
-              style={{ backgroundColor: customParty.emblem.primaryColor }}
-              className="w-4 h-4 rounded-full border-2 border-white shadow-lg"
-            />
-            <span
-              style={{ backgroundColor: customParty.emblem.primaryColor }}
-              className="px-2 py-0.5 rounded text-[10px] font-extrabold text-white mt-1 shadow"
-            >
-              {customParty.sigla}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex justify-between text-xs text-slate-400 mt-1">
-        <span>Izquierda</span>
-        <span>Centro</span>
-        <span>Derecha</span>
-      </div>
-    </div>
-  );
-}
-
-interface CustomPartyCreatorPanelProps {
-  customParty: PoliticalPartyPreset;
-  onChangeParty: (next: PoliticalPartyPreset) => void;
-}
-
-function CustomPartyCreatorPanel({ customParty, onChangeParty }: CustomPartyCreatorPanelProps) {
-  const selectedIdeologyObj =
-    IDEOLOGY_CHOICES.find((item) => item.label === customParty.ideology) ?? IDEOLOGY_CHOICES[0]!;
-
-  return (
-    <div className="space-y-5">
-      <IdeologicalSpectrumBar customParty={customParty} />
-
-      <div>
-        <div className="text-xs font-semibold text-white mb-1">
-          Posición económica: {describePositionLabel(customParty.economicPosition)} ({customParty.economicPosition} de 100)
-        </div>
-        <input
-          type="range"
-          min={1}
-          max={100}
-          value={customParty.economicPosition}
-          onChange={(e) =>
-            onChangeParty({ ...customParty, economicPosition: Number(e.target.value) })
-          }
-          className="w-full accent-purple-500"
-        />
-        <div className="flex justify-between text-[11px] text-slate-400">
-          <span>1 · izquierda</span>
-          <span>100 · derecha</span>
-        </div>
-      </div>
-
-      <div>
-        <div className="text-xs font-semibold text-white mb-1">
-          Posición cultural ({customParty.culturalPosition} de 100)
-        </div>
-        <input
-          type="range"
-          min={1}
-          max={100}
-          value={customParty.culturalPosition}
-          onChange={(e) =>
-            onChangeParty({ ...customParty, culturalPosition: Number(e.target.value) })
-          }
-          className="w-full accent-purple-500"
-        />
-        <div className="flex justify-between text-[11px] text-slate-400">
-          <span>1 · progresista</span>
-          <span>100 · conservador</span>
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-xs font-semibold text-white mb-1.5">Ideología principal</label>
-        <select
-          value={customParty.ideology}
-          onChange={(e) => onChangeParty({ ...customParty, ideology: e.target.value })}
-          className="w-full bg-[#10131c] border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white"
-        >
-          {IDEOLOGY_CHOICES.map((opt) => (
-            <option key={opt.label} value={opt.label}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-        <p className="text-xs text-slate-400 mt-1">{selectedIdeologyObj.summary}</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-semibold text-white mb-1.5">Nombre del partido</label>
-          <input
-            type="text"
-            value={customParty.name}
-            onChange={(e) => onChangeParty({ ...customParty, name: e.target.value })}
-            placeholder="Ej.: Frente Federal Productivo"
-            className="w-full bg-[#10131c] border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-white mb-1.5">Sigla (hasta 5)</label>
-          <input
-            type="text"
-            maxLength={5}
-            value={customParty.sigla}
-            onChange={(e) =>
-              onChangeParty({ ...customParty, sigla: e.target.value.toUpperCase() })
-            }
-            placeholder="MIP"
-            className="w-full bg-[#10131c] border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white"
-          />
-        </div>
-      </div>
-
-      <PartyDesignerStudio
-        emblem={customParty.emblem}
-        onChange={(emblem) =>
-          onChangeParty({
-            ...customParty,
-            primaryColor: emblem.primaryColor,
-            emblem
-          })
-        }
-      />
-    </div>
-  );
-}
-
-interface ExistingPartiesGridProps {
-  selectedPartyId: string;
-  onSelectParty: (id: string) => void;
-}
-
-function ExistingPartiesGrid({ selectedPartyId, onSelectParty }: ExistingPartiesGridProps) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {POLITICAL_PARTIES_2027.map((party) => {
-        const isSelected = party.id === selectedPartyId;
-        return (
-          <button
-            key={party.id}
-            type="button"
-            onClick={() => onSelectParty(party.id)}
-            style={{ borderTopColor: party.primaryColor }}
-            className={`text-left rounded-2xl bg-[#121520] border border-slate-800 border-t-4 p-5 transition ${
-              isSelected ? 'ring-2 ring-white bg-[#171c2b]' : 'hover:bg-[#161a26]'
-            }`}
-          >
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700/80 mb-3">
-              <PartyEmblemSvg config={party.emblem} size={18} />
-              <span className="text-xs font-bold text-white">{party.sigla}</span>
-              <span className="text-xs text-slate-400">· {party.colorName}</span>
-            </div>
-            <div className="text-xs text-slate-300 mb-2">
-              Ideología: <strong className="text-white">{party.ideology}</strong>
-            </div>
-            <p className="text-xs text-slate-400 leading-relaxed">{party.description}</p>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-interface ModeTogglePairProps<T extends string> {
-  value: T;
-  firstOption: { id: T; label: string };
-  secondOption: { id: T; label: string };
-  onChange: (next: T) => void;
-}
-
-function ModeTogglePair<T extends string>({
-  value,
-  firstOption,
-  secondOption,
-  onChange
-}: ModeTogglePairProps<T>) {
-  return (
-    <div className="inline-flex p-1 rounded-xl bg-[#10131c] border border-slate-800">
-      {[firstOption, secondOption].map((opt) => (
-        <button
-          key={opt.id}
-          type="button"
-          onClick={() => onChange(opt.id)}
-          className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition ${
-            value === opt.id ? 'bg-white text-slate-950' : 'text-slate-300'
-          }`}
-        >
-          {opt.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-interface CargoSelectorSectionProps {
-  role: PlayableRole;
-  provinceId: string;
-  provinces: ProvinceSummary[];
-  onRoleChange: (r: PlayableRole) => void;
-  onProvinceChange: (p: string) => void;
-}
-
-function CargoSelectorSection({
-  role,
-  provinceId,
-  provinces,
-  onRoleChange,
-  onProvinceChange
-}: CargoSelectorSectionProps) {
-  const isPresident = role === 'PRESIDENTE';
-
-  return (
-    <section className="space-y-4">
-      <div className="border-b border-slate-800 pb-2">
-        <h2 className="text-base font-bold text-white flex items-center gap-2">
-          <span className="text-slate-500">|</span> Cargo
-        </h2>
-      </div>
-
-      <div className="inline-flex p-1 rounded-xl bg-[#10131c] border border-slate-800">
-        <button
-          type="button"
-          onClick={() => onRoleChange('PRESIDENTE')}
-          className={`px-4 py-2 rounded-lg text-xs font-semibold transition ${
-            isPresident ? 'bg-white text-slate-950 font-bold shadow' : 'text-slate-300'
-          }`}
-        >
-          Presidente de la Nación
-        </button>
-        <button
-          type="button"
-          onClick={() => onRoleChange('GOBERNADOR')}
-          className={`px-4 py-2 rounded-lg text-xs font-semibold transition ${
-            !isPresident ? 'bg-white text-slate-950 font-bold shadow' : 'text-slate-300'
-          }`}
-        >
-          Gobernador de provincia
-        </button>
-      </div>
-
-      {!isPresident ? (
-        <div className="space-y-2 pt-2">
-          <label className="block text-xs font-semibold text-white">Provincia</label>
-          <select
-            value={provinceId}
-            onChange={(e) => onProvinceChange(e.target.value)}
-            className="w-full bg-[#10131c] border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white"
-          >
-            {provinces.map((prov) => (
-              <option key={prov.id} value={prov.id}>
-                {prov.name} ({prov.region}) · Coparticipación {prov.coparticipationDependencyPct}% · {prov.keyEconomicDriver}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-slate-400 leading-relaxed mt-1">
-            Método electoral: Gobernador por mayoría simple a una sola vuelta; una reelección consecutiva; con PASO (piso para la general: 1,5 % de los votos válidos (ley 14.086)); legislatura bicameral (92 diputados y 46 senadores). Las PASO provinciales se suspendieron en 2025; en el juego siguen vigentes para 2027.
-          </p>
-        </div>
-      ) : null}
-    </section>
-  );
-}
+import {
+  CharacterArchetypeSelector,
+  SetupScenarioAndCongressSection
+} from './SetupScenarioAndCongressSection.js';
+import { SetupSummarySidebar } from './SetupSummarySidebar.js';
 
 interface NewGameSetupScreenProps {
   provinces: ProvinceSummary[];
@@ -411,177 +37,773 @@ interface NewGameSetupScreenProps {
   onStartConfiguredGame: (setup: GameSetupConfiguration) => void;
 }
 
+const INITIAL_CUSTOM_PARTY: PoliticalPartyPreset = {
+  id: 'CUSTOM',
+  sigla: 'PN',
+  name: 'Partido Nacional',
+  colorName: 'Dorado Acero',
+  primaryColor: '#b89342',
+  ideology: 'Centro / Desarrollismo Federal',
+  description: 'Coalición amplia orientada a la estabilidad macro, producción federal y acuerdo institucional.',
+  economicPosition: 55,
+  culturalPosition: 52,
+  socialBase: 'Clase media, PyMEs industriales y complejos agroexportadores',
+  emblem: {
+    shape: 'ESCUDO',
+    pattern: 'MITADES_VERTICALES',
+    primaryColor: '#1d3250',
+    secondaryColor: '#0f172a',
+    thirdColor: '#b89342',
+    symbol: 'SOL',
+    symbolColor: '#facc15',
+    disc: 'DISCO_OSCURO',
+    customImageDataUrl: null
+  }
+};
+
+const IDEOLOGY_CHOICES = [
+  { id: 'Izquierda / Socialismo', eco: 10, cul: 12 },
+  { id: 'Progresismo / Peronismo', eco: 28, cul: 32 },
+  { id: 'Socialdemocracia / Radicalismo', eco: 45, cul: 38 },
+  { id: 'Centro / Desarrollismo Federal', eco: 55, cul: 52 },
+  { id: 'Centroderecha / Liberalismo', eco: 72, cul: 58 },
+  { id: 'Libertarismo / Anarcocapitalismo', eco: 90, cul: 78 },
+  { id: 'Nacionalismo / Conservadurismo', eco: 65, cul: 88 }
+];
+
+const ROLE_OPTIONS: Array<{ id: PlayableRole; title: string; subtitle: string }> = [
+  { id: 'PRESIDENTE', title: 'Presidente de la Nación', subtitle: 'Casa Rosada, BCRA, DNU y Cámaras' },
+  { id: 'GOBERNADOR', title: 'Gobernador Provincial', subtitle: 'Presupuesto, policía y coparticipación' },
+  { id: 'DIPUTADO', title: 'Diputado Nacional', subtitle: 'Armado en bloques y comisiones' },
+  { id: 'SENADOR', title: 'Senador Nacional', subtitle: 'Representación federal y pliegos' }
+];
+
+const STYLE_TO_ARCHETYPE: Record<RealPoliticianPreset['styleTrait'], CharacterArchetypeId> = {
+  Dogmático: 'ECONOMISTA_ORTODOXO',
+  Dialoguista: 'GESTOR_TECNICO',
+  Pragmático: 'CAUDILLO_TERRITORIAL',
+  Combativo: 'SINDICAL_POPULAR'
+};
+
+function ModeTogglePair({
+  leftLabel,
+  rightLabel,
+  isLeftActive,
+  onSelectLeft,
+  onSelectRight
+}: {
+  leftLabel: string;
+  rightLabel: string;
+  isLeftActive: boolean;
+  onSelectLeft: () => void;
+  onSelectRight: () => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <button
+        type="button"
+        onClick={onSelectLeft}
+        className={`py-2 px-3 rounded-sm text-xs font-bold uppercase tracking-wider border transition ${
+          isLeftActive
+            ? 'bg-[#1d3250] text-amber-200 border-[#b89342]'
+            : 'bg-[#0b1018] text-slate-300 border-[#263142] hover:border-slate-500'
+        }`}
+      >
+        {leftLabel}
+      </button>
+      <button
+        type="button"
+        onClick={onSelectRight}
+        className={`py-2 px-3 rounded-sm text-xs font-bold uppercase tracking-wider border transition ${
+          !isLeftActive
+            ? 'bg-[#1d3250] text-amber-200 border-[#b89342]'
+            : 'bg-[#0b1018] text-slate-300 border-[#263142] hover:border-slate-500'
+        }`}
+      >
+        {rightLabel}
+      </button>
+    </div>
+  );
+}
+
+function matchesPoliticianFilter(
+  p: RealPoliticianPreset,
+  queryLower: string,
+  partyFilter: string
+): boolean {
+  const matchesParty = partyFilter === 'ALL' || p.partySigla === partyFilter;
+  if (!matchesParty || !queryLower) {
+    return matchesParty;
+  }
+  return [p.name, p.roleDescription, p.partySigla].some((field) =>
+    field.toLowerCase().includes(queryLower)
+  );
+}
+
+function RealPoliticiansSelector({
+  selectedId,
+  onSelect
+}: {
+  selectedId: string;
+  onSelect: (p: RealPoliticianPreset) => void;
+}) {
+  const [query, setQuery] = useState('');
+  const [partyFilter, setPartyFilter] = useState('ALL');
+
+  const partySiglas = useMemo(() => {
+    return Array.from(new Set(REAL_POLITICIANS_2027.map((p) => p.partySigla)));
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return REAL_POLITICIANS_2027.filter((p) => matchesPoliticianFilter(p, q, partyFilter));
+  }, [query, partyFilter]);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Filtrar entre 158 referentes por nombre, cargo o fuerza..."
+            className="w-full bg-[#080c13] border border-[#263142] rounded-sm pl-8 pr-3 py-2 text-xs text-white focus:border-[#b89342] focus:outline-none"
+          />
+        </div>
+        <select
+          value={partyFilter}
+          onChange={(e) => setPartyFilter(e.target.value)}
+          className="bg-[#080c13] border border-[#263142] rounded-sm px-2.5 py-2 text-xs font-mono text-slate-200 focus:border-[#b89342] focus:outline-none"
+        >
+          <option value="ALL">Todas las fuerzas ({REAL_POLITICIANS_2027.length})</option>
+          {partySiglas.map((sigla) => (
+            <option key={sigla} value={sigla}>
+              {sigla}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1">
+        {filtered.map((p) => {
+          const active = p.id === selectedId;
+          return (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => onSelect(p)}
+              className={`text-left p-2.5 rounded-sm border transition ${
+                active
+                  ? 'bg-[#17253b] border-[#b89342] shadow-[inset_0_0_0_1px_rgba(184,147,66,0.35)]'
+                  : 'bg-[#0b1018] border-[#263142] hover:border-slate-500'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-white truncate">{p.name}</div>
+                  <div className="text-[11px] text-slate-400 truncate">{p.roleDescription}</div>
+                </div>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-sm bg-[#080c13] border border-[#2b394d] text-amber-300 shrink-0">
+                  {p.partySigla}
+                </span>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-[10px] font-mono text-slate-400">
+                <span>{p.ideology}</span>
+                <span className="text-slate-300">{p.difficultyLabel}</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function IdeologicalSpectrumBar({
+  party,
+  onChangePosition
+}: {
+  party: PoliticalPartyPreset;
+  onChangePosition: (eco: number, cul: number) => void;
+}) {
+  return (
+    <div className="p-3 rounded-sm bg-[#090d14] border border-[#223044] space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-slate-300">
+          <Compass className="w-3.5 h-3.5 text-amber-400" />
+          Espectro Ideológico del Espacio
+        </div>
+        <span className="text-[11px] font-mono text-amber-300">
+          Eco {party.economicPosition}/100 · Cul {party.culturalPosition}/100
+        </span>
+      </div>
+
+      <div className="relative h-7 rounded-sm border border-[#2a384c] overflow-hidden flex items-center">
+        <div
+          className="absolute inset-0 opacity-85"
+          style={{
+            background:
+              'linear-gradient(90deg, #991b1b 0%, #c2410c 22%, #eab308 48%, #2563eb 74%, #7e22ce 100%)'
+          }}
+        />
+        <div className="relative z-10 w-full flex justify-between px-3 text-[10px] font-mono font-bold text-white drop-shadow">
+          <span>ESTATISTA</span>
+          <span>CENTRO</span>
+          <span>PRO-MERCADO</span>
+        </div>
+        <div
+          className="absolute top-0 bottom-0 w-1 bg-white shadow-[0_0_8px_#fff]"
+          style={{ left: `calc(${party.economicPosition}% - 2px)` }}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+        <div>
+          <label className="block text-[11px] text-slate-400 mb-1">
+            Eje Económico ({party.economicPosition <= 35 ? 'Intervencionista' : party.economicPosition >= 65 ? 'Libre Mercado' : 'Mixto'})
+          </label>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={party.economicPosition}
+            onChange={(e) => onChangePosition(Number(e.target.value), party.culturalPosition)}
+            className="w-full accent-[#b89342]"
+          />
+        </div>
+        <div>
+          <label className="block text-[11px] text-slate-400 mb-1">
+            Eje Institucional / Cultural ({party.culturalPosition <= 35 ? 'Progresista' : party.culturalPosition >= 65 ? 'Conservador / Orden' : 'Moderado'})
+          </label>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={party.culturalPosition}
+            onChange={(e) => onChangePosition(party.economicPosition, Number(e.target.value))}
+            className="w-full accent-[#b89342]"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CustomPartyCreatorPanel({
+  party,
+  onChangeParty
+}: {
+  party: PoliticalPartyPreset;
+  onChangeParty: (next: PoliticalPartyPreset) => void;
+}) {
+  const naturalAllies = deriveIdeologicalAllies(party);
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1.5">
+          Corriente ideológica base
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {IDEOLOGY_CHOICES.map((opt) => {
+            const active = party.ideology === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() =>
+                  onChangeParty({
+                    ...party,
+                    ideology: opt.id,
+                    economicPosition: opt.eco,
+                    culturalPosition: opt.cul
+                  })
+                }
+                className={`px-2.5 py-1 rounded-sm text-[11px] font-semibold border transition ${
+                  active
+                    ? 'bg-[#1d3250] border-[#b89342] text-amber-200'
+                    : 'bg-[#0b1018] border-[#263142] text-slate-300 hover:border-slate-500'
+                }`}
+              >
+                {opt.id}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <IdeologicalSpectrumBar
+        party={party}
+        onChangePosition={(eco, cul) =>
+          onChangeParty({ ...party, economicPosition: eco, culturalPosition: cul })
+        }
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        <div className="sm:col-span-2">
+          <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
+            Nombre de la fuerza o coalición
+          </label>
+          <input
+            type="text"
+            value={party.name}
+            onChange={(e) => onChangeParty({ ...party, name: e.target.value })}
+            placeholder="Ej: Frente Federal de Desarrollo"
+            className="w-full bg-[#080c13] border border-[#263142] rounded-sm px-3 py-2 text-xs text-white focus:border-[#b89342] focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
+            Sigla (2-5 letras)
+          </label>
+          <input
+            type="text"
+            maxLength={5}
+            value={party.sigla}
+            onChange={(e) => onChangeParty({ ...party, sigla: e.target.value.toUpperCase() })}
+            placeholder="FFD"
+            className="w-full bg-[#080c13] border border-[#263142] rounded-sm px-3 py-2 text-xs font-mono font-bold text-amber-300 uppercase focus:border-[#b89342] focus:outline-none"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+        <div>
+          <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
+            Base social electoral
+          </label>
+          <input
+            type="text"
+            value={party.socialBase}
+            onChange={(e) => onChangeParty({ ...party, socialBase: e.target.value })}
+            placeholder="Ej: PyMEs exportadoras, clase media y agroindustria"
+            className="w-full bg-[#080c13] border border-[#263142] rounded-sm px-3 py-2 text-xs text-slate-200 focus:border-[#b89342] focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
+            Plataforma resumida
+          </label>
+          <input
+            type="text"
+            value={party.description}
+            onChange={(e) => onChangeParty({ ...party, description: e.target.value })}
+            placeholder="Programa económico e institucional"
+            className="w-full bg-[#080c13] border border-[#263142] rounded-sm px-3 py-2 text-xs text-slate-200 focus:border-[#b89342] focus:outline-none"
+          />
+        </div>
+      </div>
+
+      <div className="p-2.5 rounded-sm bg-[#090d14] border border-[#223044] flex flex-wrap items-center justify-between gap-2 text-xs">
+        <span className="text-slate-400">
+          Afinidad automática en el Congreso según tu posición ideológica:
+        </span>
+        <div className="flex flex-wrap gap-1.5">
+          {naturalAllies.length > 0 ? (
+            naturalAllies.map((ally) => (
+              <span
+                key={ally}
+                className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-sm bg-[#162133] border border-[#32445d] text-amber-200"
+              >
+                {ally}
+              </span>
+            ))
+          ) : (
+            <span className="text-[11px] font-mono text-slate-400">Sin aliados cercanos</span>
+          )}
+        </div>
+      </div>
+
+      <PartyDesignerStudio
+        emblem={party.emblem}
+        sigla={party.sigla}
+        onChange={(emblem) => onChangeParty({ ...party, emblem, primaryColor: emblem.primaryColor })}
+      />
+    </div>
+  );
+}
+
+function ExistingPartiesGrid({
+  selectedPartyId,
+  onSelectParty
+}: {
+  selectedPartyId: string;
+  onSelectParty: (p: PoliticalPartyPreset) => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+      {POLITICAL_PARTIES_2027.map((party) => {
+        const active = party.id === selectedPartyId;
+        return (
+          <button
+            key={party.id}
+            type="button"
+            onClick={() => onSelectParty(party)}
+            className={`text-left p-3 rounded-sm border transition flex items-start gap-3 ${
+              active
+                ? 'bg-[#17253b] border-[#b89342] shadow-[inset_0_0_0_1px_rgba(184,147,66,0.35)]'
+                : 'bg-[#0b1018] border-[#263142] hover:border-slate-500'
+            }`}
+          >
+            <PartyEmblemSvg config={party.emblem} size={46} />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-bold text-white truncate">{party.name}</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-sm bg-[#080c13] border border-[#2b394d] text-amber-300 shrink-0">
+                  {party.sigla}
+                </span>
+              </div>
+              <div className="text-[11px] text-amber-200/90 mt-0.5">{party.ideology}</div>
+              <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-snug">{party.description}</p>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ProvinceStatsStrip({ province }: { province: ProvinceSummary }) {
+  const balanceColor = province.fiscalBalancePct >= 0 ? 'text-emerald-300' : 'text-rose-300';
+  const balancePrefix = province.fiscalBalancePct >= 0 ? '+' : '';
+  const reelectionLabel = province.reelectionAllowed ? 'Habilitada' : 'Limitada';
+
+  return (
+    <div className="lg:col-span-7 p-2.5 rounded-sm bg-[#090d14] border border-[#223044] grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+      <div>
+        <div className="text-[10px] font-mono text-slate-500">BANCAS DIP. NAC.</div>
+        <div className="font-mono font-bold text-slate-100">{province.nationalDeputiesCount} escaños</div>
+      </div>
+      <div>
+        <div className="text-[10px] font-mono text-slate-500">DEP. COPARTIC.</div>
+        <div className="font-mono font-bold text-amber-300">{province.coparticipationDependencyPct}%</div>
+      </div>
+      <div>
+        <div className="text-[10px] font-mono text-slate-500">BALANCE FISCAL</div>
+        <div className={`font-mono font-bold ${balanceColor}`}>
+          {balancePrefix}
+          {province.fiscalBalancePct.toFixed(1)}%
+        </div>
+      </div>
+      <div>
+        <div className="text-[10px] font-mono text-slate-500">REELECCIÓN</div>
+        <div className="font-mono font-bold text-slate-200">{reelectionLabel}</div>
+      </div>
+      <div className="col-span-2 sm:col-span-4 text-[11px] text-slate-400 pt-1 border-t border-[#1b2434] truncate">
+        Motor productivo: <span className="text-slate-200">{province.keyEconomicDriver}</span>
+      </div>
+    </div>
+  );
+}
+
+function CargoSelectorSection({
+  role,
+  provinceId,
+  provinces,
+  onChangeRole,
+  onChangeProvince
+}: {
+  role: PlayableRole;
+  provinceId: string;
+  provinces: ProvinceSummary[];
+  onChangeRole: (r: PlayableRole) => void;
+  onChangeProvince: (id: string) => void;
+}) {
+  const selectedProv = provinces.find((p) => p.id === provinceId) ?? provinces[0];
+
+  return (
+    <section className="hoi-panel rounded-sm p-4 space-y-3">
+      <div className="flex items-center gap-2 pb-2 border-b border-[#243042]">
+        <MapPin className="w-4 h-4 text-amber-400" />
+        <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200">
+          02 · Cargo Institucional y Base Territorial
+        </h2>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+        {ROLE_OPTIONS.map((item) => {
+          const active = role === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onChangeRole(item.id)}
+              className={`text-left p-2.5 rounded-sm border transition ${
+                active
+                  ? 'bg-[#17253b] border-[#b89342]'
+                  : 'bg-[#0b1018] border-[#263142] hover:border-slate-500'
+              }`}
+            >
+              <div className="text-xs font-bold text-white">{item.title}</div>
+              <div className="text-[11px] text-slate-400 mt-0.5 leading-snug">{item.subtitle}</div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch">
+        <div className="lg:col-span-5">
+          <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
+            Distrito de Origen (+8 Lealtad inicial del Gobernador)
+          </label>
+          <select
+            value={provinceId}
+            onChange={(e) => onChangeProvince(e.target.value)}
+            className="w-full bg-[#080c13] border border-[#263142] rounded-sm px-3 py-2 text-xs text-white focus:border-[#b89342] focus:outline-none"
+          >
+            {provinces.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} · {p.region}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {selectedProv ? <ProvinceStatsStrip province={selectedProv} /> : null}
+      </div>
+    </section>
+  );
+}
+
+function resolveLeaderName(mode: 'MI_PERSONAJE' | 'UN_POLITICO_REAL', rawName: string): string {
+  if (mode !== 'MI_PERSONAJE') return rawName;
+  const trimmed = rawName.trim();
+  return trimmed.length > 0 ? trimmed : 'Mi Personaje';
+}
+
+function resolveActiveProvince(provinces: ProvinceSummary[], provinceId: string): ProvinceSummary | undefined {
+  return provinces.find((p) => p.id === provinceId) ?? provinces[0];
+}
+
+function CharacterIdentityContent({
+  characterMode,
+  characterName,
+  selectedPoliticianId,
+  onChangeName,
+  onSelectPolitician
+}: {
+  characterMode: 'MI_PERSONAJE' | 'UN_POLITICO_REAL';
+  characterName: string;
+  selectedPoliticianId: string;
+  onChangeName: (name: string) => void;
+  onSelectPolitician: (p: RealPoliticianPreset) => void;
+}) {
+  if (characterMode === 'MI_PERSONAJE') {
+    return (
+      <div>
+        <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
+          Nombre completo del candidato o presidente
+        </label>
+        <input
+          type="text"
+          value={characterName}
+          onChange={(e) => onChangeName(e.target.value)}
+          placeholder="Ej: Martín Palermo / Elena Roca"
+          className="w-full bg-[#080c13] border border-[#263142] rounded-sm px-3 py-2 text-xs text-white focus:border-[#b89342] focus:outline-none"
+        />
+      </div>
+    );
+  }
+  return <RealPoliticiansSelector selectedId={selectedPoliticianId} onSelect={onSelectPolitician} />;
+}
+
+function PartyChoiceContent({
+  partyMode,
+  selectedParty,
+  customParty,
+  onSelectExisting,
+  onChangeCustom
+}: {
+  partyMode: 'PARTIDO_EXISTENTE' | 'CREAR_MI_PARTIDO';
+  selectedParty: PoliticalPartyPreset;
+  customParty: PoliticalPartyPreset;
+  onSelectExisting: (p: PoliticalPartyPreset) => void;
+  onChangeCustom: (p: PoliticalPartyPreset) => void;
+}) {
+  if (partyMode === 'PARTIDO_EXISTENTE') {
+    return <ExistingPartiesGrid selectedPartyId={selectedParty.id} onSelectParty={onSelectExisting} />;
+  }
+  return <CustomPartyCreatorPanel party={customParty} onChangeParty={onChangeCustom} />;
+}
+
 export function NewGameSetupScreen({
   provinces,
   onBackToLanding,
   onStartConfiguredGame
 }: NewGameSetupScreenProps) {
+  const defaultPolitician = REAL_POLITICIANS_2027[0]!;
   const [characterMode, setCharacterMode] = useState<'MI_PERSONAJE' | 'UN_POLITICO_REAL'>('UN_POLITICO_REAL');
-  const [customCharacterName, setCustomCharacterName] = useState('Ana Rivas');
-  const [spaceFilter, setSpaceFilter] = useState('TODOS');
-  const [selectedPolitician, setSelectedPolitician] = useState<RealPoliticianPreset>(REAL_POLITICIANS_2027[0]!);
-  const [role, setRole] = useState<PlayableRole>('PRESIDENTE');
-  const [provinceId, setProvinceId] = useState<string>('PBA');
+  const [characterName, setCharacterName] = useState(defaultPolitician.name);
+  const [selectedPoliticianId, setSelectedPoliticianId] = useState(defaultPolitician.id);
+  const [role, setRole] = useState<PlayableRole>(defaultPolitician.defaultRole);
+  const [provinceId, setProvinceId] = useState(defaultPolitician.defaultProvinceId);
   const [partyMode, setPartyMode] = useState<'PARTIDO_EXISTENTE' | 'CREAR_MI_PARTIDO'>('PARTIDO_EXISTENTE');
-  const [selectedPartyId, setSelectedPartyId] = useState<string>('LLA');
-  const [difficulty, setDifficulty] = useState<DifficultyLevel>('ESTANDAR_2027');
+  const [selectedParty, setSelectedParty] = useState<PoliticalPartyPreset>(POLITICAL_PARTIES_2027[0]!);
+  const [customParty, setCustomParty] = useState<PoliticalPartyPreset>(INITIAL_CUSTOM_PARTY);
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>(defaultPolitician.difficulty);
+  const [characterArchetype, setCharacterArchetype] = useState<CharacterArchetypeId>(
+    STYLE_TO_ARCHETYPE[defaultPolitician.styleTrait]
+  );
+  const [congressScenario, setCongressScenario] = useState<CongressStartScenario>('ESTANDAR_2027');
+  const [startMode, setStartMode] = useState<GameStartMode>('CAMPAIGN');
 
-  const [customParty, setCustomParty] = useState<PoliticalPartyPreset>({
-    id: 'CUSTOM',
-    sigla: 'MIP',
-    name: 'Movimiento Integración Productiva',
-    colorName: 'Esmeralda',
-    primaryColor: '#10b981',
-    ideology: 'Centrismo',
-    description: 'Espacio fundado por el jugador con insignia y programa propio.',
-    economicPosition: 50,
-    culturalPosition: 50,
-    socialBase: 'Clases medias urbanas y PyMEs',
-    emblem: {
-      shape: 'ESCUDO',
-      pattern: 'MITADES_VERTICALES',
-      primaryColor: '#10b981',
-      secondaryColor: '#34d399',
-      thirdColor: '#ffffff',
-      symbol: 'ESTRELLA',
-      symbolColor: '#ffffff',
-      disc: 'SIN_FONDO',
-      customImageDataUrl: null
+  const handleSelectPolitician = (p: RealPoliticianPreset) => {
+    setSelectedPoliticianId(p.id);
+    setCharacterName(p.name);
+    setRole(p.defaultRole);
+    setProvinceId(p.defaultProvinceId);
+    setDifficulty(p.difficulty);
+    setCharacterArchetype(STYLE_TO_ARCHETYPE[p.styleTrait]);
+    const matchingParty = POLITICAL_PARTIES_2027.find((party) => party.id === p.partyId);
+    if (matchingParty) {
+      setPartyMode('PARTIDO_EXISTENTE');
+      setSelectedParty(matchingParty);
     }
-  });
-
-  const handleSelectPolitician = (pol: RealPoliticianPreset) => {
-    setSelectedPolitician(pol);
-    setSelectedPartyId(pol.partyId);
-    setRole(pol.defaultRole);
-    setProvinceId(pol.defaultProvinceId);
-    setDifficulty(pol.difficulty);
   };
 
-  const handleLaunchGame = () => {
-    const existingParty =
-      POLITICAL_PARTIES_2027.find((p) => p.id === selectedPartyId) ?? POLITICAL_PARTIES_2027[0]!;
-    const activeParty = partyMode === 'CREAR_MI_PARTIDO' ? customParty : existingParty;
-    const characterName =
-      characterMode === 'MI_PERSONAJE' ? customCharacterName : selectedPolitician.name;
+  const activeParty = partyMode === 'CREAR_MI_PARTIDO' ? customParty : selectedParty;
+  const activeLeaderName = resolveLeaderName(characterMode, characterName);
+  const activeProvince = resolveActiveProvince(provinces, provinceId);
 
+  const handleLaunchGame = () => {
     onStartConfiguredGame({
-      sessionId: String(Math.floor(100000000000 + Math.random() * 899999999999)),
+      sessionId: String(Date.now()).slice(-13),
       characterMode,
-      characterName,
-      selectedPoliticianId: selectedPolitician.id,
+      characterName: activeLeaderName,
+      selectedPoliticianId,
       role,
       provinceId,
       partyMode,
       party: activeParty,
-      difficulty
+      difficulty,
+      startMode,
+      characterArchetype,
+      congressScenario
     });
   };
 
   return (
-    <div className="min-h-screen bg-[#080a0f] text-slate-100 py-10 px-4 md:px-8">
-      <div className="max-w-5xl mx-auto space-y-8">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-          <div>
-            <span className="text-xs font-mono uppercase tracking-wider text-sky-400">
-              República Argentina · Elecciones y Mandato 2027
-            </span>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-white mt-0.5">
-              Configuración de Nueva Partida
-            </h1>
-          </div>
-          <button
-            type="button"
-            onClick={onBackToLanding}
-            className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-medium text-slate-300"
-          >
-            ← Volver al inicio
-          </button>
-        </div>
-
-        <section className="space-y-4">
-          <div className="border-b border-slate-800 pb-2">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <span className="text-slate-500">|</span> ¿Con quién jugás?
-            </h2>
-          </div>
-
-          <ModeTogglePair
-            value={characterMode}
-            firstOption={{ id: 'MI_PERSONAJE', label: 'Mi personaje' }}
-            secondOption={{ id: 'UN_POLITICO_REAL', label: 'Un político real' }}
-            onChange={setCharacterMode}
-          />
-
-          {characterMode === 'MI_PERSONAJE' ? (
-            <div>
-              <label className="block text-xs font-semibold text-white mb-1.5">
-                Nombre de tu personaje
-              </label>
-              <input
-                type="text"
-                value={customCharacterName}
-                onChange={(e) => setCustomCharacterName(e.target.value)}
-                placeholder="Ej.: Ana Rivas"
-                className="w-full bg-[#10131c] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white"
-              />
+    <div className="min-h-screen bg-[#070a0f] text-slate-100 py-5 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto space-y-5">
+        <header className="hoi-panel rounded-sm overflow-hidden">
+          <div className="hoi-header-steel px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={onBackToLanding}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-[#0c121c] hover:bg-[#162133] border border-[#32445d] text-xs font-semibold text-slate-200 transition"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Volver al menú
+              </button>
+              <div>
+                <div className="text-[10px] font-mono uppercase tracking-[0.22em] text-amber-300">
+                  Sala de Situación // Briefing Inicial 2027
+                </div>
+                <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-white">
+                  Configuración de Nueva Partida
+                </h1>
+              </div>
             </div>
-          ) : (
-            <RealPoliticiansSelector
-              selectedId={selectedPolitician.id}
-              spaceFilter={spaceFilter}
-              onFilterChange={setSpaceFilter}
-              onSelectPolitician={handleSelectPolitician}
+            <span className="text-[11px] font-mono px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#2a384c] text-amber-200">
+              Todas las opciones modifican la simulación
+            </span>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          <div className="lg:col-span-8 space-y-4">
+            <section className="hoi-panel rounded-sm p-4 space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-[#243042]">
+                <UserCheck className="w-4 h-4 text-amber-400" />
+                <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200">
+                  01 · Identidad del Líder y Perfil de Conducción
+                </h2>
+              </div>
+
+              <ModeTogglePair
+                leftLabel="Mi personaje"
+                rightLabel="Un político real"
+                isLeftActive={characterMode === 'MI_PERSONAJE'}
+                onSelectLeft={() => {
+                  setCharacterMode('MI_PERSONAJE');
+                  setCharacterName((prev) => (prev === defaultPolitician.name ? '' : prev));
+                }}
+                onSelectRight={() => setCharacterMode('UN_POLITICO_REAL')}
+              />
+
+              <CharacterIdentityContent
+                characterMode={characterMode}
+                characterName={characterName}
+                selectedPoliticianId={selectedPoliticianId}
+                onChangeName={setCharacterName}
+                onSelectPolitician={handleSelectPolitician}
+              />
+
+              <CharacterArchetypeSelector
+                value={characterArchetype}
+                onChange={setCharacterArchetype}
+              />
+            </section>
+
+            <CargoSelectorSection
+              role={role}
+              provinceId={provinceId}
+              provinces={provinces}
+              onChangeRole={setRole}
+              onChangeProvince={setProvinceId}
             />
-          )}
-        </section>
 
-        <CargoSelectorSection
-          role={role}
-          provinceId={provinceId}
-          provinces={provinces}
-          onRoleChange={setRole}
-          onProvinceChange={setProvinceId}
-        />
+            <section className="hoi-panel rounded-sm p-4 space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-[#243042]">
+                <Users className="w-4 h-4 text-amber-400" />
+                <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200">
+                  03 · Fuerza Política, Boleta y Escudo
+                </h2>
+              </div>
 
-        <section className="space-y-4">
-          <div className="border-b border-slate-800 pb-2">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <span className="text-slate-500">|</span> Partido
-            </h2>
+              <ModeTogglePair
+                leftLabel="Elegir partido existente"
+                rightLabel="Fundar mi propio partido"
+                isLeftActive={partyMode === 'PARTIDO_EXISTENTE'}
+                onSelectLeft={() => setPartyMode('PARTIDO_EXISTENTE')}
+                onSelectRight={() => setPartyMode('CREAR_MI_PARTIDO')}
+              />
+
+              <PartyChoiceContent
+                partyMode={partyMode}
+                selectedParty={selectedParty}
+                customParty={customParty}
+                onSelectExisting={setSelectedParty}
+                onChangeCustom={setCustomParty}
+              />
+            </section>
+
+            <SetupScenarioAndCongressSection
+              difficulty={difficulty}
+              congressScenario={congressScenario}
+              startMode={startMode}
+              onChangeDifficulty={setDifficulty}
+              onChangeCongressScenario={setCongressScenario}
+              onChangeStartMode={setStartMode}
+            />
           </div>
 
-          <ModeTogglePair
-            value={partyMode}
-            firstOption={{ id: 'PARTIDO_EXISTENTE', label: 'Partido existente' }}
-            secondOption={{ id: 'CREAR_MI_PARTIDO', label: 'Crear mi partido' }}
-            onChange={setPartyMode}
-          />
-
-          {partyMode === 'PARTIDO_EXISTENTE' ? (
-            <ExistingPartiesGrid
-              selectedPartyId={selectedPartyId}
-              onSelectParty={setSelectedPartyId}
+          <div className="lg:col-span-4">
+            <SetupSummarySidebar
+              leaderName={activeLeaderName}
+              role={role}
+              province={activeProvince}
+              party={activeParty}
+              difficulty={difficulty}
+              characterArchetype={characterArchetype}
+              congressScenario={congressScenario}
+              startMode={startMode}
+              onLaunchGame={handleLaunchGame}
             />
-          ) : (
-            <CustomPartyCreatorPanel
-              customParty={customParty}
-              onChangeParty={setCustomParty}
-            />
-          )}
-        </section>
-
-        <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-xs text-slate-400">
-            Iniciás el <strong>10 de diciembre de 2027</strong> con motor económico, judicial, bancario y militar activo.
           </div>
-          <button
-            type="button"
-            onClick={handleLaunchGame}
-            className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-white hover:bg-slate-200 text-slate-950 font-extrabold text-sm shadow-xl transition"
-          >
-            Comenzar partida →
-          </button>
         </div>
       </div>
     </div>

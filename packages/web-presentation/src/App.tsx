@@ -6,6 +6,7 @@ import {
   applyCampaignBridgeToGovernment,
   applyGovernmentEventChoice,
   applyPolicyAction,
+  applySetupConfigurationToState,
   getGovernmentRuntime,
   executeCampaignAction,
   type CabinetMinister,
@@ -126,7 +127,10 @@ const DEFAULT_SETUP: GameSetupConfiguration = {
   provinceId: 'CABA',
   partyMode: 'PARTIDO_EXISTENTE',
   party: POLITICAL_PARTIES_2027[0]!,
-  difficulty: 'ESTANDAR_2027'
+  difficulty: 'ESTANDAR_2027',
+  startMode: 'CAMPAIGN',
+  characterArchetype: 'ECONOMISTA_ORTODOXO',
+  congressScenario: 'ESTANDAR_2027'
 };
 
 interface CampaignActivePanelProps {
@@ -570,7 +574,8 @@ export function App() {
 
   const startPresidentialGovernment = () => {
     const baseGov = createInitialSimulationState2027(setup.role, setup.difficulty, setup.provinceId);
-    setState(attachDefaultGovCollections(applyCampaignBridgeToGovernment(baseGov, campaignState)));
+    const bridged = attachDefaultGovCollections(applyCampaignBridgeToGovernment(baseGov, campaignState));
+    setState(applySetupConfigurationToState(bridged, setup));
     setActiveSection('GABINETE');
     setScreenMode('GOVERNMENT');
   };
@@ -578,14 +583,13 @@ export function App() {
   const handleStartConfiguredGame = (nextSetup: GameSetupConfiguration) => {
     setSetup(nextSetup);
     const candidateObj = resolveCandidateFromSetup(nextSetup);
-
-    setState(
-      attachDefaultGovCollections(
-        createInitialSimulationState2027(nextSetup.role, nextSetup.difficulty, nextSetup.provinceId)
-      )
+    const baseGov = attachDefaultGovCollections(
+      createInitialSimulationState2027(nextSetup.role, nextSetup.difficulty, nextSetup.provinceId)
     );
-    setActiveSection('GABINETE');
+    const configuredGov = applySetupConfigurationToState(baseGov, nextSetup);
 
+    setState(configuredGov);
+    setActiveSection('GABINETE');
     setCampaignState(
       createInitialCampaignState(
         candidateObj,
@@ -595,7 +599,7 @@ export function App() {
       )
     );
     setCampaignNavSection('RESUMEN');
-    setScreenMode('CAMPAIGN');
+    setScreenMode(nextSetup.startMode === 'DIRECT_GOVERNMENT' ? 'GOVERNMENT' : 'CAMPAIGN');
   };
 
   const handleAdvanceCampaign = () => {
