@@ -323,6 +323,14 @@ export interface LegislatorMandateState {
   activeCommitteeName: string;
 }
 
+export interface PreviousTurnMacroSnapshot {
+  cclDollarArs: number;
+  netReservesBillionUsd: number;
+  realMonthlyIpcPct: number;
+  countryRiskEmbiPb: number;
+  presidentialImagePct: number;
+}
+
 export interface SimulationState {
   turnMonth: number;
   currentYear: number;
@@ -363,6 +371,7 @@ export interface SimulationState {
   laggedMacroShocks?: LaggedMacroShock[];
   governorMandate?: GovernorMandateState;
   legislatorMandate?: LegislatorMandateState;
+  previousTurnMetrics?: PreviousTurnMacroSnapshot;
 }
 
 export type PolicyAction =

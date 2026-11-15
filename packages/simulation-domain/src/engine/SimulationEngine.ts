@@ -240,6 +240,13 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
 
   const rigiStep = stepRigiIfPresent(state);
   const roleStep = stepRoleMandateMonthly(state);
+  const previousTurnMetrics = {
+    cclDollarArs: state.centralBank.cclDollarArs,
+    netReservesBillionUsd: state.centralBank.netLiquidReservesBillionUsd,
+    realMonthlyIpcPct: state.inflation.realMonthlyIpcPct,
+    countryRiskEmbiPb: state.countryRiskEmbiPb,
+    presidentialImagePct: state.publicOpinion.presidentialPersonalImagePct
+  };
 
   return {
     ...state,
@@ -263,6 +270,7 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
     structural: nextStructural,
     trustLedger: decayTrustLedger(state.trustLedger),
     laggedMacroShocks: macroLags.nextShocks,
+    previousTurnMetrics,
     ...roleStep,
     ...rigiStep
   };

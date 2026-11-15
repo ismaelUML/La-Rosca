@@ -49,10 +49,12 @@ const GROUP_ICONS: Record<string, React.ReactNode> = {
   'POLÍTICA Y CONGRESO': <Scale className="w-3.5 h-3.5" />
 };
 
-const SIDEBAR_GROUPS: Array<{
+type SidebarGroupSpec = {
   groupTitle: string;
   items: Array<{ id: InGameSidebarSection; label: string }>;
-}> = [
+};
+
+const PRESIDENT_SIDEBAR_GROUPS: SidebarGroupSpec[] = [
   {
     groupTitle: 'DESPACHO',
     items: [
@@ -90,6 +92,72 @@ const SIDEBAR_GROUPS: Array<{
   }
 ];
 
+const GOVERNOR_SIDEBAR_GROUPS: SidebarGroupSpec[] = [
+  {
+    groupTitle: 'DESPACHO',
+    items: [
+      { id: 'DESPACHO_RESUMEN', label: 'Gobernación Provincial' },
+      { id: 'REGISTRO', label: 'Boletín Oficial' }
+    ]
+  },
+  {
+    groupTitle: 'ECONOMÍA',
+    items: [
+      { id: 'INDICADORES', label: 'Indicadores Macro y Prov.' },
+      { id: 'MEDIDAS', label: 'Medidas Sectoriales' },
+      { id: 'ENERGIA_Y_PARITARIAS', label: 'Tarifas y Gremios' }
+    ]
+  },
+  {
+    groupTitle: 'PRESUPUESTO',
+    items: [
+      { id: 'IMPUESTOS_PROPIOS', label: 'Tributos Provinciales' },
+      { id: 'RIGI', label: 'Adhesión RIGI Provincial' }
+    ]
+  },
+  {
+    groupTitle: 'POLÍTICA Y CONGRESO',
+    items: [
+      { id: 'CONGRESO_Y_JUSTICIA', label: 'Liga de Gobernadores y CSJN' },
+      { id: 'CAMARAS', label: 'Bancas en el Congreso' },
+      { id: 'PARTIDO_PROVINCIAS', label: 'Estructura Territorial' }
+    ]
+  }
+];
+
+const LEGISLATOR_SIDEBAR_GROUPS: SidebarGroupSpec[] = [
+  {
+    groupTitle: 'DESPACHO',
+    items: [
+      { id: 'DESPACHO_RESUMEN', label: 'Despacho Parlamentario' },
+      { id: 'REGISTRO', label: 'Diario de Sesiones' }
+    ]
+  },
+  {
+    groupTitle: 'POLÍTICA Y CONGRESO',
+    items: [
+      { id: 'CAMARAS', label: 'Hemiciclo y Proyectos de Ley' },
+      { id: 'CONGRESO_Y_JUSTICIA', label: 'Comodoro Py, CSJN y Provincias' },
+      { id: 'APOYOS', label: 'Alianzas y Dirigentes' },
+      { id: 'PARTIDO_PROVINCIAS', label: 'Base en las Provincias' }
+    ]
+  },
+  {
+    groupTitle: 'PRESUPUESTO',
+    items: [
+      { id: 'IMPUESTOS_PROPIOS', label: 'Iniciativas Tributarias' },
+      { id: 'INDICADORES', label: 'Monitor Macro OPC' }
+    ]
+  }
+];
+
+const SIDEBAR_GROUPS_BY_ROLE: Record<GameSetupConfiguration['role'], SidebarGroupSpec[]> = {
+  PRESIDENTE: PRESIDENT_SIDEBAR_GROUPS,
+  GOBERNADOR: GOVERNOR_SIDEBAR_GROUPS,
+  DIPUTADO: LEGISLATOR_SIDEBAR_GROUPS,
+  SENADOR: LEGISLATOR_SIDEBAR_GROUPS
+};
+
 const ROLE_LABELS: Record<GameSetupConfiguration['role'], string> = {
   PRESIDENTE: 'Presidente',
   GOBERNADOR: 'Gobernador',
@@ -104,15 +172,60 @@ function formatGameDate(turnMonth: number): string {
   return `${months[idx]} ${year} · T${turnMonth}`;
 }
 
-function findActiveGroup(activeSection: InGameSidebarSection) {
-  const found = SIDEBAR_GROUPS.find((g) => g.items.some((i) => i.id === activeSection));
-  return found ?? SIDEBAR_GROUPS[0]!;
+function findActiveGroup(groups: SidebarGroupSpec[], activeSection: InGameSidebarSection) {
+  const found = groups.find((g) => g.items.some((i) => i.id === activeSection));
+  return found ?? groups[0]!;
 }
 
-function TelemetryBox({ label, value, toneClass }: { label: string; value: string; toneClass: string }) {
+function formatSignedDelta(delta: number, decimals: number, suffix: string): string {
+  const arrow = delta > 0 ? '▲' : '▼';
+  const sign = delta > 0 ? '+' : '';
+  return `${arrow}${sign}${delta.toFixed(decimals)}${suffix}`;
+}
+
+function buildDeltaBadge(
+  current: number,
+  previous: number | undefined,
+  decimals: number,
+  suffix: string,
+  invertGood: boolean
+): { text: string; colorClass: string } | null {
+  if (previous === undefined) return null;
+  const delta = Number((current - previous).toFixed(decimals));
+  if (Math.abs(delta) < 0.05) return null;
+  const isGood = invertGood ? delta < 0 : delta > 0;
+  return {
+    text: formatSignedDelta(delta, decimals, suffix),
+    colorClass: isGood ? 'text-emerald-400' : 'text-rose-400'
+  };
+}
+
+function TelemetryBox({
+  label,
+  value,
+  toneClass,
+  deltaBadge,
+  tooltip
+}: {
+  label: string;
+  value: string;
+  toneClass: string;
+  deltaBadge?: { text: string; colorClass: string } | null;
+  tooltip?: string;
+}) {
   return (
-    <div className="px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#283447] flex flex-col leading-tight">
-      <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400">{label}</span>
+    <div
+      title={tooltip}
+      className="px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#283447] flex flex-col leading-tight"
+    >
+      <div className="flex items-center justify-between gap-1.5">
+        <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400">{label}</span>
+        {deltaBadge ? (
+          <span className={`text-[9px] font-mono font-bold ${deltaBadge.colorClass}`}>
+            {deltaBadge.text}
+          </span>
+        ) : null}
+      </div>
       <span className={`text-xs font-mono font-bold ${toneClass}`}>{value}</span>
     </div>
   );
@@ -158,6 +271,12 @@ function TopTelemetryBar({
   const riskTone = resolveRangeTone(state.countryRiskEmbiPb, 700, 1200, true);
   const imageTone = resolveRangeTone(state.publicOpinion.presidentialPersonalImagePct, 50, 35);
 
+  const prev = state.previousTurnMetrics;
+  const lagNote =
+    state.laggedMacroShocks && state.laggedMacroShocks.length > 0
+      ? `Rezagos activos: ${state.laggedMacroShocks.map((s) => s.sourceLabel).join(', ')}`
+      : `Crawling peg ${state.centralBank.crawlingPegMonthlyPct}%/m · Resultado primario ${state.treasury.primaryResultPctGdp}% PBI`;
+
   return (
     <header className="hoi-header-steel px-4 py-2 z-30 shrink-0">
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2.5">
@@ -180,26 +299,42 @@ function TopTelemetryBar({
             label="Dólar CCL"
             value={`$${state.centralBank.cclDollarArs} (${state.centralBank.exchangeBrechaPct.toFixed(0)}%)`}
             toneClass={SEMANTIC_TEXT_CLASS[brechaTone]}
+            deltaBadge={buildDeltaBadge(state.centralBank.cclDollarArs, prev?.cclDollarArs, 0, '', true)}
+            tooltip={lagNote}
           />
           <TelemetryBox
             label="Res. Netas"
             value={`${netUsd.toFixed(1)}B USD`}
             toneClass={reservesToneClass}
+            deltaBadge={buildDeltaBadge(netUsd, prev?.netReservesBillionUsd, 1, 'B', false)}
+            tooltip={lagNote}
           />
           <TelemetryBox
             label="Inflación"
             value={`${state.inflation.realMonthlyIpcPct.toFixed(1)}%/m`}
             toneClass={SEMANTIC_TEXT_CLASS[ipcTone]}
+            deltaBadge={buildDeltaBadge(state.inflation.realMonthlyIpcPct, prev?.realMonthlyIpcPct, 1, '%', true)}
+            tooltip={lagNote}
           />
           <TelemetryBox
             label="Riesgo País"
             value={`${state.countryRiskEmbiPb} pb`}
             toneClass={SEMANTIC_TEXT_CLASS[riskTone]}
+            deltaBadge={buildDeltaBadge(state.countryRiskEmbiPb, prev?.countryRiskEmbiPb, 0, '', true)}
+            tooltip={lagNote}
           />
           <TelemetryBox
             label="Imagen"
             value={`${state.publicOpinion.presidentialPersonalImagePct.toFixed(0)}%`}
             toneClass={SEMANTIC_TEXT_CLASS[imageTone]}
+            deltaBadge={buildDeltaBadge(
+              state.publicOpinion.presidentialPersonalImagePct,
+              prev?.presidentialImagePct,
+              0,
+              '%',
+              false
+            )}
+            tooltip={lagNote}
           />
         </div>
 
@@ -242,11 +377,13 @@ function TopTelemetryBar({
 }
 
 function DockGroupTabs({
+  groups,
   activeGroupTitle,
   panelVisible,
   onSelectSection,
   onTogglePanel
 }: {
+  groups: SidebarGroupSpec[];
   activeGroupTitle: string;
   panelVisible: boolean;
   onSelectSection: (sec: InGameSidebarSection) => void;
@@ -255,7 +392,7 @@ function DockGroupTabs({
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-b border-[#1d2738]">
       <div className="flex flex-wrap gap-1">
-        {SIDEBAR_GROUPS.map((group) => {
+        {groups.map((group) => {
           const isGroupActive = panelVisible && group.groupTitle === activeGroupTitle;
           const cls = isGroupActive
             ? 'bg-[#17253b] text-amber-100 border-t-2 border-x border-[#b89342] border-x-[#2e415e]'
@@ -322,12 +459,14 @@ function CommandDockNav({
   onOpenPanel: () => void;
   onTogglePanel: () => void;
 }) {
-  const activeGroup = findActiveGroup(activeSection);
+  const groups = SIDEBAR_GROUPS_BY_ROLE[role];
+  const activeGroup = findActiveGroup(groups, activeSection);
 
   return (
     <nav className="bg-[#0b1018] border-b border-[#263142] z-20 shrink-0">
       <div className="max-w-7xl mx-auto px-4">
         <DockGroupTabs
+          groups={groups}
           activeGroupTitle={activeGroup.groupTitle}
           panelVisible={panelVisible}
           onSelectSection={(sec) => {

@@ -187,9 +187,9 @@ function CampaignActivePanel({
       />
     ),
     GOBERNANTES: <CampaignGobernantesView state={state} />,
-    POBLACION: <CampaignDemografiaPaisView key="POBLACION" initialTab="POBLACION" />,
-    INMIGRACION: <CampaignDemografiaPaisView key="INMIGRACION" initialTab="INMIGRACION" />,
-    EMIGRACION: <CampaignDemografiaPaisView key="EMIGRACION" initialTab="EMIGRACION" />,
+    POBLACION: <CampaignDemografiaPaisView key="POBLACION" initialTab="POBLACION" campaignState={state} />,
+    INMIGRACION: <CampaignDemografiaPaisView key="INMIGRACION" initialTab="INMIGRACION" campaignState={state} />,
+    EMIGRACION: <CampaignDemografiaPaisView key="EMIGRACION" initialTab="EMIGRACION" campaignState={state} />,
     REGISTRO_DIARIO: <RegistroHistoryView historyLog={state.historyLog} />
   };
 
@@ -439,17 +439,53 @@ function resolveCandidateFromSetup(nextSetup: GameSetupConfiguration): { id: str
   return { id: 'CUSTOM_CANDIDATO', name: 'Candidato' };
 }
 
+const STAGE_BY_MONTH: Record<number, ElectionStageType> = {
+  4: 'INTERNA',
+  8: 'PASO',
+  10: 'GENERALES',
+  11: 'BALOTAJE'
+};
+
 function resolveElectionStageForMonth(monthIndex: number): ElectionStageType | null {
-  if (monthIndex === 8) {
-    return 'PASO';
-  }
-  if (monthIndex === 10) {
-    return 'GENERALES';
-  }
-  if (monthIndex === 11) {
-    return 'BALOTAJE';
-  }
-  return null;
+  return STAGE_BY_MONTH[monthIndex] ?? null;
+}
+
+function applyInternaVictoryBoost(state: CampaignSimulationState): CampaignSimulationState {
+  return {
+    ...state,
+    isCandidacyConfirmed: true,
+    votingIntention: {
+      ...state.votingIntention,
+      intencionVotoGeneral: Number(
+        Math.min(58, state.votingIntention.intencionVotoGeneral + 3.5).toFixed(1)
+      )
+    },
+    attributes: {
+      ...state.attributes,
+      apoyoPartidario: Math.min(100, state.attributes.apoyoPartidario + 8)
+    },
+    historyLog: [
+      `Mes ${state.stage.currentMonthIndex}: Consagraste tu fórmula en la Interna Partidaria (+3,5% voto general · +8 Apoyo Partidario).`,
+      ...state.historyLog
+    ]
+  };
+}
+
+function applyInternaSplitPenalty(state: CampaignSimulationState): CampaignSimulationState {
+  return {
+    ...state,
+    electionDefeated: false,
+    isCandidacyConfirmed: true,
+    budgetArgentums: Math.max(5, state.budgetArgentums - 15),
+    attributes: {
+      ...state.attributes,
+      apoyoPartidario: Math.max(10, state.attributes.apoyoPartidario - 15)
+    },
+    historyLog: [
+      `Mes ${state.stage.currentMonthIndex}: Rompiste el sello tras caer en la interna y competís con Boleta Corta (-15 Apoyo Partidario · -15 ¥).`,
+      ...state.historyLog
+    ]
+  };
 }
 
 function checkElectionTransitionToGovernment(
@@ -677,6 +713,11 @@ export function App() {
     setCampaignState(step.nextState);
   };
 
+  const handleBreakPartySplit = () => {
+    setCampaignState((prev) => applyInternaSplitPenalty(prev));
+    setActiveElectionModal(null);
+  };
+
   const handleProceedElection = () => {
     if (!activeElectionModal) {
       return;
@@ -686,12 +727,12 @@ export function App() {
       handleRetryCampaign();
       return;
     }
-    const shouldEnterGov = checkElectionTransitionToGovernment(
-      activeElectionModal,
-      escrutinio.isVictory,
-      escrutinio.isRunoff
-    );
-    if (shouldEnterGov) {
+    if (activeElectionModal === 'INTERNA') {
+      setCampaignState((prev) => applyInternaVictoryBoost(prev));
+      setActiveElectionModal(null);
+      return;
+    }
+    if (checkElectionTransitionToGovernment(activeElectionModal, escrutinio.isVictory, escrutinio.isRunoff)) {
       startPresidentialGovernment();
     }
     setActiveElectionModal(null);
@@ -833,6 +874,7 @@ export function App() {
           state={campaignState}
           onProceed={handleProceedElection}
           onRetryCampaign={handleRetryCampaign}
+          onBreakPartySplit={handleBreakPartySplit}
           onNewGameSetup={() => {
             setActiveElectionModal(null);
             setScreenMode('NEW_GAME_SETUP');

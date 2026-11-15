@@ -105,5 +105,36 @@ describe('Puente Campaña -> Gobierno', () => {
     expect(senState.legislatorMandate?.pliegosOrInterpelacionesCount).toBe(1);
     expect(senState.legislatorMandate?.territorialBackingPct).toBeGreaterThan(initSen.territorialBackingPct);
   });
+
+  it('evalua la Interna Partidaria del Mes 4 y guarda previousTurnMetrics para telemetria con deltas', () => {
+    const campaign = createInitialCampaignState(
+      { id: 'JAVIER_MILEI', name: 'Javier Milei' },
+      POLITICAL_PARTIES_2027[0]!,
+      'PRESIDENTE',
+      'CABA'
+    );
+
+    const internaWin = computeEscrutinio('INTERNA', {
+      ...campaign,
+      votingIntention: { ...campaign.votingIntention, tuInterna: 62.5 }
+    });
+    expect(internaWin.isVictory).toBe(true);
+    expect(internaWin.isDefeat).toBe(false);
+    expect(internaWin.verdictTitle).toBe('Ganaste la Interna Partidaria');
+
+    const internaLoss = computeEscrutinio('INTERNA', {
+      ...campaign,
+      votingIntention: { ...campaign.votingIntention, tuInterna: 18.0 }
+    });
+    expect(internaLoss.isVictory).toBe(false);
+    expect(internaLoss.isDefeat).toBe(true);
+    expect(internaLoss.verdictTitle).toBe('Perdiste la Interna de tu Partido');
+
+    const govInit = createInitialSimulationState2027('PRESIDENTE', 'ESTANDAR_2027', 'CABA');
+    const govNext = advanceSimulationMonth(govInit);
+    expect(govNext.previousTurnMetrics).toBeDefined();
+    expect(govNext.previousTurnMetrics?.cclDollarArs).toBe(govInit.centralBank.cclDollarArs);
+    expect(govNext.previousTurnMetrics?.realMonthlyIpcPct).toBe(govInit.inflation.realMonthlyIpcPct);
+  });
 });
 

@@ -92,10 +92,12 @@ function KpiStatBox({
   accentClass: string;
 }) {
   return (
-    <div className="rounded-xl bg-[#0b0f17] border border-[#243044] p-3.5">
-      <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400">{label}</div>
+    <div className="rounded-sm bg-[#090d14] border border-[#243044] p-3.5">
+      <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+        {label}
+      </div>
       <div className={`text-xl font-mono font-extrabold mt-1 ${accentClass}`}>{value}</div>
-      <div className="text-[11px] text-slate-400 mt-1">{subtext}</div>
+      <div className="text-[11px] font-mono text-slate-400 mt-1">{subtext}</div>
     </div>
   );
 }
@@ -114,13 +116,13 @@ function RoleActionButtonsGrid({
           key={item.id}
           type="button"
           onClick={() => onExecute(item.id)}
-          className={`text-left rounded-xl bg-[#0b0f17] hover:bg-[#131b29] border p-3.5 transition group ${item.toneClass}`}
+          className={`text-left rounded-sm bg-[#090d14] hover:bg-[#121926] border p-3.5 transition group ${item.toneClass}`}
         >
           <div className="flex items-start justify-between gap-2">
             <span className="text-xs font-extrabold text-white group-hover:text-amber-200">
               {item.title}
             </span>
-            <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-[10px] font-mono font-bold text-amber-300 shrink-0">
+            <span className="px-2 py-0.5 rounded-sm bg-[#06080d] border border-[#2c384b] text-[10px] font-mono font-bold text-[#d4b26a] shrink-0">
               {item.effectBadge}
             </span>
           </div>
@@ -144,26 +146,26 @@ export function GovernorCommandPanel({
   const prov = state.provinces.find((p) => p.id === gov.provinceId) ?? state.provinces[0]!;
 
   return (
-    <div className="rounded-2xl bg-[#101521] border border-[#2b3950] p-5 space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3.5">
+    <div className="rounded-sm bg-[#0c1119] border border-[#263142] border-t-2 border-t-[#8a6d33] p-5 space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#243044] pb-3.5">
         <div>
-          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300">
+          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#d4b26a]">
             CASA DE GOBIERNO PROVINCIAL · {prov.name.toUpperCase()} ({prov.region})
           </div>
-          <h2 className="text-lg font-extrabold text-white mt-0.5">
+          <h2 className="text-lg font-serif font-bold text-white mt-0.5">
             Comando Ejecutivo de Gobernación · {setup.characterName}
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs font-mono text-slate-400">
             Motor productivo: <strong className="text-slate-200">{prov.keyEconomicDriver}</strong> · Bancas nacionales del distrito: <strong className="text-sky-300">{prov.nationalDeputiesCount} Diputados / 3 Senadores</strong>
           </p>
         </div>
 
         {gov.activeTeacherOrPoliceConflict ? (
-          <span className="px-3 py-1.5 rounded-lg bg-rose-950/80 border border-rose-700 text-xs font-bold text-rose-200">
+          <span className="px-3 py-1.5 rounded-sm bg-rose-950/80 border border-rose-700 text-xs font-mono font-bold text-rose-200">
             Conflicto gremial docente/policial activo
           </span>
         ) : (
-          <span className="px-3 py-1.5 rounded-lg bg-emerald-950/60 border border-emerald-800 text-xs font-bold text-emerald-300">
+          <span className="px-3 py-1.5 rounded-sm bg-emerald-950/60 border border-emerald-800 text-xs font-mono font-bold text-emerald-300">
             Paritarias provinciales en orden
           </span>
         )}
@@ -288,18 +290,18 @@ export function LegislatorCommandPanel({
   const actions = buildLegislatorActions(isSenate, leg.provinceId);
 
   return (
-    <div className="rounded-2xl bg-[#101521] border border-[#2b3950] p-5 space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3.5">
+    <div className="rounded-sm bg-[#0c1119] border border-[#263142] border-t-2 border-t-[#8a6d33] p-5 space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#243044] pb-3.5">
         <div>
           <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-sky-400">
             {isSenate
               ? 'HONORABLE SENADO DE LA NACIÓN · BANCA FEDERAL (1/72)'
               : 'HONORABLE CÁMARA DE DIPUTADOS · BANCA NACIONAL (1/257)'}
           </div>
-          <h2 className="text-lg font-extrabold text-white mt-0.5">
+          <h2 className="text-lg font-serif font-bold text-white mt-0.5">
             Despacho Parlamentario · {setup.characterName} ({setup.party.sigla} · {leg.provinceId})
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs font-mono text-slate-400">
             Comisión cabecera: <strong className="text-slate-200">{leg.activeCommitteeName}</strong>
           </p>
         </div>
@@ -307,7 +309,7 @@ export function LegislatorCommandPanel({
         <button
           type="button"
           onClick={() => onNavigate('CAMARAS')}
-          className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-xs font-extrabold text-amber-200 transition"
+          className="px-3.5 py-2 rounded-sm bg-gradient-to-b from-[#d8b76c] to-[#9b7a38] hover:from-[#e6c87d] hover:to-[#b08c42] border border-[#f3d893]/40 text-xs font-mono font-extrabold uppercase tracking-wider text-slate-950 transition"
         >
           Ir al Hemiciclo y Votar Leyes →
         </button>

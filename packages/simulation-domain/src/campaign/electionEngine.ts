@@ -1,7 +1,7 @@
 import type { CampaignSimulationState } from '../models/CampaignTypes.js';
 import type { PlayableRole } from '../models/SimulationTypes.js';
 
-export type ElectionStageType = 'PASO' | 'GENERALES' | 'BALOTAJE';
+export type ElectionStageType = 'INTERNA' | 'PASO' | 'GENERALES' | 'BALOTAJE';
 
 export interface CandidateVoteResult {
   fuerza: string;
@@ -303,34 +303,93 @@ function computeGeneralesEscrutinio(
   };
 }
 
-export function computeEscrutinio(stage: ElectionStageType, state: CampaignSimulationState): EscrutinioData {
-  const isBalotaje = stage === 'BALOTAJE';
+function buildInternaCandidateRows(
+  state: CampaignSimulationState,
+  votosValidos: number
+): CandidateVoteResult[] {
+  const raw = state.internalPoll.candidates.map((c) => ({
+    ...c,
+    weight: c.isPlayer ? Math.max(5, state.votingIntention.tuInterna) : Math.max(2, c.voteSharePct)
+  }));
+  const totalWeight = raw.reduce((acc, c) => acc + c.weight, 0) || 1;
+  return raw
+    .map((c) => {
+      const pct = Math.round((c.weight / totalWeight) * 1000) / 10;
+      return {
+        fuerza: `${state.partySigla} · Lista ${c.name.split(' ').pop() ?? c.name}`,
+        candidato: c.name,
+        votos: Math.round((votosValidos * pct) / 100),
+        pct,
+        color: c.isPlayer ? state.partyColor || c.color : c.color,
+        isPlayer: c.isPlayer
+      };
+    })
+    .sort((a, b) => b.pct - a.pct);
+}
+
+function computeInternaEscrutinio(state: CampaignSimulationState): EscrutinioData {
+  const padronInterna = 4280000;
+  const participacionPct = 64.5;
+  const votantes = Math.round((padronInterna * participacionPct) / 100);
+  const votosBlancos = 48200;
+  const votosNulos = 29100;
+  const votosValidos = votantes - votosBlancos - votosNulos;
+  const results = buildInternaCandidateRows(state, votosValidos);
+  const playerRow = results.find((r) => r.isPlayer) ?? results[0]!;
+  const isWinner = results[0]?.isPlayer ?? true;
+
+  return {
+    padronTotal: padronInterna,
+    participacionPct,
+    votosPositivos: votosValidos,
+    votosBlancos,
+    votosNulos,
+    abstencion: padronInterna - votantes,
+    results,
+    verdictTitle: isWinner ? 'Ganaste la Interna Partidaria' : 'Perdiste la Interna de tu Partido',
+    verdictSubtitle: `Tu lista obtuvo ${playerRow.pct.toFixed(1).replace('.', ',')} % (${playerRow.votos.toLocaleString('es-AR')} votos internos).`,
+    isVictory: isWinner,
+    isRunoff: false,
+    isDefeat: !isWinner
+  };
+}
+
+function resolveNationalTurnoutNumbers(isBalotaje: boolean) {
   const participacionPct = isBalotaje ? 76.2 : 75.1;
   const electoresVotantes = Math.round((PADRON_NACIONAL * participacionPct) / 100);
   const abstencion = PADRON_NACIONAL - electoresVotantes;
   const votosBlancos = isBalotaje ? 667473 : 530558;
   const votosNulos = isBalotaje ? 370700 : 314092;
   const votosValidos = electoresVotantes - votosBlancos - votosNulos;
+  return { participacionPct, abstencion, votosBlancos, votosNulos, votosValidos };
+}
+
+export function computeEscrutinio(stage: ElectionStageType, state: CampaignSimulationState): EscrutinioData {
+  if (stage === 'INTERNA') {
+    return computeInternaEscrutinio(state);
+  }
+  const isBalotaje = stage === 'BALOTAJE';
+  const t = resolveNationalTurnoutNumbers(isBalotaje);
   const coalitionLabel = resolveCoalitionLabel(state.partySigla, state.coalitionParties);
 
   if (isBalotaje) {
     return computeBalotajeEscrutinio(
       state,
-      votosValidos,
-      participacionPct,
-      votosBlancos,
-      votosNulos,
-      abstencion,
+      t.votosValidos,
+      t.participacionPct,
+      t.votosBlancos,
+      t.votosNulos,
+      t.abstencion,
       coalitionLabel
     );
   }
   return computeGeneralesEscrutinio(
     state,
-    votosValidos,
-    participacionPct,
-    votosBlancos,
-    votosNulos,
-    abstencion,
+    t.votosValidos,
+    t.participacionPct,
+    t.votosBlancos,
+    t.votosNulos,
+    t.abstencion,
     coalitionLabel,
     stage
   );
