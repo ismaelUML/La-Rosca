@@ -6,6 +6,7 @@ import type {
   EmblemSymbol,
   PartyEmblemConfig
 } from '@argentina-sim/domain';
+import { logoNeedsLightBackdrop } from './officialLogosCatalog.js';
 
 // Usamos mapas declarativos en vez de switches gigantes de 17 casos para que
 // el verificador de complejidad ciclomatica se mantenga en CC <= 3 por funcion.
@@ -137,7 +138,24 @@ export function PartyEmblemSvg({ config, size = 96, className }: PartyEmblemSvgP
         <rect x="0" y="0" width="100" height="100" fill={config.primaryColor} />
         {renderPatternOverlay(config.pattern, config.secondaryColor, config.thirdColor)}
         {config.customImageDataUrl ? (
-          <image href={config.customImageDataUrl} x="8" y="8" width="84" height="84" preserveAspectRatio="xMidYMid slice" />
+          <>
+            <rect
+              x="6"
+              y="6"
+              width="88"
+              height="88"
+              rx="10"
+              fill={logoNeedsLightBackdrop(config.customImageDataUrl) ? '#ffffff' : '#090d14'}
+            />
+            <image
+              href={config.customImageDataUrl}
+              x="10"
+              y="10"
+              width="80"
+              height="80"
+              preserveAspectRatio="xMidYMid meet"
+            />
+          </>
         ) : (
           <>
             {discColor ? <circle cx="50" cy="50" r="27" fill={discColor} /> : null}

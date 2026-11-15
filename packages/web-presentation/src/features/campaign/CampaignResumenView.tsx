@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { CampaignSimulationState } from '@argentina-sim/domain';
 import { PressAndDebateSimulatorModal } from '../game-shell/PressAndDebateSimulatorModal.js';
+import { OfficialPartyLogo } from '../party-setup/OfficialLogoBadge.js';
 import { playUiSound } from '../../lib/gameFeedback.js';
 
 // Vista de SITUACIÓN -> Resumen (capturas 1, 2 y 3):
@@ -15,12 +16,14 @@ interface CampaignResumenViewProps {
 
 function CandidatePartyBadge({ partySigla, color }: { partySigla: string; color: string }) {
   return (
-    <span
-      style={{ backgroundColor: color }}
-      className="px-1 py-0.5 rounded text-[9px] font-black text-slate-950 flex items-center gap-0.5 leading-none shrink-0"
-    >
-      <span className="text-[7px]">▶</span>
-      <span>{partySigla.toLowerCase()}</span>
+    <span className="inline-flex items-center gap-1.5 shrink-0">
+      <OfficialPartyLogo partyIdOrSigla={partySigla} sizePx={20} fallbackColor={color} />
+      <span
+        style={{ backgroundColor: color }}
+        className="px-1.5 py-0.5 rounded-sm text-[9px] font-black text-slate-950 uppercase leading-none"
+      >
+        {partySigla}
+      </span>
     </span>
   );
 }

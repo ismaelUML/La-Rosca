@@ -4,6 +4,7 @@ import { Mic, Radio, Sparkles, Tv, X } from 'lucide-react';
 import { playUiSound } from '@/lib/gameFeedback';
 import { getMahoganyWoodTexture } from '../map-3d/proceduralPbrTextures.js';
 import { loadGlbIntoAnchor } from '../map-3d/modelAssetLoader.js';
+import { OfficialInstitutionLogo } from '../party-setup/OfficialLogoBadge.js';
 
 // Simulador 3D de Conferencia de Prensa en Casa Rosada / Cadena Nacional
 // y Debate Presidencial con Derechos a Replica y Chicanas en Vivo.
@@ -329,6 +330,127 @@ function ActivePressQuestionPanel({
   );
 }
 
+function CadenaNacionalIntroPlate({
+  speakerName,
+  onSkip
+}: {
+  speakerName: string;
+  onSkip: () => void;
+}) {
+  return (
+    <div className="rounded-sm bg-[#060b14] border-2 border-[#75aadb]/70 overflow-hidden shadow-2xl">
+      <div className="h-2.5 w-full flex">
+        <span className="flex-1 bg-[#75aadb]" />
+        <span className="flex-1 bg-white" />
+        <span className="flex-1 bg-[#75aadb]" />
+      </div>
+
+      <div className="p-6 sm:p-8 text-center space-y-5 bg-[radial-gradient(circle_at_top,rgba(117,170,219,0.22),#060b14_70%)]">
+        <div className="flex items-center justify-center gap-4">
+          <OfficialInstitutionLogo institution="ESCUDO_NACIONAL" heightPx={68} />
+          <OfficialInstitutionLogo institution="PRESIDENCIA" heightPx={48} />
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-sm bg-sky-950/70 border border-sky-400/50 text-[10px] font-mono font-bold uppercase tracking-[0.22em] text-sky-200 animate-pulse">
+            <Radio className="w-3.5 h-3.5 text-red-400" />
+            CADENA NACIONAL DE RADIO Y TELEVISIÓN
+          </div>
+          <h4 className="text-xl sm:text-2xl font-serif font-black uppercase tracking-wide text-white">
+            Presidencia de la Nación Argentina
+          </h4>
+          <p className="text-xs font-mono text-amber-200">
+            Transmisión oficial obligatoria en todo el territorio · Vocero: {speakerName}
+          </p>
+        </div>
+
+        <div className="pt-1 flex justify-center">
+          <button
+            type="button"
+            onClick={onSkip}
+            className="px-4 py-1.5 rounded-sm bg-[#142033] hover:bg-[#1d2e48] border border-[#3a5275] text-[11px] font-mono font-bold uppercase tracking-wider text-sky-200 transition"
+          >
+            Ir al atril ahora →
+          </button>
+        </div>
+      </div>
+
+      <div className="h-2.5 w-full flex">
+        <span className="flex-1 bg-[#75aadb]" />
+        <span className="flex-1 bg-white" />
+        <span className="flex-1 bg-[#75aadb]" />
+      </div>
+    </div>
+  );
+}
+
+function PressPodiumLiveStage({
+  headline,
+  totals,
+  roundIdx,
+  currentRound,
+  finished,
+  onSelectOption,
+  onClose
+}: {
+  headline: string;
+  totals: { image: number; viral: number; market: number };
+  roundIdx: number;
+  currentRound: PressQuestionRound;
+  finished: boolean;
+  onSelectOption: (opt: PressQuestionRound['options'][number]) => void;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      <PressPodium3DCanvas activeHeadline={headline} />
+
+      <div className="grid grid-cols-3 gap-2.5 font-mono text-xs text-center">
+        <div className="p-2 rounded-sm bg-[#0c1119] border border-[#263142]">
+          <span className="text-[10px] text-slate-400 block">IMAGEN PÚBLICA</span>
+          <strong className="text-emerald-400 text-sm">{formatSignedPts(totals.image)}</strong>
+        </div>
+        <div className="p-2 rounded-sm bg-[#0c1119] border border-[#263142]">
+          <span className="text-[10px] text-slate-400 block">VIRALIDAD EN REDES</span>
+          <strong className="text-amber-300 text-sm">{formatSignedPts(totals.viral)}</strong>
+        </div>
+        <div className="p-2 rounded-sm bg-[#0c1119] border border-[#263142]">
+          <span className="text-[10px] text-slate-400 block">CALMA DE MERCADOS</span>
+          <strong className="text-sky-300 text-sm">{formatSignedPts(totals.market)}</strong>
+        </div>
+      </div>
+
+      {!finished ? (
+        <ActivePressQuestionPanel
+          roundIdx={roundIdx}
+          totalRounds={PRESS_ROUNDS.length}
+          currentRound={currentRound}
+          onSelectOption={onSelectOption}
+        />
+      ) : (
+        <div className="p-4 rounded-sm bg-[#090d14] border border-emerald-700/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div className="text-xs font-mono font-bold text-emerald-300 uppercase flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4" />
+              Conferencia Finalizada · Repercusión en Tapa y Mercados
+            </div>
+            <p className="text-xs text-slate-300">
+              Cerraste las 3 rondas con impacto de {formatSignedPts(totals.image)} en imagen y {formatSignedPts(totals.market)} en mercados.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="hoi-btn-gold px-4 py-2 rounded-sm text-xs font-mono font-bold uppercase shrink-0"
+          >
+            Cerrar Transmisión
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function PressAndDebateSimulatorModal({
   open,
   speakerName,
@@ -346,6 +468,7 @@ export function PressAndDebateSimulatorModal({
     'CONFERENCIA DE PRENSA Y DERECHO A RÉPLICA DESDE EL ATRIL OFICIAL'
   );
   const [finished, setFinished] = useState(false);
+  const [showIntroPlate, setShowIntroPlate] = useState(true);
 
   useEffect(() => {
     if (!open) return;
@@ -353,6 +476,10 @@ export function PressAndDebateSimulatorModal({
     setTotals({ image: 0, viral: 0, market: 0 });
     setHeadline('CONFERENCIA DE PRENSA Y DERECHO A RÉPLICA DESDE EL ATRIL OFICIAL');
     setFinished(false);
+    setShowIntroPlate(true);
+    playUiSound('quorum');
+    const timerId = window.setTimeout(() => setShowIntroPlate(false), 2200);
+    return () => window.clearTimeout(timerId);
   }, [open]);
 
   if (!open) return null;
@@ -381,63 +508,38 @@ export function PressAndDebateSimulatorModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm">
       <div className="w-full max-w-3xl max-h-[92vh] overflow-y-auto hoi-panel rounded-sm p-4 sm:p-6 space-y-4 border border-[#8a6d33] shadow-2xl">
         <div className="hoi-header-steel p-3.5 rounded-sm flex items-start justify-between gap-3">
-          <div>
-            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300 flex items-center gap-1.5">
-              <Tv className="w-3.5 h-3.5 text-amber-400" />
-              ATRIL OFICIAL · CONFERENCIA DE PRENSA Y DEBATE PÚBLICO EN VIVO
+          <div className="flex items-center gap-3 min-w-0">
+            <OfficialInstitutionLogo institution="PRESIDENCIA" heightPx={32} />
+            <div className="min-w-0">
+              <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300 flex items-center gap-1.5">
+                <Tv className="w-3.5 h-3.5 text-amber-400" />
+                ATRIL OFICIAL · CADENA NACIONAL Y CONFERENCIA DE PRENSA EN VIVO
+              </div>
+              <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5 truncate">
+                Vocería y Definiciones de {speakerName}
+              </h3>
             </div>
-            <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5">
-              Vocería y Definiciones de {speakerName}
-            </h3>
           </div>
           <button type="button" onClick={onClose} className="text-slate-400 hover:text-white p-1">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <PressPodium3DCanvas activeHeadline={headline} />
-
-        <div className="grid grid-cols-3 gap-2.5 font-mono text-xs text-center">
-          <div className="p-2 rounded-sm bg-[#0c1119] border border-[#263142]">
-            <span className="text-[10px] text-slate-400 block">IMAGEN PÚBLICA</span>
-            <strong className="text-emerald-400 text-sm">{formatSignedPts(totals.image)}</strong>
-          </div>
-          <div className="p-2 rounded-sm bg-[#0c1119] border border-[#263142]">
-            <span className="text-[10px] text-slate-400 block">VIRALIDAD EN REDES</span>
-            <strong className="text-amber-300 text-sm">{formatSignedPts(totals.viral)}</strong>
-          </div>
-          <div className="p-2 rounded-sm bg-[#0c1119] border border-[#263142]">
-            <span className="text-[10px] text-slate-400 block">CALMA DE MERCADOS</span>
-            <strong className="text-sky-300 text-sm">{formatSignedPts(totals.market)}</strong>
-          </div>
-        </div>
-
-        {!finished ? (
-          <ActivePressQuestionPanel
-            roundIdx={roundIdx}
-            totalRounds={PRESS_ROUNDS.length}
-            currentRound={currentRound}
-            onSelectOption={handleSelectOption}
+        {showIntroPlate ? (
+          <CadenaNacionalIntroPlate
+            speakerName={speakerName}
+            onSkip={() => setShowIntroPlate(false)}
           />
         ) : (
-          <div className="p-4 rounded-sm bg-[#090d14] border border-emerald-700/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="space-y-1">
-              <div className="text-xs font-mono font-bold text-emerald-300 uppercase flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4" />
-                Conferencia Finalizada · Repercusión en Tapa y Mercados
-              </div>
-              <p className="text-xs text-slate-300">
-                Cerraste las 3 rondas con impacto de {formatSignedPts(totals.image)} en imagen y {formatSignedPts(totals.market)} en mercados.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="hoi-btn-gold px-4 py-2 rounded-sm text-xs font-mono font-bold uppercase shrink-0"
-            >
-              Cerrar Transmisión
-            </button>
-          </div>
+          <PressPodiumLiveStage
+            headline={headline}
+            totals={totals}
+            roundIdx={roundIdx}
+            currentRound={currentRound}
+            finished={finished}
+            onSelectOption={handleSelectOption}
+            onClose={onClose}
+          />
         )}
       </div>
     </div>

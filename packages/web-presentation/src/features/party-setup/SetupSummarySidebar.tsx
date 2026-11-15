@@ -24,6 +24,8 @@ import {
   DIFFICULTY_CATALOG
 } from '@argentina-sim/domain';
 import { PartyEmblemSvg } from './PartyEmblemSvg.js';
+import { OfficialInstitutionLogo } from './OfficialLogoBadge.js';
+import type { InstitutionalLogoId } from './officialLogosCatalog.js';
 
 interface SetupSummarySidebarProps {
   leaderName: string;
@@ -42,6 +44,13 @@ const ROLE_LABELS: Record<PlayableRole, string> = {
   GOBERNADOR: 'Gobernación Provincial',
   DIPUTADO: 'Cámara de Diputados',
   SENADOR: 'Senado de la Nación'
+};
+
+const ROLE_INSTITUTION_LOGO: Record<PlayableRole, InstitutionalLogoId> = {
+  PRESIDENTE: 'PRESIDENCIA',
+  GOBERNADOR: 'ESCUDO_NACIONAL',
+  DIPUTADO: 'DIPUTADOS',
+  SENADOR: 'SENADO'
 };
 
 function DossierRow({
@@ -132,10 +141,13 @@ export function SetupSummarySidebar({
   return (
     <aside className="hoi-panel rounded-sm p-4 space-y-3 lg:sticky lg:top-4">
       <div className="pb-2.5 border-b border-[#243042] flex items-center justify-between gap-2">
-        <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-300">
-          Dossier de Partida
-        </span>
-        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-sm bg-[#162133] border border-[#32445d] text-slate-200">
+        <div className="flex items-center gap-2 min-w-0">
+          <OfficialInstitutionLogo institution={ROLE_INSTITUTION_LOGO[role]} heightPx={24} />
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-300 truncate">
+            Dossier de Partida
+          </span>
+        </div>
+        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-sm bg-[#162133] border border-[#32445d] text-slate-200 shrink-0">
           {modeTag}
         </span>
       </div>

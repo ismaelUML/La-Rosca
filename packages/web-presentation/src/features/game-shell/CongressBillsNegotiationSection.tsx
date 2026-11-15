@@ -19,6 +19,7 @@ import {
   INITIAL_CONGRESS_BILLS
 } from '@argentina-sim/domain';
 import { CongressRealtimeVoteModal } from './CongressRealtimeVoteModal.js';
+import { OfficialInstitutionLogo, OfficialPartyLogo } from '../party-setup/OfficialLogoBadge.js';
 
 // Vista de Rosca y Votacion de Leyes en formato de tarjetitas tacticas (estilo Reformas Institucionales):
 // Catalogo de proyectos con filtros, buscador, tarjetas detalladas con impacto macro y proyeccion de bancas,
@@ -47,6 +48,29 @@ function sumProjectedYesVotes(blocs: CongressNegotiationBloc[], chamber: 'deputi
   }, 0);
 }
 
+const PROJECTION_TONE_SPECS = {
+  pass: {
+    badgeCls: 'bg-emerald-950/80 text-emerald-300 border-emerald-800',
+    badgeLabel: 'Mayoría asegurada',
+    barCls: 'bg-emerald-500'
+  },
+  short: {
+    badgeCls: 'bg-rose-950/80 text-rose-300 border-rose-800',
+    badgeLabel: 'Faltan votos',
+    barCls: 'bg-amber-500'
+  }
+};
+
+function resolveChamberProjectionDisplay(title: string, projectedYes: number, quorumNeeded: number) {
+  const passes = projectedYes >= quorumNeeded;
+  const spec = passes ? PROJECTION_TONE_SPECS.pass : PROJECTION_TONE_SPECS.short;
+  const footerText = passes
+    ? `Supera el umbral legal por ${projectedYes - quorumNeeded} votos.`
+    : `Requiere negociar ${quorumNeeded - projectedYes} bancas en duda.`;
+  const institutionId = title.includes('Diputados') ? ('DIPUTADOS' as const) : ('SENADO' as const);
+  return { ...spec, institutionId, footerText };
+}
+
 function ChamberProjectionCard({
   title,
   projectedYes,
@@ -58,21 +82,18 @@ function ChamberProjectionCard({
   totalSeats: number;
   quorumNeeded: number;
 }) {
-  const passes = projectedYes >= quorumNeeded;
   const pct = Math.min(100, Math.round((projectedYes / totalSeats) * 100));
+  const ui = resolveChamberProjectionDisplay(title, projectedYes, quorumNeeded);
 
   return (
     <div className="hoi-panel p-4 rounded-sm flex flex-col justify-between">
-      <div className="flex justify-between items-center text-xs">
-        <span className="font-mono font-bold uppercase tracking-wider text-white">{title}</span>
-        <span
-          className={`px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold border ${
-            passes
-              ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800'
-              : 'bg-rose-950/80 text-rose-300 border-rose-800'
-          }`}
-        >
-          {passes ? 'Mayoría asegurada' : 'Faltan votos'}
+      <div className="flex justify-between items-center text-xs gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <OfficialInstitutionLogo institution={ui.institutionId} heightPx={24} />
+          <span className="font-mono font-bold uppercase tracking-wider text-white truncate">{title}</span>
+        </div>
+        <span className={`px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold border ${ui.badgeCls}`}>
+          {ui.badgeLabel}
         </span>
       </div>
 
@@ -84,20 +105,11 @@ function ChamberProjectionCard({
           </span>
         </div>
         <div className="w-full bg-[#090d14] h-2 rounded-sm overflow-hidden border border-[#263142] mt-1.5">
-          <div
-            className={`h-full transition-all duration-300 ${
-              passes ? 'bg-emerald-500' : 'bg-amber-500'
-            }`}
-            style={{ width: `${pct}%` }}
-          />
+          <div className={`h-full transition-all duration-300 ${ui.barCls}`} style={{ width: `${pct}%` }} />
         </div>
       </div>
 
-      <div className="text-[11px] text-slate-400">
-        {passes
-          ? `Supera el umbral legal por ${projectedYes - quorumNeeded} votos.`
-          : `Requiere negociar ${quorumNeeded - projectedYes} bancas en duda.`}
-      </div>
+      <div className="text-[11px] text-slate-400">{ui.footerText}</div>
     </div>
   );
 }
@@ -664,14 +676,15 @@ function BlocNegotiationCard({ bloc, onConcession }: BlocNegotiationCardProps) {
   return (
     <div className="hoi-panel p-4 rounded-sm flex flex-col justify-between space-y-3">
       <div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className={`px-2 py-0.5 rounded-sm text-[10px] font-extrabold ${bloc.badgeBg}`}>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <OfficialPartyLogo partyIdOrSigla={bloc.id} sizePx={24} fallbackColor={bloc.color} />
+            <span className={`px-2 py-0.5 rounded-sm text-[10px] font-extrabold shrink-0 ${bloc.badgeBg}`}>
               {bloc.shortLabel}
             </span>
-            <span className="text-xs font-bold text-white truncate max-w-[150px]">{bloc.name}</span>
+            <span className="text-xs font-bold text-white truncate max-w-[130px]">{bloc.name}</span>
           </div>
-          <span className={`px-2 py-0.5 rounded-sm border text-[10px] font-mono font-bold ${stanceInfo.cls}`}>
+          <span className={`px-2 py-0.5 rounded-sm border text-[10px] font-mono font-bold shrink-0 ${stanceInfo.cls}`}>
             {stanceInfo.label}
           </span>
         </div>

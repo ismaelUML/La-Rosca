@@ -10,6 +10,7 @@ import {
   type DelegateAssessment
 } from '@argentina-sim/domain';
 import { REAL_POLITICIANS_2027 } from '@argentina-sim/infrastructure';
+import { OfficialPartyLogo } from '../party-setup/OfficialLogoBadge.js';
 import { VicePresidentSelectionModal } from './VicePresidentSelectionModal.js';
 
 // Vista de POLITICO -> Candidatura y coaliciones en estetica tactica acero/bronce:
@@ -61,7 +62,7 @@ const COALITION_CATALOG: CoalitionPartnerConfig[] = [
   },
   {
     sigla: 'PF',
-    name: 'Provincias Unidas / Peronismo Federal',
+    name: 'Provincias Unidas / Encuentro Federal',
     description: 'Gobernadores de centro interior. Exigen reparto automático de fondos y obra pública.',
     color: '#2563eb',
     leaders: [
@@ -73,7 +74,7 @@ const COALITION_CATALOG: CoalitionPartnerConfig[] = [
   },
   {
     sigla: 'UxP',
-    name: 'Unión por la Patria',
+    name: 'Fuerza Patria / Unión por la Patria (PJ)',
     description: 'Piso popular del Conurbano y sindicatos. Polarización alta con la centroderecha.',
     color: '#0284c7',
     leaders: [
@@ -85,7 +86,7 @@ const COALITION_CATALOG: CoalitionPartnerConfig[] = [
   },
   {
     sigla: 'PRO',
-    name: 'Propuesta Republicana (PRO)',
+    name: 'PRO - Propuesta Republicana',
     description: 'Votante urbano de clase media e institucionalistas. Piden equilibrio fiscal y seguridad.',
     color: '#eab308',
     leaders: [
@@ -97,7 +98,7 @@ const COALITION_CATALOG: CoalitionPartnerConfig[] = [
   },
   {
     sigla: 'FIT',
-    name: 'Frente de Izquierda',
+    name: 'Frente de Izquierda y de Trabajadores - Unidad',
     description: 'Aporte de comisiones internas fabriles. Rechaza frentes burgueses tradicionales.',
     color: '#e11d48',
     leaders: [
@@ -524,9 +525,9 @@ function CoalitionCard({
       }`}
     >
       <div>
-        <div className="flex justify-between items-center border-b border-[#1e293b] pb-2 mb-2">
+        <div className="flex justify-between items-center border-b border-[#1e293b] pb-2 mb-2 gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: partner.color }} />
+            <OfficialPartyLogo partyIdOrSigla={partner.sigla} sizePx={28} fallbackColor={partner.color} />
             <span className="font-serif font-bold text-amber-100 text-sm uppercase tracking-wide truncate">
               {partner.name}
             </span>

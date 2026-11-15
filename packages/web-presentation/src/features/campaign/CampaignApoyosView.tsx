@@ -14,6 +14,7 @@ import {
   type NegotiationRecord
 } from '@argentina-sim/domain';
 import { REAL_POLITICIANS_2027 } from '@argentina-sim/infrastructure';
+import { OfficialPartyLogo } from '../party-setup/OfficialLogoBadge.js';
 
 // Vista de Apoyos y Figuras Políticas:
 // En la política argentina, un llamado a destiempo quema puentes. Si le pedís apoyo a un
@@ -213,9 +214,7 @@ function PoliticianCard({
     <div className="hoi-panel rounded-sm p-5 flex flex-col justify-between gap-4">
       <div className="space-y-3">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-sm bg-[#162233] border border-[#344661] flex items-center justify-center font-mono font-bold text-xs text-amber-200 shrink-0">
-            {pol.partySigla}
-          </div>
+          <OfficialPartyLogo partyIdOrSigla={pol.partySigla} sizePx={40} />
           <div>
             <h3 className="text-base font-extrabold text-white leading-tight">{pol.name}</h3>
             <div className="text-xs text-slate-400 mt-0.5">
@@ -427,9 +426,10 @@ export function CampaignApoyosView({ state, onUpdateState }: CampaignApoyosViewP
                   playUiSound('tab');
                   handleSelectParty(sigla);
                 }}
-                className={`px-3.5 py-1.5 rounded-sm text-xs font-mono font-bold transition border ${btnClass}`}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-mono font-bold transition border ${btnClass}`}
               >
-                {sigla}
+                <OfficialPartyLogo partyIdOrSigla={sigla} sizePx={18} />
+                <span>{sigla}</span>
               </button>
             );
           })}

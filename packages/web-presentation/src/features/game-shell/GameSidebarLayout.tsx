@@ -17,6 +17,8 @@ import {
   Wallet
 } from 'lucide-react';
 import { PartyEmblemSvg } from '../party-setup/PartyEmblemSvg.js';
+import { OfficialInstitutionLogo } from '../party-setup/OfficialLogoBadge.js';
+import type { InstitutionalLogoId } from '../party-setup/officialLogosCatalog.js';
 import { Argentina3DMapCanvas } from '../map-3d/Argentina3DMapCanvas.js';
 import { LiveNewsAndMarketTicker } from './LiveNewsAndMarketTicker.js';
 import { isSoundEnabled, playUiSound, setSoundEnabled } from '../../lib/gameFeedback.js';
@@ -303,8 +305,19 @@ function TopTelemetryBar({
     <header className="hoi-header-steel px-4 py-2 z-30 shrink-0">
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5 rounded-sm bg-[#090d14] border border-[#8a6d33]">
-            <PartyEmblemSvg config={setup.party.emblem} size={22} />
+          <OfficialInstitutionLogo
+            institution={
+              ({
+                PRESIDENTE: 'PRESIDENCIA',
+                GOBERNADOR: 'ESCUDO_NACIONAL',
+                DIPUTADO: 'DIPUTADOS',
+                SENADOR: 'SENADO'
+              } as Record<GameSetupConfiguration['role'], InstitutionalLogoId>)[setup.role]
+            }
+            heightPx={26}
+          />
+          <div className="p-1 rounded-sm bg-[#090d14] border border-[#8a6d33]">
+            <PartyEmblemSvg config={setup.party.emblem} size={24} />
           </div>
           <div className="leading-tight">
             <div className="text-xs font-serif font-black uppercase tracking-wider text-amber-100">

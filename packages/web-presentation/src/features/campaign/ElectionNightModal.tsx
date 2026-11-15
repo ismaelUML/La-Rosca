@@ -8,6 +8,7 @@ import {
   type PlayableRole
 } from '@argentina-sim/domain';
 import { ElectionResultsSvgMap } from './ElectionResultsSvgMap.js';
+import { OfficialInstitutionLogo, OfficialPartyLogo } from '../party-setup/OfficialLogoBadge.js';
 import { playUiSound } from '../../lib/gameFeedback.js';
 
 export type { ElectionStageType, EscrutinioData };
@@ -72,7 +73,7 @@ function ElectionResultsTable({ results }: { results: CandidateVoteResult[] }) {
               }`}
             >
               <td className="py-3 px-4 flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: r.color }} />
+                <OfficialPartyLogo partyIdOrSigla={r.fuerza} sizePx={22} fallbackColor={r.color} />
                 <span className="text-white">{r.fuerza}</span>
               </td>
               <td className="py-3 px-4 text-slate-300">{r.candidato}</td>
@@ -403,10 +404,13 @@ export function ElectionNightModal({
       <div className="bg-[#090d14] border-2 border-[#8a6d33]/80 rounded-sm w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
         <div className="p-6 md:p-8 bg-gradient-to-r from-[#131924] via-[#101620] to-[#171410] border-b border-[#263142] space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#d4b26a]">
-              {stageHeader}
-            </span>
-            <span className="px-2 py-0.5 rounded-sm bg-[#0b0f17] border border-[#2c384b] text-[10px] font-mono text-slate-400">
+            <div className="flex items-center gap-2.5">
+              <OfficialInstitutionLogo institution="ESCUDO_NACIONAL" heightPx={32} />
+              <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#d4b26a]">
+                {stageHeader}
+              </span>
+            </div>
+            <span className="px-2 py-0.5 rounded-sm bg-[#0b0f17] border border-[#2c384b] text-[10px] font-mono text-slate-400 shrink-0">
               CÁMARA NACIONAL ELECTORAL
             </span>
           </div>

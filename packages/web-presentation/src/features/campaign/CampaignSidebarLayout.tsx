@@ -23,6 +23,7 @@ import {
   VolumeX
 } from 'lucide-react';
 import { PartyEmblemSvg } from '../party-setup/PartyEmblemSvg.js';
+import { OfficialInstitutionLogo } from '../party-setup/OfficialLogoBadge.js';
 import { Argentina3DMapCanvas } from '../map-3d/Argentina3DMapCanvas.js';
 import { LiveNewsAndMarketTicker } from '../game-shell/LiveNewsAndMarketTicker.js';
 import { isSoundEnabled, playUiSound, setSoundEnabled } from '../../lib/gameFeedback.js';
@@ -172,8 +173,9 @@ function CampaignTopBar({
     <header className="hoi-header-steel px-4 py-2 z-30 shrink-0">
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5 rounded-sm bg-[#090d14] border border-[#c9a24d]/70">
-            <PartyEmblemSvg config={setup.party.emblem} size={22} />
+          <OfficialInstitutionLogo institution="ESCUDO_NACIONAL" heightPx={24} />
+          <div className="p-1 rounded-sm bg-[#090d14] border border-[#c9a24d]/70">
+            <PartyEmblemSvg config={setup.party.emblem} size={24} />
           </div>
           <div className="leading-tight">
             <div className="text-xs font-serif font-black uppercase tracking-wider text-amber-100">

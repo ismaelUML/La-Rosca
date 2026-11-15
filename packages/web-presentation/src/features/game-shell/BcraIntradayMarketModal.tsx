@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Activity, DollarSign, Flame, Play, RotateCcw, ShieldAlert, TrendingUp, X } from 'lucide-react';
 import type { PolicyAction, SimulationState } from '@argentina-sim/domain';
 import { playUiSound } from '@/lib/gameFeedback';
+import { OfficialInstitutionLogo } from '../party-setup/OfficialLogoBadge.js';
 
 // Simulador en tiempo real de la Rueda Intradia del BCRA / MULC (10:00 hs a 15:00 hs).
 // Permite intervenir en caliente durante una corrida cambiaria vendiendo reservas,
@@ -314,13 +315,16 @@ export function BcraIntradayMarketModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm">
       <div className="w-full max-w-4xl max-h-[92vh] overflow-y-auto hoi-panel rounded-sm p-4 sm:p-6 space-y-4 border border-[#8a6d33] shadow-2xl">
         <div className="hoi-header-steel p-3.5 rounded-sm flex items-start justify-between gap-3">
-          <div>
-            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300">
-              BANCO CENTRAL DE LA REPÚBLICA ARGENTINA · MESA DE OPERACIONES CAMBIARIAS
+          <div className="flex items-center gap-3 min-w-0">
+            <OfficialInstitutionLogo institution="BCRA" heightPx={38} />
+            <div className="min-w-0">
+              <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300 truncate">
+                BANCO CENTRAL DE LA REPÚBLICA ARGENTINA · MESA DE OPERACIONES CAMBIARIAS
+              </div>
+              <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5 truncate">
+                Rueda Intradía del MULC en Tiempo Real (10:00 a 15:00 hs)
+              </h3>
             </div>
-            <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5">
-              Rueda Intradía del MULC en Tiempo Real (10:00 a 15:00 hs)
-            </h3>
           </div>
           <div className="flex items-center gap-2">
             <button

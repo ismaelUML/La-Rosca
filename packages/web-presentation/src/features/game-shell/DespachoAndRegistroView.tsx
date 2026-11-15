@@ -1,6 +1,8 @@
 import React from 'react';
 import type { GameSetupConfiguration, PolicyAction, SimulationState } from '@argentina-sim/domain';
 import { PartyEmblemSvg } from '../party-setup/PartyEmblemSvg.js';
+import { OfficialInstitutionLogo } from '../party-setup/OfficialLogoBadge.js';
+import type { InstitutionalLogoId } from '../party-setup/officialLogosCatalog.js';
 import type { InGameSidebarSection } from './GameSidebarLayout.js';
 import { GovernorCommandPanel, LegislatorCommandPanel } from './RoleMandateCommandPanels.js';
 import { PresidentialDesk3DScene } from './PresidentialDesk3DScene.js';
@@ -54,6 +56,13 @@ function RoleSpecificCommandSection({
   );
 }
 
+const ROLE_CREST: Record<GameSetupConfiguration['role'], InstitutionalLogoId> = {
+  PRESIDENTE: 'PRESIDENCIA',
+  GOBERNADOR: 'ESCUDO_NACIONAL',
+  DIPUTADO: 'DIPUTADOS',
+  SENADOR: 'SENADO'
+};
+
 export function DespachoOverview({
   setup,
   state,
@@ -68,8 +77,11 @@ export function DespachoOverview({
         <div className="flex items-center gap-4">
           <PartyEmblemSvg config={setup.party.emblem} size={72} />
           <div>
-            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-sm bg-[#090d14] border border-[#2c384b] text-[10px] font-mono font-bold uppercase tracking-wider text-[#d4b26a]">
-              {setup.party.sigla} · {setup.party.name} · {setup.party.ideology}
+            <div className="flex flex-wrap items-center gap-2">
+              <OfficialInstitutionLogo institution={ROLE_CREST[setup.role]} heightPx={24} />
+              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-sm bg-[#090d14] border border-[#2c384b] text-[10px] font-mono font-bold uppercase tracking-wider text-[#d4b26a]">
+                {setup.party.sigla} · {setup.party.name} · {setup.party.ideology}
+              </div>
             </div>
             <h1 className="text-2xl md:text-3xl font-serif font-bold text-white mt-1">
               {setup.characterName}
@@ -181,14 +193,17 @@ interface RegistroHistoryViewProps {
 export function RegistroHistoryView({ historyLog }: RegistroHistoryViewProps) {
   return (
     <div className="space-y-5">
-      <div className="border-b border-[#263142] pb-4">
-        <div className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#d4b26a]">
-          DESPACHO · CRÓNICA OFICIAL
+      <div className="border-b border-[#263142] pb-4 flex items-center justify-between gap-4">
+        <div>
+          <div className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#d4b26a]">
+            DESPACHO · CRÓNICA OFICIAL
+          </div>
+          <h1 className="text-2xl md:text-3xl font-serif font-bold text-white mt-0.5">Registro</h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Bitácora cronológica de decretos, licitaciones del Tesoro, fallos de la Corte Suprema y cierres mensuales.
+          </p>
         </div>
-        <h1 className="text-2xl md:text-3xl font-serif font-bold text-white mt-0.5">Registro</h1>
-        <p className="text-xs text-slate-400 mt-1">
-          Bitácora cronológica de decretos, licitaciones del Tesoro, fallos de la Corte Suprema y cierres mensuales.
-        </p>
+        <OfficialInstitutionLogo institution="BOLETIN_OFICIAL" heightPx={36} />
       </div>
 
       <div className="space-y-2">

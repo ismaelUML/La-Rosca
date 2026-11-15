@@ -24,6 +24,7 @@ import {
   REAL_POLITICIANS_2027
 } from '@argentina-sim/infrastructure';
 import { PartyEmblemSvg } from './PartyEmblemSvg.js';
+import { OfficialPartyLogo } from './OfficialLogoBadge.js';
 import { PartyDesignerStudio } from './PartyDesignerStudio.js';
 import {
   CharacterArchetypeSelector,
@@ -201,9 +202,12 @@ function RealPoliticiansSelector({
               }`}
             >
               <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="text-xs font-bold text-white truncate">{p.name}</div>
-                  <div className="text-[11px] text-slate-400 truncate">{p.roleDescription}</div>
+                <div className="flex items-center gap-2 min-w-0">
+                  <OfficialPartyLogo partyIdOrSigla={p.partySigla} sizePx={24} />
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-white truncate">{p.name}</div>
+                    <div className="text-[11px] text-slate-400 truncate">{p.roleDescription}</div>
+                  </div>
                 </div>
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-sm bg-[#080c13] border border-[#2b394d] text-amber-300 shrink-0">
                   {p.partySigla}

@@ -33,13 +33,13 @@ export const POLITICAL_PARTIES_2027: PoliticalPartyPreset[] = [
       symbol: 'LLAMA',
       symbolColor: '#fbbf24',
       disc: 'SIN_FONDO',
-      customImageDataUrl: null
+      customImageDataUrl: '/logos/partido-lla.svg'
     }
   },
   {
     id: 'PRO',
     sigla: 'PRO',
-    name: 'Propuesta Republicana',
+    name: 'PRO - Propuesta Republicana',
     colorName: 'Amarillo',
     primaryColor: '#eab308',
     ideology: 'Conservadurismo',
@@ -57,18 +57,18 @@ export const POLITICAL_PARTIES_2027: PoliticalPartyPreset[] = [
       symbol: 'SOL',
       symbolColor: '#0f172a',
       disc: 'SIN_FONDO',
-      customImageDataUrl: null
+      customImageDataUrl: '/logos/partido-pro-2026.png'
     }
   },
   {
     id: 'PF',
     sigla: 'PF',
-    name: 'Peronismo Federal / Provincias Unidas',
+    name: 'Provincias Unidas / Encuentro Federal',
     colorName: 'Azul Federal',
     primaryColor: '#2563eb',
     ideology: 'Desarrollismo Federal',
     description:
-      'Liga de gobernadores productivistas del interior (Región Centro, Patagonia y Norte), pragmáticos y defensores de las cajas provinciales.',
+      'Interbloque de gobernadores productivistas del interior (Región Centro, Patagonia y Norte), pragmáticos y defensores de las cajas provinciales.',
     economicPosition: 52,
     culturalPosition: 56,
     socialBase: 'Interior productivo, complejo agroindustrial, petróleo y minería',
@@ -81,7 +81,7 @@ export const POLITICAL_PARTIES_2027: PoliticalPartyPreset[] = [
       symbol: 'ENGRANAJE',
       symbolColor: '#ffffff',
       disc: 'DISCO_OSCURO',
-      customImageDataUrl: null
+      customImageDataUrl: '/logos/partido-provincias-unidas.svg'
     }
   },
   {
@@ -92,7 +92,7 @@ export const POLITICAL_PARTIES_2027: PoliticalPartyPreset[] = [
     primaryColor: '#dc2626',
     ideology: 'Socialdemocracia',
     description:
-      'El partido más antiguo del país (1891): radicalismo de centroizquierda, socialdemócrata, republicano y federal, con gobernadores, intendentes y comités.',
+      'El partido más antiguo del país (1891): radicalismo federal y republicano, con gobernadores, intendentes, comités y peso universitario.',
     economicPosition: 38,
     culturalPosition: 34,
     socialBase: 'Clases medias del interior, universidades nacionales y municipios',
@@ -105,18 +105,18 @@ export const POLITICAL_PARTIES_2027: PoliticalPartyPreset[] = [
       symbol: 'ANTORCHA',
       symbolColor: '#dc2626',
       disc: 'DISCO_CLARO',
-      customImageDataUrl: null
+      customImageDataUrl: '/logos/partido-ucr.svg'
     }
   },
   {
     id: 'UxP',
     sigla: 'UxP',
-    name: 'Unión por la Patria / PJ',
+    name: 'Fuerza Patria / Unión por la Patria (PJ)',
     colorName: 'Celeste',
     primaryColor: '#0ea5e9',
     ideology: 'Peronismo / Kirchnerismo',
     description:
-      'Principal coalición nacional-popular opositora, con fuerte base en el Conurbano bonaerense, sindicatos de la CGT y movimientos sociales.',
+      'Principal coalición nacional-popular opositora y sello del justicialismo, con fuerte base en el Conurbano bonaerense, sindicatos de la CGT y gobernadores.',
     economicPosition: 23,
     culturalPosition: 26,
     socialBase: 'Trabajadores sindicalizados, Conurbano bonaerense y sectores populares',
@@ -129,18 +129,18 @@ export const POLITICAL_PARTIES_2027: PoliticalPartyPreset[] = [
       symbol: 'SOL',
       symbolColor: '#facc15',
       disc: 'DISCO_DE_COLOR',
-      customImageDataUrl: null
+      customImageDataUrl: '/logos/partido-fuerza-patria-png.png'
     }
   },
   {
     id: 'FIT',
     sigla: 'FIT',
-    name: 'Frente de Izquierda y de Trabajadores',
+    name: 'Frente de Izquierda y de Trabajadores - Unidad',
     colorName: 'Rojo Intenso',
     primaryColor: '#e11d48',
     ideology: 'Socialismo Trotskista',
     description:
-      'Frente obrero y socialista: ruptura con el FMI, no pago de la deuda externa, nacionalización de la banca y movilización en las calles.',
+      'Frente obrero y socialista (FIT-U): ruptura con el FMI, no pago de la deuda externa, nacionalización de la banca y movilización en las calles.',
     economicPosition: 8,
     culturalPosition: 10,
     socialBase: 'Sindicatos combativos de base, movimientos piqueteros y juventud universitaria',
@@ -153,7 +153,7 @@ export const POLITICAL_PARTIES_2027: PoliticalPartyPreset[] = [
       symbol: 'ESTRELLA',
       symbolColor: '#ffffff',
       disc: 'SIN_FONDO',
-      customImageDataUrl: null
+      customImageDataUrl: '/logos/partido-fitu.svg'
     }
   }
 ];

@@ -6,6 +6,7 @@ import {
   resolveFeatureProvinceId,
   TacticalSvgBackdrop
 } from './ArgentinaRealVectorMap.js';
+import { OfficialPartyLogo } from '../party-setup/OfficialLogoBadge.js';
 
 // Vista de POLITICO -> Gobernantes en estetica tactica acero/bronce:
 // Mapa vectorial interactivo de los 24 gobernadores por bloque ideologico (Derecha 7, Centro 11, Izquierda 6),
@@ -131,6 +132,26 @@ function GovernorsBlocSvgMap({
   );
 }
 
+const GOV_LOGO_RULES: Array<[string, string]> = [
+  ['libertad', 'LLA'],
+  ['pro', 'PRO'],
+  ['radical', 'UCR'],
+  ['ucr', 'UCR'],
+  ['cambia', 'UCR'],
+  ['hacemos', 'PF'],
+  ['unidos', 'PF'],
+  ['patria', 'UXP'],
+  ['justicialista', 'UXP'],
+  ['todos', 'UXP'],
+  ['uxp', 'UXP']
+];
+
+function resolveGovPartySigla(partyName: string): string {
+  const lower = partyName.toLowerCase();
+  const match = GOV_LOGO_RULES.find(([keyword]) => lower.includes(keyword));
+  return match ? match[1] : 'PROVINCIALES';
+}
+
 function GovernorDossierPanel({ gov }: { gov: GovernorInfo }) {
   const badgeBg =
     gov.faction === 'IZQUIERDA'
@@ -149,6 +170,7 @@ function GovernorDossierPanel({ gov }: { gov: GovernorInfo }) {
           {gov.provinceName}
         </div>
         <div className="flex flex-wrap items-center gap-2 mt-1.5">
+          <OfficialPartyLogo partyIdOrSigla={resolveGovPartySigla(gov.partyName)} sizePx={24} fallbackColor={gov.color} />
           <span className="text-base font-bold text-white">{gov.governorName}</span>
           <span
             style={{

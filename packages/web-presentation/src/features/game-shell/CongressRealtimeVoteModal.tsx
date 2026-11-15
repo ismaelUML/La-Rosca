@@ -10,6 +10,7 @@ import {
   BillChaptersParticularVotePanel,
   Congress3DHemicycleCanvas
 } from './Congress3DHemicycleCanvas.js';
+import { OfficialInstitutionLogo, OfficialPartyLogo } from '../party-setup/OfficialLogoBadge.js';
 
 // Tablero Electronico de Votacion Nominal en Tiempo Real (Diputados 257 / Senado 72).
 // Simula el encendido banca por banca y bloque por espacio politico como en el recinto real.
@@ -454,6 +455,7 @@ function BlocLiveBreakdownTable({ tallies }: { tallies: BlocLiveTally[] }) {
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
+                  <OfficialPartyLogo partyIdOrSigla={t.bloc.id} sizePx={22} />
                   <span className={`px-1.5 py-0.5 rounded-sm text-[10px] font-mono font-extrabold ${t.bloc.badgeBg}`}>
                     {t.bloc.shortLabel}
                   </span>
@@ -731,6 +733,7 @@ function HemicycleVisualizationBox({
 
 function ModalHeaderBar({
   billTitle,
+  activeChamber,
   view3D,
   showChapters,
   onToggle3D,
@@ -738,6 +741,7 @@ function ModalHeaderBar({
   onClose
 }: {
   billTitle: string;
+  activeChamber: 'DIPUTADOS' | 'SENADO';
   view3D: boolean;
   showChapters: boolean;
   onToggle3D: () => void;
@@ -746,13 +750,23 @@ function ModalHeaderBar({
 }) {
   return (
     <div className="hoi-header-steel p-3.5 rounded-sm flex items-start justify-between gap-3">
-      <div>
-        <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300">
-          SESIÓN ESPECIAL · TABLERO ELECTRÓNICO DEL CONGRESO DE LA NACIÓN
+      <div className="flex items-center gap-3 min-w-0">
+        {activeChamber === 'DIPUTADOS' ? (
+          <div className="flex items-center gap-1.5 shrink-0">
+            <OfficialInstitutionLogo institution="DIPUTADOS" heightPx={32} />
+            <OfficialInstitutionLogo institution="DIPUTADOS_TV" heightPx={26} />
+          </div>
+        ) : (
+          <OfficialInstitutionLogo institution="SENADO" heightPx={32} />
+        )}
+        <div className="min-w-0">
+          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300 truncate">
+            SESIÓN ESPECIAL · {activeChamber === 'DIPUTADOS' ? 'H. CÁMARA DE DIPUTADOS' : 'H. SENADO DE LA NACIÓN'}
+          </div>
+          <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5 truncate">
+            {billTitle}
+          </h3>
         </div>
-        <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5">
-          {billTitle}
-        </h3>
       </div>
       <div className="flex items-center gap-2">
         <button
@@ -843,6 +857,7 @@ export function CongressRealtimeVoteModal({
       <div className="w-full max-w-4xl max-h-[92vh] overflow-y-auto hoi-panel rounded-sm p-4 sm:p-6 space-y-4 shadow-2xl border border-[#8a6d33]">
         <ModalHeaderBar
           billTitle={outcome.billTitle}
+          activeChamber={roll.activeChamber}
           view3D={view3D}
           showChapters={showChapters}
           onToggle3D={() => {

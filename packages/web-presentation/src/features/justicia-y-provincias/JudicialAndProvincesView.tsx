@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ActionStripCard } from '@/features/game-shell/ActionStripCard';
 import { FederalSummitAndCrisisModal } from '@/features/game-shell/FederalSummitAndCrisisModal';
 import { playUiSound } from '@/lib/gameFeedback';
+import { OfficialInstitutionLogo } from '@/features/party-setup/OfficialLogoBadge';
 
 // Aca manejas la relacion con la Corte Suprema, los expedientes de Comodoro Py
 // y la caja de ATN con los 24 gobernadores para juntar votos y gobernabilidad.
@@ -45,9 +46,14 @@ function SupremeCourtList({ state }: { state: SimulationState }) {
   const { judicial } = state;
   return (
     <div className="space-y-1.5 rounded-sm bg-[#090d14] p-3 border border-[#263142]">
-      <div className="flex items-center justify-between text-xs mb-1">
-        <span className="font-mono font-bold uppercase tracking-wider text-amber-300">Corte Suprema (5 Jueces · mayoría de 3)</span>
-        <span className="text-[11px] font-mono text-slate-400">Tope 75 años</span>
+      <div className="flex items-center justify-between text-xs mb-1 gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <OfficialInstitutionLogo institution="CSJN" heightPx={28} />
+          <span className="font-mono font-bold uppercase tracking-wider text-amber-300 truncate">
+            Corte Suprema (5 Jueces · mayoría de 3)
+          </span>
+        </div>
+        <span className="text-[11px] font-mono text-slate-400 shrink-0">Tope 75 años</span>
       </div>
       {judicial.supremeCourt.map((j) => (
         <div key={j.id} className="flex items-center justify-between border-b border-slate-800/60 pb-1.5 last:border-b-0 last:pb-0 text-xs">

@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Flag, Landmark } from 'lucide-react';
 import type { CampaignSimulationState } from '@argentina-sim/domain';
 import { SectionPageHeader } from '@/components/ui/SectionPageHeader';
 import { playUiSound } from '@/lib/gameFeedback';
+import { OfficialPartyLogo } from '../party-setup/OfficialLogoBadge.js';
 
 // Comando de campaña provincial profunda (QQG Capturas 2, 3, 4, 5):
 // En Argentina ningún presidente gobierna sin territorio. Las 24 jurisdicciones eligen gobernador
@@ -767,17 +768,42 @@ function formatVoteRowLabel(share: ProvincialPartyShare): string {
   return `${share.partyName} (tu fórmula)`;
 }
 
+const PARTY_LOGO_KEYWORDS: Array<[string, string]> = [
+  ['lla', 'LLA'],
+  ['libertad', 'LLA'],
+  ['pro', 'PRO'],
+  ['provincias unidas', 'PF'],
+  ['hacemos', 'PF'],
+  ['ucr', 'UCR'],
+  ['radical', 'UCR'],
+  ['cambia', 'UCR'],
+  ['uxp', 'UXP'],
+  ['unión por la patria', 'UXP'],
+  ['justicialista', 'PJ'],
+  ['pj', 'PJ'],
+  ['fit', 'FIT'],
+  ['izquierda', 'FIT']
+];
+
+function resolveProvincialLogoKey(partyName: string): string {
+  const lower = partyName.toLowerCase();
+  for (const [kw, key] of PARTY_LOGO_KEYWORDS) {
+    if (lower.includes(kw)) return key;
+  }
+  return 'PROVINCIALES';
+}
+
 function VoteRowItem({ share }: { share: ProvincialPartyShare }) {
   const label = formatVoteRowLabel(share);
   const textClass = share.isPlayer ? 'font-bold text-amber-100' : 'text-slate-300';
   const rowBg = share.isPlayer ? 'bg-[#121a28] border-[#8a6d33]/60' : 'bg-[#090d14] border-[#1e293b]';
   return (
     <div className={`flex items-center justify-between px-3 py-1.5 rounded-sm border text-xs ${rowBg}`}>
-      <div className="flex items-center gap-2">
-        <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: share.color }} />
-        <span className={textClass}>{label}</span>
+      <div className="flex items-center gap-2 min-w-0">
+        <OfficialPartyLogo partyIdOrSigla={resolveProvincialLogoKey(share.partyName)} sizePx={20} fallbackColor={share.color} />
+        <span className={`${textClass} truncate`}>{label}</span>
       </div>
-      <span className="font-mono font-extrabold text-amber-200">
+      <span className="font-mono font-extrabold text-amber-200 shrink-0 ml-2">
         {share.sharePct.toFixed(1).replace('.', ',')} %
       </span>
     </div>
@@ -1118,7 +1144,7 @@ function ProvincialCoalitionCard({
       <div className="space-y-2">
         <div className="flex items-center justify-between border-b border-[#1e293b] pb-2">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: party.color }} />
+            <OfficialPartyLogo partyIdOrSigla={resolveProvincialLogoKey(party.partyName)} sizePx={22} fallbackColor={party.color} />
             <span className="text-sm font-serif font-bold text-amber-100 truncate">{party.partyName}</span>
           </div>
           {isInAlliance ? (

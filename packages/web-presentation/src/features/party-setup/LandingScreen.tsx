@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { OfficialInstitutionLogo } from './OfficialLogoBadge.js';
 
 // Pantalla de inicio estilo comando estrategico (HOI4 / Millennium Dawn):
 // panel central metalico con cabecera carmesi, menu de operaciones en bronce/acero
@@ -91,7 +92,8 @@ export function LandingScreen({
       <div className="hoi-panel rounded-sm w-full max-w-5xl overflow-hidden">
         <div className="hoi-header-crimson px-6 py-3 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
-            <span className="inline-block w-5 h-3.5 border border-amber-300/60 bg-gradient-to-b from-sky-400 via-white to-sky-400" />
+            <OfficialInstitutionLogo institution="ESCUDO_NACIONAL" heightPx={26} />
+            <OfficialInstitutionLogo institution="PRESIDENCIA" heightPx={24} />
             <span className="text-xs font-mono font-bold uppercase tracking-widest text-amber-100">
               REPÚBLICA ARGENTINA · SALA DE SITUACIÓN 2027
             </span>

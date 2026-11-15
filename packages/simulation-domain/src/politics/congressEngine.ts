@@ -106,7 +106,7 @@ export const INITIAL_PARLIAMENTARY_BLOCS: CongressNegotiationBloc[] = [
   },
   {
     id: 'PRO',
-    name: 'Propuesta Republicana (PRO)',
+    name: 'PRO - Propuesta Republicana',
     shortLabel: 'PRO',
     deputiesSeats: 37,
     senateSeats: 6,
@@ -119,8 +119,8 @@ export const INITIAL_PARLIAMENTARY_BLOCS: CongressNegotiationBloc[] = [
   },
   {
     id: 'PF',
-    name: 'Peronismo Federal / Provincias Unidas',
-    shortLabel: 'PF',
+    name: 'Provincias Unidas / Encuentro Federal',
+    shortLabel: 'PU/PF',
     deputiesSeats: 16,
     senateSeats: 6,
     color: '#2563eb',
@@ -132,7 +132,7 @@ export const INITIAL_PARLIAMENTARY_BLOCS: CongressNegotiationBloc[] = [
   },
   {
     id: 'PROVINCIALES',
-    name: 'Bloques Provinciales y Fuerzas Locales',
+    name: 'Innovación Federal y Bloques Provinciales',
     shortLabel: 'PROV',
     deputiesSeats: 28,
     senateSeats: 7,
@@ -158,8 +158,8 @@ export const INITIAL_PARLIAMENTARY_BLOCS: CongressNegotiationBloc[] = [
   },
   {
     id: 'UXP',
-    name: 'Unión por la Patria',
-    shortLabel: 'UxP',
+    name: 'Fuerza Patria / Unión por la Patria',
+    shortLabel: 'FP/UxP',
     deputiesSeats: 99,
     senateSeats: 33,
     color: '#38bdf8',
@@ -171,8 +171,8 @@ export const INITIAL_PARLIAMENTARY_BLOCS: CongressNegotiationBloc[] = [
   },
   {
     id: 'FIT',
-    name: 'Frente de Izquierda y de Trabajadores',
-    shortLabel: 'FIT',
+    name: 'Frente de Izquierda y de Trabajadores - Unidad',
+    shortLabel: 'FIT-U',
     deputiesSeats: 5,
     senateSeats: 0,
     color: '#ef4444',

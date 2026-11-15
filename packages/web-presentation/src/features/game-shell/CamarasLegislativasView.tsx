@@ -3,6 +3,7 @@ import { Landmark } from 'lucide-react';
 import type { PolicyAction, SimulationState } from '@argentina-sim/domain';
 import { SectionPageHeader } from '@/components/ui/SectionPageHeader';
 import { playUiSound } from '@/lib/gameFeedback';
+import { OfficialInstitutionLogo, OfficialPartyLogo } from '../party-setup/OfficialLogoBadge.js';
 import { CongressBillsNegotiationSection } from './CongressBillsNegotiationSection.js';
 import { ReformasInstitucionalesSection } from './ReformasInstitucionalesSection.js';
 
@@ -36,7 +37,7 @@ const INITIAL_CONGRESS_FORCES: PartySeatShare[] = [
   },
   {
     id: 'PRO',
-    name: 'Propuesta Republicana (PRO)',
+    name: 'PRO - Propuesta Republicana',
     shortLabel: 'PRO',
     deputiesSeats: 37,
     senateSeats: 6,
@@ -58,8 +59,8 @@ const INITIAL_CONGRESS_FORCES: PartySeatShare[] = [
   },
   {
     id: 'PF',
-    name: 'Peronismo Federal / Provincias Unidas',
-    shortLabel: 'PF',
+    name: 'Provincias Unidas / Encuentro Federal',
+    shortLabel: 'PU/PF',
     deputiesSeats: 16,
     senateSeats: 6,
     color: '#2563eb',
@@ -69,7 +70,7 @@ const INITIAL_CONGRESS_FORCES: PartySeatShare[] = [
   },
   {
     id: 'PROVINCIALES',
-    name: 'Bloques Provinciales y Fuerzas Locales',
+    name: 'Innovación Federal y Bloques Provinciales',
     shortLabel: 'PROV',
     deputiesSeats: 28,
     senateSeats: 7,
@@ -80,8 +81,8 @@ const INITIAL_CONGRESS_FORCES: PartySeatShare[] = [
   },
   {
     id: 'UXP',
-    name: 'Unión por la Patria',
-    shortLabel: 'UxP',
+    name: 'Fuerza Patria / Unión por la Patria',
+    shortLabel: 'FP/UxP',
     deputiesSeats: 99,
     senateSeats: 33,
     color: '#38bdf8',
@@ -91,8 +92,8 @@ const INITIAL_CONGRESS_FORCES: PartySeatShare[] = [
   },
   {
     id: 'FIT',
-    name: 'Frente de Izquierda y de Trabajadores',
-    shortLabel: 'FIT',
+    name: 'Frente de Izquierda y de Trabajadores - Unidad',
+    shortLabel: 'FIT-U',
     deputiesSeats: 5,
     senateSeats: 0,
     color: '#ef4444',
@@ -202,9 +203,15 @@ function HemicycleCard({
 }) {
   return (
     <div className="hoi-panel rounded-sm p-5 flex flex-col justify-between gap-4">
-      <div className="flex items-center justify-between border-b border-[#263142] pb-3">
-        <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-white">{title}</h3>
-        <span className="font-mono text-xs px-2.5 py-0.5 rounded-sm bg-[#090d14] border border-[#263142] text-amber-300">
+      <div className="flex items-center justify-between border-b border-[#263142] pb-3 gap-2">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <OfficialInstitutionLogo
+            institution={title.includes('Diputados') ? 'DIPUTADOS' : 'SENADO'}
+            heightPx={28}
+          />
+          <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-white truncate">{title}</h3>
+        </div>
+        <span className="font-mono text-xs px-2.5 py-0.5 rounded-sm bg-[#090d14] border border-[#263142] text-amber-300 shrink-0">
           Quórum: {quorumNeeded}
         </span>
       </div>
@@ -328,6 +335,7 @@ function PoliticalForceTableRow({ force }: { force: PartySeatShare }) {
     <tr className="border-b border-slate-800/50 hover:bg-slate-900/40 transition">
       <td className="py-3 px-4">
         <div className="flex items-center gap-2">
+          <OfficialPartyLogo partyIdOrSigla={force.id} sizePx={24} fallbackColor={force.color} />
           <span className={`px-2 py-0.5 rounded text-[11px] font-extrabold ${force.badgeBg}`}>
             {force.shortLabel}
           </span>

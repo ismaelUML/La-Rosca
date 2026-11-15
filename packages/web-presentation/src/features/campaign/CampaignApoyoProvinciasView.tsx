@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { seededUnit, type CampaignSimulationState } from '@argentina-sim/domain';
+import { OfficialPartyLogo } from '../party-setup/OfficialLogoBadge.js';
 
 // Vista de POLITICO -> Apoyo en Provincias en estetica tactica acero/bronce:
 // Negociacion y cooptacion territorial con intendentes y referentes municipales en PBA, Cordoba, Santa Fe y Mendoza.
@@ -140,12 +141,15 @@ function LocalLeaderCard({
     <div className={`hoi-panel rounded-sm p-4 flex flex-col justify-between space-y-3 transition ${cardBorder}`}>
       <div>
         <div className="flex items-start justify-between gap-2 border-b border-[#1e293b] pb-2">
-          <div>
-            <div className="font-serif font-bold text-amber-100 text-sm uppercase tracking-wide">
-              {leader.name}
-            </div>
-            <div className="text-[11px] font-mono text-slate-400 mt-0.5">
-              {leader.partyName} · <span className="text-sky-300">{leader.district}</span>
+          <div className="flex items-start gap-2 min-w-0">
+            <OfficialPartyLogo partyIdOrSigla={leader.partySigla} sizePx={26} />
+            <div className="min-w-0">
+              <div className="font-serif font-bold text-amber-100 text-sm uppercase tracking-wide truncate">
+                {leader.name}
+              </div>
+              <div className="text-[11px] font-mono text-slate-400 mt-0.5 truncate">
+                {leader.partyName} · <span className="text-sky-300">{leader.district}</span>
+              </div>
             </div>
           </div>
           <span className="px-2 py-0.5 rounded-sm bg-[#090d14] border border-[#263142] text-[10px] font-mono font-bold text-amber-300 shrink-0">
