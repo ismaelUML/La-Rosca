@@ -1,11 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Globe } from 'lucide-react';
 import type { CampaignSimulationState, SimulationState } from '@argentina-sim/domain';
+import { playUiSound } from '@/lib/gameFeedback';
 
-// Vista de PAÍS -> Población, Inmigración y Emigración:
-// Ahora calcula flujos migratorios y variacion demografica en tiempo real segun inflacion,
-// desempleo, PBI y meses transcurridos en vez de clavar numeros estaticos de maqueta.
+// Vista integral de PAÍS (presente tanto en Campaña como en Presidencia / Gobierno):
+// Demografía, Inmigración, Emigración, Tejido Social (Salud/Educación/Vivienda) y Matriz Productiva.
 
-export type DemografiaCountryTab = 'POBLACION' | 'INMIGRACION' | 'EMIGRACION';
+export type DemografiaCountryTab =
+  | 'POBLACION'
+  | 'INMIGRACION'
+  | 'EMIGRACION'
+  | 'TEJIDO_SOCIAL'
+  | 'MATRIZ_PRODUCTIVA';
 
 interface CountryMigRow {
   country: string;
@@ -21,7 +27,9 @@ const BASE_IMMIGRATION_TABLE: CountryMigRow[] = [
   { country: 'Venezuela', count: 207976, lastMonth: 953, twelveMonths: 10842, pct: 5.5 },
   { country: 'Perú', count: 168516, lastMonth: 225, twelveMonths: 2654, pct: 1.6 },
   { country: 'Chile', count: 70120, lastMonth: 80, twelveMonths: 950, pct: 0.7 },
-  { country: 'Uruguay', count: 54200, lastMonth: 45, twelveMonths: 520, pct: 0.5 }
+  { country: 'Uruguay', count: 54200, lastMonth: 45, twelveMonths: 520, pct: 0.5 },
+  { country: 'Brasil', count: 49810, lastMonth: 112, twelveMonths: 1320, pct: 2.6 },
+  { country: 'Colombia', count: 46340, lastMonth: 145, twelveMonths: 1690, pct: 3.6 }
 ];
 
 const BASE_EMIGRATION_TABLE: CountryMigRow[] = [
@@ -30,26 +38,36 @@ const BASE_EMIGRATION_TABLE: CountryMigRow[] = [
   { country: 'Paraguay', count: 83252, lastMonth: 56, twelveMonths: 661, pct: 0.8 },
   { country: 'Chile', count: 78436, lastMonth: 59, twelveMonths: 700, pct: 0.9 },
   { country: 'Italia', count: 75200, lastMonth: 85, twelveMonths: 1020, pct: 1.4 },
-  { country: 'Israel', count: 48900, lastMonth: 35, twelveMonths: 410, pct: 0.6 }
+  { country: 'Israel', count: 48900, lastMonth: 35, twelveMonths: 410, pct: 0.6 },
+  { country: 'Uruguay', count: 42150, lastMonth: 64, twelveMonths: 760, pct: 1.8 },
+  { country: 'Alemania', count: 31400, lastMonth: 42, twelveMonths: 495, pct: 1.5 }
 ];
 
 interface DemographicDrivers {
   inflationMonthly: number;
   unemploymentPct: number;
   gdpGrowthPct: number;
+  povertyPct: number;
   elapsedMonths: number;
 }
 
 function extractDriversFromCampaign(c?: CampaignSimulationState): DemographicDrivers {
   const mood = c?.countryMood;
   if (!c || !mood) {
-    return { inflationMonthly: 3.8, unemploymentPct: 6.9, gdpGrowthPct: 2.8, elapsedMonths: 1 };
+    return {
+      inflationMonthly: 3.8,
+      unemploymentPct: 6.9,
+      gdpGrowthPct: 2.8,
+      povertyPct: 36.5,
+      elapsedMonths: 1
+    };
   }
   const impliedGdp = Number(((50 - mood.povertyPct) * 0.18 + 2.2).toFixed(1));
   return {
     inflationMonthly: mood.inflationMonthlyPct,
     unemploymentPct: mood.unemploymentPct,
     gdpGrowthPct: impliedGdp,
+    povertyPct: mood.povertyPct,
     elapsedMonths: c.stage.currentMonthIndex
   };
 }
@@ -63,6 +81,7 @@ function extractDemographicDrivers(
       inflationMonthly: govState.inflation.realMonthlyIpcPct,
       unemploymentPct: govState.labor.unemploymentPct,
       gdpGrowthPct: govState.gdpGrowthAnnualPct,
+      povertyPct: govState.inflation.povertyCbtPct,
       elapsedMonths: govState.turnMonth
     };
   }
@@ -80,6 +99,7 @@ function scaleMigrationRows(rows: CountryMigRow[], mult: number, months: number)
 }
 
 interface ComputedDemographics {
+  drivers: DemographicDrivers;
   poblacionMillonesStr: string;
   variacion12MesesStr: string;
   inmigrantesMillonesStr: string;
@@ -123,6 +143,7 @@ function computeDynamicDemographics(
   const popMillions = 47.61 + (var12m / 12000000) * (d.elapsedMonths - 1);
 
   return {
+    drivers: d,
     poblacionMillonesStr: popMillions.toFixed(2).replace('.', ','),
     variacion12MesesStr: var12m.toLocaleString('es-AR'),
     inmigrantesMillonesStr: (immTotal / 1000000).toFixed(2).replace('.', ','),
@@ -142,7 +163,7 @@ function PoblacionTabPanel({ demo }: { demo: ComputedDemographics }) {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-        <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
+        <div className="hoi-panel rounded-sm p-4">
           <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
             POBLACIÓN NACIONAL
           </div>
@@ -151,7 +172,7 @@ function PoblacionTabPanel({ demo }: { demo: ComputedDemographics }) {
             <span className="text-xs font-sans font-normal text-slate-400">millones</span>
           </div>
         </div>
-        <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
+        <div className="hoi-panel rounded-sm p-4">
           <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-teal-400">
             VARIACIÓN EN 12 MESES
           </div>
@@ -160,7 +181,7 @@ function PoblacionTabPanel({ demo }: { demo: ComputedDemographics }) {
             <span className="text-xs font-sans font-normal text-slate-400">hab.</span>
           </div>
         </div>
-        <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
+        <div className="hoi-panel rounded-sm p-4">
           <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#d4b26a]">
             PADRÓN ELECTORAL CNE
           </div>
@@ -168,7 +189,7 @@ function PoblacionTabPanel({ demo }: { demo: ComputedDemographics }) {
             36,26 <span className="text-xs font-sans font-normal text-slate-400">millones</span>
           </div>
         </div>
-        <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
+        <div className="hoi-panel rounded-sm p-4">
           <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
             INMIGRANTES RESIDENTES
           </div>
@@ -179,17 +200,42 @@ function PoblacionTabPanel({ demo }: { demo: ComputedDemographics }) {
         </div>
       </div>
 
-      <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-5 space-y-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 font-mono text-xs">
+        <div className="hoi-panel rounded-sm p-3.5 bg-[#090d14]">
+          <div className="text-[10px] text-slate-400 uppercase">Esperanza de Vida</div>
+          <div className="text-lg font-extrabold text-emerald-400 mt-0.5">77,4 años</div>
+          <div className="text-[10px] text-slate-500">Mujeres 80,6 · Hombres 74,2</div>
+        </div>
+        <div className="hoi-panel rounded-sm p-3.5 bg-[#090d14]">
+          <div className="text-[10px] text-slate-400 uppercase">Tasa de Urbanización</div>
+          <div className="text-lg font-extrabold text-sky-400 mt-0.5">92,5 %</div>
+          <div className="text-[10px] text-slate-500">AMBA concentra 35,8% nac.</div>
+        </div>
+        <div className="hoi-panel rounded-sm p-3.5 bg-[#090d14]">
+          <div className="text-[10px] text-slate-400 uppercase">Edad Mediana</div>
+          <div className="text-lg font-extrabold text-amber-300 mt-0.5">33,1 años</div>
+          <div className="text-[10px] text-slate-500">Bono demográfico activo</div>
+        </div>
+        <div className="hoi-panel rounded-sm p-3.5 bg-[#090d14]">
+          <div className="text-[10px] text-slate-400 uppercase">Tasa de Natalidad</div>
+          <div className="text-lg font-extrabold text-slate-200 mt-0.5">11,2 ‰</div>
+          <div className="text-[10px] text-slate-500">Fecundidad: 1,54 hijos/mujer</div>
+        </div>
+      </div>
+
+      <div className="hoi-panel rounded-sm p-5 space-y-3">
         <div className="flex flex-wrap justify-between items-center gap-2 text-xs text-slate-400">
-          <span className="font-mono font-bold uppercase tracking-wider text-white">
-            Curva de Población y Saldo Migratorio Nacional
+          <span className="font-serif font-bold uppercase tracking-wider text-amber-100">
+            Curva de Población y Saldo Migratorio Nacional (RENAPER / INDEC)
           </span>
           <span className="font-mono text-[11px] text-[#d4b26a]">
-             Impulsores macro: {demo.driverSummary}
+            Impulsores macro: {demo.driverSummary}
           </span>
         </div>
-        <div className="h-44 w-full flex items-center justify-center border-b border-[#1c2432]">
+        <div className="h-44 w-full flex items-center justify-center border-b border-[#1c2432] bg-[#070a10] rounded-sm p-2">
           <svg viewBox="0 0 500 120" className="w-full h-full">
+            <line x1="20" y1="30" x2="480" y2="30" stroke="#1b2333" strokeDasharray="3 3" />
+            <line x1="20" y1="70" x2="480" y2="70" stroke="#1b2333" strokeDasharray="3 3" />
             <polyline
               fill="none"
               stroke="#38bdf8"
@@ -246,7 +292,7 @@ function MigracionTabPanel({ activeTab, demo }: MigracionTabPanelProps) {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-        <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
+        <div className="hoi-panel rounded-sm p-4">
           <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
             {cfg.mainCardTitle}
           </div>
@@ -254,7 +300,7 @@ function MigracionTabPanel({ activeTab, demo }: MigracionTabPanelProps) {
             {cfg.mainCardNumber}
           </div>
         </div>
-        <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
+        <div className="hoi-panel rounded-sm p-4">
           <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-teal-400">
             VARIACIÓN EN 12 MESES
           </div>
@@ -263,7 +309,7 @@ function MigracionTabPanel({ activeTab, demo }: MigracionTabPanelProps) {
             <span className="text-xs font-sans font-normal text-slate-400">pers.</span>
           </div>
         </div>
-        <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
+        <div className="hoi-panel rounded-sm p-4">
           <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-sky-400">
             SALDO MIGRATORIO DEL ÚLTIMO MES
           </div>
@@ -278,10 +324,10 @@ function MigracionTabPanel({ activeTab, demo }: MigracionTabPanelProps) {
         </div>
       </div>
 
-      <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-5 space-y-4">
+      <div className="hoi-panel rounded-sm p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className="text-xs font-mono font-bold uppercase tracking-wider text-white">
+            <div className="text-xs font-serif font-bold uppercase tracking-wider text-amber-100">
               {cfg.listTitle}
             </div>
             <div className="text-[11px] font-mono text-slate-400 mt-0.5">
@@ -340,10 +386,175 @@ function MigracionTabPanel({ activeTab, demo }: MigracionTabPanelProps) {
   );
 }
 
+function TejidoSocialTabPanel({ demo }: { demo: ComputedDemographics }) {
+  const pov = demo.drivers.povertyPct;
+  const middleClass = Math.max(25, Math.min(58, Number((68 - pov * 0.65).toFixed(1))));
+  const upperClass = 6.8;
+  const vulnerable = Number(Math.max(8, 100 - upperClass - middleClass - pov).toFixed(1));
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 font-mono">
+        <div className="hoi-panel rounded-sm p-4">
+          <div className="text-[10px] text-amber-300 uppercase">Clase Media Integrada</div>
+          <div className="text-2xl font-extrabold text-emerald-400 mt-1">{middleClass.toFixed(1)}%</div>
+          <div className="text-[10px] text-slate-400 mt-0.5">EPH 31 Aglomerados Urbanos</div>
+        </div>
+        <div className="hoi-panel rounded-sm p-4">
+          <div className="text-[10px] text-rose-300 uppercase">Pobreza Urbana (CBT)</div>
+          <div className="text-2xl font-extrabold text-rose-400 mt-1">{pov.toFixed(1)}%</div>
+          <div className="text-[10px] text-slate-400 mt-0.5">Vulnerables no pobres: {vulnerable}%</div>
+        </div>
+        <div className="hoi-panel rounded-sm p-4">
+          <div className="text-[10px] text-sky-300 uppercase">Alfabetización y Escolaridad</div>
+          <div className="text-2xl font-extrabold text-sky-300 mt-1">99,1%</div>
+          <div className="text-[10px] text-slate-400 mt-0.5">2,48M alumnos universitarios</div>
+        </div>
+        <div className="hoi-panel rounded-sm p-4">
+          <div className="text-[10px] text-teal-300 uppercase">Déficit Habitacional</div>
+          <div className="text-2xl font-extrabold text-amber-200 mt-1">3,65M</div>
+          <div className="text-[10px] text-slate-400 mt-0.5">Hogares (1,3M cuantitativo)</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="hoi-panel rounded-sm p-5 space-y-3 text-xs">
+          <div className="border-b border-[#263142] pb-2">
+            <span className="text-[10px] font-mono text-amber-300 uppercase block">SALUD Y SEGURIDAD SOCIAL</span>
+            <h3 className="text-sm font-serif font-bold uppercase text-amber-100">
+              Cobertura del Sistema Sanitario Argentino
+            </h3>
+          </div>
+          <div className="space-y-2 font-mono">
+            <div className="flex justify-between p-2 rounded-sm bg-[#090d14] border border-[#1e293b]">
+              <span className="text-slate-300">Obras Sociales Sindicales y PAMI</span>
+              <strong className="text-sky-300">48,6 %</strong>
+            </div>
+            <div className="flex justify-between p-2 rounded-sm bg-[#090d14] border border-[#1e293b]">
+              <span className="text-slate-300">Red Hospitalaria Pública Exclusiva</span>
+              <strong className="text-amber-300">37,2 %</strong>
+            </div>
+            <div className="flex justify-between p-2 rounded-sm bg-[#090d14] border border-[#1e293b]">
+              <span className="text-slate-300">Medicina Prepaga Privada</span>
+              <strong className="text-emerald-400">14,2 %</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="hoi-panel rounded-sm p-5 space-y-3 text-xs">
+          <div className="border-b border-[#263142] pb-2">
+            <span className="text-[10px] font-mono text-amber-300 uppercase block">EDUCACIÓN Y CIENCIA</span>
+            <h3 className="text-sm font-serif font-bold uppercase text-amber-100">
+              Indicadores Educativos y Universitarios
+            </h3>
+          </div>
+          <div className="space-y-2 font-mono">
+            <div className="flex justify-between p-2 rounded-sm bg-[#090d14] border border-[#1e293b]">
+              <span className="text-slate-300">Egreso Secundario en Tiempo y Forma</span>
+              <strong className="text-amber-200">61,4 %</strong>
+            </div>
+            <div className="flex justify-between p-2 rounded-sm bg-[#090d14] border border-[#1e293b]">
+              <span className="text-slate-300">Universidades Nacionales (57 casas)</span>
+              <strong className="text-emerald-400">2,02M estudiantes</strong>
+            </div>
+            <div className="flex justify-between p-2 rounded-sm bg-[#090d14] border border-[#1e293b]">
+              <span className="text-slate-300">Investigadores CONICET / I+D</span>
+              <strong className="text-sky-300">11.850 científicos</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MatrizProductivaTabPanel({ demo }: { demo: ComputedDemographics }) {
+  const gdp = demo.drivers.gdpGrowthPct;
+  const oilBbl = Math.round(455 + demo.drivers.elapsedMonths * 8 + gdp * 6);
+  const agroTons = Math.round(131 + gdp * 1.8);
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 font-mono">
+        <div className="hoi-panel rounded-sm p-4">
+          <div className="text-[10px] text-amber-300 uppercase">Crudo Vaca Muerta</div>
+          <div className="text-2xl font-extrabold text-emerald-400 mt-1">{oilBbl}k bbl/d</div>
+          <div className="text-[10px] text-slate-400 mt-0.5">Cuenca Neuquina + Golfo San Jorge</div>
+        </div>
+        <div className="hoi-panel rounded-sm p-4">
+          <div className="text-[10px] text-sky-300 uppercase">Cosecha Granaria Total</div>
+          <div className="text-2xl font-extrabold text-amber-200 mt-1">{agroTons} M Ton</div>
+          <div className="text-[10px] text-slate-400 mt-0.5">Soja, Maíz, Trigo y Girasol</div>
+        </div>
+        <div className="hoi-panel rounded-sm p-4">
+          <div className="text-[10px] text-teal-300 uppercase">Carbonato de Litio</div>
+          <div className="text-2xl font-extrabold text-sky-300 mt-1">138k Ton</div>
+          <div className="text-[10px] text-slate-400 mt-0.5">Jujuy, Salta y Catamarca (3º mundial)</div>
+        </div>
+        <div className="hoi-panel rounded-sm p-4">
+          <div className="text-[10px] text-emerald-300 uppercase">Economía del Conocimiento</div>
+          <div className="text-2xl font-extrabold text-white mt-1">8,9B USD</div>
+          <div className="text-[10px] text-slate-400 mt-0.5">Software, satélites y biotecnología</div>
+        </div>
+      </div>
+
+      <div className="hoi-panel rounded-sm p-5 space-y-3 text-xs">
+        <div className="border-b border-[#263142] pb-2">
+          <span className="text-[10px] font-mono text-amber-300 uppercase block">COMPLEJOS EXPORTADORES Y PRODUCTIVOS</span>
+          <h3 className="text-sm font-serif font-bold uppercase text-amber-100">
+            Motores Regionales del PBI Argentino
+          </h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono">
+          <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142] space-y-1">
+            <div className="text-amber-200 font-bold">1. Polo Agroindustrial Pampeano</div>
+            <div className="text-[11px] text-slate-400">
+              PBA, Santa Fe, Córdoba y Entre Ríos · 54% de las divisas FOB por harinas, aceites y granos.
+            </div>
+          </div>
+          <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142] space-y-1">
+            <div className="text-sky-300 font-bold">2. Corredor Energético Patagónico</div>
+            <div className="text-[11px] text-slate-400">
+              Neuquén, Río Negro, Chubut y Santa Cruz · Gasoductos troncales, petróleo shale y terminales GNL.
+            </div>
+          </div>
+          <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142] space-y-1">
+            <div className="text-emerald-300 font-bold">3. Arco Minero Andino y NOA</div>
+            <div className="text-[11px] text-slate-400">
+              San Juan, Catamarca, Salta y Jujuy · Megaproyectos de cobre porfírico y salares de litio.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const COUNTRY_TABS_META: Array<{ id: DemografiaCountryTab; label: string }> = [
+  { id: 'POBLACION', label: 'Población y Censo' },
+  { id: 'INMIGRACION', label: 'Inmigración' },
+  { id: 'EMIGRACION', label: 'Emigración' },
+  { id: 'TEJIDO_SOCIAL', label: 'Salud, Educación y Sociedad' },
+  { id: 'MATRIZ_PRODUCTIVA', label: 'Matriz Productiva y Energía' }
+];
+
 interface CampaignDemografiaPaisViewProps {
   initialTab?: DemografiaCountryTab;
   campaignState?: CampaignSimulationState;
   govState?: SimulationState;
+}
+
+function CountryTabContent({
+  activeTab,
+  demo
+}: {
+  activeTab: DemografiaCountryTab;
+  demo: ComputedDemographics;
+}) {
+  if (activeTab === 'POBLACION') return <PoblacionTabPanel demo={demo} />;
+  if (activeTab === 'TEJIDO_SOCIAL') return <TejidoSocialTabPanel demo={demo} />;
+  if (activeTab === 'MATRIZ_PRODUCTIVA') return <MatrizProductivaTabPanel demo={demo} />;
+  return <MigracionTabPanel activeTab={activeTab} demo={demo} />;
 }
 
 export function CampaignDemografiaPaisView({
@@ -361,41 +572,49 @@ export function CampaignDemografiaPaisView({
     setActiveTab(initialTab);
   }, [initialTab]);
 
+  const currentTabLabel = COUNTRY_TABS_META.find((t) => t.id === activeTab)?.label ?? activeTab;
+
   return (
-    <div className="space-y-6">
-      <div className="border-b border-[#263142] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <div className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#d4b26a]">
-            CENSO Y FLUJO MIGRATORIO · PAÍS
+    <div className="space-y-5 rosca-panel-enter">
+      <div className="hoi-panel hoi-header-steel rounded-sm p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-sm bg-[#090d14] border border-[#8a6d33] flex items-center justify-center shrink-0">
+            <Globe className="w-5 h-5 text-amber-300" />
           </div>
-          <h1 className="text-2xl md:text-3xl font-serif font-bold text-white mt-0.5">
-            {activeTab}
-          </h1>
+          <div>
+            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300">
+              RADIOGRAFÍA ESTRUCTURAL DE LA REPÚBLICA ARGENTINA · PAÍS
+            </div>
+            <h1 className="text-xl md:text-2xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5">
+              {currentTabLabel}
+            </h1>
+          </div>
         </div>
 
-        <div className="inline-flex p-1 rounded-sm bg-[#0c1119] border border-[#263142]">
-          {(['POBLACION', 'INMIGRACION', 'EMIGRACION'] as const).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`px-3.5 py-1.5 rounded-sm text-xs font-mono font-bold uppercase tracking-wider transition ${
-                activeTab === tab
-                  ? 'bg-[#d4b26a] text-slate-950 shadow'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+        <div className="flex flex-wrap gap-1.5">
+          {COUNTRY_TABS_META.map((tab) => {
+            const isSelected = activeTab === tab.id;
+            const cls = isSelected
+              ? 'bg-[#1d3250] text-amber-100 border-[#b89342]'
+              : 'bg-[#090d14] text-slate-300 border-[#263142] hover:border-[#8a6d33]';
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  playUiSound('tab');
+                  setActiveTab(tab.id);
+                }}
+                className={`px-3 py-1.5 rounded-sm text-xs font-mono font-bold uppercase tracking-wider border transition ${cls}`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {activeTab === 'POBLACION' ? (
-        <PoblacionTabPanel demo={demo} />
-      ) : (
-        <MigracionTabPanel activeTab={activeTab} demo={demo} />
-      )}
+      <CountryTabContent activeTab={activeTab} demo={demo} />
     </div>
   );
 }

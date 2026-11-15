@@ -8,8 +8,8 @@ import {
   SEMANTIC_TEXT_CLASS
 } from '../../lib/semanticColors.js';
 
-// Tarjeta de indicador con jerarquia clara: numero principal dominante,
-// variacion semantica consistente (verde/dorado/rojo-rosa) y sparkline secundario.
+// Tarjeta tactica de indicador macroeconomico y social (estilo acero y bronce):
+// Numero principal dominante, comparativa contra inicio de serie, variacion mensual y curva SVG.
 
 function buildSvgPolyline(points: IndicatorPoint[], minVal: number, maxVal: number): {
   linePoints: string;
@@ -50,26 +50,34 @@ interface IndicatorCardFooterProps {
 }
 
 function IndicatorCardFooter({ card, showDetail, onToggleDetail }: IndicatorCardFooterProps) {
+  const firstVal = card.points[0]?.value ?? card.currentValue;
+  const accumDelta = Number((card.currentValue - firstVal).toFixed(2));
+
   return (
-    <div className="pt-3 border-t border-slate-800/60 mt-2">
-      {card.subtitle ? <p className="text-[11px] text-slate-400 mb-2 leading-relaxed">{card.subtitle}</p> : null}
-      <button
-        type="button"
-        onClick={onToggleDetail}
-        className="text-xs font-semibold text-slate-200 hover:text-amber-300 transition"
-      >
-        {showDetail ? 'Ocultar detalle mensual' : 'Ver detalle mensual'}
-      </button>
+    <div className="pt-3 border-t border-[#263142] mt-2 space-y-2">
+      {card.subtitle ? <p className="text-[11px] text-slate-300 leading-relaxed">{card.subtitle}</p> : null}
+      <div className="flex items-center justify-between text-[11px] font-mono">
+        <span className="text-slate-400">
+          Base dic 26: <strong className="text-slate-200">{firstVal} {card.unit}</strong> ({formatSignedDelta(accumDelta)} acum.)
+        </span>
+        <button
+          type="button"
+          onClick={onToggleDetail}
+          className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-300 hover:text-amber-100 transition"
+        >
+          {showDetail ? '▲ Ocultar serie' : '▼ Serie histórica'}
+        </button>
+      </div>
 
       {showDetail ? (
-        <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 gap-2 text-[11px] rosca-panel-enter">
+        <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 gap-1.5 text-[11px] font-mono rosca-panel-enter">
           {card.points.map((pt) => (
             <div
               key={pt.label}
-              className="px-2.5 py-1.5 rounded bg-[#090d14] border border-slate-800 flex justify-between"
+              className="px-2 py-1 rounded-sm bg-[#090d14] border border-[#1e293b] flex justify-between"
             >
               <span className="text-slate-400">{pt.label}</span>
-              <span className="font-mono text-slate-200">{pt.value}</span>
+              <span className="text-amber-100 font-bold">{pt.value}</span>
             </div>
           ))}
         </div>
@@ -95,50 +103,57 @@ export function IndicatorChartCard({ card }: IndicatorChartCardProps) {
   const accentHex = SEMANTIC_HEX[heroTone];
 
   return (
-    <div className="rounded-xl bg-[#0e131c] border border-[#232e40] p-6 flex flex-col justify-between gap-4">
+    <div className="hoi-panel rounded-sm p-5 flex flex-col justify-between gap-3 hover:border-[#8a6d33] transition">
       <div>
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">{card.title}</div>
-            <div className="flex items-baseline gap-2">
-              <span className={`text-4xl sm:text-5xl font-black tracking-tight tabular-nums ${SEMANTIC_TEXT_CLASS[heroTone]}`}>
+        <div className="flex items-start justify-between gap-3 border-b border-[#1e293b] pb-3">
+          <div className="space-y-1">
+            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300/90">
+              {card.category.replace('_', ' ')}
+            </div>
+            <div className="text-sm font-serif font-bold uppercase tracking-wide text-amber-100">
+              {card.title}
+            </div>
+            <div className="flex items-baseline gap-2 pt-0.5">
+              <span className={`text-3xl sm:text-4xl font-mono font-black tracking-tight tabular-nums ${SEMANTIC_TEXT_CLASS[heroTone]}`}>
                 {card.currentValue}
               </span>
-              <span className="text-sm text-slate-400 font-semibold">{card.unit}</span>
+              <span className="text-xs font-mono text-slate-400 font-semibold">{card.unit}</span>
             </div>
           </div>
 
-          <div className="text-right space-y-1 shrink-0">
+          <div className="text-right space-y-1.5 shrink-0">
             <span className={`inline-block px-2 py-0.5 rounded-sm border text-xs font-mono font-bold ${SEMANTIC_BG_BADGE[deltaTone]}`}>
               {formatSignedDelta(card.monthlyVariation)} {card.variationUnit}
             </span>
-            <div className="text-[11px] font-mono text-slate-500">
+            <div className="text-[10px] font-mono text-slate-400 bg-[#090d14] border border-[#1e293b] px-2 py-0.5 rounded-sm">
               mín {card.minValue} · máx {card.maxValue}
             </div>
           </div>
         </div>
 
-        <div className="mt-5 pt-3 border-t border-slate-800/50 relative opacity-80 hover:opacity-100 transition-opacity">
+        <div className="mt-3 pt-2 relative bg-[#070a10] border border-[#1a2434] rounded-sm px-2 pb-1">
           <svg viewBox="0 0 440 118" className="w-full h-24 overflow-visible">
             <line x1="20" y1="16" x2="420" y2="16" stroke="#1b2333" strokeDasharray="3 3" />
             <line x1="20" y1="54" x2="420" y2="54" stroke="#1b2333" strokeDasharray="3 3" />
             <line x1="20" y1="92" x2="420" y2="92" stroke="#1b2333" />
 
-            <polygon points={areaPoints} fill={accentHex} fillOpacity="0.08" />
-            <polyline fill="none" stroke={accentHex} strokeWidth="1.7" points={linePoints} />
+            <polygon points={areaPoints} fill={accentHex} fillOpacity="0.12" />
+            <polyline fill="none" stroke={accentHex} strokeWidth="2.0" points={linePoints} />
 
             {coords.map((c) => (
               <g key={c.point.label}>
                 <circle
                   cx={c.x}
                   cy={c.y}
-                  r={3}
+                  r={3.2}
                   fill={accentHex}
+                  stroke="#070a10"
+                  strokeWidth={1}
                   className="cursor-pointer"
                   onMouseEnter={() => setHoveredPoint(c.point)}
                   onMouseLeave={() => setHoveredPoint(null)}
                 />
-                <text x={c.x} y={110} textAnchor="middle" className="fill-slate-500 text-[9px]">
+                <text x={c.x} y={110} textAnchor="middle" className="fill-slate-400 font-mono text-[9px]">
                   {c.point.label}
                 </text>
               </g>
@@ -146,7 +161,7 @@ export function IndicatorChartCard({ card }: IndicatorChartCardProps) {
           </svg>
 
           {hoveredPoint ? (
-            <div className="absolute top-2 right-1 px-2.5 py-1 rounded bg-slate-950/95 border border-slate-700 text-[11px] text-slate-200 shadow">
+            <div className="absolute top-2 right-2 px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#b89342] text-[11px] font-mono text-amber-100 shadow-lg">
               {hoveredPoint.label}:{' '}
               <strong style={{ color: accentHex }}>
                 {hoveredPoint.value} {card.unit}

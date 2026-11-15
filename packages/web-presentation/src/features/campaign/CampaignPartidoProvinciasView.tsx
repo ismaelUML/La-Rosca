@@ -732,14 +732,14 @@ interface ProvincialVoteBarProps {
 function ProvincialLeadingBadge({ isLeading, diff, rivalName }: { isLeading: boolean; diff: string; rivalName: string }) {
   if (isLeading) {
     return (
-      <span className="font-mono font-bold text-purple-400 text-xs tracking-wide">
-        ¡Tu fórmula lidera!
+      <span className="px-2 py-0.5 rounded-sm bg-emerald-950/60 border border-emerald-700/70 font-mono font-bold text-emerald-300 text-[11px] uppercase tracking-wider">
+        ★ Lidera tu fórmula (+{diff} pp vs. {rivalName})
       </span>
     );
   }
   return (
-    <span className="font-mono text-slate-400 text-xs">
-      Segunda fuerza (-{diff} vs. {rivalName})
+    <span className="px-2 py-0.5 rounded-sm bg-amber-950/40 border border-[#8a6d33]/70 font-mono text-amber-200 text-[11px]">
+      Escoltas a {rivalName} (-{diff} pp)
     </span>
   );
 }
@@ -762,21 +762,22 @@ function resolveRivalShare(sorted: ProvincialPartyShare[]): { name: string; shar
 function formatVoteRowLabel(share: ProvincialPartyShare): string {
   if (!share.isPlayer) return share.partyName;
   if (share.partyName.toLowerCase().includes('tu fórmula')) {
-    return 'Tu fórmula';
+    return 'Tu fórmula oficial';
   }
   return `${share.partyName} (tu fórmula)`;
 }
 
 function VoteRowItem({ share }: { share: ProvincialPartyShare }) {
   const label = formatVoteRowLabel(share);
-  const textClass = share.isPlayer ? 'font-bold text-white' : 'text-slate-300';
+  const textClass = share.isPlayer ? 'font-bold text-amber-100' : 'text-slate-300';
+  const rowBg = share.isPlayer ? 'bg-[#121a28] border-[#8a6d33]/60' : 'bg-[#090d14] border-[#1e293b]';
   return (
-    <div className="flex items-center justify-between text-xs">
+    <div className={`flex items-center justify-between px-3 py-1.5 rounded-sm border text-xs ${rowBg}`}>
       <div className="flex items-center gap-2">
-        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: share.color }} />
+        <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: share.color }} />
         <span className={textClass}>{label}</span>
       </div>
-      <span className="font-mono font-extrabold text-white">
+      <span className="font-mono font-extrabold text-amber-200">
         {share.sharePct.toFixed(1).replace('.', ',')} %
       </span>
     </div>
@@ -796,24 +797,31 @@ function ProvincialVoteBar({ shares }: ProvincialVoteBarProps) {
     : (rival.share - playerShare).toFixed(1).replace('.', ',');
 
   return (
-    <div className="rounded-2xl bg-[#0f131c] border border-slate-800 p-5 space-y-4">
-      <div className="flex items-center justify-between text-xs">
-        <span className="font-extrabold text-white text-sm">Intención de voto provincial</span>
+    <div className="hoi-panel rounded-sm p-5 space-y-3.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#263142] pb-2.5">
+        <div>
+          <span className="text-[10px] font-mono uppercase tracking-widest text-amber-300 block">
+            SONDEO ELECTORAL DISTRITAL
+          </span>
+          <span className="font-serif font-bold uppercase tracking-wide text-amber-100 text-sm">
+            Intención de voto provincial a Gobernador
+          </span>
+        </div>
         <ProvincialLeadingBadge isLeading={isLeading} diff={diff} rivalName={rival.name} />
       </div>
 
-      <div className="w-full h-4 rounded-full overflow-hidden flex bg-slate-900 border border-slate-800">
+      <div className="w-full h-3.5 rounded-sm overflow-hidden flex bg-[#090d14] border border-[#263142]">
         {sortedShares.map((s) => (
           <div
             key={s.partyName}
             style={{ width: `${s.sharePct}%`, backgroundColor: s.color }}
-            className="h-full transition-all duration-300"
+            className="h-full transition-all duration-300 border-r border-[#090d14]/60"
             title={`${s.partyName}: ${s.sharePct}%`}
           />
         ))}
       </div>
 
-      <div className="space-y-2 pt-2 border-t border-slate-800/80">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
         {sortedShares.map((s) => (
           <VoteRowItem key={s.partyName} share={s} />
         ))}
@@ -828,6 +836,56 @@ interface ProvincialFormulaProps {
   onChangeVice: (id: string) => void;
 }
 
+function FormulaCandidateSlotCard({
+  roleTitle,
+  badgeCode,
+  selected,
+  candidates,
+  selectedId,
+  onChange
+}: {
+  roleTitle: string;
+  badgeCode: string;
+  selected: ProvincialCandidateOption | undefined;
+  candidates: ProvincialCandidateOption[];
+  selectedId: string;
+  onChange: (id: string) => void;
+}) {
+  return (
+    <div className="hoi-panel rounded-sm p-4 space-y-3">
+      <div className="flex items-center justify-between border-b border-[#1e293b] pb-2">
+        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300">
+          {roleTitle}
+        </span>
+        <span className="text-[10px] font-mono text-sky-300">
+          Relevancia: {selected?.relevance ?? 25} pts
+        </span>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-sm bg-[#162233] border border-[#8a6d33] flex items-center justify-center font-mono font-bold text-xs text-amber-200 shrink-0">
+          {badgeCode}
+        </div>
+        <div className="min-w-0">
+          <div className="text-sm font-serif font-bold text-amber-100 truncate">{selected?.name}</div>
+          <div className="text-[11px] font-mono text-slate-400 truncate">{selected?.roleDescription}</div>
+        </div>
+      </div>
+      <select
+        value={selectedId}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={roleTitle}
+        className="w-full bg-[#090d14] border border-[#263142] focus:border-[#b89342] rounded-sm px-3 py-2 text-xs font-mono text-amber-100"
+      >
+        {candidates.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.name} · relev. {c.relevance}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 function ProvincialFormulaSelector({ prov, onChangeGobernador, onChangeVice }: ProvincialFormulaProps) {
   const selectedGov =
     prov.gobernadorCandidates.find((c) => c.id === prov.selectedGobernadorId) ??
@@ -838,57 +896,22 @@ function ProvincialFormulaSelector({ prov, onChangeGobernador, onChangeVice }: P
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="rounded-2xl bg-[#0f131c] border border-slate-800 p-4 space-y-3">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-purple-400">
-          GOBERNADOR
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-purple-950 border border-purple-800 flex items-center justify-center font-bold text-xs text-purple-300">
-            🕊️
-          </div>
-          <div>
-            <div className="text-sm font-extrabold text-white">{selectedGov?.name}</div>
-            <div className="text-[11px] text-slate-400">{selectedGov?.roleDescription}</div>
-          </div>
-        </div>
-        <select
-          value={prov.selectedGobernadorId}
-          onChange={(e) => onChangeGobernador(e.target.value)}
-          className="w-full bg-[#0b0e15] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"
-        >
-          {prov.gobernadorCandidates.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name} · relev. {c.relevance}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="rounded-2xl bg-[#0f131c] border border-slate-800 p-4 space-y-3">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-purple-400">
-          VICEGOBERNADOR
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-purple-950 border border-purple-800 flex items-center justify-center font-bold text-xs text-purple-300">
-            🕊️
-          </div>
-          <div>
-            <div className="text-sm font-extrabold text-white">{selectedVice?.name}</div>
-            <div className="text-[11px] text-slate-400">{selectedVice?.roleDescription}</div>
-          </div>
-        </div>
-        <select
-          value={prov.selectedViceId}
-          onChange={(e) => onChangeVice(e.target.value)}
-          className="w-full bg-[#0b0e15] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"
-        >
-          {prov.viceCandidates.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name} · relev. {c.relevance}
-            </option>
-          ))}
-        </select>
-      </div>
+      <FormulaCandidateSlotCard
+        roleTitle="CANDIDATO A GOBERNADOR"
+        badgeCode="GOB"
+        selected={selectedGov}
+        candidates={prov.gobernadorCandidates}
+        selectedId={prov.selectedGobernadorId}
+        onChange={onChangeGobernador}
+      />
+      <FormulaCandidateSlotCard
+        roleTitle="CANDIDATO A VICEGOBERNADOR"
+        badgeCode="VICE"
+        selected={selectedVice}
+        candidates={prov.viceCandidates}
+        selectedId={prov.selectedViceId}
+        onChange={onChangeVice}
+      />
     </div>
   );
 }
@@ -1045,6 +1068,40 @@ interface ProvincialCoalitionCardProps {
   onBreakAlliance: () => void;
 }
 
+function CoalitionActionFooter({
+  isInAlliance,
+  canAddMore,
+  onFormAlliance,
+  onBreakAlliance
+}: {
+  isInAlliance: boolean;
+  canAddMore: boolean;
+  onFormAlliance: () => void;
+  onBreakAlliance: () => void;
+}) {
+  if (isInAlliance) {
+    return (
+      <button
+        type="button"
+        onClick={onBreakAlliance}
+        className="w-full py-2 rounded-sm text-xs font-mono font-bold uppercase tracking-wider text-rose-300 bg-rose-950/40 border border-rose-800/70 hover:bg-rose-900/60 transition"
+      >
+        Romper pacto distrital
+      </button>
+    );
+  }
+  return (
+    <button
+      type="button"
+      disabled={!canAddMore}
+      onClick={onFormAlliance}
+      className="hoi-btn-gold w-full py-2 rounded-sm text-xs font-mono font-bold uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed transition"
+    >
+      {canAddMore ? 'Proponer alianza distrital' : 'Máximo 2 aliados alcanzado'}
+    </button>
+  );
+}
+
 function ProvincialCoalitionCard({
   party,
   isInAlliance,
@@ -1054,55 +1111,104 @@ function ProvincialCoalitionCard({
 }: ProvincialCoalitionCardProps) {
   const potentialBoost = Math.max(0.3, Math.round(party.sharePct * 0.6 * 10) / 10);
   const referente = resolveDistrictReferente(party.partyName);
+  const borderCls = isInAlliance ? 'border-emerald-700/80' : 'border-[#263142] hover:border-[#8a6d33]';
 
   return (
-    <div className="rounded-2xl bg-[#0f131c] border border-slate-800 p-4 flex flex-col justify-between space-y-3">
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: party.color }} />
-            <span className="text-sm font-extrabold text-white">{party.partyName}</span>
+    <div className={`hoi-panel rounded-sm p-4 flex flex-col justify-between space-y-3 transition ${borderCls}`}>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between border-b border-[#1e293b] pb-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: party.color }} />
+            <span className="text-sm font-serif font-bold text-amber-100 truncate">{party.partyName}</span>
           </div>
           {isInAlliance ? (
-            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-800/60 px-2 py-0.5 rounded">
-              ✓ En coalición distrital
+            <span className="text-[10px] font-mono font-bold text-emerald-300 bg-emerald-950/70 border border-emerald-700/70 px-2 py-0.5 rounded-sm shrink-0">
+              ✓ EN COALICIÓN
             </span>
           ) : (
-            <span className="text-[10px] text-slate-400">Fuerza opositora / distrital</span>
+            <span className="text-[10px] font-mono text-slate-400 shrink-0">Fuerza distrital</span>
           )}
         </div>
 
         <div className="text-[11px] text-slate-300">
-          Referente: <span className="font-semibold text-white">{referente}</span>
+          Referente territorial: <span className="font-semibold text-amber-100">{referente}</span>
         </div>
 
-        <div className="text-xs text-slate-400">
-          Intención de voto provincial: <strong className="text-white">{party.sharePct.toFixed(1).replace('.', ',')} %</strong>
-        </div>
-        <div className="text-xs text-purple-300">
-          Aporte potencial a tu fórmula: <strong className="text-purple-200">+{potentialBoost.toFixed(1).replace('.', ',')} %</strong>
+        <div className="grid grid-cols-2 gap-2 pt-1 text-xs font-mono">
+          <div className="p-2 rounded-sm bg-[#090d14] border border-[#1e293b]">
+            <div className="text-[9px] text-slate-400 uppercase">Caudal propio</div>
+            <div className="font-bold text-white mt-0.5">{party.sharePct.toFixed(1).replace('.', ',')} %</div>
+          </div>
+          <div className="p-2 rounded-sm bg-[#090d14] border border-[#1e293b]">
+            <div className="text-[9px] text-slate-400 uppercase">Transferencia</div>
+            <div className="font-bold text-emerald-400 mt-0.5">+{potentialBoost.toFixed(1).replace('.', ',')} %</div>
+          </div>
         </div>
       </div>
 
-      <div>
-        {isInAlliance ? (
-          <button
-            type="button"
-            onClick={onBreakAlliance}
-            className="w-full py-2 rounded-xl text-xs font-bold text-rose-400 bg-rose-950/40 border border-rose-900/60 hover:bg-rose-900/60 transition"
-          >
-            Desarmar alianza
-          </button>
-        ) : (
-          <button
-            type="button"
-            disabled={!canAddMore}
-            onClick={onFormAlliance}
-            className="w-full py-2 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white transition shadow"
-          >
-            {canAddMore ? 'Proponer alianza distrital' : 'Máximo 2 aliados alcanzado'}
-          </button>
-        )}
+      <div className="pt-2 border-t border-[#1e293b]">
+        <CoalitionActionFooter
+          isInAlliance={isInAlliance}
+          canAddMore={canAddMore}
+          onFormAlliance={onFormAlliance}
+          onBreakAlliance={onBreakAlliance}
+        />
+      </div>
+    </div>
+  );
+}
+
+function LocalActionCard({
+  act,
+  allowed,
+  fatigueMult,
+  onExecute
+}: {
+  act: LocalActionItem;
+  allowed: boolean;
+  fatigueMult: number;
+  onExecute: (cost: number, boost: number) => void;
+}) {
+  const btnCls = allowed
+    ? 'hoi-btn-gold'
+    : 'bg-[#090d14] text-slate-500 border border-[#1e293b] cursor-not-allowed';
+
+  return (
+    <div className="hoi-panel rounded-sm p-4 flex flex-col justify-between space-y-3 hover:border-[#8a6d33] transition">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between border-b border-[#1e293b] pb-2">
+          <span className="text-sm font-serif font-bold uppercase tracking-wide text-amber-100">
+            {act.title}
+          </span>
+          <span className="px-2 py-0.5 rounded-sm bg-amber-950/30 border border-[#8a6d33]/80 font-mono font-bold text-[11px] text-amber-300">
+            -${act.cost.toFixed(1).replace('.', ',')}M
+          </span>
+        </div>
+        <p className="text-xs text-slate-300 leading-relaxed">{act.description}</p>
+        <div className="flex flex-wrap gap-1 pt-1">
+          {act.badges.map((b) => (
+            <span
+              key={b}
+              className="px-2 py-0.5 rounded-sm text-[9px] font-mono font-bold bg-[#090d14] border border-[#263142] text-emerald-400"
+            >
+              {scaleProvincialBadge(b, fatigueMult)}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="pt-2 border-t border-[#1e293b]">
+        <button
+          type="button"
+          disabled={!allowed}
+          onClick={() => {
+            playUiSound('atn');
+            onExecute(act.cost, 1.8 * fatigueMult);
+          }}
+          className={`w-full py-2 rounded-sm text-xs font-mono font-bold uppercase tracking-wider transition ${btnCls}`}
+        >
+          Ejecutar operación (-${act.cost.toFixed(1).replace('.', ',')}M)
+        </button>
       </div>
     </div>
   );
@@ -1113,53 +1219,109 @@ function ProvincialActionsGrid({ budget, actionsLeft, onExecute }: ProvincialAct
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between text-xs">
+      <div className="hoi-panel rounded-sm px-4 py-3 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
         <div>
-          Presupuesto de la campaña:{' '}
-          <strong className="text-white font-mono text-sm">{budget.toFixed(1)} argentums</strong>
+          CAJA DE CAMPAÑA LOCAL:{' '}
+          <strong className="text-amber-300 text-sm">${budget.toFixed(1)}M argentums</strong>
         </div>
-        <div className="font-mono text-slate-300">
-          Quedan <strong className="text-purple-400">{actionsLeft}</strong> acciones este mes (de 4)
+        <div className="text-slate-300">
+          OPERACIONES DISPONIBLES ESTE MES:{' '}
+          <strong className="text-emerald-400">{actionsLeft} / 4</strong>
+          <span className="text-slate-500 ml-2">· Eficacia {Math.round(fatigueMult * 100)}%</span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-        {LOCAL_ACTIONS.map((act) => {
-          const canAfford = budget >= act.cost;
-          const hasActions = actionsLeft > 0;
-          const allowed = canAfford && hasActions;
+        {LOCAL_ACTIONS.map((act) => (
+          <LocalActionCard
+            key={act.id}
+            act={act}
+            allowed={budget >= act.cost && actionsLeft > 0}
+            fatigueMult={fatigueMult}
+            onExecute={onExecute}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
-          return (
-            <div
-              key={act.id}
-              className="rounded-2xl bg-[#0f131c] border border-slate-800 p-4 flex flex-col justify-between space-y-3"
-            >
-              <div className="space-y-2">
-                <div className="text-sm font-extrabold text-white">{act.title}</div>
-                <p className="text-[11px] text-slate-400 line-clamp-2">{act.description}</p>
-                <div className="flex flex-wrap gap-1">
-                  {act.badges.map((b) => (
-                    <span
-                      key={b}
-                      className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-slate-900 border border-slate-700 text-emerald-400"
-                    >
-                      {scaleProvincialBadge(b, fatigueMult)}
-                    </span>
-                  ))}
-                </div>
-              </div>
+function ProvincialElectorateBar({ prov }: { prov: DeepProvincialData }) {
+  const { izq, centro, der } = prov.electorateBreakdown;
+  return (
+    <div className="hoi-panel rounded-sm p-4 space-y-2.5 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="font-mono font-bold uppercase tracking-wider text-amber-200">
+          Composición Ideológica del Padrón de {prov.name}
+        </span>
+        <span className="font-mono text-[11px] text-slate-400">
+          Izquierda <strong className="text-rose-400">{izq}%</strong> · Centro{' '}
+          <strong className="text-sky-300">{centro}%</strong> · Derecha{' '}
+          <strong className="text-amber-300">{der}%</strong>
+        </span>
+      </div>
+      <div className="w-full h-2.5 rounded-sm overflow-hidden flex bg-[#090d14] border border-[#263142]">
+        <div style={{ width: `${izq}%` }} className="bg-rose-500/80 h-full" />
+        <div style={{ width: `${centro}%` }} className="bg-sky-500/80 h-full" />
+        <div style={{ width: `${der}%` }} className="bg-amber-500/80 h-full" />
+      </div>
+      <p className="text-[11px] text-slate-400 leading-relaxed">
+        Manejás la campaña distrital en cualquier fase de la partida: si algún mes no ejecutás operaciones,
+        el comité local sostiene presencia mínima. Las operaciones provinciales impactan directo sobre la gobernación.
+      </p>
+    </div>
+  );
+}
 
-              <button
-                type="button"
-                disabled={!allowed}
-                onClick={() => onExecute(act.cost, 1.8 * fatigueMult)}
-                className="w-full py-2 rounded-xl text-xs font-bold bg-white hover:bg-slate-200 text-slate-950 disabled:opacity-40 disabled:cursor-not-allowed transition shadow"
-              >
-                Hacer (Costo: -{act.cost.toFixed(1).replace('.', ',')})
-              </button>
-            </div>
-          );
-        })}
+function ProvincialCandidateProfilePanel({ prov }: { prov: DeepProvincialData }) {
+  const gov =
+    prov.gobernadorCandidates.find((c) => c.id === prov.selectedGobernadorId) ??
+    prov.gobernadorCandidates[0];
+  const vice =
+    prov.viceCandidates.find((c) => c.id === prov.selectedViceId) ??
+    prov.viceCandidates[0];
+  const relevance = gov?.relevance ?? 32;
+  const playerShare = resolvePlayerShare(prov.shares);
+
+  return (
+    <div className="hoi-panel rounded-sm p-5 space-y-4 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#263142] pb-2.5">
+        <div>
+          <span className="text-[10px] font-mono uppercase tracking-widest text-amber-300 block">
+            DOSSIER DE INTELIGENCIA ELECTORAL
+          </span>
+          <h4 className="text-sm font-serif font-bold uppercase tracking-wide text-amber-100">
+            Atributos del binomio: {gov?.name} — {vice?.name}
+          </h4>
+        </div>
+        <span className="px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#8a6d33] font-mono text-[11px] text-amber-200">
+          Lealtad con Casa Rosada: {prov.loyaltyIndex}%
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center font-mono">
+        <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142]">
+          <div className="text-slate-400 text-[10px] uppercase">Relevancia</div>
+          <div className="text-lg font-extrabold text-amber-200 mt-1">{relevance} pts</div>
+        </div>
+        <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142]">
+          <div className="text-slate-400 text-[10px] uppercase">Estructura Local</div>
+          <div className="text-lg font-extrabold text-sky-400 mt-1">
+            {Math.min(95, Math.round(prov.loyaltyIndex * 0.85 + 12))} %
+          </div>
+        </div>
+        <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142]">
+          <div className="text-slate-400 text-[10px] uppercase">Intención de Voto</div>
+          <div className="text-lg font-extrabold text-emerald-400 mt-1">
+            {playerShare.toFixed(1).replace('.', ',')} %
+          </div>
+        </div>
+        <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142]">
+          <div className="text-slate-400 text-[10px] uppercase">Fiscalización Mesas</div>
+          <div className="text-lg font-extrabold text-amber-300 mt-1">
+            {Math.min(100, Math.round(relevance * 1.4 + 28))} %
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1171,38 +1333,201 @@ interface ProvincialDrilldownProps {
   onUpdateProv: (updater: (p: DeepProvincialData) => DeepProvincialData) => void;
 }
 
+function ProvincialDrilldownHeader({
+  prov,
+  onBack
+}: {
+  prov: DeepProvincialData;
+  onBack: () => void;
+}) {
+  return (
+    <div className="hoi-panel hoi-header-steel rounded-sm p-4 space-y-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              playUiSound('tab');
+              onBack();
+            }}
+            className="px-3 py-1.5 rounded-sm bg-[#090d14] border border-[#263142] hover:border-[#b89342] text-xs font-mono font-bold text-amber-100 transition inline-flex items-center gap-1.5"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-amber-300" />
+            Volver a turnos
+          </button>
+          <div>
+            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300">
+              COMANDO DE ELECCIÓN PROVINCIAL · TURNO {prov.turnYear}
+            </div>
+            <h1 className="text-xl md:text-2xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5">
+              {prov.name}
+            </h1>
+          </div>
+        </div>
+        <div className="text-xs font-mono font-bold text-amber-200 bg-[#090d14] border border-[#8a6d33] px-3 py-1.5 rounded-sm">
+          {prov.statusBadge}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-[#263142] text-xs font-mono text-slate-300">
+        <span>
+          Comicio a Gobernador: <strong className="text-amber-200">{prov.electionDate}</strong> · Mayoría / Balotaje Provincial
+        </span>
+        <span>
+          Gobernador en ejercicio: <strong className="text-white">{prov.currentGovernor}</strong> ({prov.governingParty})
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function applyLocalCampaignAction(
+  prev: DeepProvincialData,
+  cost: number,
+  boostPct: number
+): DeepProvincialData {
+  const nextShares = prev.shares.map((s) => {
+    if (s.isPlayer) {
+      return { ...s, sharePct: Math.round((s.sharePct + boostPct) * 10) / 10 };
+    }
+    const deduction = boostPct / Math.max(1, prev.shares.length - 1);
+    return { ...s, sharePct: Math.max(0.5, Math.round((s.sharePct - deduction) * 10) / 10) };
+  });
+  nextShares.sort((a, b) => b.sharePct - a.sharePct);
+
+  return {
+    ...prev,
+    localBudgetArgentums: Math.max(0, Math.round((prev.localBudgetArgentums - cost) * 10) / 10),
+    localActionsRemaining: Math.max(0, prev.localActionsRemaining - 1),
+    shares: nextShares
+  };
+}
+
+function ProvincialDrilldownSubTabs({
+  subTab,
+  actionsLeft,
+  alliancesCount,
+  onSelect
+}: {
+  subTab: 'CAMPAÑA' | 'COALICION' | 'PERFIL';
+  actionsLeft: number;
+  alliancesCount: number;
+  onSelect: (t: 'CAMPAÑA' | 'COALICION' | 'PERFIL') => void;
+}) {
+  const tabs: Array<{ id: 'CAMPAÑA' | 'COALICION' | 'PERFIL'; label: string }> = [
+    { id: 'CAMPAÑA', label: `Operaciones de Campaña (${actionsLeft}/4)` },
+    { id: 'COALICION', label: `Coalición Distrital (${alliancesCount}/2)` },
+    { id: 'PERFIL', label: 'Dossier del Binomio' }
+  ];
+
+  return (
+    <div className="flex flex-wrap gap-1 border-b border-[#263142] pb-1">
+      {tabs.map((tab) => {
+        const isSelected = subTab === tab.id;
+        const cls = isSelected
+          ? 'bg-[#17253b] text-amber-100 border-b-2 border-[#b89342]'
+          : 'text-slate-400 hover:text-slate-200 border-b-2 border-transparent';
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => {
+              playUiSound('tab');
+              onSelect(tab.id);
+            }}
+            className={`px-4 py-2 rounded-t-sm text-xs font-mono font-bold uppercase tracking-wide transition ${cls}`}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ProvincialCoalitionPanel({
+  prov,
+  coalitionBanner,
+  onClearBanner,
+  onFormAlliance,
+  onBreakAlliance
+}: {
+  prov: DeepProvincialData;
+  coalitionBanner: string | null;
+  onClearBanner: () => void;
+  onFormAlliance: (target: ProvincialPartyShare) => void;
+  onBreakAlliance: (partyName: string) => void;
+}) {
+  const alliances = prov.localAlliances ?? [];
+  return (
+    <div className="space-y-4">
+      <div className="hoi-panel rounded-sm p-4 text-xs text-slate-300 space-y-1.5">
+        <h4 className="text-sm font-serif font-bold uppercase tracking-wide text-amber-100">
+          Pactos y Frentes Electorales en {prov.name}
+        </h4>
+        <p className="text-slate-400 leading-relaxed">
+          Podés sellar alianza con hasta 2 fuerzas provinciales o vecinalistas para apuntalar tu
+          fórmula a la gobernación. Cada espacio aliado transfiere el 60 % de su caudal directo a tu boleta.
+        </p>
+      </div>
+
+      {coalitionBanner ? (
+        <div className="rounded-sm p-3 bg-amber-950/50 border border-[#b89342] text-amber-100 text-xs font-mono flex items-center justify-between">
+          <span>{coalitionBanner}</span>
+          <button
+            type="button"
+            onClick={onClearBanner}
+            className="text-amber-300 hover:text-white font-bold ml-2"
+          >
+            ✕
+          </button>
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        {prov.shares
+          .filter((s) => !s.isPlayer)
+          .map((party) => {
+            const isInAlliance = alliances.includes(party.partyName);
+            const canAddMore = alliances.length < 2 || isInAlliance;
+            return (
+              <ProvincialCoalitionCard
+                key={party.partyName}
+                party={party}
+                isInAlliance={isInAlliance}
+                canAddMore={canAddMore}
+                onFormAlliance={() => onFormAlliance(party)}
+                onBreakAlliance={() => onBreakAlliance(party.partyName)}
+              />
+            );
+          })}
+      </div>
+    </div>
+  );
+}
+
+function validateAllianceProposal(prov: DeepProvincialData, target: ProvincialPartyShare): string | null {
+  if ((prov.localAlliances ?? []).length >= 2) {
+    return 'Ya alcanzaste el límite máximo de 2 coaliciones distritales.';
+  }
+  if (isPartyIncompatible(target.partyName)) {
+    return `${target.partyName} rechazó la alianza distrital por diferencias ideológicas.`;
+  }
+  return null;
+}
+
 function ProvincialDrilldownView({ prov, onBack, onUpdateProv }: ProvincialDrilldownProps) {
   const [subTab, setSubTab] = useState<'CAMPAÑA' | 'COALICION' | 'PERFIL'>('CAMPAÑA');
   const [coalitionBanner, setCoalitionBanner] = useState<string | null>(null);
 
   const handleExecuteAction = (cost: number, boostPct: number) => {
-    onUpdateProv((prev) => {
-      const nextShares = prev.shares.map((s) => {
-        if (s.isPlayer) {
-          return { ...s, sharePct: Math.round((s.sharePct + boostPct) * 10) / 10 };
-        }
-        const deduction = boostPct / Math.max(1, prev.shares.length - 1);
-        return { ...s, sharePct: Math.max(0.5, Math.round((s.sharePct - deduction) * 10) / 10) };
-      });
-      nextShares.sort((a, b) => b.sharePct - a.sharePct);
-
-      return {
-        ...prev,
-        localBudgetArgentums: Math.max(0, Math.round((prev.localBudgetArgentums - cost) * 10) / 10),
-        localActionsRemaining: Math.max(0, prev.localActionsRemaining - 1),
-        shares: nextShares
-      };
-    });
+    onUpdateProv((prev) => applyLocalCampaignAction(prev, cost, boostPct));
   };
 
   const handleFormAlliance = (target: ProvincialPartyShare) => {
-    const currentAlliances = prov.localAlliances ?? [];
-    if (currentAlliances.length >= 2) {
-      setCoalitionBanner('Ya alcanzaste el límite máximo de 2 coaliciones distritales.');
-      return;
-    }
-    if (isPartyIncompatible(target.partyName)) {
-      setCoalitionBanner(`${target.partyName} rechazó la alianza distrital por diferencias ideológicas.`);
+    const errorMsg = validateAllianceProposal(prov, target);
+    if (errorMsg) {
+      setCoalitionBanner(errorMsg);
       return;
     }
     const transfer = Math.max(0.3, Math.round(target.sharePct * 0.6 * 10) / 10);
@@ -1226,38 +1551,8 @@ function ProvincialDrilldownView({ prov, onBack, onUpdateProv }: ProvincialDrill
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800/80 pb-4 gap-2">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              playUiSound('tab');
-              onBack();
-            }}
-            className="px-3 py-1.5 rounded-sm bg-[#090d14] border border-[#263142] hover:border-[#b89342] text-xs font-mono font-bold text-white transition inline-flex items-center gap-1.5"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Volver a turnos
-          </button>
-          <div>
-            <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-300">
-              Elección Provincial
-            </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-white mt-0.5">{prov.name}</h1>
-          </div>
-        </div>
-        <div className="text-xs font-mono font-bold text-amber-400 bg-amber-950/40 border border-amber-900/60 px-3 py-1 rounded-full">
-          {prov.statusBadge}
-        </div>
-      </div>
-
-      <div className="text-xs text-slate-400">
-        Elección a gobernador: <strong className="text-white">{prov.electionDate}</strong> · con
-        balotaje (más del 50 %) · gobierna{' '}
-        <strong className="text-white">{prov.currentGovernor}</strong> ({prov.governingParty})
-      </div>
-
+    <div className="space-y-5 rosca-panel-enter">
+      <ProvincialDrilldownHeader prov={prov} onBack={onBack} />
       <ProvincialVoteBar shares={prov.shares} />
 
       <ProvincialFormulaSelector
@@ -1266,121 +1561,35 @@ function ProvincialDrilldownView({ prov, onBack, onUpdateProv }: ProvincialDrill
         onChangeVice={(id) => onUpdateProv((prev) => ({ ...prev, selectedViceId: id }))}
       />
 
-      <div className="text-xs text-slate-400 bg-[#0b0e15] border border-slate-800/80 p-3.5 rounded-xl leading-relaxed">
-        Electorado de {prov.name}: izquierda{' '}
-        <strong className="text-white">{prov.electorateBreakdown.izq} %</strong> · centro{' '}
-        <strong className="text-white">{prov.electorateBreakdown.centro} %</strong> · derecha{' '}
-        <strong className="text-white">{prov.electorateBreakdown.der} %</strong>. Un sector no
-        puede sacar mucho más que su peso en la provincia.
-      </div>
-
-      <div className="rounded-sm bg-[#090d14] border border-[#263142] p-4 text-xs text-slate-300 leading-relaxed">
-        Manejás la campaña de este candidato en cualquier fase del juego: si algún mes no hacés
-        acciones, el partido hace un par por su cuenta (más débiles que las tuyas). Las acciones
-        provinciales rinden más que las nacionales.
-      </div>
+      <ProvincialElectorateBar prov={prov} />
 
       <div className="space-y-4">
-        <div className="flex gap-2 border-b border-slate-800 pb-2">
-          {(['CAMPAÑA', 'COALICION', 'PERFIL'] as const).map((tab) => {
-            const labels: Record<string, string> = {
-              CAMPAÑA: 'Campaña (4 acciones)',
-              COALICION: 'Coalición',
-              PERFIL: 'Perfil del candidato'
-            };
-            return (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setSubTab(tab)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
-                  subTab === tab
-                    ? 'bg-white text-slate-950 shadow'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                {labels[tab]}
-              </button>
-            );
-          })}
-        </div>
+        <ProvincialDrilldownSubTabs
+          subTab={subTab}
+          actionsLeft={prov.localActionsRemaining}
+          alliancesCount={prov.localAlliances?.length ?? 0}
+          onSelect={setSubTab}
+        />
 
-        {subTab === 'CAMPAÑA' && (
+        {subTab === 'CAMPAÑA' ? (
           <ProvincialActionsGrid
             budget={prov.localBudgetArgentums}
             actionsLeft={prov.localActionsRemaining}
             onExecute={handleExecuteAction}
           />
-        )}
+        ) : null}
 
-        {subTab === 'COALICION' && (
-          <div className="space-y-4">
-            <div className="rounded-2xl bg-[#0f131c] border border-slate-800 p-5 text-xs text-slate-300 space-y-2">
-              <h4 className="text-sm font-bold text-white">Alianzas distritales en {prov.name}</h4>
-              <p className="text-slate-400 leading-relaxed">
-                Podés sellar alianza con hasta 2 fuerzas provinciales o vecinalistas para fortalecer tu
-                candidatura a gobernador. Cada aliado suma hasta el 60 % de su caudal electoral directamente
-                a tu fórmula.
-              </p>
-            </div>
+        {subTab === 'COALICION' ? (
+          <ProvincialCoalitionPanel
+            prov={prov}
+            coalitionBanner={coalitionBanner}
+            onClearBanner={() => setCoalitionBanner(null)}
+            onFormAlliance={handleFormAlliance}
+            onBreakAlliance={handleBreakAlliance}
+          />
+        ) : null}
 
-            {coalitionBanner ? (
-              <div className="rounded-xl p-3 bg-purple-950/60 border border-purple-800 text-purple-200 text-xs flex items-center justify-between">
-                <span>{coalitionBanner}</span>
-                <button
-                  type="button"
-                  onClick={() => setCoalitionBanner(null)}
-                  className="text-purple-400 hover:text-white font-bold ml-2"
-                >
-                  ✕
-                </button>
-              </div>
-            ) : null}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              {prov.shares
-                .filter((s) => !s.isPlayer)
-                .map((party) => {
-                  const isInAlliance = (prov.localAlliances ?? []).includes(party.partyName);
-                  const canAddMore = (prov.localAlliances?.length ?? 0) < 2 || isInAlliance;
-                  return (
-                    <ProvincialCoalitionCard
-                      key={party.partyName}
-                      party={party}
-                      isInAlliance={isInAlliance}
-                      canAddMore={canAddMore}
-                      onFormAlliance={() => handleFormAlliance(party)}
-                      onBreakAlliance={() => handleBreakAlliance(party.partyName)}
-                    />
-                  );
-                })}
-            </div>
-          </div>
-        )}
-
-        {subTab === 'PERFIL' && (
-          <div className="rounded-2xl bg-[#0f131c] border border-slate-800 p-5 text-xs text-slate-300 space-y-3">
-            <h4 className="text-sm font-bold text-white">Atributos del binomio provincial</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-              <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
-                <div className="text-slate-400 text-[10px]">RELEVANCIA</div>
-                <div className="text-lg font-bold text-white mt-1">27</div>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
-                <div className="text-slate-400 text-[10px]">ESTRUCTURA LOCAL</div>
-                <div className="text-lg font-bold text-sky-400 mt-1">64 %</div>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
-                <div className="text-slate-400 text-[10px]">IMAGEN POSITIVA</div>
-                <div className="text-lg font-bold text-emerald-400 mt-1">32 %</div>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
-                <div className="text-slate-400 text-[10px]">CONVENCIMIENTO</div>
-                <div className="text-lg font-bold text-purple-400 mt-1">29 %</div>
-              </div>
-            </div>
-          </div>
-        )}
+        {subTab === 'PERFIL' ? <ProvincialCandidateProfilePanel prov={prov} /> : null}
       </div>
     </div>
   );

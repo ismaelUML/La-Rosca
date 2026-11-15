@@ -1,9 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowRight, Check, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
+import { ArrowRight, Check, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { playUiSound } from '@/lib/gameFeedback';
 import type {
   BlocStance,
-  ChamberVoteDetail,
   ConcessionType,
   CongressBillCategory,
   CongressBillProject,
@@ -19,6 +18,7 @@ import {
   executeFullCongressVote,
   INITIAL_CONGRESS_BILLS
 } from '@argentina-sim/domain';
+import { CongressRealtimeVoteModal } from './CongressRealtimeVoteModal.js';
 
 // Vista de Rosca y Votacion de Leyes en formato de tarjetitas tacticas (estilo Reformas Institucionales):
 // Catalogo de proyectos con filtros, buscador, tarjetas detalladas con impacto macro y proyeccion de bancas,
@@ -698,91 +698,6 @@ function BlocNegotiationCard({ bloc, onConcession }: BlocNegotiationCardProps) {
   );
 }
 
-function ChamberVoteBreakdownTable({ detail }: { detail: ChamberVoteDetail }) {
-  const isDip = detail.chamber === 'DIPUTADOS';
-  return (
-    <div className="p-4 rounded-sm bg-[#090d14] border border-[#263142] space-y-2">
-      <div className="flex justify-between items-center text-xs font-bold">
-        <span className="text-white">{isDip ? 'Cámara de Diputados' : 'Senado de la Nación'}</span>
-        <span className={detail.passed ? 'text-emerald-400 font-mono' : 'text-rose-400 font-mono'}>
-          {detail.yesVotes} afirmativos / {detail.totalSeats} (Quórum: {detail.quorumNeeded})
-        </span>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2 text-center text-xs font-mono pt-1">
-        <div className="p-2 rounded-sm bg-emerald-950/40 border border-emerald-800/60 text-emerald-300">
-          <div>Afirmativos</div>
-          <div className="text-lg font-bold">{detail.yesVotes}</div>
-        </div>
-        <div className="p-2 rounded-sm bg-rose-950/40 border border-rose-800/60 text-rose-300">
-          <div>Negativos</div>
-          <div className="text-lg font-bold">{detail.noVotes}</div>
-        </div>
-        <div className="p-2 rounded-sm bg-[#111824] border border-[#263142] text-slate-400">
-          <div>Abstenciones</div>
-          <div className="text-lg font-bold">{detail.abstentions}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function VoteResultModal({
-  outcome,
-  onClose
-}: {
-  outcome: CongressVoteOutcome | null;
-  onClose: () => void;
-}) {
-  if (!outcome) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-lg hoi-panel rounded-sm p-6 space-y-4 shadow-2xl">
-        <div className="flex justify-between items-start border-b border-[#263142] pb-3">
-          <div>
-            <span
-              className={`px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold border uppercase ${
-                outcome.passed
-                  ? 'bg-emerald-950 text-emerald-300 border-emerald-700'
-                  : 'bg-rose-950 text-rose-300 border-rose-700'
-              }`}
-            >
-              {outcome.passed ? 'PROYECTO SANCIONADO' : 'PROYECTO RECHAZADO'}
-            </span>
-            <h3 className="text-lg font-extrabold text-white mt-1">{outcome.billTitle}</h3>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar recinto"
-            className="text-slate-400 hover:text-white p-1"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        <p className="text-xs text-slate-300 leading-relaxed">{outcome.summaryMessage}</p>
-
-        <div className="space-y-3">
-          <ChamberVoteBreakdownTable detail={outcome.deputies} />
-          <ChamberVoteBreakdownTable detail={outcome.senate} />
-        </div>
-
-        <div className="pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="hoi-btn-gold w-full py-2.5 rounded-sm font-mono font-bold text-xs uppercase tracking-wide"
-          >
-            Entendido · Cerrar recinto
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function resolveBillPersistedStatus(
   id: string,
   enactedSet: Set<string>,
@@ -936,7 +851,11 @@ export function CongressBillsNegotiationSection({
         ))}
       </div>
 
-      <VoteResultModal outcome={voteOutcome} onClose={() => setVoteOutcome(null)} />
+      <CongressRealtimeVoteModal
+        outcome={voteOutcome}
+        blocs={blocs}
+        onClose={() => setVoteOutcome(null)}
+      />
     </div>
   );
 }

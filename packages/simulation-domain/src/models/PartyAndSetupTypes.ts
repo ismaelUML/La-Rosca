@@ -115,6 +115,8 @@ export type IndicatorCategory =
   | 'SECTOR_EXTERNO'
   | 'FINANZAS'
   | 'FINANZAS_PUBLICAS'
+  | 'ENERGIA_Y_MINERIA'
+  | 'EDUCACION_Y_SALUD'
   | 'OPINION_PUBLICA'
   | 'DEFENSA';
 

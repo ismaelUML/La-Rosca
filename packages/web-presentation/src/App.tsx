@@ -190,6 +190,8 @@ function CampaignActivePanel({
     POBLACION: <CampaignDemografiaPaisView key="POBLACION" initialTab="POBLACION" campaignState={state} />,
     INMIGRACION: <CampaignDemografiaPaisView key="INMIGRACION" initialTab="INMIGRACION" campaignState={state} />,
     EMIGRACION: <CampaignDemografiaPaisView key="EMIGRACION" initialTab="EMIGRACION" campaignState={state} />,
+    TEJIDO_SOCIAL: <CampaignDemografiaPaisView key="TEJIDO_SOCIAL" initialTab="TEJIDO_SOCIAL" campaignState={state} />,
+    MATRIZ_PRODUCTIVA: <CampaignDemografiaPaisView key="MATRIZ_PRODUCTIVA" initialTab="MATRIZ_PRODUCTIVA" campaignState={state} />,
     REGISTRO_DIARIO: <RegistroHistoryView historyLog={state.historyLog} />
   };
 
@@ -316,6 +318,46 @@ function ActiveSectionRenderer(props: ActiveSectionRendererProps) {
     ),
     PROVINCIAS_Y_DEFENSA: (
       <JudicialAndProvincesView state={props.state} onDispatch={props.onDispatch} />
+    ),
+    PAIS_POBLACION: (
+      <CampaignDemografiaPaisView
+        key="GOV_PAIS_POBLACION"
+        initialTab="POBLACION"
+        govState={props.state}
+        campaignState={props.campaignState}
+      />
+    ),
+    PAIS_INMIGRACION: (
+      <CampaignDemografiaPaisView
+        key="GOV_PAIS_INMIGRACION"
+        initialTab="INMIGRACION"
+        govState={props.state}
+        campaignState={props.campaignState}
+      />
+    ),
+    PAIS_EMIGRACION: (
+      <CampaignDemografiaPaisView
+        key="GOV_PAIS_EMIGRACION"
+        initialTab="EMIGRACION"
+        govState={props.state}
+        campaignState={props.campaignState}
+      />
+    ),
+    PAIS_TEJIDO_SOCIAL: (
+      <CampaignDemografiaPaisView
+        key="GOV_PAIS_TEJIDO_SOCIAL"
+        initialTab="TEJIDO_SOCIAL"
+        govState={props.state}
+        campaignState={props.campaignState}
+      />
+    ),
+    PAIS_MATRIZ_PRODUCTIVA: (
+      <CampaignDemografiaPaisView
+        key="GOV_PAIS_MATRIZ_PRODUCTIVA"
+        initialTab="MATRIZ_PRODUCTIVA"
+        govState={props.state}
+        campaignState={props.campaignState}
+      />
     )
   };
 

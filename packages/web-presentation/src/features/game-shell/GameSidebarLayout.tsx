@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { GameSetupConfiguration, SimulationState } from '@argentina-sim/domain';
 import {
   BarChart3,
+  Globe,
   Landmark,
   LogOut,
   Map as MapIcon,
@@ -40,18 +41,35 @@ export type InGameSidebarSection =
   | 'APOYOS'
   | 'PARTIDO_PROVINCIAS'
   | 'CONGRESO_Y_JUSTICIA'
-  | 'PROVINCIAS_Y_DEFENSA';
+  | 'PROVINCIAS_Y_DEFENSA'
+  | 'PAIS_POBLACION'
+  | 'PAIS_INMIGRACION'
+  | 'PAIS_EMIGRACION'
+  | 'PAIS_TEJIDO_SOCIAL'
+  | 'PAIS_MATRIZ_PRODUCTIVA';
 
 const GROUP_ICONS: Record<string, React.ReactNode> = {
   DESPACHO: <Landmark className="w-3.5 h-3.5" />,
   ECONOMÍA: <BarChart3 className="w-3.5 h-3.5" />,
   PRESUPUESTO: <Wallet className="w-3.5 h-3.5" />,
-  'POLÍTICA Y CONGRESO': <Scale className="w-3.5 h-3.5" />
+  'POLÍTICA Y CONGRESO': <Scale className="w-3.5 h-3.5" />,
+  PAÍS: <Globe className="w-3.5 h-3.5" />
 };
 
 type SidebarGroupSpec = {
   groupTitle: string;
   items: Array<{ id: InGameSidebarSection; label: string }>;
+};
+
+const PAIS_SIDEBAR_GROUP: SidebarGroupSpec = {
+  groupTitle: 'PAÍS',
+  items: [
+    { id: 'PAIS_POBLACION', label: 'Población y Demografía' },
+    { id: 'PAIS_INMIGRACION', label: 'Inmigración' },
+    { id: 'PAIS_EMIGRACION', label: 'Emigración' },
+    { id: 'PAIS_TEJIDO_SOCIAL', label: 'Salud, Educación y Sociedad' },
+    { id: 'PAIS_MATRIZ_PRODUCTIVA', label: 'Matriz Productiva y Energía' }
+  ]
 };
 
 const PRESIDENT_SIDEBAR_GROUPS: SidebarGroupSpec[] = [
@@ -89,7 +107,8 @@ const PRESIDENT_SIDEBAR_GROUPS: SidebarGroupSpec[] = [
       { id: 'PARTIDO_PROVINCIAS', label: 'Partido en las provincias' },
       { id: 'CONGRESO_Y_JUSTICIA', label: 'Justicia y 24 Provincias' }
     ]
-  }
+  },
+  PAIS_SIDEBAR_GROUP
 ];
 
 const GOVERNOR_SIDEBAR_GROUPS: SidebarGroupSpec[] = [
@@ -122,7 +141,8 @@ const GOVERNOR_SIDEBAR_GROUPS: SidebarGroupSpec[] = [
       { id: 'CAMARAS', label: 'Bancas en el Congreso' },
       { id: 'PARTIDO_PROVINCIAS', label: 'Estructura Territorial' }
     ]
-  }
+  },
+  PAIS_SIDEBAR_GROUP
 ];
 
 const LEGISLATOR_SIDEBAR_GROUPS: SidebarGroupSpec[] = [
@@ -148,7 +168,8 @@ const LEGISLATOR_SIDEBAR_GROUPS: SidebarGroupSpec[] = [
       { id: 'IMPUESTOS_PROPIOS', label: 'Iniciativas Tributarias' },
       { id: 'INDICADORES', label: 'Monitor Macro OPC' }
     ]
-  }
+  },
+  PAIS_SIDEBAR_GROUP
 ];
 
 const SIDEBAR_GROUPS_BY_ROLE: Record<GameSetupConfiguration['role'], SidebarGroupSpec[]> = {

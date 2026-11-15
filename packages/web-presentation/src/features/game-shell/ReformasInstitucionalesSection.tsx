@@ -1,13 +1,18 @@
 import React, { useMemo, useState } from 'react';
 import { Check, Search, X } from 'lucide-react';
 import {
+  buildDynamicParliamentaryBlocs,
+  executeFullCongressVote,
   INITIAL_FIXED_REFORMS,
+  type CongressNegotiationBloc,
+  type CongressVoteOutcome,
   type FixedReformItem,
   type PolicyAction,
   type ReformCategory,
   type SimulationState
 } from '@argentina-sim/domain';
 import { playUiSound } from '@/lib/gameFeedback';
+import { CongressRealtimeVoteModal } from './CongressRealtimeVoteModal.js';
 
 // Vista de Reformas Institucionales y Electorales fijas (ea(...) en QQG):
 // Catálogo constitucional y electoral de 20 reformas estructurales con reglas
@@ -167,6 +172,34 @@ interface ReformasInstitucionalesSectionProps {
   onDispatch: (action: PolicyAction) => void;
 }
 
+function buildReformVoteOutcome(
+  reform: FixedReformItem,
+  blocs: CongressNegotiationBloc[]
+): CongressVoteOutcome {
+  const boostedBlocs = blocs.map((b) => ({
+    ...b,
+    probabilityYes: Math.min(98, Math.round(b.probabilityYes + reform.publicSupportPct * 0.35))
+  }));
+  const syntheticBill = {
+    id: reform.id,
+    title: `Reforma: ${reform.name}`,
+    shortDescription: reform.description,
+    category: 'INSTITUCIONAL' as const,
+    urgency: 'ESTRUCTURAL' as const,
+    status: 'PENDIENTE' as const,
+    consequences: {}
+  };
+  return executeFullCongressVote(syntheticBill, boostedBlocs, Date.now());
+}
+
+function buildReformToggleNotice(target: FixedReformItem): string {
+  if (!target.active) {
+    const mutual = target.mutuallyExclusiveWith ? ` (derogando ${target.mutuallyExclusiveWith})` : '';
+    return `Se promulgó y guardó la reforma: ${target.name}${mutual}.`;
+  }
+  return `Se derogó la reforma: ${target.name}.`;
+}
+
 export function ReformasInstitucionalesSection({
   state,
   onDispatch
@@ -174,7 +207,12 @@ export function ReformasInstitucionalesSection({
   const [selectedCat, setSelectedCat] = useState<'TODAS' | ReformCategory>('TODAS');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [bannerNotice, setBannerNotice] = useState<string | null>(null);
+  const [voteOutcome, setVoteOutcome] = useState<CongressVoteOutcome | null>(null);
 
+  const blocs = useMemo(
+    () => buildDynamicParliamentaryBlocs(state, 'INSTITUCIONAL'),
+    [state]
+  );
   const activeSet = useMemo(() => new Set(state.activeReformIds ?? []), [state.activeReformIds]);
   const reforms = useMemo(
     () => INITIAL_FIXED_REFORMS.map((r) => ({ ...r, active: activeSet.has(r.id) })),
@@ -183,13 +221,12 @@ export function ReformasInstitucionalesSection({
 
   const handleToggle = (id: string) => {
     const prevTarget = reforms.find((r) => r.id === id);
-    onDispatch({ type: 'TOGGLE_INSTITUTIONAL_REFORM', reformId: id });
-    if (prevTarget && !prevTarget.active) {
-      const mutual = prevTarget.mutuallyExclusiveWith ? ` (derogando ${prevTarget.mutuallyExclusiveWith})` : '';
-      setBannerNotice(`Se promulgó y guardó la reforma: ${prevTarget.name}${mutual}.`);
-    } else if (prevTarget) {
-      setBannerNotice(`Se derogó la reforma: ${prevTarget.name}.`);
+    if (!prevTarget) return;
+    if (!prevTarget.active) {
+      setVoteOutcome(buildReformVoteOutcome(prevTarget, blocs));
     }
+    onDispatch({ type: 'TOGGLE_INSTITUTIONAL_REFORM', reformId: id });
+    setBannerNotice(buildReformToggleNotice(prevTarget));
   };
 
   const filtered = reforms.filter(
@@ -205,7 +242,7 @@ export function ReformasInstitucionalesSection({
           <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300">
             Sistema Electoral y Constitución Nacional
           </div>
-          <h2 className="text-lg md:text-xl font-extrabold text-white mt-0.5">
+          <h2 className="text-lg md:text-xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5">
             Reformas Institucionales y Electorales
           </h2>
           <p className="text-xs text-slate-300 mt-1 max-w-2xl">
@@ -264,6 +301,12 @@ export function ReformasInstitucionalesSection({
           <ReformCard key={reform.id} reform={reform} onToggle={handleToggle} />
         ))}
       </div>
+
+      <CongressRealtimeVoteModal
+        outcome={voteOutcome}
+        blocs={blocs}
+        onClose={() => setVoteOutcome(null)}
+      />
     </div>
   );
 }

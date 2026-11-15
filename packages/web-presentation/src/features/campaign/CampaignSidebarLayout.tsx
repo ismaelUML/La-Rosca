@@ -40,6 +40,8 @@ export type CampaignNavSection =
   | 'POBLACION'
   | 'INMIGRACION'
   | 'EMIGRACION'
+  | 'TEJIDO_SOCIAL'
+  | 'MATRIZ_PRODUCTIVA'
   | 'REGISTRO_DIARIO';
 
 interface CampaignSidebarLayoutProps {
@@ -93,9 +95,11 @@ const CAMPAIGN_NAV_GROUPS = [
   {
     title: 'PAÍS',
     items: [
-      { id: 'POBLACION' as const, label: 'Población' },
+      { id: 'POBLACION' as const, label: 'Población y Demografía' },
       { id: 'INMIGRACION' as const, label: 'Inmigración' },
-      { id: 'EMIGRACION' as const, label: 'Emigración' }
+      { id: 'EMIGRACION' as const, label: 'Emigración' },
+      { id: 'TEJIDO_SOCIAL' as const, label: 'Salud y Educación' },
+      { id: 'MATRIZ_PRODUCTIVA' as const, label: 'Matriz Productiva' }
     ]
   },
   {
