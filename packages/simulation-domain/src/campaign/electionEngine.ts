@@ -1,4 +1,5 @@
 import type { CampaignSimulationState } from '../models/CampaignTypes.js';
+import type { PlayableRole } from '../models/SimulationTypes.js';
 
 export type ElectionStageType = 'PASO' | 'GENERALES' | 'BALOTAJE';
 
@@ -23,6 +24,7 @@ export interface EscrutinioData {
   verdictSubtitle: string;
   isVictory: boolean;
   isRunoff: boolean;
+  isDefeat: boolean;
 }
 
 interface NationalPresetTicket {
@@ -87,14 +89,38 @@ function resolveCoalitionLabel(partySigla: string, coalitionParties?: string[]):
   return partySigla;
 }
 
-function resolveEscrutinioTitle(isDirectVictory: boolean, isPlayerWinner: boolean, isPaso: boolean): string {
+const ROLE_WIN_TITLES: Record<PlayableRole, string> = {
+  PRESIDENTE: 'Ganaste la Presidencia',
+  GOBERNADOR: 'Ganaste la Gobernación',
+  DIPUTADO: 'Conseguiste tu Banca en Diputados',
+  SENADOR: 'Conseguiste tu Banca en el Senado'
+};
+
+function resolveBalotajeTitle(isPlayerWinner: boolean, role: PlayableRole): string {
+  return isPlayerWinner ? ROLE_WIN_TITLES[role] : 'Fuiste derrotado en el balotaje';
+}
+
+function resolveFirstRoundTitle(
+  isDirectVictory: boolean,
+  isPlayerWinner: boolean,
+  playerInTopTwo: boolean
+): string {
   if (isDirectVictory) {
     return isPlayerWinner ? 'Ganaste en primera vuelta' : 'Ganó la oposición en primera vuelta';
   }
+  return playerInTopTwo ? 'Vas a segunda vuelta' : 'Quedaste afuera del balotaje';
+}
+
+function resolveEscrutinioTitle(
+  isDirectVictory: boolean,
+  isPlayerWinner: boolean,
+  isPaso: boolean,
+  playerInTopTwo: boolean
+): string {
   if (isPaso) {
     return isPlayerWinner ? 'Ganaste las PASO' : 'Quedaste posicionado para las Generales';
   }
-  return 'Vas a segunda vuelta';
+  return resolveFirstRoundTitle(isDirectVictory, isPlayerWinner, playerInTopTwo);
 }
 
 function resolveRivalTickets(playerPartySigla: string, coalitionParties: string[] = []): NationalPresetTicket[] {
@@ -172,8 +198,10 @@ function computeBalotajeEscrutinio(
   abstencion: number,
   coalitionLabel: string
 ): EscrutinioData {
+  // Antes el piso estaba clavado en 48%, asi que hasta haciendo una campana desastrosa
+  // empatabas tecnico 48 a 52. Bajamos el piso a 30% para que una paliza se vea como paliza.
   const playerShare = Math.min(80, Math.max(20, state.votingIntention.intencionVotoGeneral));
-  const playerPct = Math.min(78, Math.max(48, Math.round(playerShare * 1.35 * 10) / 10));
+  const playerPct = Math.min(78, Math.max(30, Math.round(playerShare * 1.35 * 10) / 10));
   const rivalPct = Math.round((100 - playerPct) * 10) / 10;
   const playerVotes = Math.round((votosValidos * playerPct) / 100);
   const isPlayerWinner = playerPct > rivalPct;
@@ -194,7 +222,7 @@ function computeBalotajeEscrutinio(
       color: topRival.color,
       isPlayer: false
     }
-  ];
+  ].sort((a, b) => b.pct - a.pct);
 
   return {
     padronTotal: PADRON_NACIONAL,
@@ -204,11 +232,34 @@ function computeBalotajeEscrutinio(
     votosNulos,
     abstencion,
     results,
-    verdictTitle: isPlayerWinner ? 'Ganaste la Presidencia' : 'Fuiste derrotado en el balotaje',
+    verdictTitle: resolveBalotajeTitle(isPlayerWinner, state.targetRole),
     verdictSubtitle: `Sacaste ${playerPct.toFixed(1).replace('.', ',')} % (${playerVotes.toLocaleString('es-AR')} votos).`,
     isVictory: isPlayerWinner,
-    isRunoff: false
+    isRunoff: false,
+    isDefeat: !isPlayerWinner
   };
+}
+
+function resolveFirstRoundFlags(
+  directVictory: boolean,
+  isFirstPlayer: boolean,
+  playerInTopTwo: boolean
+): { isVictory: boolean; isRunoff: boolean; isDefeat: boolean } {
+  const isVictory = directVictory && isFirstPlayer;
+  const isRunoff = !directVictory && playerInTopTwo;
+  return { isVictory, isRunoff, isDefeat: !isVictory && !isRunoff };
+}
+
+function resolveGeneralesOutcomeFlags(
+  stage: ElectionStageType,
+  directVictory: boolean,
+  isFirstPlayer: boolean,
+  playerInTopTwo: boolean
+): { isVictory: boolean; isRunoff: boolean; isDefeat: boolean } {
+  if (stage === 'PASO') {
+    return { isVictory: Boolean(directVictory && isFirstPlayer), isRunoff: false, isDefeat: false };
+  }
+  return resolveFirstRoundFlags(directVictory, isFirstPlayer, playerInTopTwo);
 }
 
 function computeGeneralesEscrutinio(
@@ -235,7 +286,8 @@ function computeGeneralesEscrutinio(
   const first = rawResults[0]!;
   const second = rawResults[1] ?? first;
   const directVictory = checkConstitutionalFirstRoundWin(first.pct, first.pct - second.pct);
-  const isRunoff = stage === 'GENERALES' ? !directVictory : false;
+  const playerInTopTwo = first.isPlayer || second.isPlayer;
+  const flags = resolveGeneralesOutcomeFlags(stage, directVictory, first.isPlayer, playerInTopTwo);
 
   return {
     padronTotal: PADRON_NACIONAL,
@@ -245,10 +297,9 @@ function computeGeneralesEscrutinio(
     votosNulos,
     abstencion,
     results: rawResults,
-    verdictTitle: resolveEscrutinioTitle(directVictory, first.isPlayer, stage === 'PASO'),
+    verdictTitle: resolveEscrutinioTitle(directVictory, first.isPlayer, stage === 'PASO', playerInTopTwo),
     verdictSubtitle: `Sacaste ${playerPct.toFixed(1).replace('.', ',')} % (${playerVotes.toLocaleString('es-AR')} votos).`,
-    isVictory: directVictory && first.isPlayer,
-    isRunoff
+    ...flags
   };
 }
 

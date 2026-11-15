@@ -3,6 +3,7 @@ import type { SectorMeasureCard } from '../models/PartyAndSetupTypes.js';
 import { clamp, round2 } from '../economy/mathUtils.js';
 import { INITIAL_CONGRESS_BILLS } from '../politics/congressEngine.js';
 import { INITIAL_FIXED_REFORMS, toggleFixedReformState } from '../politics/reformasInstitucionalesEngine.js';
+import { executeRolePolicyAction } from '../politics/roleMandateEngine.js';
 import { approveAllRigiProjects, approveRigiProject } from './rigiEngine.js';
 import { adjustTrustLedger, enqueueMacroShock } from './trustAndLagEngine.js';
 
@@ -221,6 +222,9 @@ function applyJudicialOrTaxAction(state: SimulationState, action: PolicyAction):
       t.id === action.taxId ? { ...t, currentRatePct: round2(clamp(action.newRatePct, 0, 65)) } : t
     );
     return { ...state, taxes };
+  }
+  if (action.type === 'EXECUTE_ROLE_ACTION') {
+    return executeRolePolicyAction(state, action.actionId);
   }
   return state;
 }

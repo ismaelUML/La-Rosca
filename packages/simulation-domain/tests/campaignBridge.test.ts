@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { applyCampaignBridgeToGovernment, computeEscrutinio } from '@argentina-sim/domain';
+import {
+  advanceSimulationMonth,
+  applyCampaignBridgeToGovernment,
+  applyPolicyAction,
+  computeEscrutinio,
+  getOrInitGovernorMandate,
+  getOrInitLegislatorMandate
+} from '@argentina-sim/domain';
 import {
   createInitialCampaignState,
   createInitialSimulationState2027,
@@ -60,6 +67,43 @@ describe('Puente Campaña -> Gobierno', () => {
     });
     expect(runoff.isVictory).toBe(false);
     expect(runoff.isRunoff).toBe(true);
+    expect(runoff.isDefeat).toBe(false);
+
+    const balotajeDefeat = computeEscrutinio('BALOTAJE', {
+      ...campaign,
+      votingIntention: { ...campaign.votingIntention, intencionVotoGeneral: 28.0 }
+    });
+    expect(balotajeDefeat.isVictory).toBe(false);
+    expect(balotajeDefeat.isDefeat).toBe(true);
+    expect(balotajeDefeat.verdictTitle).toBe('Fuiste derrotado en el balotaje');
+    expect(balotajeDefeat.results[0]!.isPlayer).toBe(false);
+  });
+
+  it('ejecuta el bucle jugable propio de Gobernador, Diputado y Senador', () => {
+    let govState = createInitialSimulationState2027('GOBERNADOR', 'ESTANDAR_2027', 'CORDOBA');
+    const baseGov = getOrInitGovernorMandate(govState);
+    expect(baseGov.provinceId).toBe('CORDOBA');
+
+    govState = applyPolicyAction(govState, { type: 'EXECUTE_ROLE_ACTION', actionId: 'LICITAR_OBRA_PROVINCIAL' });
+    govState = applyPolicyAction(govState, { type: 'EXECUTE_ROLE_ACTION', actionId: 'EXIGIR_COPARTICIPACION_Y_ATN' });
+    govState = advanceSimulationMonth(govState);
+    expect(govState.governorMandate?.publicWorksExecutionPct).toBeGreaterThan(baseGov.publicWorksExecutionPct);
+    expect(govState.governorMandate?.nationalProjectionIndex).toBeGreaterThan(baseGov.nationalProjectionIndex);
+
+    let depState = createInitialSimulationState2027('DIPUTADO', 'ESTANDAR_2027', 'PBA');
+    depState = applyPolicyAction(depState, { type: 'EXECUTE_ROLE_ACTION', actionId: 'PRESENTAR_PROYECTO_PROPIO' });
+    depState = applyPolicyAction(depState, { type: 'EXECUTE_ROLE_ACTION', actionId: 'DISCURSO_ENCENDIDO_RECINTO' });
+    depState = advanceSimulationMonth(depState);
+    expect(depState.legislatorMandate?.chamber).toBe('DIPUTADOS');
+    expect(depState.legislatorMandate?.authoredBillsSubmitted).toBe(1);
+
+    let senState = createInitialSimulationState2027('SENADOR', 'ESTANDAR_2027', 'MENDOZA');
+    const initSen = getOrInitLegislatorMandate(senState);
+    expect(initSen.chamber).toBe('SENADO');
+    senState = applyPolicyAction(senState, { type: 'EXECUTE_ROLE_ACTION', actionId: 'INTERPELAR_MINISTRO_O_PLIEGO' });
+    senState = applyPolicyAction(senState, { type: 'EXECUTE_ROLE_ACTION', actionId: 'DEFENDER_PARTIDAS_PROVINCIALES' });
+    expect(senState.legislatorMandate?.pliegosOrInterpelacionesCount).toBe(1);
+    expect(senState.legislatorMandate?.territorialBackingPct).toBeGreaterThan(initSen.territorialBackingPct);
   });
 });
 

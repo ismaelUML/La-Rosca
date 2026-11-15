@@ -290,13 +290,32 @@ function DockGroupTabs({
   );
 }
 
+const DESPACHO_LABEL_BY_ROLE: Record<GameSetupConfiguration['role'], string> = {
+  PRESIDENTE: 'Despacho Presidencial',
+  GOBERNADOR: 'Gobernación Provincial',
+  DIPUTADO: 'Banca en Diputados',
+  SENADOR: 'Banca en el Senado'
+};
+
+function resolveSidebarItemLabel(
+  item: { id: InGameSidebarSection; label: string },
+  role: GameSetupConfiguration['role']
+): string {
+  if (item.id === 'DESPACHO_RESUMEN') {
+    return DESPACHO_LABEL_BY_ROLE[role];
+  }
+  return item.label;
+}
+
 function CommandDockNav({
+  role,
   activeSection,
   panelVisible,
   onSelectSection,
   onOpenPanel,
   onTogglePanel
 }: {
+  role: GameSetupConfiguration['role'];
   activeSection: InGameSidebarSection;
   panelVisible: boolean;
   onSelectSection: (sec: InGameSidebarSection) => void;
@@ -332,7 +351,7 @@ function CommandDockNav({
                   onClick={() => onSelectSection(item.id)}
                   className={`px-3 py-1 rounded-sm border text-xs font-semibold transition ${itemCls}`}
                 >
-                  {item.label}
+                  {resolveSidebarItemLabel(item, role)}
                 </button>
               );
             })}
@@ -440,6 +459,7 @@ export function GameSidebarLayout({
       />
 
       <CommandDockNav
+        role={setup.role}
         activeSection={activeSection}
         panelVisible={panelVisible}
         onSelectSection={selectSectionWithFx}

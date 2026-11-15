@@ -281,6 +281,48 @@ export interface LaggedMacroShock {
   approvalDeltaPerMonth: number;
 }
 
+export type RoleActionId =
+  | 'BAJAR_IIBB_PROVINCIAL'
+  | 'SUBIR_IIBB_PROVINCIAL'
+  | 'LICITAR_OBRA_PROVINCIAL'
+  | 'BLINDAR_SEGURIDAD_PROVINCIAL'
+  | 'EXIGIR_COPARTICIPACION_Y_ATN'
+  | 'PACTO_INTENDENTES_Y_LEGISLATURA'
+  | 'EMITIR_CUASIMONEDA_PROVINCIAL'
+  | 'CERRAR_PARITARIA_DOCENTE_POLICIAL'
+  | 'PRESENTAR_PROYECTO_PROPIO'
+  | 'DISCURSO_ENCENDIDO_RECINTO'
+  | 'ROSCA_EN_COMISION'
+  | 'INTERPELAR_MINISTRO_O_PLIEGO'
+  | 'DEFENDER_PARTIDAS_PROVINCIALES'
+  | 'ROMPER_O_ALINEAR_BLOQUE';
+
+export interface GovernorMandateState {
+  provinceId: string;
+  provincialApprovalPct: number;
+  provincialTreasuryArsBillion: number;
+  iibbRatePct: number;
+  publicWorksExecutionPct: number;
+  securityAndPoliceIndex: number;
+  localLegislatureSupportPct: number;
+  nationalProjectionIndex: number;
+  activeTeacherOrPoliceConflict: boolean;
+}
+
+export interface LegislatorMandateState {
+  chamber: 'DIPUTADOS' | 'SENADO';
+  provinceId: string;
+  parliamentaryCloutIndex: number;
+  floorSpeechImpactIndex: number;
+  committeeControlCount: number;
+  authoredBillsSubmitted: number;
+  authoredBillsApproved: number;
+  territorialBackingPct: number;
+  blocDisciplineAlignmentPct: number;
+  pliegosOrInterpelacionesCount: number;
+  activeCommitteeName: string;
+}
+
 export interface SimulationState {
   turnMonth: number;
   currentYear: number;
@@ -319,6 +361,8 @@ export interface SimulationState {
   // Opcionales para no romper partidas guardadas previas
   trustLedger?: Record<string, number>;
   laggedMacroShocks?: LaggedMacroShock[];
+  governorMandate?: GovernorMandateState;
+  legislatorMandate?: LegislatorMandateState;
 }
 
 export type PolicyAction =
@@ -349,5 +393,6 @@ export type PolicyAction =
   | { type: 'ADD_CUSTOM_TAX'; proposal: CustomTaxProposal }
   | { type: 'TOGGLE_INSTITUTIONAL_REFORM'; reformId: string }
   | { type: 'REJECT_CONGRESS_BILL'; billId: string }
-  | { type: 'GRANT_BLOC_CONCESSION'; blocId: string; concession: 'ARGENTUMS' | 'GABINETE' | 'SUAVIZAR' | 'GOBERNADORES' };
+  | { type: 'GRANT_BLOC_CONCESSION'; blocId: string; concession: 'ARGENTUMS' | 'GABINETE' | 'SUAVIZAR' | 'GOBERNADORES' }
+  | { type: 'EXECUTE_ROLE_ACTION'; actionId: RoleActionId };
 

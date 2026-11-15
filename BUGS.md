@@ -195,25 +195,28 @@ Este documento recopila y cataloga todos los bugs, desvíos respecto a *¿Quién
 
 ### [BUG-021] Derrota en el balotaje sigue permitiendo continuar en la elección
 - **Severidad**: Crítica (Flujo Electoral / Fin de Campaña).
-- **Estado**: 🔴 ABIERTO / PENDIENTE.
-- **Descripción**: Cuando perdés la segunda vuelta (`escrutinio.isVictory === false` con título `"Fuiste derrotado en el balotaje"` en `electionEngine.ts`), `handleProceedElection` en `packages/web-presentation/src/App.tsx` simplemente ejecuta `setActiveElectionModal(null)` y te deja seguir adentro del tablero electoral / campaña en lugar de frenar el ciclo y mostrar la pantalla de derrota.
+- **Estado**: 🟢 RESUELTO.
+- **Descripción**: Cuando perdés la segunda vuelta (`escrutinio.isVictory === false` con título `"Fuiste derrotado en el balotaje"` en `electionEngine.ts`), `handleProceedElection` en `packages/web-presentation/src/App.tsx` simplemente ejecutaba `setActiveElectionModal(null)` y te dejaba seguir adentro del tablero electoral / campaña en lugar de frenar el ciclo y mostrar la pantalla de derrota.
+- **Impacto**: Se agregó `isDefeat` en `EscrutinioData`, bandera persistente `electionDefeated` en `CampaignSimulationState` y bloqueo estricto en `evaluateCampaignAdvanceStep` (`App.tsx`) para impedir avanzar al turno de gobierno tras una derrota.
 
 ### [BUG-022] Perder el balotaje sigue habilitando la opción de asumir/ejercer como Presidente
 - **Severidad**: Crítica (Noche Electoral / Presentación).
-- **Estado**: 🔴 ABIERTO / PENDIENTE.
-- **Descripción**: En `packages/web-presentation/src/features/campaign/ElectionNightModal.tsx`, `resolveElectionProceedButtonLabel` devuelve siempre `"Asumir la Presidencia de la Nación (10 de diciembre de 2027) ▶"` cuando `stageType === 'BALOTAJE'` sin chequear `escrutinio.isVictory`, así que aunque pierdas te muestra el botón para asumir (y si pasás de mes hacia diciembre igualmente entras a gobernar).
+- **Estado**: 🟢 RESUELTO.
+- **Descripción**: En `packages/web-presentation/src/features/campaign/ElectionNightModal.tsx`, `resolveElectionProceedButtonLabel` devolvía siempre `"Asumir la Presidencia de la Nación (10 de diciembre de 2027) ▶"` cuando `stageType === 'BALOTAJE'` sin chequear `escrutinio.isVictory`, así que aunque perdieras te mostraba el botón para asumir (y si pasabas de mes hacia diciembre igualmente entrabas a gobernar).
+- **Impacto**: `ElectionModalFooter` valida `escrutinio.isDefeat` y reemplaza el botón de asunción por el pie de derrota electoral; además `resolveGovStageEntry` en `App.tsx` verifica `computeEscrutinio('BALOTAJE', currentState).isVictory` antes de permitir el ingreso al mandato.
 
 ### [FEAT-008] Opción para "Intentar de nuevo" tras perder la elección
 - **Severidad**: Alta (UX / Ciclo de Partida).
-- **Estado**: 🔴 ABIERTO / PENDIENTE.
-- **Descripción**: Falta reemplazar el botón de asumir cuando `escrutinio.isVictory === false` (tanto en Balotaje como en Generales perdidas sin balotaje) por un cierre de derrota electoral con acciones claras: **Intentar de nuevo** (reintentar la campaña con tu configuración actual) o **Volver a Nueva Partida** (`NewGameSetupScreen.tsx`).
+- **Estado**: 🟢 RESUELTO.
+- **Descripción**: Reemplazar el botón de asumir cuando `escrutinio.isVictory === false` (tanto en Balotaje como en Generales perdidas sin balotaje) por un cierre de derrota electoral con acciones claras: **Intentar de nuevo** (reintentar la campaña con tu configuración actual) o **Configurar nueva partida** (`NewGameSetupScreen.tsx`).
+- **Impacto**: Componente `DefeatModalFooter` en `ElectionNightModal.tsx` conectado a `handleRetryCampaign` y `onNewGameSetup` en `App.tsx`.
 
 ### [FEAT-009] Funcionalidad y bucle jugable propio para Gobernador, Diputado y Senador
 - **Severidad**: Alta (Jugabilidad / Roles Constitucionales).
-- **Estado**: 🔴 ABIERTO / PENDIENTE.
-- **Descripción**: Hoy `PlayableRole` deja elegir `GOBERNADOR`, `DIPUTADO` o `SENADOR`, pero al pasar al gobierno termina cargando el despacho nacional de Presidente. Falta armar mecánicas y vistas dedicadas para cada cargo:
-  - **Gobernador**: presupuesto provincial propio, coparticipación y pedido de ATN a Nación, recaudación local (Ingresos Brutos / Inmobiliario / Sellos), legislatura provincial, conflictos gremiales locales y proyección nacional.
-  - **Diputado**: agenda legislativa en la Cámara Baja (257 bancas), dictámenes de comisión, presentación de proyectos, rosca con jefes de bloque y votaciones nominales.
-  - **Senador**: agenda en la Cámara Alta (72 bancas), defensa de intereses provinciales, acuerdos para jueces/pliegos y negociación de leyes federales / coparticipación.
+- **Estado**: 🟢 RESUELTO.
+- **Descripción**: Hoy `PlayableRole` deja elegir `GOBERNADOR`, `DIPUTADO` o `SENADOR`, pero al pasar al gobierno terminaba cargando únicamente el despacho nacional de Presidente. Se armaron mecánicas de dominio (`roleMandateEngine.ts`) y tableros dedicados (`RoleMandateCommandPanels.tsx`):
+  - **Gobernador**: presupuesto provincial propio (`provincialTreasuryArsBillion`), alícuota de Ingresos Brutos (`BAJAR_IIBB_PROVINCIAL` / `SUBIR_IIBB_PROVINCIAL`), licitación de obras (`LICITAR_OBRA_PROVINCIAL`), seguridad y policía (`BLINDAR_SEGURIDAD_PROVINCIAL`), reclamo de coparticipación y ATN (`EXIGIR_COPARTICIPACION_Y_ATN`), pacto con intendentes/legislatura (`PACTO_INTENDENTES_Y_LEGISLATURA`), paritaria docente/policial (`CERRAR_PARITARIA_DOCENTE_POLICIAL`) y emisión de cuasimonedas (`EMITIR_CUASIMONEDA_PROVINCIAL`).
+  - **Diputado**: banca en la Cámara Baja (1/257) con presentación de proyectos propios (`PRESENTAR_PROYECTO_PROPIO`), cuestiones de privilegio en el recinto (`DISCURSO_ENCENDIDO_RECINTO`), rosca en comisiones (`ROSCA_EN_COMISION`), interpelación al Gabinete Art. 71 CN (`INTERPELAR_MINISTRO_O_PLIEGO`), defensa de partidas provinciales (`DEFENDER_PARTIDAS_PROVINCIALES`) y negociación orgánica de bloque (`ROMPER_O_ALINEAR_BLOQUE`).
+  - **Senador**: banca federal en la Cámara Alta (1/72) con comisión de Acuerdos y Coparticipación Federal, dictamen de pliegos judiciales y embajadores, defensa de obras para su provincia y articulación directa con el hemiciclo.
 
 

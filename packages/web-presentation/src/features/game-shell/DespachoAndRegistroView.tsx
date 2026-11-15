@@ -1,7 +1,8 @@
 import React from 'react';
-import type { GameSetupConfiguration, SimulationState } from '@argentina-sim/domain';
+import type { GameSetupConfiguration, PolicyAction, SimulationState } from '@argentina-sim/domain';
 import { PartyEmblemSvg } from '../party-setup/PartyEmblemSvg.js';
 import type { InGameSidebarSection } from './GameSidebarLayout.js';
+import { GovernorCommandPanel, LegislatorCommandPanel } from './RoleMandateCommandPanels.js';
 
 // Vistas de DESPACHO -> Despacho (resumen ejecutivo del jugador y accesos rapidos)
 // y DESPACHO -> Registro (bitacora historica mes a mes).
@@ -12,6 +13,34 @@ interface DespachoOverviewProps {
   historyLog: string[];
   onNavigate: (section: InGameSidebarSection) => void;
   onAdvanceTurn: () => void;
+  onDispatch?: (action: PolicyAction) => void;
+}
+
+function RoleSpecificCommandSection({
+  setup,
+  state,
+  onNavigate,
+  onDispatch
+}: {
+  setup: GameSetupConfiguration;
+  state: SimulationState;
+  onNavigate: (section: InGameSidebarSection) => void;
+  onDispatch?: (action: PolicyAction) => void;
+}) {
+  if (!onDispatch || setup.role === 'PRESIDENTE') {
+    return null;
+  }
+  if (setup.role === 'GOBERNADOR') {
+    return <GovernorCommandPanel setup={setup} state={state} onDispatch={onDispatch} />;
+  }
+  return (
+    <LegislatorCommandPanel
+      setup={setup}
+      state={state}
+      onDispatch={onDispatch}
+      onNavigate={onNavigate}
+    />
+  );
 }
 
 export function DespachoOverview({
@@ -19,7 +48,8 @@ export function DespachoOverview({
   state,
   historyLog,
   onNavigate,
-  onAdvanceTurn
+  onAdvanceTurn,
+  onDispatch
 }: DespachoOverviewProps) {
   return (
     <div className="space-y-6">
@@ -56,6 +86,13 @@ export function DespachoOverview({
           </button>
         </div>
       </div>
+
+      <RoleSpecificCommandSection
+        setup={setup}
+        state={state}
+        onNavigate={onNavigate}
+        onDispatch={onDispatch}
+      />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
         <div className="rounded-2xl bg-[#10131b] border border-slate-800 p-4">

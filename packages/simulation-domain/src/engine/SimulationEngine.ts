@@ -17,6 +17,7 @@ import {
   stepProvincesState,
   stepPublicOpinion
 } from '../politics/judicialLaborAndOpinionEngine.js';
+import { stepRoleMandateMonthly } from '../politics/roleMandateEngine.js';
 
 // El orden del pipeline mensual importa muchisimo: primero impactan la energia y el mercado cambiario,
 // despues se forma la inflacion del mes, luego se ajustan paritarias y recaudacion (con Olivera-Tanzi),
@@ -238,6 +239,7 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
   };
 
   const rigiStep = stepRigiIfPresent(state);
+  const roleStep = stepRoleMandateMonthly(state);
 
   return {
     ...state,
@@ -261,6 +263,7 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
     structural: nextStructural,
     trustLedger: decayTrustLedger(state.trustLedger),
     laggedMacroShocks: macroLags.nextShocks,
+    ...roleStep,
     ...rigiStep
   };
 }

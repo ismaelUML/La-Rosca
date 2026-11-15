@@ -196,6 +196,7 @@ export interface CampaignSimulationState {
   actionsTotalThisMonth: number;
   historyLog: string[];
   rivalLastTurnSummary?: string[];
+  electionDefeated?: boolean;
 }
 
 export type CampaignExecutePayload =

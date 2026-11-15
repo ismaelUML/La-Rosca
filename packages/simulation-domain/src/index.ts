@@ -26,6 +26,7 @@ export * from './engine/semanticParserEngine.js';
 export * from './politics/militaryTheaterEngine.js';
 export * from './politics/officialBillsCatalogQQG.js';
 export * from './politics/reformasInstitucionalesEngine.js';
+export * from './politics/roleMandateEngine.js';
 export * from './politics/acuerdosFederalesEngine.js';
 export * from './politics/governmentEventsCatalog.js';
 export * from './politics/governmentEventsEngine.js';

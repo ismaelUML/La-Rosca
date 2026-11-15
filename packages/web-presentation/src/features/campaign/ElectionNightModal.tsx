@@ -4,7 +4,8 @@ import {
   type CampaignSimulationState,
   type CandidateVoteResult,
   type ElectionStageType,
-  type EscrutinioData
+  type EscrutinioData,
+  type PlayableRole
 } from '@argentina-sim/domain';
 import { ElectionResultsSvgMap } from './ElectionResultsSvgMap.js';
 
@@ -13,6 +14,13 @@ export { computeEscrutinio };
 
 // Modal de Noche Electoral y Escrutinio Oficial (QQG Capturas 9 y 10):
 // La logica matematica de calculo y balotaje vive ahora en @argentina-sim/domain (electionEngine.ts).
+
+const ASSUME_ROLE_BUTTON_LABEL: Record<PlayableRole, string> = {
+  PRESIDENTE: 'Asumir la Presidencia de la Nación (10 de diciembre de 2027) ▶',
+  GOBERNADOR: 'Asumir la Gobernación Provincial (10 de diciembre de 2027) ▶',
+  DIPUTADO: 'Jurar Banca en la Cámara de Diputados (10 de diciembre de 2027) ▶',
+  SENADOR: 'Jurar Banca en el Senado de la Nación (10 de diciembre de 2027) ▶'
+};
 
 function resolveElectionStageHeader(stageType: ElectionStageType): string {
   if (stageType === 'BALOTAJE') {
@@ -24,12 +32,16 @@ function resolveElectionStageHeader(stageType: ElectionStageType): string {
   return 'ELECCIONES PRIMARIAS (PASO) · 8 DE AGOSTO DE 2027';
 }
 
-function resolveElectionProceedButtonLabel(stageType: ElectionStageType, isRunoff: boolean): string {
-  if (stageType === 'BALOTAJE') {
-    return 'Asumir la Presidencia de la Nación (10 de diciembre de 2027) ▶';
+function resolveElectionProceedButtonLabel(
+  stageType: ElectionStageType,
+  escrutinio: EscrutinioData,
+  role: PlayableRole
+): string {
+  if (escrutinio.isRunoff) {
+    return 'Ir al Balotaje (21 de noviembre de 2027) ▶';
   }
-  if (stageType === 'GENERALES' && isRunoff) {
-    return 'Ir al Balotaje Presidencial (21 de noviembre de 2027) ▶';
+  if (stageType !== 'PASO' && escrutinio.isVictory) {
+    return ASSUME_ROLE_BUTTON_LABEL[role];
   }
   return 'Continuar campaña ▶';
 }
@@ -107,13 +119,101 @@ interface ElectionNightModalProps {
   stageType: ElectionStageType;
   state: CampaignSimulationState;
   onProceed: () => void;
+  onRetryCampaign?: () => void;
+  onNewGameSetup?: () => void;
+}
+
+function DefeatModalFooter({
+  onRetry,
+  onNewGameSetup
+}: {
+  onRetry: () => void;
+  onNewGameSetup?: () => void;
+}) {
+  return (
+    <div className="p-4 md:p-6 bg-[#080a10] border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+      <div className="text-xs font-bold text-rose-300 bg-rose-950/60 border border-rose-800 px-3 py-1.5 rounded-xl">
+        Derrota electoral · Quedaste fuera de la asunción del 10 de diciembre
+      </div>
+      <div className="flex flex-wrap items-center gap-2.5">
+        {onNewGameSetup ? (
+          <button
+            type="button"
+            onClick={onNewGameSetup}
+            className="px-4 py-2.5 rounded-2xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 transition"
+          >
+            Configurar nueva partida
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={onRetry}
+          className="px-6 py-3 rounded-2xl text-xs md:text-sm font-extrabold bg-rose-600 hover:bg-rose-500 text-white transition shadow-lg"
+        >
+          Intentar de nuevo ↻
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ElectionModalFooter({
+  stageType,
+  escrutinio,
+  role,
+  onProceed,
+  onRetryCampaign,
+  onNewGameSetup
+}: {
+  stageType: ElectionStageType;
+  escrutinio: EscrutinioData;
+  role: PlayableRole;
+  onProceed: () => void;
+  onRetryCampaign?: () => void;
+  onNewGameSetup?: () => void;
+}) {
+  if (escrutinio.isDefeat) {
+    return (
+      <DefeatModalFooter
+        onRetry={onRetryCampaign ?? onProceed}
+        onNewGameSetup={onNewGameSetup}
+      />
+    );
+  }
+
+  const isBalotajeWin = stageType === 'BALOTAJE' && escrutinio.isVictory;
+  const proceedBtnLabel = resolveElectionProceedButtonLabel(stageType, escrutinio, role);
+
+  return (
+    <div className="p-4 md:p-6 bg-[#080a10] border-t border-slate-800 flex items-center justify-between">
+      {isBalotajeWin ? (
+        <div className="text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-3 py-1.5 rounded-xl">
+          Logro desbloqueado: Ganaste el balotaje
+        </div>
+      ) : (
+        <div className="text-xs text-slate-400 font-mono">
+          Escrutinio provisorio definitivo verificado
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={onProceed}
+        className="px-6 py-3 rounded-2xl text-xs md:text-sm font-extrabold bg-white hover:bg-slate-200 text-slate-950 transition shadow-lg"
+      >
+        {proceedBtnLabel}
+      </button>
+    </div>
+  );
 }
 
 export function ElectionNightModal({
   isOpen,
   stageType,
   state,
-  onProceed
+  onProceed,
+  onRetryCampaign,
+  onNewGameSetup
 }: ElectionNightModalProps) {
   const escrutinio = useMemo(() => computeEscrutinio(stageType, state), [stageType, state]);
 
@@ -122,8 +222,6 @@ export function ElectionNightModal({
   }
 
   const stageHeader = resolveElectionStageHeader(stageType);
-  const proceedBtnLabel = resolveElectionProceedButtonLabel(stageType, escrutinio.isRunoff);
-  const isBalotajeWin = stageType === 'BALOTAJE' && escrutinio.isVictory;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
@@ -179,25 +277,14 @@ export function ElectionNightModal({
           </div>
         </div>
 
-        <div className="p-4 md:p-6 bg-[#080a10] border-t border-slate-800 flex items-center justify-between">
-          {isBalotajeWin ? (
-            <div className="text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-3 py-1.5 rounded-xl">
-              Logro desbloqueado: Ganaste un balotaje
-            </div>
-          ) : (
-            <div className="text-xs text-slate-400 font-mono">
-              Escrutinio provisorio definitivo verificado
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={onProceed}
-            className="px-6 py-3 rounded-2xl text-xs md:text-sm font-extrabold bg-white hover:bg-slate-200 text-slate-950 transition shadow-lg"
-          >
-            {proceedBtnLabel}
-          </button>
-        </div>
+        <ElectionModalFooter
+          stageType={stageType}
+          escrutinio={escrutinio}
+          role={state.targetRole}
+          onProceed={onProceed}
+          onRetryCampaign={onRetryCampaign}
+          onNewGameSetup={onNewGameSetup}
+        />
       </div>
     </div>
   );

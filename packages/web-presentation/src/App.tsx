@@ -233,6 +233,7 @@ function ActiveSectionRenderer(props: ActiveSectionRendererProps) {
         historyLog={props.state.eventLog}
         onNavigate={props.onNavigate}
         onAdvanceTurn={props.onAdvanceTurn}
+        onDispatch={props.onDispatch}
       />
     ),
     GABINETE: (
@@ -488,6 +489,58 @@ function hydrateInitialGovernmentState(savedSession: PersistedGameSession | null
   };
 }
 
+function resolveInitialGovSection(role: GameSetupConfiguration['role']): InGameSidebarSection {
+  return role === 'PRESIDENTE' ? 'GABINETE' : 'DESPACHO_RESUMEN';
+}
+
+function resolveGovStageEntry(
+  currentState: CampaignSimulationState,
+  next: CampaignSimulationState
+): { shouldAssume: boolean; modalStage: ElectionStageType | null; nextState: CampaignSimulationState } {
+  const finalCheck = computeEscrutinio('BALOTAJE', currentState);
+  if (!finalCheck.isVictory) {
+    return {
+      shouldAssume: false,
+      modalStage: 'BALOTAJE',
+      nextState: { ...currentState, electionDefeated: true }
+    };
+  }
+  return { shouldAssume: true, modalStage: null, nextState: next };
+}
+
+function buildSteppedCampaignState(next: CampaignSimulationState): {
+  modalStage: ElectionStageType | null;
+  nextState: CampaignSimulationState;
+} {
+  const dilemma = resolveMonthlyDilemma(next.stage.currentMonthIndex, next.resolvedDilemmas);
+  const electionStage = resolveElectionStageForMonth(next.stage.currentMonthIndex);
+  const isDefeat = electionStage ? computeEscrutinio(electionStage, next).isDefeat : false;
+  return {
+    modalStage: electionStage,
+    nextState: {
+      ...next,
+      activeMonthlyDilemmaId: dilemma ? dilemma.id : null,
+      electionDefeated: isDefeat ? true : next.electionDefeated
+    }
+  };
+}
+
+function evaluateCampaignAdvanceStep(currentState: CampaignSimulationState): {
+  shouldAssume: boolean;
+  modalStage: ElectionStageType | null;
+  nextState: CampaignSimulationState;
+} {
+  if (currentState.electionDefeated) {
+    return { shouldAssume: false, modalStage: 'BALOTAJE', nextState: currentState };
+  }
+  const next = advanceCampaignMonth(currentState);
+  if (next.stage.stage === 'GOBIERNO') {
+    return resolveGovStageEntry(currentState, next);
+  }
+  const stepped = buildSteppedCampaignState(next);
+  return { shouldAssume: false, ...stepped };
+}
+
 function attachDefaultGovCollections(base: SimulationState): SimulationState {
   return {
     ...base,
@@ -576,8 +629,18 @@ export function App() {
     const baseGov = createInitialSimulationState2027(setup.role, setup.difficulty, setup.provinceId);
     const bridged = attachDefaultGovCollections(applyCampaignBridgeToGovernment(baseGov, campaignState));
     setState(applySetupConfigurationToState(bridged, setup));
-    setActiveSection('GABINETE');
+    setActiveSection(resolveInitialGovSection(setup.role));
     setScreenMode('GOVERNMENT');
+  };
+
+  const handleRetryCampaign = () => {
+    const candidateObj = resolveCandidateFromSetup(setup);
+    setCampaignState(
+      createInitialCampaignState(candidateObj, setup.party, setup.role, setup.provinceId)
+    );
+    setActiveElectionModal(null);
+    setCampaignNavSection('RESUMEN');
+    setScreenMode('CAMPAIGN');
   };
 
   const handleStartConfiguredGame = (nextSetup: GameSetupConfiguration) => {
@@ -589,7 +652,7 @@ export function App() {
     const configuredGov = applySetupConfigurationToState(baseGov, nextSetup);
 
     setState(configuredGov);
-    setActiveSection('GABINETE');
+    setActiveSection(resolveInitialGovSection(nextSetup.role));
     setCampaignState(
       createInitialCampaignState(
         candidateObj,
@@ -603,34 +666,33 @@ export function App() {
   };
 
   const handleAdvanceCampaign = () => {
-    const next = advanceCampaignMonth(campaignState);
-    if (next.stage.stage === 'GOBIERNO') {
+    const step = evaluateCampaignAdvanceStep(campaignState);
+    if (step.shouldAssume) {
       startPresidentialGovernment();
       return;
     }
-    const dilemma = resolveMonthlyDilemma(next.stage.currentMonthIndex, next.resolvedDilemmas);
-    const nextDilemmaId = dilemma ? dilemma.id : null;
-    const electionStage = resolveElectionStageForMonth(next.stage.currentMonthIndex);
-    if (electionStage) {
-      setActiveElectionModal(electionStage);
+    if (step.modalStage) {
+      setActiveElectionModal(step.modalStage);
     }
-    setCampaignState({
-      ...next,
-      activeMonthlyDilemmaId: nextDilemmaId
-    });
+    setCampaignState(step.nextState);
   };
 
   const handleProceedElection = () => {
-    if (activeElectionModal) {
-      const escrutinio = computeEscrutinio(activeElectionModal, campaignState);
-      const shouldEnterGov = checkElectionTransitionToGovernment(
-        activeElectionModal,
-        escrutinio.isVictory,
-        escrutinio.isRunoff
-      );
-      if (shouldEnterGov) {
-        startPresidentialGovernment();
-      }
+    if (!activeElectionModal) {
+      return;
+    }
+    const escrutinio = computeEscrutinio(activeElectionModal, campaignState);
+    if (escrutinio.isDefeat) {
+      handleRetryCampaign();
+      return;
+    }
+    const shouldEnterGov = checkElectionTransitionToGovernment(
+      activeElectionModal,
+      escrutinio.isVictory,
+      escrutinio.isRunoff
+    );
+    if (shouldEnterGov) {
+      startPresidentialGovernment();
     }
     setActiveElectionModal(null);
   };
@@ -770,6 +832,11 @@ export function App() {
           stageType={activeElectionModal ?? 'PASO'}
           state={campaignState}
           onProceed={handleProceedElection}
+          onRetryCampaign={handleRetryCampaign}
+          onNewGameSetup={() => {
+            setActiveElectionModal(null);
+            setScreenMode('NEW_GAME_SETUP');
+          }}
         />
       </CampaignSidebarLayout>
     );
