@@ -21,6 +21,12 @@ import {
   type Map3DMode,
   type ProvinceMeshMeta
 } from './argentina3dGeometry.js';
+import {
+  animateStrategicLandmarksFrame,
+  applyNightSatelliteMode,
+  buildStrategicLandmarksOverlay,
+  type AnimatedLandmarkRefs
+} from './argentina3dLandmarks.js';
 import { getProvincePoliticalMeta, normalizeProvinceId } from './provincePoliticalMeta.js';
 import { playUiSound } from '../../lib/gameFeedback.js';
 
@@ -313,25 +319,70 @@ function HoveredCursorTooltip({
   );
 }
 
+function resolveTogglePillCls(active: boolean, activeStyle: string): string {
+  if (active) return activeStyle;
+  return 'border-[#2d3c52] text-slate-400 bg-[#0c1119]/95';
+}
+
 function MapLayerToolbar({
   mapMode,
   layersOpen,
+  showLandmarks,
+  nightMode,
   onToggleOpen,
+  onToggleLandmarks,
+  onToggleNightMode,
   onSelectMode,
   onResetView
 }: {
   mapMode: Map3DMode;
   layersOpen: boolean;
+  showLandmarks: boolean;
+  nightMode: boolean;
   onToggleOpen: () => void;
+  onToggleLandmarks: () => void;
+  onToggleNightMode: () => void;
   onSelectMode: (mode: Map3DMode) => void;
   onResetView: () => void;
 }) {
   const activeOption = MODE_OPTIONS.find((m) => m.id === mapMode) ?? MODE_OPTIONS[0]!;
   const legendItems = LEGEND_BY_MODE[mapMode];
+  const landmarkCls = resolveTogglePillCls(
+    showLandmarks,
+    'border-[#b89342] text-amber-200 bg-[#172233]/95'
+  );
+  const nightCls = resolveTogglePillCls(
+    nightMode,
+    'border-sky-500 text-sky-200 bg-[#122036]/95'
+  );
 
   return (
     <div className="pointer-events-auto flex flex-col items-end gap-1.5">
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center justify-end gap-1.5">
+        <button
+          type="button"
+          onClick={() => {
+            playUiSound('tab');
+            onToggleLandmarks();
+          }}
+          title="Activar/ocultar monumentos 3D, Vaca Muerta, Litio, Eólicos y Gasoductos"
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm border text-[10px] font-mono font-bold uppercase tracking-wider shadow-xl transition ${landmarkCls}`}
+        >
+          <span>Activos 3D + Gasoducto</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            playUiSound('tab');
+            onToggleNightMode();
+          }}
+          title="Alternar modo satelital nocturno con constelación urbana"
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm border text-[10px] font-mono font-bold uppercase tracking-wider shadow-xl transition ${nightCls}`}
+        >
+          <span>Satelital Nocturno</span>
+        </button>
+
         <button
           type="button"
           onClick={() => {
@@ -468,6 +519,7 @@ function useArgentina3DSetup(
   onSelectRef: React.MutableRefObject<(id: string) => void>
 ) {
   const groupRef = useRef<THREE.Group | null>(null);
+  const landmarksRef = useRef<AnimatedLandmarkRefs | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
@@ -488,6 +540,7 @@ function useArgentina3DSetup(
       animId = requestAnimationFrame(renderLoop);
       controls.target.lerp(targetGoalRef.current, 0.12);
       animateGroupFrame(groupRef.current, hoveredRef.current, selectedRef.current);
+      animateStrategicLandmarksFrame(landmarksRef.current, groupRef.current, performance.now() * 0.001);
       controls.update();
       renderer.render(scene, camera);
     };
@@ -550,7 +603,7 @@ function useArgentina3DSetup(
     };
   }, [containerRef, provincesRef, modeRef, onHoverChangeRef, onSelectRef]);
 
-  return { groupRef, sceneRef, cameraRef, targetGoalRef, hoveredRef, selectedRef };
+  return { groupRef, landmarksRef, sceneRef, cameraRef, targetGoalRef, hoveredRef, selectedRef };
 }
 
 function lookupProvinceInMap(
@@ -585,6 +638,8 @@ export function Argentina3DMapCanvas({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [mapMode, setMapMode] = useState<Map3DMode>('LOYALTY');
   const [layersOpen, setLayersOpen] = useState(true);
+  const [showLandmarks, setShowLandmarks] = useState(true);
+  const [nightMode, setNightMode] = useState(false);
   const [hoveredState, setHoveredState] = useState<{ id: string | null; pos: { x: number; y: number } | null }>({
     id: null,
     pos: null
@@ -602,7 +657,7 @@ export function Argentina3DMapCanvas({
   const onSelectRef = useRef(onSelectProvince);
   onSelectRef.current = onSelectProvince;
 
-  const { groupRef, sceneRef, cameraRef, targetGoalRef, hoveredRef, selectedRef } = useArgentina3DSetup(
+  const { groupRef, landmarksRef, sceneRef, cameraRef, targetGoalRef, hoveredRef, selectedRef } = useArgentina3DSetup(
     containerRef,
     provincesRef,
     modeRef,
@@ -625,12 +680,18 @@ export function Argentina3DMapCanvas({
     const scene = sceneRef.current;
     if (!scene || !topoData) return;
     if (groupRef.current) scene.remove(groupRef.current);
+    if (landmarksRef.current) scene.remove(landmarksRef.current.overlayGroup);
     const nextGroup = buildArgentina3DGroup(topoData, provinces, mapMode);
+    const nextLandmarks = buildStrategicLandmarksOverlay(nextGroup, provinces);
+    nextLandmarks.overlayGroup.visible = showLandmarks;
     groupRef.current = nextGroup;
+    landmarksRef.current = nextLandmarks;
     scene.add(nextGroup);
+    scene.add(nextLandmarks.overlayGroup);
+    applyNightSatelliteMode(scene, nextLandmarks, nightMode);
     selectedRef.current = selectedProvinceId;
     updateGroupMaterials(nextGroup, provinces, mapMode, hoveredRef.current, selectedProvinceId);
-  }, [topoData, mapMode, provinces, selectedProvinceId, groupRef, sceneRef, hoveredRef, selectedRef]);
+  }, [topoData, mapMode, provinces, selectedProvinceId, showLandmarks, nightMode, groupRef, landmarksRef, sceneRef, hoveredRef, selectedRef]);
 
   const provMap = buildNormalizedProvinceMap(provinces);
   const activeProvince = lookupProvinceInMap(provMap, selectedProvinceId || hoveredState.id);
@@ -653,7 +714,11 @@ export function Argentina3DMapCanvas({
         <MapLayerToolbar
           mapMode={mapMode}
           layersOpen={layersOpen}
+          showLandmarks={showLandmarks}
+          nightMode={nightMode}
           onToggleOpen={() => setLayersOpen((o) => !o)}
+          onToggleLandmarks={() => setShowLandmarks((v) => !v)}
+          onToggleNightMode={() => setNightMode((n) => !n)}
           onSelectMode={setMapMode}
           onResetView={handleResetView}
         />

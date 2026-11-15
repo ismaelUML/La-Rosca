@@ -1,6 +1,15 @@
 // Feedback sutil opcional (Web Audio API sin dependencias) y log interno de errores de guardado.
 
-export type UiSoundKind = 'tab' | 'turn' | 'atn' | 'select' | 'error';
+export type UiSoundKind =
+  | 'tab'
+  | 'turn'
+  | 'atn'
+  | 'select'
+  | 'error'
+  | 'quorum'
+  | 'stamp'
+  | 'ticker'
+  | 'alert';
 
 const SOUND_PREF_KEY = 'LA_ROSCA_SOUND_ENABLED';
 let sharedAudioCtx: AudioContext | null = null;
@@ -31,12 +40,16 @@ function getAudioContext(): AudioContext | null {
   return sharedAudioCtx;
 }
 
-const SOUND_PROFILES: Record<UiSoundKind, { freq: number; endFreq: number; dur: number; gain: number }> = {
-  tab: { freq: 520, endFreq: 640, dur: 0.045, gain: 0.025 },
-  select: { freq: 440, endFreq: 550, dur: 0.06, gain: 0.03 },
-  atn: { freq: 490, endFreq: 740, dur: 0.11, gain: 0.045 },
-  turn: { freq: 330, endFreq: 495, dur: 0.14, gain: 0.05 },
-  error: { freq: 220, endFreq: 165, dur: 0.12, gain: 0.045 }
+const SOUND_PROFILES: Record<UiSoundKind, { freq: number; endFreq: number; dur: number; gain: number; wave?: OscillatorType }> = {
+  tab: { freq: 520, endFreq: 640, dur: 0.045, gain: 0.025, wave: 'triangle' },
+  select: { freq: 440, endFreq: 550, dur: 0.06, gain: 0.03, wave: 'triangle' },
+  atn: { freq: 490, endFreq: 740, dur: 0.11, gain: 0.045, wave: 'triangle' },
+  turn: { freq: 330, endFreq: 495, dur: 0.14, gain: 0.05, wave: 'triangle' },
+  error: { freq: 220, endFreq: 165, dur: 0.12, gain: 0.045, wave: 'sawtooth' },
+  quorum: { freq: 880, endFreq: 880, dur: 0.22, gain: 0.055, wave: 'square' },
+  stamp: { freq: 145, endFreq: 72, dur: 0.095, gain: 0.075, wave: 'sine' },
+  ticker: { freq: 1120, endFreq: 960, dur: 0.028, gain: 0.02, wave: 'square' },
+  alert: { freq: 620, endFreq: 390, dur: 0.18, gain: 0.055, wave: 'sawtooth' }
 };
 
 export function playUiSound(kind: UiSoundKind): void {
@@ -47,7 +60,7 @@ export function playUiSound(kind: UiSoundKind): void {
     const profile = SOUND_PROFILES[kind];
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = 'triangle';
+    osc.type = profile.wave ?? 'triangle';
     osc.frequency.setValueAtTime(profile.freq, ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(profile.endFreq, ctx.currentTime + profile.dur);
     gain.gain.setValueAtTime(profile.gain, ctx.currentTime);

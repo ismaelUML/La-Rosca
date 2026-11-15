@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   computeEscrutinio,
   type CampaignSimulationState,
@@ -8,6 +8,7 @@ import {
   type PlayableRole
 } from '@argentina-sim/domain';
 import { ElectionResultsSvgMap } from './ElectionResultsSvgMap.js';
+import { playUiSound } from '../../lib/gameFeedback.js';
 
 export type { ElectionStageType, EscrutinioData };
 export { computeEscrutinio };
@@ -294,6 +295,74 @@ function OfficialResultsMapSection({
   );
 }
 
+function resolveBunkerTelegramFlash(countedPct: number): string {
+  if (countedPct < 45) {
+    return 'TRAMO 1 (INTERIOR Y CABA): Entrando mesas testigo de Córdoba Capital, Mendoza, CABA y Santa Fe..';
+  }
+  if (countedPct < 75) {
+    return 'TRAMO 2 (NORTE Y PATAGONIA): Cargando telegramas de Tucumán, Salta, Neuquén, Chubut y Entre Ríos..';
+  }
+  if (countedPct < 99) {
+    return 'TRAMO 3 (CONURBANO BONAERENSE): ¡Entrando carga masiva de La Matanza, Lomas de Zamora, Quilmes y Moreno!';
+  }
+  return 'ESCRUTINIO PROVISORIO CERRADO (99,4%): Tendencia irreversible confirmada por la Cámara Nacional Electoral.';
+}
+
+function computeProgressiveResults(
+  finalResults: CandidateVoteResult[],
+  countedPct: number
+): CandidateVoteResult[] {
+  const ratio = Math.min(1, countedPct / 99.4);
+  const skew = (1 - ratio) * 2.6;
+  return finalResults.map((r, idx) => {
+    const shift = idx === 0 ? skew : -skew / Math.max(1, finalResults.length - 1);
+    const livePct = Number(Math.max(0.5, r.pct + shift).toFixed(1));
+    const liveVotos = Math.round(r.votos * ratio);
+    return { ...r, pct: livePct, votos: liveVotos };
+  });
+}
+
+function LiveTelegramProgressStrip({
+  countedPct,
+  onSkipToFinal
+}: {
+  countedPct: number;
+  onSkipToFinal: () => void;
+}) {
+  const isComplete = countedPct >= 99.4;
+  return (
+    <div className="p-3.5 rounded-sm bg-[#0c1119] border border-[#8a6d33] space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+        <span className="text-amber-300 font-bold uppercase">
+          CORREO ARGENTINO / DINE · MESAS ESCRUTADAS: {countedPct.toFixed(1).replace('.', ',')}%
+        </span>
+        {!isComplete ? (
+          <button
+            type="button"
+            onClick={onSkipToFinal}
+            className="px-2.5 py-1 rounded-sm bg-[#162233] hover:bg-[#1f2e47] border border-[#b89342] text-[10px] font-bold uppercase text-amber-200"
+          >
+            Saltear a Cómputo Final (99,4%) ▶
+          </button>
+        ) : (
+          <span className="text-emerald-400 font-bold text-[11px]">✓ CARGA OFICIAL COMPLETA</span>
+        )}
+      </div>
+
+      <div className="w-full h-2.5 rounded-sm bg-[#070a10] border border-[#263142] overflow-hidden">
+        <div
+          style={{ width: `${Math.min(100, countedPct)}%` }}
+          className="h-full bg-gradient-to-r from-[#b89342] to-emerald-500 transition-all duration-150"
+        />
+      </div>
+
+      <div className="text-[11px] font-mono text-slate-300">
+        {resolveBunkerTelegramFlash(countedPct)}
+      </div>
+    </div>
+  );
+}
+
 export function ElectionNightModal({
   isOpen,
   stageType,
@@ -304,12 +373,30 @@ export function ElectionNightModal({
   onBreakPartySplit
 }: ElectionNightModalProps) {
   const escrutinio = useMemo(() => computeEscrutinio(stageType, state), [stageType, state]);
+  const [countedPct, setCountedPct] = useState(14.2);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    setCountedPct(14.2);
+    const timer = window.setInterval(() => {
+      setCountedPct((prev) => {
+        if (prev >= 99.4) {
+          window.clearInterval(timer);
+          return 99.4;
+        }
+        playUiSound('ticker');
+        return Number(Math.min(99.4, prev + 6.8).toFixed(1));
+      });
+    }, 180);
+    return () => window.clearInterval(timer);
+  }, [isOpen, stageType]);
 
   if (!isOpen) {
     return null;
   }
 
   const stageHeader = resolveElectionStageHeader(stageType);
+  const liveResults = computeProgressiveResults(escrutinio.results, countedPct);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
@@ -328,11 +415,15 @@ export function ElectionNightModal({
         </div>
 
         <div className="p-6 md:p-8 space-y-6 overflow-y-auto">
-          <ElectionResultsTable results={escrutinio.results} />
+          <LiveTelegramProgressStrip
+            countedPct={countedPct}
+            onSkipToFinal={() => setCountedPct(99.4)}
+          />
+          <ElectionResultsTable results={liveResults} />
           <ElectionStatsGrid escrutinio={escrutinio} />
 
           <div className="space-y-2">
-            {escrutinio.results.map((r) => (
+            {liveResults.map((r) => (
               <div key={r.fuerza} className="space-y-1">
                 <div className="flex justify-between text-xs font-mono font-bold text-slate-300">
                   <span>{r.fuerza}</span>

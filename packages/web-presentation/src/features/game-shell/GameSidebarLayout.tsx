@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { PartyEmblemSvg } from '../party-setup/PartyEmblemSvg.js';
 import { Argentina3DMapCanvas } from '../map-3d/Argentina3DMapCanvas.js';
+import { LiveNewsAndMarketTicker } from './LiveNewsAndMarketTicker.js';
 import { isSoundEnabled, playUiSound, setSoundEnabled } from '../../lib/gameFeedback.js';
 import { resolveRangeTone, SEMANTIC_TEXT_CLASS } from '../../lib/semanticColors.js';
 
@@ -659,6 +660,8 @@ export function GameSidebarLayout({
           </main>
         ) : null}
       </div>
+
+      <LiveNewsAndMarketTicker govState={state} />
     </div>
   );
 }

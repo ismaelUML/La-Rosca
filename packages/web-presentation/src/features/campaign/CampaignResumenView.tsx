@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { CampaignSimulationState } from '@argentina-sim/domain';
+import { PressAndDebateSimulatorModal } from '../game-shell/PressAndDebateSimulatorModal.js';
+import { playUiSound } from '../../lib/gameFeedback.js';
 
 // Vista de SITUACIÓN -> Resumen (capturas 1, 2 y 3):
 // Objetivo de la interna, imagen positiva/negativa/desconocimiento,
@@ -61,6 +63,7 @@ export function CampaignResumenView({
   onAdvanceMonth,
   onNavigateActions
 }: CampaignResumenViewProps) {
+  const [debateOpen, setDebateOpen] = useState(false);
   const attrs = state.attributes;
   const img = state.image;
   const poll = state.internalPoll;
@@ -68,14 +71,32 @@ export function CampaignResumenView({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-sm bg-gradient-to-r from-[#131924] via-[#101620] to-[#1a160f] border border-[#263142] border-l-2 border-l-[#c5a059] p-5 shadow-lg">
-        <div className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#d4b26a]">
-          Objetivo de Campaña
+      <div className="rounded-sm bg-gradient-to-r from-[#131924] via-[#101620] to-[#1a160f] border border-[#263142] border-l-2 border-l-[#c5a059] p-5 shadow-lg flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#d4b26a]">
+            Objetivo de Campaña
+          </div>
+          <div className="text-xl md:text-2xl font-serif font-bold text-white mt-0.5">
+            {state.stage.objectiveTitle}
+          </div>
         </div>
-        <div className="text-xl md:text-2xl font-serif font-bold text-white mt-0.5">
-          {state.stage.objectiveTitle}
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            playUiSound('tab');
+            setDebateOpen(true);
+          }}
+          className="hoi-btn-gold px-3.5 py-2 rounded-sm text-xs font-mono font-extrabold uppercase tracking-wider shrink-0"
+        >
+          Estudio TV 3D · Debate y Prensa en Vivo
+        </button>
       </div>
+
+      <PressAndDebateSimulatorModal
+        open={debateOpen}
+        speakerName={state.candidateName}
+        onClose={() => setDebateOpen(false)}
+      />
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">

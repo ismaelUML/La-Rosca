@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ActionStripCard } from '@/features/game-shell/ActionStripCard';
+import { FederalSummitAndCrisisModal } from '@/features/game-shell/FederalSummitAndCrisisModal';
+import { playUiSound } from '@/lib/gameFeedback';
 
 // Aca manejas la relacion con la Corte Suprema, los expedientes de Comodoro Py
 // y la caja de ATN con los 24 gobernadores para juntar votos y gobernabilidad.
@@ -250,6 +252,7 @@ function ProvincesTabContent({ state, onDispatch }: JudicialAndProvincesViewProp
 
 export function JudicialAndProvincesView({ state, onDispatch }: JudicialAndProvincesViewProps) {
   const [activeTab, setActiveTab] = useState<JudicialProvincesTab>('judicial');
+  const [summitOpen, setSummitOpen] = useState(false);
   const tabClass = (tab: JudicialProvincesTab) =>
     activeTab === tab
       ? 'bg-[#1a2b44] text-amber-100 border-b-2 border-amber-400'
@@ -260,7 +263,17 @@ export function JudicialAndProvincesView({ state, onDispatch }: JudicialAndProvi
       <CardHeader className="pb-3 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle>Justicia, Corte y Provincias</CardTitle>
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                playUiSound('tab');
+                setSummitOpen(true);
+              }}
+              className="hoi-btn-gold px-2.5 py-1 rounded-sm text-[11px] font-mono font-bold uppercase tracking-wider"
+            >
+              Cumbre Federal y Juicio Político
+            </button>
             <Badge variant={state.judicial.cautelaresBlockingDnuCount > 0 ? 'danger' : 'success'}>
               Cautelares DNU: {state.judicial.cautelaresBlockingDnuCount}
             </Badge>
@@ -269,6 +282,13 @@ export function JudicialAndProvincesView({ state, onDispatch }: JudicialAndProvi
             </Badge>
           </div>
         </div>
+
+        <FederalSummitAndCrisisModal
+          open={summitOpen}
+          state={state}
+          onDispatch={onDispatch}
+          onClose={() => setSummitOpen(false)}
+        />
 
         <div className="grid grid-cols-2 rounded-sm bg-[#0b1018] border border-[#283447]">
           <button

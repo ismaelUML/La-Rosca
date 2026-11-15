@@ -1,0 +1,422 @@
+import React, { useEffect, useRef, useState } from 'react';
+import * as THREE from 'three';
+import { Mic, Radio, Sparkles, Tv, X } from 'lucide-react';
+import { playUiSound } from '@/lib/gameFeedback';
+
+// Simulador 3D de Conferencia de Prensa en Casa Rosada / Cadena Nacional
+// y Debate Presidencial con Derechos a Replica y Chicanas en Vivo.
+
+interface PressQuestionRound {
+  id: string;
+  journalist: string;
+  outlet: string;
+  question: string;
+  options: Array<{
+    tone: 'ORTODOXO' | 'CHICANA' | 'INSTITUCIONAL';
+    toneLabel: string;
+    replyText: string;
+    imageDelta: number;
+    viralDelta: number;
+    marketDelta: number;
+    headline: string;
+  }>;
+}
+
+const PRESS_ROUNDS: PressQuestionRound[] = [
+  {
+    id: 'ROUND_1',
+    journalist: 'Acreditado Sala de Prensa · Economía',
+    outlet: 'LN+ / Ámbito Financiero',
+    question:
+      '«Presidente, los formadores de precios remarcaron preventivamente esta semana y los gremios amenazan con no homologar paritarias debajo del IPC. ¿Va a convalidar una devaluación o mantiene el ancla fiscal a rajatabla?»',
+    options: [
+      {
+        tone: 'ORTODOXO',
+        toneLabel: 'Técnico-Ortodoxo (Rigor Fiscal)',
+        replyText:
+          '«El equilibrio fiscal no se negocia ni un milímetro. No vamos a convalidar la irresponsabilidad monetaria con devaluaciones bruscas: el que remarque por encima de la pauta se va a quedar sin vender.»',
+        imageDelta: 1.5,
+        viralDelta: 2.0,
+        marketDelta: 4.5,
+        headline: 'EL EJECUTIVO RATIFICA EL ANCLA FISCAL Y DESCARTA SALTO CAMBIARIO'
+      },
+      {
+        tone: 'CHICANA',
+        toneLabel: 'Chicana al Hueso (Cruzar a la Casta)',
+        replyText:
+          '«Los mismos economistas y sindicalistas que dejaron 200% de inflación ahora nos quieren explicar cómo manejar la mesa de dinero. Que vayan a competir sin subsidios del Estado.»',
+        imageDelta: 1.0,
+        viralDelta: 5.5,
+        marketDelta: 1.5,
+        headline: 'FUERTE CRUCE EN CASA ROSADA: "QUE COMPITAN SIN SUBSIDIOS DEL ESTADO"'
+      },
+      {
+        tone: 'INSTITUCIONAL',
+        toneLabel: 'Institucional-Moderado (Mesa Tripartita)',
+        replyText:
+          '«Vamos a convocar al Consejo del Salario y a las cámaras industriales para coordinar una transición ordenada de precios y haberes cuidando el empleo formal.»',
+        imageDelta: 2.5,
+        viralDelta: -1.0,
+        marketDelta: 1.0,
+        headline: 'EL GOBIERNO CONVOCA A EMPRESARIOS Y GREMIOS PARA ORDENAR PRECIOS'
+      }
+    ]
+  },
+  {
+    id: 'ROUND_2',
+    journalist: 'Corresponsal Parlamentario · Política',
+    outlet: 'TN / Clarín',
+    question:
+      '«Los gobernadores dialoguistas advierten que sin fondos para obras viales e infraestructura energética no habrá quórum para el próximo paquete de reformas en el Senado. ¿Habrá billetera abierta o decretazo?»',
+    options: [
+      {
+        tone: 'ORTODOXO',
+        toneLabel: 'Técnico-Ortodoxo (Auditoría Obra por Obra)',
+        replyText:
+          '«Cada peso de ATN o infraestructura va a estar atado a metas de superávit provincial y adhesión al RIGI. Se terminaron los cheques en blanco por votos.»',
+        imageDelta: 1.5,
+        viralDelta: 1.5,
+        marketDelta: 3.5,
+        headline: 'CONDICIONAN GIROS A PROVINCIAS AL CUMPLIMIENTO DE METAS FISCALES'
+      },
+      {
+        tone: 'CHICANA',
+        toneLabel: 'Chicana al Hueso (Exponer en Cadena)',
+        replyText:
+          '«Si los senadores quieren votar en contra del alivio impositivo para defender sus cajas políticas, vamos a exponer nombre por nombre en televisión quién vota contra la gente.»',
+        imageDelta: 0.5,
+        viralDelta: 6.0,
+        marketDelta: 0.5,
+        headline: 'TENSIÓN CON EL SENADO: ADVIERTEN QUE EXPONDRÁN A QUIENES BLOQUEEN LEYES'
+      },
+      {
+        tone: 'INSTITUCIONAL',
+        toneLabel: 'Institucional-Moderado (Pacto Federal)',
+        replyText:
+          '«El Ministro del Interior ya está reunido con las ligas provinciales para destrabar las obras estratégicas y garantizar una sanción con amplio consenso federal.»',
+        imageDelta: 3.0,
+        viralDelta: 0.5,
+        marketDelta: 2.5,
+        headline: 'ACERCAMIENTO CON GOBERNADORES PARA SELLAR EL PACTO FEDERAL EN EL SENADO'
+      }
+    ]
+  },
+  {
+    id: 'ROUND_3',
+    journalist: 'Periodista Acreditado · Sociedad y Calle',
+    outlet: 'C5N / Crónica TV',
+    question:
+      '«Las columnas sindicales y universitarias anunciaron una movilización frente al Congreso por la caída del poder adquisitivo. ¿Aplicará el protocolo antipiquetes al 100% o abrirá un canal de negociación?»',
+    options: [
+      {
+        tone: 'ORTODOXO',
+        toneLabel: 'Técnico-Ortodoxo (Orden Público Estricto)',
+        replyText:
+          '«El derecho a manifestarse existe sobre la vereda, pero la libre circulación está garantizada por ley. Las fuerzas federales van a hacer cumplir el protocolo sin excepciones.»',
+        imageDelta: 2.0,
+        viralDelta: 3.5,
+        marketDelta: 3.0,
+        headline: 'RATIFICAN APLICACIÓN ESTRICTA DEL PROTOCOLO DE ORDEN PÚBLICO EN ACCESOS'
+      },
+      {
+        tone: 'CHICANA',
+        toneLabel: 'Chicana al Hueso (Auditar Intermediarios)',
+        replyText:
+          '«El que corta no cobra y vamos a auditar hasta la última factura de los gerentes de la pobreza que usan a la gente de rehén para cuidar sus sellos.»',
+        imageDelta: 1.0,
+        viralDelta: 6.5,
+        marketDelta: 2.0,
+        headline: '"EL QUE CORTA NO COBRA": LANZAN AUDITORÍA MASIVA SOBRE INTERMEDIARIOS'
+      },
+      {
+        tone: 'INSTITUCIONAL',
+        toneLabel: 'Institucional-Moderado (Refuerzo Directo)',
+        replyText:
+          '«Reforzaremos de manera directa la Tarjeta Alimentar y las becas estudiantiles sin intermediarios, garantizando una jornada en paz y con diálogo institucional.»',
+        imageDelta: 3.0,
+        viralDelta: 0.5,
+        marketDelta: 1.5,
+        headline: 'ANUNCIAN REFUERZO SOCIAL DIRECTO SIN INTERMEDIARIOS PARA DESCOMPRIMIR LA CALLE'
+      }
+    ]
+  }
+];
+
+function createPressStudio3DScene(container: HTMLDivElement) {
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x060a12);
+
+  const w = container.clientWidth || 380;
+  const h = container.clientHeight || 190;
+  const camera = new THREE.PerspectiveCamera(36, w / h, 0.1, 100);
+  camera.position.set(0, 2.4, 6.2);
+  camera.lookAt(0, 1.1, 0);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  container.appendChild(renderer.domElement);
+
+  scene.add(new THREE.HemisphereLight(0xfef3c7, 0x0f172a, 1.1));
+  const keyLight = new THREE.PointLight(0xfbbf24, 2.2, 18);
+  keyLight.position.set(2.5, 4.2, 3.5);
+  scene.add(keyLight);
+
+  const flashLight = new THREE.PointLight(0xe0f2fe, 0, 15);
+  flashLight.position.set(-2, 2.8, 4.2);
+  scene.add(flashLight);
+
+  const backdrop = new THREE.Mesh(
+    new THREE.PlaneGeometry(11, 4.6),
+    new THREE.MeshStandardMaterial({ color: 0x0f243c, roughness: 0.6, metalness: 0.25 })
+  );
+  backdrop.position.set(0, 1.8, -1.6);
+  scene.add(backdrop);
+
+  const flagStripe = new THREE.Mesh(
+    new THREE.BoxGeometry(8.5, 0.28, 0.08),
+    new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, emissiveIntensity: 0.45 })
+  );
+  flagStripe.position.set(0, 2.9, -1.52);
+  scene.add(flagStripe);
+
+  const podium = new THREE.Mesh(
+    new THREE.BoxGeometry(1.45, 1.4, 0.85),
+    new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.4, metalness: 0.35 })
+  );
+  podium.position.set(0, 0.7, 0.4);
+  scene.add(podium);
+
+  const seal = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.24, 0.24, 0.06, 20),
+    new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.85, roughness: 0.2 })
+  );
+  seal.rotation.x = Math.PI / 2;
+  seal.position.set(0, 0.95, 0.84);
+  scene.add(seal);
+
+  const micMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.2 });
+  for (const ox of [-0.32, 0, 0.32]) {
+    const mic = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.35, 8), micMat);
+    mic.position.set(ox, 1.52, 0.62);
+    mic.rotation.x = -0.35;
+    scene.add(mic);
+  }
+
+  return { scene, camera, renderer, podium, flashLight };
+}
+
+function PressPodium3DCanvas({ activeHeadline }: { activeHeadline: string }) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return undefined;
+    const { scene, camera, renderer, podium, flashLight } = createPressStudio3DScene(container);
+
+    let animId = 0;
+    const tick = () => {
+      animId = requestAnimationFrame(tick);
+      const t = performance.now() * 0.001;
+      camera.position.x = Math.sin(t * 0.55) * 0.85;
+      camera.lookAt(0, 1.05, 0);
+      podium.rotation.y = Math.sin(t * 0.4) * 0.06;
+      flashLight.intensity = Math.sin(t * 11) > 0.92 ? 3.5 : 0;
+      renderer.render(scene, camera);
+    };
+    tick();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      renderer.dispose();
+      renderer.domElement.remove();
+    };
+  }, []);
+
+  return (
+    <div className="relative rounded-sm overflow-hidden border border-[#8a6d33] bg-[#05080d]">
+      <div ref={containerRef} className="w-full h-[185px]" />
+      <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-sm bg-rose-700 text-[10px] font-mono font-extrabold uppercase text-white flex items-center gap-1.5 shadow">
+        <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+        EN VIVO · SALA DE PRENSA / CADENA NACIONAL
+      </div>
+      <div className="bg-gradient-to-r from-[#8b0000] via-[#b91c1c] to-[#7f1d1d] px-3 py-1.5 border-t border-amber-400/70 flex items-center justify-between text-xs font-mono">
+        <span className="font-extrabold text-white uppercase tracking-wider truncate">
+          {activeHeadline}
+        </span>
+        <span className="text-[10px] text-amber-200 shrink-0 ml-2">TRANSMISIÓN OFICIAL</span>
+      </div>
+    </div>
+  );
+}
+
+function formatSignedPts(val: number): string {
+  const prefix = val >= 0 ? '+' : '';
+  return `${prefix}${val} pts`;
+}
+
+function ActivePressQuestionPanel({
+  roundIdx,
+  totalRounds,
+  currentRound,
+  onSelectOption
+}: {
+  roundIdx: number;
+  totalRounds: number;
+  currentRound: PressQuestionRound;
+  onSelectOption: (opt: PressQuestionRound['options'][number]) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="p-3.5 rounded-sm bg-[#090d14] border border-[#8a6d33]/80 space-y-1">
+        <div className="flex items-center justify-between text-[10px] font-mono text-amber-300">
+          <span className="inline-flex items-center gap-1">
+            <Mic className="w-3 h-3" />
+            PREGUNTA {roundIdx + 1} DE {totalRounds} · {currentRound.journalist}
+          </span>
+          <span className="text-sky-300">{currentRound.outlet}</span>
+        </div>
+        <p className="text-xs sm:text-sm font-serif italic text-slate-100 leading-relaxed">
+          {currentRound.question}
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        {currentRound.options.map((opt) => (
+          <button
+            key={opt.tone}
+            type="button"
+            onClick={() => onSelectOption(opt)}
+            className="w-full p-3 rounded-sm bg-[#0c1119] hover:bg-[#152030] border border-[#263142] hover:border-[#b89342] text-left space-y-1 transition"
+          >
+            <div className="flex items-center justify-between text-[11px] font-mono">
+              <span className="font-bold text-amber-200 uppercase flex items-center gap-1.5">
+                <Radio className="w-3 h-3 text-amber-400" />
+                {opt.toneLabel}
+              </span>
+              <span className="text-emerald-300">
+                Img +{opt.imageDelta} · Redes {formatSignedPts(opt.viralDelta)} · Mkt +{opt.marketDelta}
+              </span>
+            </div>
+            <p className="text-xs text-slate-300">{opt.replyText}</p>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function PressAndDebateSimulatorModal({
+  open,
+  speakerName,
+  onCompleteImpact,
+  onClose
+}: {
+  open: boolean;
+  speakerName: string;
+  onCompleteImpact?: (deltas: { image: number; viral: number; market: number }) => void;
+  onClose: () => void;
+}) {
+  const [roundIdx, setRoundIdx] = useState(0);
+  const [totals, setTotals] = useState({ image: 0, viral: 0, market: 0 });
+  const [headline, setHeadline] = useState(
+    'CONFERENCIA DE PRENSA Y DERECHO A RÉPLICA DESDE EL ATRIL OFICIAL'
+  );
+  const [finished, setFinished] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setRoundIdx(0);
+    setTotals({ image: 0, viral: 0, market: 0 });
+    setHeadline('CONFERENCIA DE PRENSA Y DERECHO A RÉPLICA DESDE EL ATRIL OFICIAL');
+    setFinished(false);
+  }, [open]);
+
+  if (!open) return null;
+
+  const currentRound = PRESS_ROUNDS[roundIdx] ?? PRESS_ROUNDS[0]!;
+
+  const handleSelectOption = (opt: PressQuestionRound['options'][number]) => {
+    playUiSound('stamp');
+    const nextTotals = {
+      image: Number((totals.image + opt.imageDelta).toFixed(1)),
+      viral: Number((totals.viral + opt.viralDelta).toFixed(1)),
+      market: Number((totals.market + opt.marketDelta).toFixed(1))
+    };
+    setTotals(nextTotals);
+    setHeadline(opt.headline);
+
+    if (roundIdx + 1 >= PRESS_ROUNDS.length) {
+      setFinished(true);
+      onCompleteImpact?.(nextTotals);
+    } else {
+      setRoundIdx((r) => r + 1);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm">
+      <div className="w-full max-w-3xl max-h-[92vh] overflow-y-auto hoi-panel rounded-sm p-4 sm:p-6 space-y-4 border border-[#8a6d33] shadow-2xl">
+        <div className="hoi-header-steel p-3.5 rounded-sm flex items-start justify-between gap-3">
+          <div>
+            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300 flex items-center gap-1.5">
+              <Tv className="w-3.5 h-3.5 text-amber-400" />
+              ATRIL OFICIAL · CONFERENCIA DE PRENSA Y DEBATE PÚBLICO EN VIVO
+            </div>
+            <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5">
+              Vocería y Definiciones de {speakerName}
+            </h3>
+          </div>
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-white p-1">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <PressPodium3DCanvas activeHeadline={headline} />
+
+        <div className="grid grid-cols-3 gap-2.5 font-mono text-xs text-center">
+          <div className="p-2 rounded-sm bg-[#0c1119] border border-[#263142]">
+            <span className="text-[10px] text-slate-400 block">IMAGEN PÚBLICA</span>
+            <strong className="text-emerald-400 text-sm">{formatSignedPts(totals.image)}</strong>
+          </div>
+          <div className="p-2 rounded-sm bg-[#0c1119] border border-[#263142]">
+            <span className="text-[10px] text-slate-400 block">VIRALIDAD EN REDES</span>
+            <strong className="text-amber-300 text-sm">{formatSignedPts(totals.viral)}</strong>
+          </div>
+          <div className="p-2 rounded-sm bg-[#0c1119] border border-[#263142]">
+            <span className="text-[10px] text-slate-400 block">CALMA DE MERCADOS</span>
+            <strong className="text-sky-300 text-sm">{formatSignedPts(totals.market)}</strong>
+          </div>
+        </div>
+
+        {!finished ? (
+          <ActivePressQuestionPanel
+            roundIdx={roundIdx}
+            totalRounds={PRESS_ROUNDS.length}
+            currentRound={currentRound}
+            onSelectOption={handleSelectOption}
+          />
+        ) : (
+          <div className="p-4 rounded-sm bg-[#090d14] border border-emerald-700/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-1">
+              <div className="text-xs font-mono font-bold text-emerald-300 uppercase flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4" />
+                Conferencia Finalizada · Repercusión en Tapa y Mercados
+              </div>
+              <p className="text-xs text-slate-300">
+                Cerraste las 3 rondas con impacto de {formatSignedPts(totals.image)} en imagen y {formatSignedPts(totals.market)} en mercados.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="hoi-btn-gold px-4 py-2 rounded-sm text-xs font-mono font-bold uppercase shrink-0"
+            >
+              Cerrar Transmisión
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

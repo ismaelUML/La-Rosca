@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { PartyEmblemSvg } from '../party-setup/PartyEmblemSvg.js';
 import { Argentina3DMapCanvas } from '../map-3d/Argentina3DMapCanvas.js';
+import { LiveNewsAndMarketTicker } from '../game-shell/LiveNewsAndMarketTicker.js';
 import { isSoundEnabled, playUiSound, setSoundEnabled } from '../../lib/gameFeedback.js';
 
 // Shell de campana electoral 2027 sobre el mismo mapa 3D interactivo de Argentina.
@@ -503,6 +504,8 @@ export function CampaignSidebarLayout({
           />
         ) : null}
       </div>
+
+      <LiveNewsAndMarketTicker campaignState={state} />
     </div>
   );
 }

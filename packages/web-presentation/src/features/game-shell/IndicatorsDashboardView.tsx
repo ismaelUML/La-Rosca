@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import type { IndicatorCategory, IndicatorSeriesCard, SimulationState } from '@argentina-sim/domain';
 import { buildIndicatorsCatalog } from '@argentina-sim/infrastructure';
-import { BarChart3, RefreshCw, Search } from 'lucide-react';
+import { BarChart3, History, RefreshCw, Search } from 'lucide-react';
 import { IndicatorChartCard } from './IndicatorChartCard.js';
+import { HistoricalMandateComparatorModal } from './HistoricalMandateComparatorModal.js';
 import { playUiSound } from '../../lib/gameFeedback.js';
 
 // Tablero Nacional de Indicadores Macroeconomicos, Sociales y Sectoriales (INDEC / BCRA):
@@ -197,6 +198,7 @@ export function IndicatorsDashboardView({
 }: IndicatorsDashboardViewProps) {
   const [selectedCategory, setSelectedCategory] = useState<IndicatorCategory | 'TODOS'>('PRECIOS');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [comparatorOpen, setComparatorOpen] = useState<boolean>(false);
 
   const allCards = useMemo(() => buildIndicatorsCatalog(state), [state]);
   const visibleCards = useMemo(
@@ -220,8 +222,27 @@ export function IndicatorsDashboardView({
             </h1>
           </div>
         </div>
-        <SaveStatusBadge saveError={saveError} onRetrySave={onRetrySave} />
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              playUiSound('tab');
+              setComparatorOpen(true);
+            }}
+            className="hoi-btn-gold px-3 py-1.5 rounded-sm text-xs font-mono font-bold uppercase tracking-wider inline-flex items-center gap-1.5"
+          >
+            <History className="w-3.5 h-3.5" />
+            <span>Comparador Histórico (1991–2031)</span>
+          </button>
+          <SaveStatusBadge saveError={saveError} onRetrySave={onRetrySave} />
+        </div>
       </div>
+
+      <HistoricalMandateComparatorModal
+        open={comparatorOpen}
+        state={state}
+        onClose={() => setComparatorOpen(false)}
+      />
 
       <ExecutiveKpiStrip state={state} />
 

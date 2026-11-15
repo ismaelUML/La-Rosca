@@ -10,6 +10,7 @@ import { Check, Play, ScrollText, Search, Sliders } from 'lucide-react';
 import { SectionPageHeader } from '@/components/ui/SectionPageHeader';
 import { playUiSound } from '@/lib/gameFeedback';
 import { ActionStripCard } from './ActionStripCard.js';
+import { BcraIntradayMarketModal } from './BcraIntradayMarketModal.js';
 
 // Vistas de ECONOMIA -> Politica economica (palancas -2 a +2 acopladas al motor)
 // y ECONOMIA -> Medidas (12 sectores y decretos/programas activables).
@@ -173,6 +174,8 @@ function FineTuningSection({
   state: SimulationState;
   onDispatch: (action: PolicyAction) => void;
 }) {
+  const [bcraOpen, setBcraOpen] = useState(false);
+
   return (
     <div className="hoi-panel rounded-sm overflow-hidden">
       <div className="hoi-header-crimson px-5 py-3 flex flex-wrap items-center justify-between gap-2">
@@ -184,6 +187,16 @@ function FineTuningSection({
             PARÁMETROS DE DEVALUACIÓN, TASA MONETARIA Y SUBSIDIOS
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => {
+            playUiSound('tab');
+            setBcraOpen(true);
+          }}
+          className="hoi-btn-gold px-3 py-1.5 rounded-sm text-[11px] font-mono font-bold uppercase tracking-wider"
+        >
+          Simular Rueda Intradía MULC (10 a 15 hs)
+        </button>
       </div>
 
       <div className="p-4 space-y-2.5">
@@ -196,6 +209,13 @@ function FineTuningSection({
           {buildFineTuningAlert(state)}
         </div>
       </div>
+
+      <BcraIntradayMarketModal
+        open={bcraOpen}
+        state={state}
+        onDispatch={onDispatch}
+        onClose={() => setBcraOpen(false)}
+      />
     </div>
   );
 }

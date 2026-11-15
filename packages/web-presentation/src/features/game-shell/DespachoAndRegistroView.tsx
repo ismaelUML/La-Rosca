@@ -3,6 +3,7 @@ import type { GameSetupConfiguration, PolicyAction, SimulationState } from '@arg
 import { PartyEmblemSvg } from '../party-setup/PartyEmblemSvg.js';
 import type { InGameSidebarSection } from './GameSidebarLayout.js';
 import { GovernorCommandPanel, LegislatorCommandPanel } from './RoleMandateCommandPanels.js';
+import { PresidentialDesk3DScene } from './PresidentialDesk3DScene.js';
 
 // Vistas de DESPACHO -> Despacho (resumen ejecutivo del jugador y accesos rapidos)
 // y DESPACHO -> Registro (bitacora historica mes a mes).
@@ -27,7 +28,17 @@ function RoleSpecificCommandSection({
   onNavigate: (section: InGameSidebarSection) => void;
   onDispatch?: (action: PolicyAction) => void;
 }) {
-  if (!onDispatch || setup.role === 'PRESIDENTE') {
+  if (setup.role === 'PRESIDENTE') {
+    return (
+      <PresidentialDesk3DScene
+        state={state}
+        speakerName={setup.characterName}
+        onNavigate={onNavigate}
+        onDispatch={onDispatch}
+      />
+    );
+  }
+  if (!onDispatch) {
     return null;
   }
   if (setup.role === 'GOBERNADOR') {

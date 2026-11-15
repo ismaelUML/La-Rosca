@@ -6,6 +6,10 @@ import type {
   CongressVoteOutcome
 } from '@argentina-sim/domain';
 import { playUiSound } from '@/lib/gameFeedback';
+import {
+  BillChaptersParticularVotePanel,
+  Congress3DHemicycleCanvas
+} from './Congress3DHemicycleCanvas.js';
 
 // Tablero Electronico de Votacion Nominal en Tiempo Real (Diputados 257 / Senado 72).
 // Simula el encendido banca por banca y bloque por espacio politico como en el recinto real.
@@ -646,6 +650,7 @@ function useRealtimeRollCall(outcome: CongressVoteOutcome | null) {
 
   useEffect(() => {
     if (!outcome) return;
+    playUiSound('quorum');
     setActiveChamber('DIPUTADOS');
     setRevealedCount(0);
     setBothDone(false);
@@ -686,12 +691,126 @@ function useRealtimeRollCall(outcome: CongressVoteOutcome | null) {
   };
 }
 
+function HemicycleVisualizationBox({
+  view3D,
+  seats,
+  revealedCount,
+  detail,
+  liveYes,
+  liveNo
+}: {
+  view3D: boolean;
+  seats: SeatDotItem[];
+  revealedCount: number;
+  detail: ChamberVoteDetail;
+  liveYes: number;
+  liveNo: number;
+}) {
+  if (view3D) {
+    const label = detail.chamber === 'DIPUTADOS' ? 'H. Cámara de Diputados' : 'H. Senado de la Nación';
+    return (
+      <Congress3DHemicycleCanvas
+        seats={seats}
+        revealedCount={revealedCount}
+        chamberLabel={label}
+        majorityNeeded={detail.majorityNeeded}
+        liveYes={liveYes}
+      />
+    );
+  }
+  return (
+    <LiveHemicycleSvg
+      seats={seats}
+      revealedCount={revealedCount}
+      detail={detail}
+      liveYes={liveYes}
+      liveNo={liveNo}
+    />
+  );
+}
+
+function ModalHeaderBar({
+  billTitle,
+  view3D,
+  showChapters,
+  onToggle3D,
+  onToggleChapters,
+  onClose
+}: {
+  billTitle: string;
+  view3D: boolean;
+  showChapters: boolean;
+  onToggle3D: () => void;
+  onToggleChapters: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="hoi-header-steel p-3.5 rounded-sm flex items-start justify-between gap-3">
+      <div>
+        <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300">
+          SESIÓN ESPECIAL · TABLERO ELECTRÓNICO DEL CONGRESO DE LA NACIÓN
+        </div>
+        <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5">
+          {billTitle}
+        </h3>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onToggle3D}
+          className="px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#b89342] text-[10px] font-mono font-bold uppercase text-amber-200 hover:bg-[#172233]"
+        >
+          {view3D ? 'Ver Plano 2D' : 'Ver Recinto 3D'}
+        </button>
+        <button
+          type="button"
+          onClick={onToggleChapters}
+          className="px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#2d3c52] text-[10px] font-mono font-bold uppercase text-sky-300 hover:bg-[#172233]"
+        >
+          {showChapters ? 'Ocultar Capítulos' : 'Votación en Particular (Capítulos)'}
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar recinto"
+          className="text-slate-400 hover:text-white p-1"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function OptionalChaptersSection({
+  visible,
+  billTitle,
+  baseYesVotes,
+  majorityNeeded
+}: {
+  visible: boolean;
+  billTitle: string;
+  baseYesVotes: number;
+  majorityNeeded: number;
+}) {
+  if (!visible) return null;
+  return (
+    <BillChaptersParticularVotePanel
+      billTitle={billTitle}
+      baseYesVotes={baseYesVotes}
+      majorityNeeded={majorityNeeded}
+    />
+  );
+}
+
 export function CongressRealtimeVoteModal({
   outcome,
   blocs,
   onClose
 }: CongressRealtimeVoteModalProps) {
   const roll = useRealtimeRollCall(outcome);
+  const [view3D, setView3D] = useState(true);
+  const [showChapters, setShowChapters] = useState(false);
   const seats = useMemo(
     () => (roll.detail ? buildChamberSeats(roll.detail, blocs) : []),
     [roll.detail, blocs]
@@ -722,24 +841,20 @@ export function CongressRealtimeVoteModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm">
       <div className="w-full max-w-4xl max-h-[92vh] overflow-y-auto hoi-panel rounded-sm p-4 sm:p-6 space-y-4 shadow-2xl border border-[#8a6d33]">
-        <div className="hoi-header-steel p-3.5 rounded-sm flex items-start justify-between gap-3">
-          <div>
-            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300">
-              SESIÓN ESPECIAL · TABLERO ELECTRÓNICO DEL CONGRESO DE LA NACIÓN
-            </div>
-            <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5">
-              {outcome.billTitle}
-            </h3>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar recinto"
-            className="text-slate-400 hover:text-white p-1"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+        <ModalHeaderBar
+          billTitle={outcome.billTitle}
+          view3D={view3D}
+          showChapters={showChapters}
+          onToggle3D={() => {
+            playUiSound('tab');
+            setView3D((v) => !v);
+          }}
+          onToggleChapters={() => {
+            playUiSound('tab');
+            setShowChapters((c) => !c);
+          }}
+          onClose={onClose}
+        />
 
         <ModalChamberSelectorBar
           activeChamber={roll.activeChamber}
@@ -752,7 +867,8 @@ export function CongressRealtimeVoteModal({
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <LiveHemicycleSvg
+          <HemicycleVisualizationBox
+            view3D={view3D}
             seats={seats}
             revealedCount={roll.effectiveRevealed}
             detail={roll.detail}
@@ -768,6 +884,13 @@ export function CongressRealtimeVoteModal({
             isDone={roll.effectiveRevealed >= roll.detail.totalSeats}
           />
         </div>
+
+        <OptionalChaptersSection
+          visible={showChapters || roll.bothDone}
+          billTitle={outcome.billTitle}
+          baseYesVotes={live.yes}
+          majorityNeeded={roll.detail.majorityNeeded}
+        />
 
         <BlocLiveBreakdownTable tallies={blocTallies} />
         {roll.bothDone ? <FinalSessionFooterBanner outcome={outcome} onClose={onClose} /> : null}
