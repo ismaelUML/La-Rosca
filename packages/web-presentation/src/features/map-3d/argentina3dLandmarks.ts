@@ -2,19 +2,25 @@ import * as THREE from 'three';
 import type { ProvinceSummary } from '@argentina-sim/domain';
 import type { ProvinceMeshMeta } from './argentina3dGeometry.js';
 import { buildNormalizedProvinceMap } from './argentina3dGeometry.js';
+import {
+  getCasaRosadaFacadeTexture,
+  getCorrugatedSiloTexture,
+  getTravertineStoneTexture
+} from './proceduralPbrTextures.js';
+import { loadGlbIntoAnchor } from './modelAssetLoader.js';
 
-// Activos estrategicos 3D sobre el tablero nacional:
-// - Obelisco y Casa Rosada (CABA / PBA)
-// - Torres de perforacion y venteo en Vaca Muerta (Neuquen, Rio Negro, Mendoza)
-// - Piletones de evaporacion de litio en la Puna (Jujuy, Salta, Catamarca)
-// - Silos y complejos portuarios agroexportadores (Santa Fe, Cordoba, Entre Rios)
-// - Parques eolicos patagonicos con rotores animados (Chubut, Santa Cruz, Tierra del Fuego)
-// - Gasoducto Perito Moreno y corredores logisticos nacionales con pulsos de flujo en vivo
-// - Constelacion de luces urbanas satelitales y ondas de conflicto social
+// Monumentos arquitectonicos e instalaciones industriales 3D de alta densidad:
+// - Obelisco travertino + Casa Rosada con fachada neoclasica + Cupula del Congreso (AMBA)
+// - Torre Derrick reticulada + Ciguena petrolera (Pumpjack animado) + Venteo (Vaca Muerta)
+// - Terrazas de salmuera con diques de sal + Planta quimica paraboloide (Triangulo del Litio)
+// - Bateria de silos conicos de chapa corrugada + Noria elevadora y puente (Nucleo Agro)
+// - Parques eolicos dobles con gondola aerodinamica y palas ahusadas (Patagonia)
+// - Represa hidroelectrica curva con embalse y vertedero (Cordillera y Litoral)
 
 export interface AnimatedLandmarkRefs {
   overlayGroup: THREE.Group;
   windRotors: THREE.Object3D[];
+  pumpBeams: THREE.Object3D[];
   gasFlares: THREE.Mesh[];
   conflictRings: THREE.Mesh[];
   pipelinePulses: Array<{
@@ -27,140 +33,323 @@ export interface AnimatedLandmarkRefs {
   anchorMap: Map<string, THREE.Group>;
 }
 
+function buildCongresoDomeMini(): THREE.Group {
+  const grp = new THREE.Group();
+  const baseMat = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.45, metalness: 0.25 });
+  const base = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.24, 0.34), baseMat);
+  base.position.y = 0.12;
+
+  const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 0.22, 16), baseMat);
+  drum.position.y = 0.32;
+
+  const pts = [
+    new THREE.Vector2(0.14, 0),
+    new THREE.Vector2(0.135, 0.12),
+    new THREE.Vector2(0.1, 0.26),
+    new THREE.Vector2(0.04, 0.36),
+    new THREE.Vector2(0.0, 0.4)
+  ];
+  const domeMat = new THREE.MeshStandardMaterial({
+    color: 0x14b8a6,
+    roughness: 0.3,
+    metalness: 0.65,
+    emissive: 0x0f766e,
+    emissiveIntensity: 0.3
+  });
+  const dome = new THREE.Mesh(new THREE.LatheGeometry(pts, 18), domeMat);
+  dome.position.y = 0.42;
+
+  const spire = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.008, 0.02, 0.16, 8),
+    new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.85, roughness: 0.2 })
+  );
+  spire.position.y = 0.88;
+
+  grp.add(base, drum, dome, spire);
+  return grp;
+}
+
 function createObeliscoAndRosadaNode(): THREE.Group {
   const node = new THREE.Group();
-  const shaftMat = new THREE.MeshStandardMaterial({
-    color: 0xf8fafc,
-    roughness: 0.25,
-    metalness: 0.3,
-    emissive: 0xfbbf24,
-    emissiveIntensity: 0.35
+  const stoneMat = new THREE.MeshStandardMaterial({
+    map: getTravertineStoneTexture(),
+    roughness: 0.35,
+    metalness: 0.15
   });
-  const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1.85, 0.24), shaftMat);
-  shaft.position.set(0, 0.92, 0);
-  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.19, 0.42, 4), shaftMat);
-  tip.position.set(0, 2.02, 0);
-  tip.rotation.y = Math.PI / 4;
+
+  const plazaPlinth = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.28, 0.34, 0.12, 8),
+    new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.6 })
+  );
+  plazaPlinth.position.set(0, 0.06, 0);
+
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.165, 1.78, 4), stoneMat);
+  shaft.position.set(0, 0.98, 0);
+  shaft.rotation.y = Math.PI / 4;
+
+  const apex = new THREE.Mesh(new THREE.ConeGeometry(0.085, 0.34, 4), stoneMat);
+  apex.position.set(0, 2.04, 0);
+  apex.rotation.y = Math.PI / 4;
+
+  const rod = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.008, 0.008, 0.22, 6),
+    new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.9 })
+  );
+  rod.position.set(0, 2.28, 0);
 
   const rosadaMat = new THREE.MeshStandardMaterial({
-    color: 0xe11d48,
-    roughness: 0.4,
-    metalness: 0.2,
-    emissive: 0x9f1239,
-    emissiveIntensity: 0.45
+    map: getCasaRosadaFacadeTexture(),
+    roughness: 0.42,
+    metalness: 0.18
   });
-  const rosada = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.46, 0.38), rosadaMat);
-  rosada.position.set(0.55, 0.23, 0.28);
+  const rosadaMain = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.42, 0.34), rosadaMat);
+  rosadaMain.position.set(0.62, 0.21, 0.26);
+  const rosadaArch = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.48, 0.38), rosadaMat);
+  rosadaArch.position.set(0.62, 0.24, 0.26);
 
-  node.add(shaft, tip, rosada);
+  const congreso = buildCongresoDomeMini();
+  congreso.position.set(-0.56, 0, 0.28);
+
+  node.add(plazaPlinth, shaft, apex, rod, rosadaMain, rosadaArch, congreso);
+  loadGlbIntoAnchor(node, 'custom/amba_monuments.glb');
   return node;
 }
 
-function createVacaMuertaRigNode(flares: THREE.Mesh[]): THREE.Group {
+function buildPumpjackUnit(pumpBeams: THREE.Object3D[]): THREE.Group {
+  const unit = new THREE.Group();
+  const darkSteel = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.75, roughness: 0.3 });
+  const yellowSteel = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.6, roughness: 0.35 });
+
+  const aFrame = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.52, 4), darkSteel);
+  aFrame.position.set(0, 0.26, 0);
+
+  const beamPivot = new THREE.Group();
+  beamPivot.position.set(0, 0.5, 0);
+  const walkingBeam = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.07, 0.08), yellowSteel);
+  const horseHead = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.12, 0.12, 0.09, 12, 1, false, 0, Math.PI),
+    yellowSteel
+  );
+  horseHead.position.set(0.3, -0.02, 0);
+  horseHead.rotation.x = Math.PI / 2;
+  beamPivot.add(walkingBeam, horseHead);
+  pumpBeams.push(beamPivot);
+
+  unit.add(aFrame, beamPivot);
+  return unit;
+}
+
+function createVacaMuertaRigNode(flares: THREE.Mesh[], pumpBeams: THREE.Object3D[]): THREE.Group {
   const node = new THREE.Group();
   const steelMat = new THREE.MeshStandardMaterial({
     color: 0x94a3b8,
-    roughness: 0.32,
-    metalness: 0.72
+    roughness: 0.28,
+    metalness: 0.78
   });
-  const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.34, 1.55, 4), steelMat);
-  tower.position.set(0, 0.78, 0);
+  const wireMat = new THREE.MeshStandardMaterial({
+    color: 0xcbd5e1,
+    roughness: 0.3,
+    metalness: 0.8,
+    wireframe: true
+  });
 
-  const base = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.22, 0.75), steelMat);
-  base.position.set(0, 0.11, 0);
+  const pad = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.12, 0.82), steelMat);
+  pad.position.set(0, 0.06, 0);
 
-  const flareMat = new THREE.MeshBasicMaterial({ color: 0xf97316 });
-  const flare = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 10), flareMat);
-  flare.position.set(0, 1.66, 0);
+  const latticeTower = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.28, 1.65, 4, 6), wireMat);
+  latticeTower.position.set(-0.18, 0.92, 0);
+  latticeTower.rotation.y = Math.PI / 4;
+
+  const drillPipe = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.68, 8), steelMat);
+  drillPipe.position.set(-0.18, 0.92, 0);
+
+  const tankMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.55, roughness: 0.35 });
+  const tank = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.28, 8, 12), tankMat);
+  tank.rotation.z = Math.PI / 2;
+  tank.position.set(-0.15, 0.22, 0.28);
+
+  const flareStack = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 1.45, 8), steelMat);
+  flareStack.position.set(0.32, 0.78, -0.22);
+
+  const flare = new THREE.Mesh(
+    new THREE.ConeGeometry(0.14, 0.38, 10),
+    new THREE.MeshBasicMaterial({ color: 0xf97316 })
+  );
+  flare.position.set(0.32, 1.62, -0.22);
   flares.push(flare);
 
-  node.add(base, tower, flare);
+  const pumpjack = buildPumpjackUnit(pumpBeams);
+  pumpjack.position.set(0.28, 0.12, 0.16);
+
+  node.add(pad, latticeTower, drillPipe, tank, flareStack, flare, pumpjack);
+  loadGlbIntoAnchor(node, 'custom/vaca_muerta.glb');
   return node;
 }
 
 function createLithiumSaltFlatNode(): THREE.Group {
   const node = new THREE.Group();
-  const poolMat = new THREE.MeshStandardMaterial({
+  const saltRimMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.55 });
+  const brineCyan = new THREE.MeshStandardMaterial({
     color: 0x06b6d4,
-    roughness: 0.15,
-    metalness: 0.45,
+    roughness: 0.12,
+    metalness: 0.5,
     emissive: 0x22d3ee,
-    emissiveIntensity: 0.55
+    emissiveIntensity: 0.48
   });
-  const rimMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.6 });
+  const brineEmerald = new THREE.MeshStandardMaterial({
+    color: 0x10b981,
+    roughness: 0.14,
+    metalness: 0.45,
+    emissive: 0x34d399,
+    emissiveIntensity: 0.42
+  });
 
-  const poolA = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.14, 0.55), poolMat);
-  poolA.position.set(-0.22, 0.08, -0.15);
-  const poolB = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.14, 0.48), poolMat);
-  poolB.position.set(0.32, 0.08, 0.22);
-  const plant = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.38, 0.32), rimMat);
-  plant.position.set(0.28, 0.19, -0.25);
+  const dikeA = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.46, 0.1, 6), saltRimMat);
+  dikeA.position.set(-0.26, 0.05, -0.14);
+  const poolA = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.12, 6), brineCyan);
+  poolA.position.set(-0.26, 0.06, -0.14);
 
-  node.add(poolA, poolB, plant);
+  const dikeB = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.38, 0.1, 6), saltRimMat);
+  dikeB.position.set(0.28, 0.05, 0.22);
+  const poolB = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.12, 6), brineEmerald);
+  poolB.position.set(0.28, 0.06, 0.22);
+
+  const hangarRoof = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.22, 0.22, 0.48, 14, 1, false, 0, Math.PI),
+    new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.65, roughness: 0.3 })
+  );
+  hangarRoof.rotation.z = Math.PI / 2;
+  hangarRoof.position.set(0.26, 0.12, -0.24);
+
+  node.add(dikeA, poolA, dikeB, poolB, hangarRoof);
+  loadGlbIntoAnchor(node, 'custom/litio_planta.glb');
   return node;
 }
 
 function createAgroSiloComplexNode(): THREE.Group {
   const node = new THREE.Group();
-  const siloMat = new THREE.MeshStandardMaterial({
+  const siloWallMat = new THREE.MeshStandardMaterial({
+    map: getCorrugatedSiloTexture(),
+    roughness: 0.32,
+    metalness: 0.68
+  });
+  const roofMat = new THREE.MeshStandardMaterial({
+    color: 0xe2e8f0,
+    roughness: 0.25,
+    metalness: 0.78
+  });
+  const goldMat = new THREE.MeshStandardMaterial({
     color: 0xd97706,
     roughness: 0.35,
-    metalness: 0.55,
-    emissive: 0x78350f,
-    emissiveIntensity: 0.28
+    metalness: 0.55
   });
+
   const offsets: Array<[number, number]> = [
-    [-0.28, -0.16],
+    [-0.32, -0.16],
     [0, -0.16],
-    [0.28, -0.16],
-    [-0.14, 0.18],
-    [0.14, 0.18]
+    [0.32, -0.16],
+    [-0.16, 0.18],
+    [0.16, 0.18]
   ];
   for (const [ox, oz] of offsets) {
-    const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.68, 12), siloMat);
-    cyl.position.set(ox, 0.34, oz);
-    node.add(cyl);
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.62, 16), siloWallMat);
+    body.position.set(ox, 0.31, oz);
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(0.145, 0.22, 16), roofMat);
+    cone.position.set(ox, 0.73, oz);
+    node.add(body, cone);
   }
+
+  const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.07, 0.08), goldMat);
+  bridge.position.set(0, 0.86, -0.16);
+  const elevatorTower = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.05, 0.14), goldMat);
+  elevatorTower.position.set(-0.52, 0.52, -0.16);
+
+  node.add(bridge, elevatorTower);
+  loadGlbIntoAnchor(node, 'custom/complejo_agro.glb');
   return node;
 }
 
-function createPatagoniaWindTurbineNode(rotors: THREE.Object3D[]): THREE.Group {
-  const node = new THREE.Group();
+function buildSingleWindTurbine(rotors: THREE.Object3D[], scale = 1): THREE.Group {
+  const unit = new THREE.Group();
   const whiteMat = new THREE.MeshStandardMaterial({
-    color: 0xe2e8f0,
-    roughness: 0.28,
-    metalness: 0.35
+    color: 0xf1f5f9,
+    roughness: 0.22,
+    metalness: 0.38
   });
-  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.09, 1.35, 10), whiteMat);
-  mast.position.set(0, 0.67, 0);
+
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.085, 1.38, 14), whiteMat);
+  mast.position.set(0, 0.69, 0);
+
+  const nacelle = new THREE.Mesh(new THREE.CapsuleGeometry(0.065, 0.18, 8, 12), whiteMat);
+  nacelle.rotation.x = Math.PI / 2;
+  nacelle.position.set(0, 1.38, 0.04);
 
   const hub = new THREE.Group();
-  hub.position.set(0, 1.34, 0.08);
+  hub.position.set(0, 1.38, 0.18);
+  const spinner = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.14, 12), whiteMat);
+  spinner.rotation.x = Math.PI / 2;
+  hub.add(spinner);
+
   for (let i = 0; i < 3; i += 1) {
-    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.62, 0.02), whiteMat);
-    blade.position.y = 0.28;
+    const blade = new THREE.Mesh(new THREE.ConeGeometry(0.042, 0.68, 8), whiteMat);
+    blade.scale.z = 0.28;
+    blade.position.y = 0.34;
     const pivot = new THREE.Group();
     pivot.rotation.z = (i * Math.PI * 2) / 3;
     pivot.add(blade);
     hub.add(pivot);
   }
   rotors.push(hub);
-  node.add(mast, hub);
+  unit.add(mast, nacelle, hub);
+  unit.scale.setScalar(scale);
+  return unit;
+}
+
+function createPatagoniaWindTurbineNode(rotors: THREE.Object3D[]): THREE.Group {
+  const node = new THREE.Group();
+  const mainTurbine = buildSingleWindTurbine(rotors, 1);
+  mainTurbine.position.set(-0.18, 0, 0);
+
+  const secondaryTurbine = buildSingleWindTurbine(rotors, 0.78);
+  secondaryTurbine.position.set(0.32, 0, -0.22);
+
+  node.add(mainTurbine, secondaryTurbine);
+  loadGlbIntoAnchor(node, 'custom/eolico_patagonia.glb');
   return node;
 }
 
 function createHydroAndCordilleraNode(): THREE.Group {
   const node = new THREE.Group();
-  const damMat = new THREE.MeshStandardMaterial({
-    color: 0x38bdf8,
-    roughness: 0.3,
-    metalness: 0.45,
-    emissive: 0x0284c7,
-    emissiveIntensity: 0.35
+  const concreteMat = new THREE.MeshStandardMaterial({
+    color: 0x94a3b8,
+    roughness: 0.5,
+    metalness: 0.25
   });
-  const dam = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.42, 0.26), damMat);
-  dam.position.set(0, 0.21, 0);
-  node.add(dam);
+  const waterMat = new THREE.MeshStandardMaterial({
+    color: 0x0284c7,
+    roughness: 0.15,
+    metalness: 0.45,
+    emissive: 0x0369a1,
+    emissiveIntensity: 0.45
+  });
+
+  const archWall = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.48, 0.42, 0.46, 18, 1, true, 0, Math.PI),
+    concreteMat
+  );
+  archWall.position.set(0, 0.23, 0);
+
+  const reservoir = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.44, 0.44, 0.36, 18, 1, false, 0, Math.PI),
+    waterMat
+  );
+  reservoir.position.set(0, 0.18, 0);
+
+  const powerhouse = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.2, 0.22), concreteMat);
+  powerhouse.position.set(0, 0.1, 0.24);
+
+  node.add(archWall, reservoir, powerhouse);
+  loadGlbIntoAnchor(node, 'custom/represa_hidro.glb');
   return node;
 }
 
@@ -192,11 +381,12 @@ const PROVINCE_LANDMARK_KIND: Record<string, LandmarkKind> = {
 function instantiateLandmarkByKind(
   kind: LandmarkKind,
   rotors: THREE.Object3D[],
-  flares: THREE.Mesh[]
+  flares: THREE.Mesh[],
+  pumpBeams: THREE.Object3D[]
 ): THREE.Group {
   const builders: Record<LandmarkKind, () => THREE.Group> = {
     AMBA: createObeliscoAndRosadaNode,
-    VACA_MUERTA: () => createVacaMuertaRigNode(flares),
+    VACA_MUERTA: () => createVacaMuertaRigNode(flares, pumpBeams),
     LITIO: createLithiumSaltFlatNode,
     AGRO: createAgroSiloComplexNode,
     EOLICO: () => createPatagoniaWindTurbineNode(rotors),
@@ -325,6 +515,7 @@ export function buildStrategicLandmarksOverlay(
 ): AnimatedLandmarkRefs {
   const overlayGroup = new THREE.Group();
   const windRotors: THREE.Object3D[] = [];
+  const pumpBeams: THREE.Object3D[] = [];
   const gasFlares: THREE.Mesh[] = [];
   const conflictRings: THREE.Mesh[] = [];
   const pipelinePulses: AnimatedLandmarkRefs['pipelinePulses'] = [];
@@ -344,7 +535,7 @@ export function buildStrategicLandmarksOverlay(
 
     const kind = PROVINCE_LANDMARK_KIND[meta.provinceId];
     if (kind) {
-      anchor.add(instantiateLandmarkByKind(kind, windRotors, gasFlares));
+      anchor.add(instantiateLandmarkByKind(kind, windRotors, gasFlares, pumpBeams));
     }
     if (isProvinceInConflict(provMap.get(meta.provinceId))) {
       attachConflictRippleRing(anchor, conflictRings);
@@ -358,6 +549,7 @@ export function buildStrategicLandmarksOverlay(
   return {
     overlayGroup,
     windRotors,
+    pumpBeams,
     gasFlares,
     conflictRings,
     pipelinePulses,
@@ -366,9 +558,13 @@ export function buildStrategicLandmarksOverlay(
   };
 }
 
-function animateRotorsAndFlares(refs: AnimatedLandmarkRefs, clockSec: number) {
+function animateRotorsFlaresAndPumps(refs: AnimatedLandmarkRefs, clockSec: number) {
   for (const rotor of refs.windRotors) {
     rotor.rotation.z = clockSec * 2.8;
+  }
+  const pumpAngle = Math.sin(clockSec * 3.4) * 0.28;
+  for (const beam of refs.pumpBeams) {
+    beam.rotation.z = pumpAngle;
   }
   const flareScale = 0.85 + Math.sin(clockSec * 9.5) * 0.25;
   for (const flare of refs.gasFlares) {
@@ -393,7 +589,7 @@ export function animateStrategicLandmarksFrame(
   clockSec: number
 ) {
   if (!refs) return;
-  animateRotorsAndFlares(refs, clockSec);
+  animateRotorsFlaresAndPumps(refs, clockSec);
   animateRingsAndPulses(refs, clockSec);
   syncLandmarkAnchorHeights(refs, provinceGroup);
 }

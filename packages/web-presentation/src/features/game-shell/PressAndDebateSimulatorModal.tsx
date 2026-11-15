@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Mic, Radio, Sparkles, Tv, X } from 'lucide-react';
 import { playUiSound } from '@/lib/gameFeedback';
+import { getMahoganyWoodTexture } from '../map-3d/proceduralPbrTextures.js';
+import { loadGlbIntoAnchor } from '../map-3d/modelAssetLoader.js';
 
 // Simulador 3D de Conferencia de Prensa en Casa Rosada / Cadena Nacional
 // y Debate Presidencial con Derechos a Replica y Chicanas en Vivo.
@@ -142,6 +144,47 @@ const PRESS_ROUNDS: PressQuestionRound[] = [
   }
 ];
 
+function buildSculptedPressPodiumGroup(): THREE.Group {
+  const anchor = new THREE.Group();
+  anchor.position.set(0, 0, 0.4);
+
+  const fallback = new THREE.Group();
+  const woodTex = getMahoganyWoodTexture();
+  const woodMat = new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.34, metalness: 0.22 });
+  const brassMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.85, roughness: 0.2 });
+  const chromeMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.85, roughness: 0.18 });
+  const foamMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.9 });
+
+  const plinth = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.16, 0.96), woodMat);
+  plinth.position.y = 0.08;
+  const column = new THREE.Mesh(new THREE.BoxGeometry(1.36, 1.18, 0.76), woodMat);
+  column.position.y = 0.72;
+  const slantedTop = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.12, 0.92), woodMat);
+  slantedTop.position.set(0, 1.34, 0.02);
+  slantedTop.rotation.x = 0.22;
+
+  const seal = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.06, 20), brassMat);
+  seal.rotation.x = Math.PI / 2;
+  seal.position.set(0, 0.92, 0.4);
+  const sealRing = new THREE.Mesh(new THREE.TorusGeometry(0.27, 0.03, 10, 24), brassMat);
+  sealRing.position.set(0, 0.92, 0.41);
+
+  fallback.add(plinth, column, slantedTop, seal, sealRing);
+
+  for (const ox of [-0.34, 0, 0.34]) {
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.36, 10), chromeMat);
+    stem.position.set(ox, 1.54, 0.22);
+    stem.rotation.x = -0.35;
+    const foam = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 12), foamMat);
+    foam.position.set(ox, 1.7, 0.14);
+    fallback.add(stem, foam);
+  }
+
+  anchor.add(fallback);
+  loadGlbIntoAnchor(anchor, '/models/atril_prensa.glb', 1);
+  return anchor;
+}
+
 function createPressStudio3DScene(container: HTMLDivElement) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x060a12);
@@ -157,8 +200,8 @@ function createPressStudio3DScene(container: HTMLDivElement) {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   container.appendChild(renderer.domElement);
 
-  scene.add(new THREE.HemisphereLight(0xfef3c7, 0x0f172a, 1.1));
-  const keyLight = new THREE.PointLight(0xfbbf24, 2.2, 18);
+  scene.add(new THREE.HemisphereLight(0xfef3c7, 0x0f172a, 1.15));
+  const keyLight = new THREE.PointLight(0xfbbf24, 2.4, 18);
   keyLight.position.set(2.5, 4.2, 3.5);
   scene.add(keyLight);
 
@@ -180,28 +223,8 @@ function createPressStudio3DScene(container: HTMLDivElement) {
   flagStripe.position.set(0, 2.9, -1.52);
   scene.add(flagStripe);
 
-  const podium = new THREE.Mesh(
-    new THREE.BoxGeometry(1.45, 1.4, 0.85),
-    new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.4, metalness: 0.35 })
-  );
-  podium.position.set(0, 0.7, 0.4);
+  const podium = buildSculptedPressPodiumGroup();
   scene.add(podium);
-
-  const seal = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.24, 0.24, 0.06, 20),
-    new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.85, roughness: 0.2 })
-  );
-  seal.rotation.x = Math.PI / 2;
-  seal.position.set(0, 0.95, 0.84);
-  scene.add(seal);
-
-  const micMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.2 });
-  for (const ox of [-0.32, 0, 0.32]) {
-    const mic = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.35, 8), micMat);
-    mic.position.set(ox, 1.52, 0.62);
-    mic.rotation.x = -0.35;
-    scene.add(mic);
-  }
 
   return { scene, camera, renderer, podium, flashLight };
 }

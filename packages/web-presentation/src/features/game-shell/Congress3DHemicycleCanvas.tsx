@@ -3,9 +3,14 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { CheckCircle2, FileCheck2, ShieldAlert, Sparkles } from 'lucide-react';
 import { playUiSound } from '@/lib/gameFeedback';
+import {
+  getMahoganyWoodTexture,
+  getTravertineStoneTexture
+} from '../map-3d/proceduralPbrTextures.js';
 
-// Recinto 3D del Congreso de la Nacion con camara orbital Three.js
-// y modulo de Votacion en Particular (Capitulo por Capitulo) de proyectos de ley.
+// Recinto 3D del Congreso de la Nacion con camara orbital Three.js,
+// bancas parlamentarias esculpidas en caoba y cuero, estrado con columnas
+// y modulo de Votacion en Particular (Capitulo por Capitulo).
 
 export interface Hemicycle3DSeatInput {
   index: number;
@@ -20,6 +25,33 @@ const VOTE_HEX_MAP: Record<'YES' | 'NO' | 'ABST', number> = {
   NO: 0xef4444,
   ABST: 0xf59e0b
 };
+
+function buildCongressDaisAndColumns(scene: THREE.Scene) {
+  const woodTex = getMahoganyWoodTexture();
+  const stoneTex = getTravertineStoneTexture();
+  const woodMat = new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.35, metalness: 0.22 });
+  const stoneMat = new THREE.MeshStandardMaterial({ map: stoneTex, roughness: 0.55, metalness: 0.12 });
+  const goldMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.85, roughness: 0.2 });
+
+  const lowerDesk = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.85, 1.3), woodMat);
+  lowerDesk.position.set(0, 0.32, 1.85);
+  const upperDais = new THREE.Mesh(new THREE.BoxGeometry(6.2, 1.45, 1.55), woodMat);
+  upperDais.position.set(0, 0.62, 2.75);
+
+  const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.08, 20), goldMat);
+  shield.rotation.x = Math.PI / 2;
+  shield.position.set(0, 0.88, 1.96);
+
+  for (const cx of [-5.2, -3.2, 3.2, 5.2]) {
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 4.6, 16), stoneMat);
+    col.position.set(cx, 2.1, 3.45);
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.24, 0.76), goldMat);
+    cap.position.set(cx, 4.42, 3.45);
+    scene.add(col, cap);
+  }
+
+  scene.add(lowerDesk, upperDais, shield);
+}
 
 function createHemicycleScene(container: HTMLDivElement) {
   const scene = new THREE.Scene();
@@ -44,34 +76,29 @@ function createHemicycleScene(container: HTMLDivElement) {
   controls.maxDistance = 34;
   controls.target.set(0, 1.2, -2.5);
 
-  scene.add(new THREE.HemisphereLight(0xfef3c7, 0x0f172a, 0.95));
-  const spot = new THREE.DirectionalLight(0xfffbeb, 1.45);
+  scene.add(new THREE.HemisphereLight(0xfef3c7, 0x0f172a, 1.05));
+  const spot = new THREE.DirectionalLight(0xfffbeb, 1.55);
   spot.position.set(8, 22, 12);
   scene.add(spot);
 
   const floor = new THREE.Mesh(
     new THREE.CylinderGeometry(18, 18, 0.3, 48),
-    new THREE.MeshStandardMaterial({ color: 0x0c1320, roughness: 0.78, metalness: 0.22 })
+    new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.72, metalness: 0.22 })
   );
   floor.position.set(0, -0.2, -2);
   scene.add(floor);
 
-  const dais = new THREE.Mesh(
-    new THREE.BoxGeometry(5.6, 1.35, 1.8),
-    new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.45, metalness: 0.35 })
-  );
-  dais.position.set(0, 0.55, 2.2);
-  scene.add(dais);
+  buildCongressDaisAndColumns(scene);
 
   const board = new THREE.Mesh(
     new THREE.BoxGeometry(8.5, 2.2, 0.2),
     new THREE.MeshStandardMaterial({
       color: 0x090d14,
       emissive: 0xb89342,
-      emissiveIntensity: 0.22
+      emissiveIntensity: 0.25
     })
   );
-  board.position.set(0, 2.8, 3.2);
+  board.position.set(0, 2.95, 3.35);
   scene.add(board);
 
   return { scene, camera, renderer, controls };
@@ -83,12 +110,23 @@ function buildSeatMeshesGroup(seats: Hemicycle3DSeatInput[]): {
 } {
   const group = new THREE.Group();
   const ledMeshes: THREE.Mesh[] = [];
-  const deskGeo = new THREE.BoxGeometry(0.42, 0.34, 0.28);
-  const orbGeo = new THREE.SphereGeometry(0.18, 10, 10);
+  const woodTex = getMahoganyWoodTexture();
+
+  const deskFrontGeo = new THREE.BoxGeometry(0.44, 0.32, 0.12);
+  const deskTopGeo = new THREE.BoxGeometry(0.46, 0.05, 0.24);
+  const chairBackGeo = new THREE.BoxGeometry(0.34, 0.46, 0.08);
+  const chairSeatGeo = new THREE.BoxGeometry(0.34, 0.08, 0.24);
+  const orbGeo = new THREE.SphereGeometry(0.15, 10, 10);
+
   const deskMat = new THREE.MeshStandardMaterial({
-    color: 0x451a03,
-    roughness: 0.5,
-    metalness: 0.3
+    map: woodTex,
+    roughness: 0.38,
+    metalness: 0.22
+  });
+  const leatherMat = new THREE.MeshStandardMaterial({
+    color: 0x7f1d1d,
+    roughness: 0.52,
+    metalness: 0.15
   });
 
   for (const s of seats) {
@@ -97,10 +135,22 @@ function buildSeatMeshesGroup(seats: Hemicycle3DSeatInput[]): {
     const dist = Math.hypot(sx, sz - 2.2);
     const tierY = Math.max(0, (dist - 4.5) * 0.26);
 
-    const desk = new THREE.Mesh(deskGeo, deskMat);
-    desk.position.set(sx, tierY + 0.17, sz);
-    desk.lookAt(0, tierY, 2.2);
-    group.add(desk);
+    const unit = new THREE.Group();
+    unit.position.set(sx, tierY, sz);
+    unit.lookAt(0, tierY, 2.2);
+
+    const deskFront = new THREE.Mesh(deskFrontGeo, deskMat);
+    deskFront.position.set(0, 0.16, 0.08);
+    const deskTop = new THREE.Mesh(deskTopGeo, deskMat);
+    deskTop.position.set(0, 0.33, 0.04);
+
+    const chairBack = new THREE.Mesh(chairBackGeo, leatherMat);
+    chairBack.position.set(0, 0.26, -0.22);
+    const chairSeat = new THREE.Mesh(chairSeatGeo, leatherMat);
+    chairSeat.position.set(0, 0.14, -0.12);
+
+    unit.add(deskFront, deskTop, chairBack, chairSeat);
+    group.add(unit);
 
     const orbMat = new THREE.MeshStandardMaterial({
       color: 0x1e293b,
@@ -109,7 +159,7 @@ function buildSeatMeshesGroup(seats: Hemicycle3DSeatInput[]): {
       roughness: 0.2
     });
     const orb = new THREE.Mesh(orbGeo, orbMat);
-    orb.position.set(sx, tierY + 0.46, sz);
+    orb.position.set(sx, tierY + 0.47, sz);
     orb.userData = { vote: s.vote };
     group.add(orb);
     ledMeshes.push(orb);
