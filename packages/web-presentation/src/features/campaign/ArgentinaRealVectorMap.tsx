@@ -5,13 +5,12 @@ import type { ProvinceCampaignInfo } from '@argentina-sim/domain';
 import {
   buildDistrictPopup,
   type DistrictCandidateBase,
-  type DistrictCandidateProjection,
   type DistrictPopupData
 } from './districtPollGenerator.js';
 
-// Mapa vectorial real de la Republica Argentina (IGN / INDEC):
+// Mapa vectorial tactico de la Republica Argentina (IGN / INDEC):
 // Proyeccion Mercator centrada en [-64, -38.5] renderizando SVG puro para
-// las 24 provincias y los 527 departamentos, con soporte de hover, seleccion y zoom AMBA.
+// las 24 provincias y los 527 departamentos, con grilla cartografica, rosa de los vientos y zoom AMBA.
 
 export interface GeoFeatureItem {
   id: string;
@@ -42,7 +41,7 @@ const PROVINCE_NAME_TO_ID: Record<string, string> = {
   'San Luis': 'SAN_LUIS',
   'Santa Cruz': 'SANTA_CRUZ',
   'Santa Fe': 'SANTA_FE',
-  'Santiago del Estero': 'SANTIAGO_ESTERO',
+  'Santiago del Estero': 'SANTIAGO_DEL_ESTERO',
   'Tierra del Fuego': 'TIERRA_DEL_FUEGO',
   Tucumán: 'TUCUMAN',
   'BUENOS AIRES': 'PBA',
@@ -66,7 +65,8 @@ const PROVINCE_NAME_TO_ID: Record<string, string> = {
   'SAN LUIS': 'SAN_LUIS',
   'SANTA CRUZ': 'SANTA_CRUZ',
   'SANTA FE': 'SANTA_FE',
-  'SANTIAGO DEL ESTERO': 'SANTIAGO_ESTERO',
+  'SANTIAGO DEL ESTERO': 'SANTIAGO_DEL_ESTERO',
+  SANTIAGO_ESTERO: 'SANTIAGO_DEL_ESTERO',
   'TIERRA DEL FUEGO': 'TIERRA_DEL_FUEGO',
   TUCUMAN: 'TUCUMAN'
 };
@@ -94,61 +94,54 @@ function extractFeatureNames(props: Record<string, any>): { name: string; subReg
 
 function convertGeoFeature(feat: any, pathGen: (f: any) => string | null): GeoFeatureItem | null {
   const d = pathGen(feat);
-  if (!d) {
-    return null;
-  }
+  if (!d) return null;
   const { name, subRegion } = extractFeatureNames(feat.properties);
   const id = feat.properties.id ? String(feat.properties.id) : name;
   return { id, name, subRegion, pathD: d };
 }
 
+function findMinPolygonLongitude(poly: any): number {
+  let minLon = 999;
+  function walk(c: any) {
+    if (typeof c[0] === 'number') {
+      minLon = Math.min(minLon, c[0]);
+    } else {
+      c.forEach(walk);
+    }
+  }
+  walk(poly);
+  return minLon;
+}
+
+function filterMalvinasPolygons(feat: any) {
+  const malvinasPolys = feat.geometry.coordinates.filter(
+    (poly: any) => findMinPolygonLongitude(poly) < -56
+  );
+  return {
+    ...feat,
+    properties: {
+      ...feat.properties,
+      departamento: 'ISLAS MALVINAS',
+      provincia: 'TIERRA DEL FUEGO'
+    },
+    geometry: {
+      ...feat.geometry,
+      coordinates: malvinasPolys
+    }
+  };
+}
+
 function sanitizeDeptFeature(feat: any): any | null {
   const id = Number(feat.properties?.id);
-  // Feature 488 en el dataset crudo del IGN tiene el id y nombre de "Islas Malvinas",
-  // pero sus coordenadas son el cono antartico hasta los -90 de latitud.
-  // En geoMercator, tan(pi/4 + phi/2) con phi=-pi/2 se va a infinito y genera un
-  // polígono deforme de 5000x5000 px que pinta todo el SVG de violeta y rompe el mapa.
-  if (id === 488) {
-    return null;
-  }
-  // Feature 489 agrupa en el IGN tanto a las Islas Malvinas como a las Georgias y Sandwich del Sur.
-  // Las Georgias estan en longitud -36 y Sandwich en -26: si las dejamos adentro,
-  // el mapa estira el bounding box 3000 km al este y la Argentina continental queda
-  // convertida en un fideo vertical ilegible. Filtramos los poligonos a lon < -56
-  // para conservar exclusivamente las Malvinas en escala y posicion real.
+  // Feature 488 en el IGN trae coordenadas antarticas hasta -90 que explotan en Mercator.
+  if (id === 488) return null;
+  // Feature 489 agrupa Malvinas + Georgias + Sandwich; filtramos a lon < -56 para escala real.
   if (id === 489 && feat.geometry?.type === 'MultiPolygon') {
-    const malvinasPolys = feat.geometry.coordinates.filter((poly: any) => {
-      let minLon = 999;
-      function walk(c: any) {
-        if (typeof c[0] === 'number') {
-          minLon = Math.min(minLon, c[0]);
-        } else {
-          c.forEach(walk);
-        }
-      }
-      walk(poly);
-      return minLon < -56;
-    });
-    return {
-      ...feat,
-      properties: {
-        ...feat.properties,
-        departamento: 'ISLAS MALVINAS',
-        provincia: 'TIERRA DEL FUEGO'
-      },
-      geometry: {
-        ...feat.geometry,
-        coordinates: malvinasPolys
-      }
-    };
+    return filterMalvinasPolygons(feat);
   }
   return feat;
 }
 
-// Los 24 partidos del Gran Buenos Aires concentran 11 millones de habitantes pero en
-// una proyeccion nacional son manchitas de 2x2 pixeles imposibles de clickear con mouse.
-// Metemos una segunda proyeccion Mercator recortada a escala 11500 (lente de aumento)
-// para que el jugador pueda interactuar comodamente con la Primera y Tercera Seccion electoral.
 const CONURBANO_NAMES = new Set([
   'ALMIRANTE BROWN',
   'AVELLANEDA',
@@ -185,26 +178,19 @@ function buildConurbanoPathGenerator() {
 }
 
 function isConurbanoFeature(props: any): boolean {
-  if (!props || props.provincia !== 'BUENOS AIRES') {
-    return false;
-  }
+  if (!props || props.provincia !== 'BUENOS AIRES') return false;
   const dept = String(props.departamento || '').toUpperCase();
   return CONURBANO_NAMES.has(dept);
 }
 
-function normalizeConurbanoFeatures(topoData: any): GeoFeatureItem[] {
+export function normalizeConurbanoFeatures(topoData: any): GeoFeatureItem[] {
   const pathGen = buildConurbanoPathGenerator();
   const geoObj = topojson.feature(topoData, topoData.objects['departamentos-argentina']) as any;
   const items: GeoFeatureItem[] = [];
-
   for (const feat of geoObj.features) {
-    if (!isConurbanoFeature(feat.properties)) {
-      continue;
-    }
+    if (!isConurbanoFeature(feat.properties)) continue;
     const item = convertGeoFeature(feat, pathGen);
-    if (item) {
-      items.push(item);
-    }
+    if (item) items.push(item);
   }
   return items;
 }
@@ -213,18 +199,63 @@ export function normalizeFeatures(topoData: any, objectKey: string): GeoFeatureI
   const pathGen = buildPathGenerator();
   const geoObj = topojson.feature(topoData, topoData.objects[objectKey]) as any;
   const items: GeoFeatureItem[] = [];
-
   for (const rawFeat of geoObj.features) {
     const feat = objectKey === 'departamentos-argentina' ? sanitizeDeptFeature(rawFeat) : rawFeat;
-    if (!feat) {
-      continue;
-    }
+    if (!feat) continue;
     const item = convertGeoFeature(feat, pathGen);
-    if (item) {
-      items.push(item);
-    }
+    if (item) items.push(item);
   }
   return items;
+}
+
+export function TacticalSvgBackdrop() {
+  return (
+    <g className="pointer-events-none">
+      {[120, 220, 320, 420, 520, 620].map((y) => (
+        <line
+          key={`lat-${y}`}
+          x1={55}
+          y1={y}
+          x2={375}
+          y2={y}
+          stroke="#1e293b"
+          strokeWidth={0.5}
+          strokeDasharray="3 3"
+        />
+      ))}
+      {[110, 180, 250, 320].map((x) => (
+        <line
+          key={`lon-${x}`}
+          x1={x}
+          y1={55}
+          x2={x}
+          y2={700}
+          stroke="#1e293b"
+          strokeWidth={0.5}
+          strokeDasharray="3 3"
+        />
+      ))}
+      <g transform="translate(338, 92)">
+        <circle cx={0} cy={0} r={18} fill="#090d14" stroke="#8a6d33" strokeWidth={0.9} />
+        <circle cx={0} cy={0} r={13} fill="none" stroke="#263142" strokeWidth={0.6} />
+        <polygon points="0,-15 3.5,-3 0,-6 -3.5,-3" fill="#eab308" />
+        <polygon points="0,15 3,3 0,6 -3,3" fill="#64748b" />
+        <text x={0} y={-19} textAnchor="middle" fill="#eab308" fontSize={7} fontFamily="monospace" fontWeight="bold">
+          N
+        </text>
+      </g>
+      <g transform="translate(278, 595)">
+        <rect x={0} y={0} width={88} height={22} rx={2} fill="#090d14" stroke="#263142" strokeWidth={0.8} />
+        <text x={44} y={9} textAnchor="middle" fill="#94a3b8" fontSize={6} fontFamily="monospace">
+          ATLÁNTICO SUR · IGN
+        </text>
+        <line x1={12} y1={16} x2={52} y2={16} stroke="#eab308" strokeWidth={1.2} />
+        <text x={68} y={18} textAnchor="middle" fill="#eab308" fontSize={6} fontFamily="monospace">
+          500km
+        </text>
+      </g>
+    </g>
+  );
 }
 
 function DistrictPopupCard({
@@ -235,51 +266,66 @@ function DistrictPopupCard({
   onClose: () => void;
 }) {
   return (
-    <div className="absolute bottom-3 left-3 z-30 w-72 rounded-2xl bg-[#0d1017]/95 border border-slate-700/80 p-4 shadow-2xl backdrop-blur-md text-xs">
-      <div className="flex items-start justify-between gap-2">
+    <div className="absolute bottom-3 left-3 z-30 w-72 rounded-sm bg-[#090d14]/95 border border-[#8a6d33] p-3.5 shadow-2xl text-xs">
+      <div className="flex items-start justify-between gap-2 border-b border-[#263142] pb-2">
         <div>
-          <div className="font-extrabold text-white text-sm">{data.title}</div>
-          <div className="text-[11px] text-slate-400 mt-0.5">
-            {data.subTitle} · padrón: {data.electorateText} · indecisos ≈ {data.indecisosPct} %
+          <div className="font-serif font-bold text-amber-100 text-sm uppercase tracking-wide">{data.title}</div>
+          <div className="text-[10px] font-mono text-slate-400 mt-0.5">
+            {data.subTitle ? `${data.subTitle} · ` : ''}Padrón: {data.electorateText} · Indecisos {data.indecisosPct}%
           </div>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="text-slate-400 hover:text-white p-1 rounded-md text-xs font-bold"
+          className="text-slate-400 hover:text-amber-200 px-1.5 py-0.5 rounded-sm border border-[#263142] text-[10px] font-mono"
         >
           ✕
         </button>
       </div>
 
-      <div className="mt-3 space-y-2.5">
-        {data.candidates.map((c) => (
+      <div className="mt-2.5 space-y-2">
+        {data.candidates.map((c, idx) => (
           <div key={c.name}>
-            <div className="flex justify-between items-center mb-0.5">
+            <div className="flex justify-between items-center mb-0.5 text-[11px]">
               <span className="flex items-center gap-1.5 text-slate-200">
                 <span
                   style={{ backgroundColor: c.color }}
-                  className="w-2 h-2 rounded-full inline-block"
+                  className="w-2 h-2 rounded-sm inline-block shrink-0"
                 />
-                <span className="truncate max-w-[150px]">{c.name}</span>
+                <span className={`truncate max-w-[155px] ${idx === 0 ? 'font-bold text-amber-100' : ''}`}>
+                  {c.name}
+                </span>
               </span>
-              <span className="font-mono font-bold text-white">{c.pct.toFixed(1)} %</span>
+              <span className="font-mono font-bold text-amber-300">{c.pct.toFixed(1)}%</span>
             </div>
-            <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+            <div className="w-full h-1.5 rounded-sm bg-[#141c28] border border-[#263142] overflow-hidden">
               <div
                 style={{ width: `${c.pct}%`, backgroundColor: c.color }}
-                className="h-full rounded-full transition-all duration-300"
+                className="h-full transition-all duration-300"
               />
             </div>
           </div>
         ))}
       </div>
 
-      <div className="mt-3 pt-2 border-t border-slate-800 text-[10px] text-slate-500">
-        Proyección de voto.
+      <div className="mt-2.5 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] font-mono text-slate-400">
+        <span>SONDEO TERRITORIAL</span>
+        <span className="text-emerald-400">Líder: {data.candidates[0]?.name ?? '-'}</span>
       </div>
     </div>
   );
+}
+
+function resolveDistrictLeadColor(
+  name: string,
+  subRegion: string,
+  provId: string,
+  partySigla: string,
+  internalCandidates: DistrictCandidateBase[] | undefined,
+  fallbackColor: string
+): string {
+  const popup = buildDistrictPopup(name, subRegion, provId, partySigla, internalCandidates);
+  return popup.candidates[0]?.color ?? fallbackColor;
 }
 
 interface ConurbanoZoomPanelProps {
@@ -295,36 +341,58 @@ function ConurbanoZoomPanel({
   internalCandidates,
   onSelectDistrict
 }: ConurbanoZoomPanelProps) {
+  const [hoveredPartido, setHoveredPartido] = useState<string | null>(null);
+
   return (
-    <div className="w-full md:w-[280px] rounded-2xl bg-[#0d1017] border border-slate-800 p-3 space-y-2 select-none">
-      <div className="flex justify-between items-center text-xs">
-        <span className="font-extrabold text-white">Zoom: conurbano bonaerense</span>
-        <span className="text-[10px] text-slate-400">Proyección por partido</span>
+    <div className="w-full md:w-[270px] rounded-sm bg-[#090d14] border border-[#263142] p-3 space-y-2 select-none">
+      <div className="flex justify-between items-center border-b border-[#1e293b] pb-1.5">
+        <span className="text-[11px] font-serif font-bold uppercase tracking-wider text-amber-200">
+          Lente AMBA · 24 Partidos
+        </span>
+        <span className="text-[10px] font-mono text-sky-400">
+          {hoveredPartido ?? '1ra y 3ra Sección'}
+        </span>
       </div>
-      <div className="h-[260px] w-full relative">
+      <div className="h-[260px] w-full relative bg-[#070a10] rounded-sm border border-[#1a2434] p-1">
         <svg
           viewBox="70 -10 210 270"
           className="w-full h-full filter drop-shadow-xl"
           aria-label="Zoom del Conurbano Bonaerense"
         >
-          {features.map((feat) => (
-            <path
-              key={feat.id}
-              d={feat.pathD}
-              fill="#ca8a04"
-              stroke="#0f172a"
-              strokeWidth={0.9}
-              className="cursor-pointer transition-colors hover:brightness-125 hover:stroke-white"
-              onClick={() =>
-                onSelectDistrict(
-                  buildDistrictPopup(feat.name, 'Buenos Aires', 'PBA', partySigla, internalCandidates)
-                )
-              }
-            >
-              <title>{feat.name} (Conurbano)</title>
-            </path>
-          ))}
+          {features.map((feat) => {
+            const fillColor = resolveDistrictLeadColor(
+              feat.name,
+              'Buenos Aires',
+              'PBA',
+              partySigla,
+              internalCandidates,
+              '#eab308'
+            );
+            return (
+              <path
+                key={feat.id}
+                d={feat.pathD}
+                fill={fillColor}
+                stroke="#090d14"
+                strokeWidth={0.95}
+                className="cursor-pointer transition-all hover:brightness-125 hover:stroke-amber-200"
+                onMouseEnter={() => setHoveredPartido(feat.name)}
+                onMouseLeave={() => setHoveredPartido(null)}
+                onClick={() =>
+                  onSelectDistrict(
+                    buildDistrictPopup(feat.name, 'Buenos Aires', 'PBA', partySigla, internalCandidates)
+                  )
+                }
+              >
+                <title>{feat.name} (Conurbano)</title>
+              </path>
+            );
+          })}
         </svg>
+      </div>
+      <div className="text-[10px] font-mono text-slate-400 flex items-center justify-between">
+        <span>Click en cada municipio para sondeo</span>
+        <span className="text-amber-300">Padrón: 9,4M</span>
       </div>
     </div>
   );
@@ -349,6 +417,12 @@ interface ArgentinaSideProvinceListProps {
   onSelectPopup: (popup: DistrictPopupData) => void;
 }
 
+function isSameProvinceId(a: string, b: string): boolean {
+  const normA = a === 'SANTIAGO_ESTERO' ? 'SANTIAGO_DEL_ESTERO' : a;
+  const normB = b === 'SANTIAGO_ESTERO' ? 'SANTIAGO_DEL_ESTERO' : b;
+  return normA === normB;
+}
+
 function ArgentinaSideProvinceList({
   provinces,
   selectedProvinceId,
@@ -358,21 +432,31 @@ function ArgentinaSideProvinceList({
   onSelectProvince,
   onSelectPopup
 }: ArgentinaSideProvinceListProps) {
-  const title = mode === 'PROVINCIA' ? '24 Provincias Oficiales' : '527 Departamentos IGN';
+  const title = mode === 'PROVINCIA' ? '24 Jurisdicciones Federales' : '527 Departamentos IGN';
 
   return (
-    <div className="flex-1 max-w-sm space-y-3 text-xs">
-      <div className="flex justify-between items-center text-xs font-bold text-white uppercase tracking-wider">
-        <span>{title}</span>
-        <span className="text-[10px] font-mono text-emerald-400">Cartografía IGN 100% Vectorial</span>
+    <div className="w-full lg:w-80 rounded-sm bg-[#090d14] border border-[#263142] p-3 space-y-2.5 text-xs">
+      <div className="flex justify-between items-center border-b border-[#1e293b] pb-2">
+        <span className="text-[11px] font-serif font-bold text-amber-100 uppercase tracking-wider">
+          {title}
+        </span>
+        <span className="text-[10px] font-mono text-emerald-400">IGN Vectorial</span>
       </div>
 
-      <div className="max-h-80 overflow-y-auto space-y-1.5 pr-2">
+      <div className="max-h-[410px] overflow-y-auto space-y-1.5 pr-1">
         {provinces.map((p) => {
-          const isSelected = p.provinceId === selectedProvinceId;
+          const isSelected = isSameProvinceId(p.provinceId, selectedProvinceId);
+          const leadColor = resolveDistrictLeadColor(
+            p.provinceName,
+            '',
+            p.provinceId,
+            partySigla,
+            internalCandidates,
+            p.leadingPartyColor
+          );
           const bgClass = isSelected
-            ? 'bg-[#181d2c] border-white text-white font-bold'
-            : 'bg-[#10131b] border-slate-800 text-slate-300 hover:border-slate-700';
+            ? 'bg-[#172234] border-[#c9a24d] text-amber-100 font-bold'
+            : 'bg-[#0c1119] border-[#1e293b] text-slate-300 hover:border-[#344661]';
 
           return (
             <button
@@ -382,19 +466,19 @@ function ArgentinaSideProvinceList({
                 onSelectProvince(p.provinceId);
                 onSelectPopup(buildDistrictPopup(p.provinceName, '', p.provinceId, partySigla, internalCandidates));
               }}
-              className={`w-full text-left px-3 py-2 rounded-xl border transition flex items-center justify-between ${bgClass}`}
+              className={`w-full text-left px-3 py-2 rounded-sm border transition flex items-center justify-between ${bgClass}`}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <span
-                  style={{ backgroundColor: p.leadingPartyColor }}
-                  className="w-2.5 h-2.5 rounded-full inline-block"
+                  style={{ backgroundColor: leadColor }}
+                  className="w-2.5 h-2.5 rounded-sm inline-block shrink-0 border border-black/40"
                 />
-                <span>{p.provinceName}</span>
+                <span className="truncate">{p.provinceName}</span>
               </div>
-              <div className="text-right">
-                <span className="font-mono text-emerald-400">{p.playerVotePct.toFixed(1)}%</span>
+              <div className="text-right shrink-0 font-mono">
+                <span className="text-emerald-400 font-bold">{p.playerVotePct.toFixed(1)}%</span>
                 <span className="text-[10px] text-slate-500 ml-1.5">
-                  ({p.visitsCount} {p.visitsCount === 1 ? 'visita' : 'visitas'})
+                  ({p.visitsCount}v)
                 </span>
               </div>
             </button>
@@ -431,25 +515,34 @@ function ArgentinaMainSvgCard({
   onClosePopup
 }: ArgentinaMainSvgCardProps) {
   return (
-    <div className="w-full md:w-[360px] h-[480px] relative select-none">
+    <div className="w-full md:w-[360px] h-[470px] relative select-none rounded-sm bg-[#070a10] border border-[#263142] p-2">
       <svg
         viewBox="50 50 330 660"
         className="w-full h-full filter drop-shadow-2xl"
         aria-label="Mapa cartográfico oficial de la República Argentina"
       >
+        <TacticalSvgBackdrop />
         {activeFeatures.map((feat) => {
           const mappedProvId = resolveFeatureProvinceId(feat);
-          const isSelected = mappedProvId === selectedProvinceId;
-          const fillColor = provinceColorMap[mappedProvId] ?? '#ca8a04';
+          const isSelected = isSameProvinceId(mappedProvId, selectedProvinceId);
+          const fallbackColor = provinceColorMap[mappedProvId] ?? '#ca8a04';
+          const fillColor = resolveDistrictLeadColor(
+            feat.name,
+            feat.subRegion,
+            mappedProvId,
+            partySigla,
+            internalCandidates,
+            fallbackColor
+          );
 
           return (
             <path
               key={feat.id}
               d={feat.pathD}
               fill={fillColor}
-              stroke={isSelected ? '#ffffff' : '#0f172a'}
-              strokeWidth={isSelected ? 2.5 : 0.6}
-              strokeOpacity={0.8}
+              stroke={isSelected ? '#fde68a' : '#090d14'}
+              strokeWidth={isSelected ? 2.2 : 0.65}
+              strokeOpacity={0.92}
               className="cursor-pointer transition-colors duration-150 hover:brightness-125"
               onMouseEnter={() =>
                 onHover(feat.subRegion ? `${feat.name} (${feat.subRegion})` : feat.name)
@@ -463,6 +556,21 @@ function ArgentinaMainSvgCard({
           );
         })}
       </svg>
+
+      <button
+        type="button"
+        onClick={() => {
+          onSelectProvince('CABA');
+          onSelectPopup(buildDistrictPopup('Ciudad de Buenos Aires', '', 'CABA', partySigla, internalCandidates));
+        }}
+        className={`absolute top-48 right-3 px-2 py-1 rounded-sm border text-[10px] font-mono font-bold transition shadow-lg ${
+          selectedProvinceId === 'CABA'
+            ? 'bg-[#b89342] text-[#090d14] border-amber-200'
+            : 'bg-[#090d14]/95 text-amber-200 border-[#8a6d33] hover:bg-[#162234]'
+        }`}
+      >
+        ● CABA
+      </button>
 
       {popupDistrict ? (
         <DistrictPopupCard data={popupDistrict} onClose={onClosePopup} />
@@ -483,39 +591,32 @@ function resolveActiveFeatures(
 }
 
 function HoveredDistrictBadge({ info }: { info: string | null }) {
-  if (!info) {
-    return null;
-  }
+  if (!info) return null;
   return (
-    <div className="absolute top-4 left-4 z-20 px-3 py-1.5 rounded-xl bg-slate-950/95 border border-slate-700 text-xs font-medium text-slate-200 shadow-xl pointer-events-none">
-      {info}
+    <div className="absolute top-3 left-3 z-20 px-3 py-1 rounded-sm bg-[#090d14]/95 border border-[#8a6d33] text-[11px] font-mono font-bold text-amber-200 shadow-xl pointer-events-none">
+      ⌖ {info}
     </div>
   );
 }
 
-function ConurbanoZoomSlot({
-  show,
-  features,
-  partySigla,
-  internalCandidates,
-  onSelectDistrict
+function CandidateMapLegend({
+  candidates
 }: {
-  show: boolean;
-  features: GeoFeatureItem[];
-  partySigla: string;
-  internalCandidates?: DistrictCandidateBase[];
-  onSelectDistrict: (popup: DistrictPopupData) => void;
+  candidates?: DistrictCandidateBase[];
 }) {
-  if (!show) {
-    return null;
-  }
+  if (!candidates || candidates.length === 0) return null;
   return (
-    <ConurbanoZoomPanel
-      features={features}
-      partySigla={partySigla}
-      internalCandidates={internalCandidates}
-      onSelectDistrict={onSelectDistrict}
-    />
+    <div className="w-full flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-sm bg-[#090d14] border border-[#263142] text-[11px] font-mono">
+      <span className="text-slate-400 uppercase tracking-wider">Puntero por distrito:</span>
+      <div className="flex flex-wrap items-center gap-3">
+        {candidates.map((c) => (
+          <span key={c.name} className="inline-flex items-center gap-1.5 text-slate-200">
+            <span style={{ backgroundColor: c.color }} className="w-2.5 h-2.5 rounded-sm inline-block" />
+            <span>{c.name}</span>
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -541,67 +642,71 @@ export function ArgentinaRealVectorMap({
   }, []);
 
   useEffect(() => {
-    if (deptFeatures.length > 0) {
-      return;
-    }
-    if (mode === 'DEPARTAMENTO' || selectedProvinceId === 'PBA') {
-      fetch('/geo/argentina-departamentos.topojson')
-        .then((res) => res.json())
-        .then((topo) => {
-          setDeptFeatures(normalizeFeatures(topo, 'departamentos-argentina'));
-          setConurbanoFeatures(normalizeConurbanoFeatures(topo));
-        })
-        .catch(() => undefined);
-    }
-  }, [mode, selectedProvinceId, deptFeatures.length]);
+    if (deptFeatures.length > 0) return;
+    fetch('/geo/argentina-departamentos.topojson')
+      .then((res) => res.json())
+      .then((topo) => {
+        setDeptFeatures(normalizeFeatures(topo, 'departamentos-argentina'));
+        setConurbanoFeatures(normalizeConurbanoFeatures(topo));
+      })
+      .catch(() => undefined);
+  }, [deptFeatures.length]);
 
   const provinceColorMap = useMemo(() => {
     const map: Record<string, string> = {};
     for (const p of provinces) {
       map[p.provinceId] = p.leadingPartyColor;
+      if (p.provinceId === 'SANTIAGO_DEL_ESTERO' || p.provinceId === 'SANTIAGO_ESTERO') {
+        map.SANTIAGO_DEL_ESTERO = p.leadingPartyColor;
+        map.SANTIAGO_ESTERO = p.leadingPartyColor;
+      }
     }
     return map;
   }, [provinces]);
 
   const activeFeatures = resolveActiveFeatures(mode, deptFeatures, provinceFeatures);
-  const showConurbano = selectedProvinceId === 'PBA' && conurbanoFeatures.length > 0;
+  const showConurbano = conurbanoFeatures.length > 0;
 
   return (
-    <div className="rounded-2xl bg-[#0b0e15] border border-slate-800/90 p-4 relative flex flex-col md:flex-row items-center justify-center gap-6">
+    <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4 relative space-y-3">
       <HoveredDistrictBadge info={hoveredInfo} />
+      <CandidateMapLegend candidates={internalCandidates} />
 
-      <div className="flex flex-col xl:flex-row items-center gap-4">
-        <ArgentinaMainSvgCard
-          activeFeatures={activeFeatures}
+      <div className="flex flex-col xl:flex-row items-stretch justify-between gap-4">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 flex-1">
+          <ArgentinaMainSvgCard
+            activeFeatures={activeFeatures}
+            selectedProvinceId={selectedProvinceId}
+            provinceColorMap={provinceColorMap}
+            partySigla={partySigla}
+            internalCandidates={internalCandidates}
+            popupDistrict={popupDistrict}
+            onHover={setHoveredInfo}
+            onSelectProvince={onSelectProvince}
+            onSelectPopup={setPopupDistrict}
+            onClosePopup={() => setPopupDistrict(null)}
+          />
+
+          {showConurbano ? (
+            <ConurbanoZoomPanel
+              features={conurbanoFeatures}
+              partySigla={partySigla}
+              internalCandidates={internalCandidates}
+              onSelectDistrict={(popup) => setPopupDistrict(popup)}
+            />
+          ) : null}
+        </div>
+
+        <ArgentinaSideProvinceList
+          provinces={provinces}
           selectedProvinceId={selectedProvinceId}
-          provinceColorMap={provinceColorMap}
+          mode={mode}
           partySigla={partySigla}
           internalCandidates={internalCandidates}
-          popupDistrict={popupDistrict}
-          onHover={setHoveredInfo}
           onSelectProvince={onSelectProvince}
           onSelectPopup={setPopupDistrict}
-          onClosePopup={() => setPopupDistrict(null)}
-        />
-
-        <ConurbanoZoomSlot
-          show={showConurbano}
-          features={conurbanoFeatures}
-          partySigla={partySigla}
-          internalCandidates={internalCandidates}
-          onSelectDistrict={(popup) => setPopupDistrict(popup)}
         />
       </div>
-
-      <ArgentinaSideProvinceList
-        provinces={provinces}
-        selectedProvinceId={selectedProvinceId}
-        mode={mode}
-        partySigla={partySigla}
-        internalCandidates={internalCandidates}
-        onSelectProvince={onSelectProvince}
-        onSelectPopup={setPopupDistrict}
-      />
     </div>
   );
 }

@@ -42,11 +42,18 @@ export const PROVINCE_POLITICAL_META: Record<string, ProvincePoliticalMeta> = {
   SAN_LUIS: { governorName: 'Claudio Poggi', partySigla: 'PRO', partyName: 'Cambia San Luis', partyColorHex: PARTY_COLOR_HEX.PRO!, bloc: 'DERECHA' },
   JUJUY: { governorName: 'Carlos Sadir', partySigla: 'UCR', partyName: 'Cambia Jujuy', partyColorHex: PARTY_COLOR_HEX.UCR!, bloc: 'CENTRO' },
   CATAMARCA: { governorName: 'Raúl Jalil', partySigla: 'UxP', partyName: 'Frente de Todos', partyColorHex: PARTY_COLOR_HEX.UXP!, bloc: 'CENTRO' },
+  SANTIAGO_DEL_ESTERO: { governorName: 'Gerardo Zamora', partySigla: 'PROV', partyName: 'Frente Cívico', partyColorHex: PARTY_COLOR_HEX.PROVINCIAL!, bloc: 'IZQUIERDA' },
   SANTIAGO_ESTERO: { governorName: 'Gerardo Zamora', partySigla: 'PROV', partyName: 'Frente Cívico', partyColorHex: PARTY_COLOR_HEX.PROVINCIAL!, bloc: 'IZQUIERDA' },
   LA_PAMPA: { governorName: 'Sergio Ziliotto', partySigla: 'PJ', partyName: 'Frejupa / PJ', partyColorHex: PARTY_COLOR_HEX.UXP!, bloc: 'IZQUIERDA' }
 };
 
+export function normalizeProvinceId(provinceId: string): string {
+  if (provinceId === 'SANTIAGO_ESTERO') return 'SANTIAGO_DEL_ESTERO';
+  if (provinceId === 'BUENOS_AIRES') return 'PBA';
+  return provinceId;
+}
+
 export function getProvincePoliticalMeta(provinceId: string): ProvincePoliticalMeta | undefined {
-  return PROVINCE_POLITICAL_META[provinceId];
+  return PROVINCE_POLITICAL_META[provinceId] ?? PROVINCE_POLITICAL_META[normalizeProvinceId(provinceId)];
 }
 

@@ -1402,7 +1402,7 @@ export const REAL_POLITICIANS_2027: RealPoliticianPreset[] = [
     "styleTrait": "Dialoguista",
     "accentColor": "#0284c7",
     "defaultRole": "DIPUTADO",
-    "defaultProvinceId": "SANTIAGO_ESTERO"
+    "defaultProvinceId": "SANTIAGO_DEL_ESTERO"
   },
   {
     "id": "VERONICA_MAGARIO",
@@ -1570,7 +1570,7 @@ export const REAL_POLITICIANS_2027: RealPoliticianPreset[] = [
     "styleTrait": "Dialoguista",
     "accentColor": "#0284c7",
     "defaultRole": "SENADOR",
-    "defaultProvinceId": "SANTIAGO_ESTERO"
+    "defaultProvinceId": "SANTIAGO_DEL_ESTERO"
   },
   {
     "id": "GUSTAVO_MENENDEZ",

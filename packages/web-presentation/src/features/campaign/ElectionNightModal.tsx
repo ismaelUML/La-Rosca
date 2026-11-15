@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   computeEscrutinio,
   type CampaignSimulationState,
@@ -238,6 +238,62 @@ function ElectionModalFooter({
   );
 }
 
+function OfficialResultsMapSection({
+  state,
+  escrutinio
+}: {
+  state: CampaignSimulationState;
+  escrutinio: EscrutinioData;
+}) {
+  const [mapMode, setMapMode] = useState<'PROVINCIA' | 'DEPARTAMENTO'>('PROVINCIA');
+
+  return (
+    <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <span className="text-xs font-serif font-bold uppercase tracking-wider text-amber-100">
+            Mapa de resultados oficial
+          </span>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Pintado con la fuerza ganadora en los 24 distritos electorales y los 527 departamentos IGN.
+          </p>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setMapMode('PROVINCIA')}
+            className={`px-3 py-1.5 rounded-sm text-xs font-mono font-bold uppercase tracking-wider transition ${
+              mapMode === 'PROVINCIA'
+                ? 'bg-[#d4b26a] text-slate-950 shadow'
+                : 'bg-[#121926] text-slate-300 border border-[#263142] hover:bg-[#192334]'
+            }`}
+          >
+            Por provincia
+          </button>
+          <button
+            type="button"
+            onClick={() => setMapMode('DEPARTAMENTO')}
+            className={`px-3 py-1.5 rounded-sm text-xs font-mono font-bold uppercase tracking-wider transition ${
+              mapMode === 'DEPARTAMENTO'
+                ? 'bg-[#d4b26a] text-slate-950 shadow'
+                : 'bg-[#121926] text-slate-300 border border-[#263142] hover:bg-[#192334]'
+            }`}
+          >
+            Por departamento
+          </button>
+        </div>
+      </div>
+      <div className="pt-1">
+        <ElectionResultsSvgMap
+          provinces={state.provinces}
+          mode={mapMode}
+          results={escrutinio.results}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function ElectionNightModal({
   isOpen,
   stageType,
@@ -292,28 +348,7 @@ export function ElectionNightModal({
             ))}
           </div>
 
-          <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-white">
-                Mapa de resultados oficial
-              </span>
-              <span className="text-[10px] font-mono text-amber-300/90">Padrón CNE escrutado 100%</span>
-            </div>
-            <p className="text-xs text-slate-400">
-              Pintado con la fuerza ganadora en los 24 distritos electorales del país.
-            </p>
-            <div className="flex gap-2 pt-1">
-              <span className="px-3 py-1 rounded-sm text-xs font-mono font-bold bg-[#d4b26a] text-slate-950 shadow">
-                Por provincia
-              </span>
-              <span className="px-3 py-1 rounded-sm text-xs font-mono font-medium bg-[#121926] text-slate-400 border border-[#263142]">
-                Por departamento
-              </span>
-            </div>
-            <div className="pt-2">
-              <ElectionResultsSvgMap provinces={state.provinces} />
-            </div>
-          </div>
+          <OfficialResultsMapSection state={state} escrutinio={escrutinio} />
         </div>
 
         <ElectionModalFooter

@@ -376,7 +376,7 @@ const BASE_PROVINCES_CONFIG: Array<{ id: string; name: string; affinity: 'AFIN' 
   { id: 'CATAMARCA', name: 'Catamarca', affinity: 'NEUTRAL', mult: 0.86 },
   { id: 'LA_RIOJA', name: 'La Rioja', affinity: 'HOSTIL', mult: 0.75 },
   { id: 'LA_PAMPA', name: 'La Pampa', affinity: 'NEUTRAL', mult: 0.9 },
-  { id: 'SANTIAGO_ESTERO', name: 'Santiago del Estero', affinity: 'HOSTIL', mult: 0.7 },
+  { id: 'SANTIAGO_DEL_ESTERO', name: 'Santiago del Estero', affinity: 'HOSTIL', mult: 0.7 },
   { id: 'SANTA_CRUZ', name: 'Santa Cruz', affinity: 'NEUTRAL', mult: 0.88 },
   { id: 'TIERRA_DEL_FUEGO', name: 'Tierra del Fuego', affinity: 'NEUTRAL', mult: 0.85 }
 ];

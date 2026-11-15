@@ -2,10 +2,8 @@ import React, { useMemo } from 'react';
 import type { CampaignSimulationState } from '@argentina-sim/domain';
 import { REAL_POLITICIANS_2027 } from '@argentina-sim/infrastructure';
 
-// Modal de selección de Vicepresidente (QQG Screenshot 8):
-// El vice en Argentina no es un adorno: o te salva las papas en el Senado desempatando
-// votaciones calientes, o te arma una interna desde adentro. Tus socios de coalición o los
-// barones de tu propio partido te ponen nombres sobre la mesa para equilibrar la fórmula.
+// Modal de seleccion de Vicepresidente en estetica tactica acero/bronce:
+// El vice equilibra el binomio presidencial y desempata votaciones en el Senado.
 
 interface ViceCandidateOption {
   id: string;
@@ -57,37 +55,48 @@ interface ViceCandidateCardProps {
 
 function ViceCandidateCard({ candidate, isSelected, onSelect }: ViceCandidateCardProps) {
   return (
-    <div className="rounded-2xl bg-[#0f131c] border border-slate-800 p-4 flex flex-col justify-between space-y-3 shadow-md hover:border-slate-700 transition">
-      <div className="space-y-1.5">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center font-bold text-xs text-white shrink-0">
+    <div
+      className={`rounded-sm bg-[#090d14] border p-4 flex flex-col justify-between space-y-3 transition ${
+        isSelected ? 'border-emerald-500/70 bg-[#0d1917]' : 'border-[#263142] hover:border-[#8a6d33]'
+      }`}
+    >
+      <div className="space-y-2">
+        <div className="flex items-center gap-2.5 border-b border-[#1e293b] pb-2">
+          <div className="w-8 h-8 rounded-sm bg-[#0c1119] border border-[#8a6d33]/80 flex items-center justify-center font-mono font-bold text-xs text-amber-200 shrink-0">
             {candidate.partySigla}
           </div>
           <div>
-            <h4 className="text-sm font-extrabold text-white leading-tight">{candidate.name}</h4>
-            <div className="text-[11px] text-slate-400">
-              Político de {candidate.partySigla} · relevancia {candidate.relevance}
+            <h4 className="text-sm font-serif font-bold text-amber-100 uppercase tracking-wide leading-tight">
+              {candidate.name}
+            </h4>
+            <div className="text-[11px] font-mono text-slate-400">
+              Referente de {candidate.partySigla} · Relevancia {candidate.relevance}
             </div>
           </div>
         </div>
-        <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed pt-1">
+        <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
           {candidate.roleDescription}
         </p>
-        <div className="text-[11px] font-mono text-slate-400 pt-1">
-          Relevancia {candidate.relevance} · Estructura {candidate.structure}
+        <div className="grid grid-cols-2 gap-2 pt-1 font-mono text-[11px]">
+          <div className="p-1.5 rounded-sm bg-[#0c1119] border border-[#1e293b] text-slate-300">
+            Relevancia: <strong className="text-amber-300">{candidate.relevance}</strong>
+          </div>
+          <div className="p-1.5 rounded-sm bg-[#0c1119] border border-[#1e293b] text-slate-300">
+            Estructura: <strong className="text-emerald-400">{candidate.structure}</strong>
+          </div>
         </div>
       </div>
 
       <button
         type="button"
         onClick={() => onSelect(candidate)}
-        className={`w-full py-2.5 rounded-xl text-xs font-bold transition shadow ${
+        className={`w-full py-2 rounded-sm text-xs font-mono font-bold uppercase tracking-wider transition shadow ${
           isSelected
-            ? 'bg-emerald-600 text-white cursor-default'
-            : 'bg-white hover:bg-slate-200 text-slate-950'
+            ? 'bg-emerald-950/60 border border-emerald-600/60 text-emerald-300 cursor-default'
+            : 'hoi-btn-gold'
         }`}
       >
-        {isSelected ? '✓ Seleccionado como vice' : 'Elegir como vicepresidente'}
+        {isSelected ? '✓ Seleccionado en la Fórmula' : 'Proclamar Vicepresidente'}
       </button>
     </div>
   );
@@ -118,29 +127,30 @@ export function VicePresidentSelectionModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-[#0b0e15] border border-slate-800 rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
-        <div className="p-6 border-b border-slate-800 flex items-start justify-between">
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="hoi-panel rounded-sm border-2 border-[#8a6d33] w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+        <div className="hoi-header-steel p-5 border-b border-[#263142] flex items-start justify-between">
           <div className="space-y-1">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-purple-400">
-              Fórmula Presidencial 2027
+            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-400">
+              FÓRMULA PRESIDENCIAL 2027 · PRESIDENCIA DEL SENADO
             </div>
-            <h2 className="text-2xl font-extrabold text-white">Elegí a tu vicepresidente</h2>
-            <p className="text-xs text-slate-400 max-w-xl leading-relaxed">
-              Tu socio de coalición o dirigentes de tu espacio te ofrecen estas opciones para
-              completar la fórmula presidencial. El vice aporta estructura y relevancia en el interior.
+            <h2 className="text-2xl font-serif font-bold text-amber-100 uppercase tracking-wide">
+              Elegí a tu vicepresidente
+            </h2>
+            <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
+              Tus socios de coalición y referentes partidarios proponen estos nombres para completar el binomio.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-2 rounded-xl bg-slate-900 border border-slate-800 text-sm"
+            className="text-slate-300 hover:text-amber-200 px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#263142] font-mono text-xs"
           >
             ✕
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-5 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-4 bg-[#0c1119]">
           {options.map((opt) => (
             <ViceCandidateCard
               key={opt.id}
@@ -151,11 +161,11 @@ export function VicePresidentSelectionModal({
           ))}
         </div>
 
-        <div className="p-4 bg-[#080a10] border-t border-slate-800/80 flex justify-end">
+        <div className="p-4 bg-[#090d14] border-t border-[#263142] flex justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-slate-900 border border-slate-800"
+            className="px-5 py-2 rounded-sm text-xs font-mono font-bold uppercase tracking-wider text-slate-300 hover:text-amber-200 bg-[#0c1119] border border-[#263142]"
           >
             Cerrar
           </button>
@@ -164,4 +174,3 @@ export function VicePresidentSelectionModal({
     </div>
   );
 }
-

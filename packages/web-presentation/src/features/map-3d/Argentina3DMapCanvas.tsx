@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronUp,
+  Compass,
   Flag,
   Landmark,
   Layers,
@@ -15,12 +16,16 @@ import {
 } from 'lucide-react';
 import {
   buildArgentina3DGroup,
+  buildNormalizedProvinceMap,
   resolveProvinceColor,
   type Map3DMode,
   type ProvinceMeshMeta
 } from './argentina3dGeometry.js';
-import { getProvincePoliticalMeta } from './provincePoliticalMeta.js';
+import { getProvincePoliticalMeta, normalizeProvinceId } from './provincePoliticalMeta.js';
 import { playUiSound } from '../../lib/gameFeedback.js';
+
+// Mapa 3D tactico de las 24 jurisdicciones con mesa de operaciones naval/acero,
+// anillos de radar estrategicos, contorno superior resaltado y normalizacion federal.
 
 interface Argentina3DMapCanvasProps {
   provinces: ProvinceSummary[];
@@ -75,14 +80,32 @@ const LEGEND_BY_MODE: Record<Map3DMode, Array<{ dotClass: string; label: string 
   ]
 };
 
+function attachTacticalRadarRings(scene: THREE.Scene) {
+  const ringRadii = [12, 22, 34, 48];
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: 0xb89342,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.14
+  });
+  for (const r of ringRadii) {
+    const geo = new THREE.RingGeometry(r, r + 0.11, 72);
+    const ring = new THREE.Mesh(geo, ringMat);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.set(-2, -0.02, 2);
+    scene.add(ring);
+  }
+}
+
 function createSceneEnvironment(container: HTMLDivElement) {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x070a0f);
+  scene.background = new THREE.Color(0x06090f);
+  scene.fog = new THREE.FogExp2(0x06090f, 0.0042);
 
   const width = container.clientWidth || 960;
   const height = container.clientHeight || 600;
   const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 350);
-  camera.position.set(18, 33, 46);
+  camera.position.set(16, 34, 45);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   renderer.setSize(width, height);
@@ -95,13 +118,13 @@ function createSceneEnvironment(container: HTMLDivElement) {
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
   controls.maxPolarAngle = Math.PI / 2.15;
-  controls.minDistance = 15;
+  controls.minDistance = 14;
   controls.maxDistance = 95;
-  controls.target.set(-10, 0, 2);
+  controls.target.set(-8, 0, 2);
 
-  scene.add(new THREE.HemisphereLight(0xcbe0ff, 0x0f172a, 0.78));
-  const keyLight = new THREE.DirectionalLight(0xfff1d6, 1.45);
-  keyLight.position.set(26, 46, 24);
+  scene.add(new THREE.HemisphereLight(0xdbeafe, 0x0f172a, 0.88));
+  const keyLight = new THREE.DirectionalLight(0xfff4db, 1.55);
+  keyLight.position.set(26, 48, 24);
   keyLight.castShadow = true;
   keyLight.shadow.mapSize.set(1024, 1024);
   keyLight.shadow.camera.left = -45;
@@ -110,22 +133,23 @@ function createSceneEnvironment(container: HTMLDivElement) {
   keyLight.shadow.camera.bottom = -45;
   scene.add(keyLight);
 
-  const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.45);
-  rimLight.position.set(-28, 22, -24);
+  const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.52);
+  rimLight.position.set(-28, 24, -24);
   scene.add(rimLight);
 
   const table = new THREE.Mesh(
-    new THREE.PlaneGeometry(150, 150),
-    new THREE.MeshStandardMaterial({ color: 0x080d14, roughness: 0.92, metalness: 0.08 })
+    new THREE.PlaneGeometry(170, 170),
+    new THREE.MeshStandardMaterial({ color: 0x070c14, roughness: 0.88, metalness: 0.14 })
   );
   table.rotation.x = -Math.PI / 2;
   table.position.y = -0.06;
   table.receiveShadow = true;
   scene.add(table);
 
-  const grid = new THREE.GridHelper(120, 50, 0x223044, 0x131b26);
+  const grid = new THREE.GridHelper(130, 52, 0x26354a, 0x111a27);
   grid.position.y = -0.04;
   scene.add(grid);
+  attachTacticalRadarRings(scene);
 
   return { scene, camera, renderer, controls };
 }
@@ -150,15 +174,20 @@ function findIntersectedProvince(
 }
 
 function resolveEmissiveState(isSelected: boolean, isHovered: boolean): { hex: number; intensity: number } {
-  if (isSelected) return { hex: 0xfbbf24, intensity: 0.58 };
-  if (isHovered) return { hex: 0x7dd3fc, intensity: 0.48 };
-  return { hex: 0x000000, intensity: 0 };
+  if (isSelected) return { hex: 0xfbbf24, intensity: 0.62 };
+  if (isHovered) return { hex: 0x38bdf8, intensity: 0.52 };
+  return { hex: 0x0f172a, intensity: 0.12 };
 }
 
 function resolveTargetLift(isSelected: boolean, isHovered: boolean): number {
   if (isSelected) return 0.95;
   if (isHovered) return 0.48;
   return 0;
+}
+
+function isMatchingProvince(idA: string | null | undefined, idB: string | null | undefined): boolean {
+  if (!idA || !idB) return false;
+  return normalizeProvinceId(idA) === normalizeProvinceId(idB);
 }
 
 function animateGroupFrame(
@@ -170,7 +199,10 @@ function animateGroupFrame(
   for (const child of group.children) {
     const mesh = child as THREE.Mesh;
     const meta = mesh.userData as ProvinceMeshMeta;
-    const targetY = resolveTargetLift(meta.provinceId === selectedId, meta.provinceId === hoveredId);
+    const targetY = resolveTargetLift(
+      isMatchingProvince(meta.provinceId, selectedId),
+      isMatchingProvince(meta.provinceId, hoveredId)
+    );
     mesh.position.y += (targetY - mesh.position.y) * 0.16;
   }
 }
@@ -183,12 +215,15 @@ function updateGroupMaterials(
   selectedId: string | null
 ) {
   if (!group) return;
-  const provMap = new Map(provinces.map((p) => [p.id, p]));
+  const provMap = buildNormalizedProvinceMap(provinces);
   for (const child of group.children) {
     const mesh = child as THREE.Mesh;
     const meta = mesh.userData as ProvinceMeshMeta;
     const mat = mesh.material as THREE.MeshStandardMaterial;
-    const emissive = resolveEmissiveState(meta.provinceId === selectedId, meta.provinceId === hoveredId);
+    const emissive = resolveEmissiveState(
+      isMatchingProvince(meta.provinceId, selectedId),
+      isMatchingProvince(meta.provinceId, hoveredId)
+    );
     mat.color.setHex(resolveProvinceColor(provMap.get(meta.provinceId), mode));
     mat.emissive.setHex(emissive.hex);
     mat.emissiveIntensity = emissive.intensity;
@@ -200,8 +235,8 @@ function findSelectedMeshMeta(
   selectedId: string | null
 ): ProvinceMeshMeta | null {
   if (!group || !selectedId) return null;
-  const found = group.children.find(
-    (c) => ((c as THREE.Mesh).userData as ProvinceMeshMeta).provinceId === selectedId
+  const found = group.children.find((c) =>
+    isMatchingProvince(((c as THREE.Mesh).userData as ProvinceMeshMeta).provinceId, selectedId)
   ) as THREE.Mesh | undefined;
   return found ? (found.userData as ProvinceMeshMeta) : null;
 }
@@ -212,7 +247,7 @@ function computeCameraTargetOffset(
   panelOpen: boolean
 ): THREE.Vector3 {
   const meta = findSelectedMeshMeta(group, selectedId);
-  if (!meta) return new THREE.Vector3(panelOpen ? -12 : 0, 0, 2);
+  if (!meta) return new THREE.Vector3(panelOpen ? -10 : -2, 0, 2);
   return new THREE.Vector3(meta.centerX + (panelOpen ? -7 : 0), 0.5, meta.centerZ);
 }
 
@@ -259,12 +294,20 @@ function HoveredCursorTooltip({
   cursor: { x: number; y: number } | null;
 }) {
   if (!province || !cursor) return null;
+  const polMeta = getProvincePoliticalMeta(province.id);
   return (
     <div
       style={{ left: cursor.x + 14, top: cursor.y - 12 }}
-      className="pointer-events-none fixed z-40 rounded-sm bg-[#0b1018]/95 border border-sky-400/60 px-3 py-1.5 shadow-xl"
+      className="pointer-events-none fixed z-40 rounded-sm bg-[#090d14]/95 border border-[#8a6d33] px-3 py-2 shadow-2xl"
     >
-      <div className="text-xs font-bold text-slate-100">{province.name}</div>
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-serif font-bold text-amber-100">{province.name}</span>
+        {polMeta ? (
+          <span className="px-1.5 py-0.5 rounded-sm bg-[#162234] border border-[#2d3c52] text-[9px] font-mono text-sky-300">
+            {polMeta.partySigla}
+          </span>
+        ) : null}
+      </div>
       <div className="text-[10px] font-mono text-amber-300 mt-0.5">{formatTooltipStats(province, mode)}</div>
     </div>
   );
@@ -274,30 +317,47 @@ function MapLayerToolbar({
   mapMode,
   layersOpen,
   onToggleOpen,
-  onSelectMode
+  onSelectMode,
+  onResetView
 }: {
   mapMode: Map3DMode;
   layersOpen: boolean;
   onToggleOpen: () => void;
   onSelectMode: (mode: Map3DMode) => void;
+  onResetView: () => void;
 }) {
   const activeOption = MODE_OPTIONS.find((m) => m.id === mapMode) ?? MODE_OPTIONS[0]!;
   const legendItems = LEGEND_BY_MODE[mapMode];
 
   return (
     <div className="pointer-events-auto flex flex-col items-end gap-1.5">
-      <button
-        type="button"
-        onClick={() => {
-          playUiSound('tab');
-          onToggleOpen();
-        }}
-        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-[#0c1119]/95 hover:bg-[#172233] border border-[#8a6d33] text-[11px] font-mono font-bold uppercase tracking-wider text-amber-200 shadow-xl"
-      >
-        <Layers className="w-3.5 h-3.5 text-amber-400" />
-        <span>Capas: {activeOption.label}</span>
-        {layersOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-      </button>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => {
+            playUiSound('tab');
+            onResetView();
+          }}
+          title="Recenter cámara 3D sobre el territorio nacional"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm bg-[#0c1119]/95 hover:bg-[#172233] border border-[#2d3c52] text-[10px] font-mono font-bold uppercase tracking-wider text-slate-200 shadow-xl"
+        >
+          <Compass className="w-3.5 h-3.5 text-sky-400" />
+          <span>Centrar</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            playUiSound('tab');
+            onToggleOpen();
+          }}
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-[#0c1119]/95 hover:bg-[#172233] border border-[#8a6d33] text-[11px] font-mono font-bold uppercase tracking-wider text-amber-200 shadow-xl"
+        >
+          <Layers className="w-3.5 h-3.5 text-amber-400" />
+          <span>Capas: {activeOption.label}</span>
+          {layersOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        </button>
+      </div>
 
       {layersOpen ? (
         <div className="flex flex-col items-end gap-1.5 rosca-panel-enter">
@@ -350,8 +410,8 @@ function SelectedProvinceHeader({
         <div className="text-[10px] font-mono uppercase tracking-wider text-amber-400">
           {province.region}{sigla}
         </div>
-        <div className="text-sm font-bold text-slate-100">{province.name}</div>
-        {polMeta ? <div className="text-[10px] text-slate-400">Gob. {polMeta.governorName}</div> : null}
+        <div className="text-sm font-serif font-bold text-slate-100">{province.name}</div>
+        {polMeta ? <div className="text-[10px] font-mono text-slate-400">Gob. {polMeta.governorName}</div> : null}
       </div>
       <button type="button" onClick={onClose} className="text-slate-400 hover:text-white font-mono text-xs">
         Cerrar
@@ -409,8 +469,9 @@ function useArgentina3DSetup(
 ) {
   const groupRef = useRef<THREE.Group | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
-  const targetGoalRef = useRef(new THREE.Vector3(-10, 0, 2));
+  const targetGoalRef = useRef(new THREE.Vector3(-8, 0, 2));
   const hoveredRef = useRef<string | null>(null);
   const selectedRef = useRef<string | null>(null);
 
@@ -419,6 +480,7 @@ function useArgentina3DSetup(
     if (!container) return undefined;
     const { scene, camera, renderer, controls } = createSceneEnvironment(container);
     sceneRef.current = scene;
+    cameraRef.current = camera;
     controlsRef.current = controls;
 
     let animId = 0;
@@ -488,7 +550,29 @@ function useArgentina3DSetup(
     };
   }, [containerRef, provincesRef, modeRef, onHoverChangeRef, onSelectRef]);
 
-  return { groupRef, sceneRef, targetGoalRef, hoveredRef, selectedRef };
+  return { groupRef, sceneRef, cameraRef, targetGoalRef, hoveredRef, selectedRef };
+}
+
+function lookupProvinceInMap(
+  provMap: Map<string, ProvinceSummary>,
+  id: string | null | undefined
+): ProvinceSummary | undefined {
+  if (!id) return undefined;
+  return provMap.get(normalizeProvinceId(id));
+}
+
+function buildAtnHandler(
+  activeProvince: ProvinceSummary | undefined,
+  onSendAtn: ((provinceId: string) => void) | undefined,
+  setAtnFlash: (val: boolean) => void
+): (() => void) | undefined {
+  if (!activeProvince || !onSendAtn) return undefined;
+  return () => {
+    playUiSound('atn');
+    setAtnFlash(true);
+    onSendAtn(activeProvince.id);
+    window.setTimeout(() => setAtnFlash(false), 900);
+  };
 }
 
 export function Argentina3DMapCanvas({
@@ -518,7 +602,7 @@ export function Argentina3DMapCanvas({
   const onSelectRef = useRef(onSelectProvince);
   onSelectRef.current = onSelectProvince;
 
-  const { groupRef, sceneRef, targetGoalRef, hoveredRef, selectedRef } = useArgentina3DSetup(
+  const { groupRef, sceneRef, cameraRef, targetGoalRef, hoveredRef, selectedRef } = useArgentina3DSetup(
     containerRef,
     provincesRef,
     modeRef,
@@ -548,15 +632,16 @@ export function Argentina3DMapCanvas({
     updateGroupMaterials(nextGroup, provinces, mapMode, hoveredRef.current, selectedProvinceId);
   }, [topoData, mapMode, provinces, selectedProvinceId, groupRef, sceneRef, hoveredRef, selectedRef]);
 
-  const activeProvince = provinces.find((p) => p.id === (selectedProvinceId ?? hoveredState.id));
-  const hoveredProvince = provinces.find((p) => p.id === hoveredState.id);
+  const provMap = buildNormalizedProvinceMap(provinces);
+  const activeProvince = lookupProvinceInMap(provMap, selectedProvinceId || hoveredState.id);
+  const hoveredProvince = lookupProvinceInMap(provMap, hoveredState.id);
+  const handleAtnClick = buildAtnHandler(activeProvince, onSendAtn, setAtnFlash);
 
-  const handleAtnClick = activeProvince && onSendAtn ? () => {
-    playUiSound('atn');
-    setAtnFlash(true);
-    onSendAtn(activeProvince.id);
-    window.setTimeout(() => setAtnFlash(false), 900);
-  } : undefined;
+  const handleResetView = () => {
+    onSelectProvince('');
+    targetGoalRef.current.set(panelOpen ? -10 : -2, 0, 2);
+    if (cameraRef.current) cameraRef.current.position.set(16, 34, 45);
+  };
 
   return (
     <div className="relative w-full h-full overflow-hidden select-none">
@@ -570,6 +655,7 @@ export function Argentina3DMapCanvas({
           layersOpen={layersOpen}
           onToggleOpen={() => setLayersOpen((o) => !o)}
           onSelectMode={setMapMode}
+          onResetView={handleResetView}
         />
       </div>
 

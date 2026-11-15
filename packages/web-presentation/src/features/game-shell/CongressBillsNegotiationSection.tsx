@@ -20,6 +20,10 @@ import {
   INITIAL_CONGRESS_BILLS
 } from '@argentina-sim/domain';
 
+// Vista de Rosca y Votacion de Leyes en formato de tarjetitas tacticas (estilo Reformas Institucionales):
+// Catalogo de proyectos con filtros, buscador, tarjetas detalladas con impacto macro y proyeccion de bancas,
+// mas mesa de concesiones bloque por bloque y votacion nominal en ambas camaras.
+
 interface CongressBillsNegotiationSectionProps {
   state: SimulationState;
   onDispatch: (action: PolicyAction) => void;
@@ -98,19 +102,30 @@ function ChamberProjectionCard({
   );
 }
 
-const BILLS_PER_PAGE = 9;
+const BILLS_PER_PAGE = 6;
 
 const BILL_CATEGORY_FILTERS: Array<{ id: 'TODAS' | CongressBillCategory; label: string }> = [
-  { id: 'TODAS', label: 'Todas' },
-  { id: 'FISCAL_PRESUPUESTO', label: 'Fiscal' },
+  { id: 'TODAS', label: 'Todas las leyes' },
+  { id: 'FISCAL_PRESUPUESTO', label: 'Fiscal y Presupuesto' },
   { id: 'TRIBUTARIA', label: 'Tributaria' },
   { id: 'LABORAL', label: 'Laboral' },
   { id: 'REFORMA_ESTRUCTURAL', label: 'Estructural' },
-  { id: 'SEGURIDAD_JUSTICIA', label: 'Seguridad' },
+  { id: 'SEGURIDAD_JUSTICIA', label: 'Seguridad y Justicia' },
   { id: 'ENERGIA_INFRAESTRUCTURA', label: 'Energía e Infra' },
-  { id: 'PRODUCCION_SOCIAL', label: 'Producción' },
+  { id: 'PRODUCCION_SOCIAL', label: 'Producción y Social' },
   { id: 'INSTITUCIONAL', label: 'Institucional' }
 ];
+
+const CATEGORY_SHORT_LABELS: Record<CongressBillCategory, string> = {
+  FISCAL_PRESUPUESTO: 'Fiscal · Mayoría absoluta (129 · 37)',
+  TRIBUTARIA: 'Tributaria · Mayoría absoluta (129 · 37)',
+  LABORAL: 'Laboral · Mayoría absoluta (129 · 37)',
+  REFORMA_ESTRUCTURAL: 'Estructural · Mayoría absoluta (129 · 37)',
+  SEGURIDAD_JUSTICIA: 'Seguridad y Justicia · (129 · 37)',
+  ENERGIA_INFRAESTRUCTURA: 'Energía e Infraestructura · (129 · 37)',
+  PRODUCCION_SOCIAL: 'Producción y Social · (129 · 37)',
+  INSTITUCIONAL: 'Institucional · Mayoría calificada'
+};
 
 function matchesBillQuery(bill: CongressBillProject, query: string): boolean {
   const q = query.trim().toLowerCase();
@@ -129,198 +144,32 @@ function matchesBillFilters(
   return catOk && statusOk && matchesBillQuery(bill, query);
 }
 
-function BillStatusBadge({ status }: { status: CongressBillProject['status'] }) {
+function resolveBillCardBorder(status: CongressBillProject['status'], isSelected: boolean): string {
+  if (status === 'APROBADA') return 'bg-[#0e1917] border-emerald-600/70';
+  if (isSelected) return 'bg-[#111928] border-[#b89342] shadow-lg';
+  if (status === 'RECHAZADA') return 'bg-[#170f14] border-rose-800/60';
+  return 'bg-[#0e131c] border-[#263142] hover:border-[#8a6d33]';
+}
+
+function resolveBillStatusBadge(
+  status: CongressBillProject['status'],
+  isSelected: boolean
+): { cls: string; text: string } {
   if (status === 'APROBADA') {
-    return (
-      <span className="px-1.5 py-0.2 rounded-sm text-[9px] bg-emerald-950 border border-emerald-700 text-emerald-300 font-extrabold shrink-0">
-        SANCIONADA
-      </span>
-    );
+    return { cls: 'bg-emerald-950/80 border border-emerald-700 text-emerald-300', text: 'SANCIONADA' };
   }
   if (status === 'RECHAZADA') {
-    return (
-      <span className="px-1.5 py-0.2 rounded-sm text-[9px] bg-rose-950 border border-rose-700 text-rose-300 font-extrabold shrink-0">
-        RECHAZADA
-      </span>
-    );
+    return { cls: 'bg-rose-950/80 border border-rose-700 text-rose-300', text: 'RECHAZADA' };
   }
-  return null;
-}
-
-function BillOptionButton({
-  bill,
-  isSelected,
-  onSelect
-}: {
-  bill: CongressBillProject;
-  isSelected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        playUiSound('tab');
-        onSelect();
-      }}
-      className={`px-3 py-2 rounded-sm text-xs font-mono font-bold transition flex items-center justify-between gap-2 border text-left ${
-        isSelected
-          ? 'bg-[#1d3250] text-amber-100 border-[#b89342]'
-          : 'bg-[#090d14] text-slate-400 border-[#263142] hover:text-slate-100 hover:border-slate-500'
-      }`}
-    >
-      <span className="truncate">{bill.title}</span>
-      <BillStatusBadge status={bill.status} />
-    </button>
-  );
-}
-
-function BillPaginationBar({
-  page,
-  totalPages,
-  totalFiltered,
-  onPrev,
-  onNext
-}: {
-  page: number;
-  totalPages: number;
-  totalFiltered: number;
-  onPrev: () => void;
-  onNext: () => void;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-2 pt-1 text-[11px] font-mono text-slate-400">
-      <span>{totalFiltered} proyectos coincidentes</span>
-      <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={onPrev}
-          disabled={page <= 0}
-          className="p-1 rounded-sm border border-[#263142] bg-[#090d14] text-slate-300 disabled:opacity-35 hover:border-[#b89342]"
-          aria-label="Página anterior"
-        >
-          <ChevronLeft className="w-3.5 h-3.5" />
-        </button>
-        <span className="px-2 text-slate-300">
-          {page + 1} / {totalPages}
-        </span>
-        <button
-          type="button"
-          onClick={onNext}
-          disabled={page + 1 >= totalPages}
-          className="p-1 rounded-sm border border-[#263142] bg-[#090d14] text-slate-300 disabled:opacity-35 hover:border-[#b89342]"
-          aria-label="Página siguiente"
-        >
-          <ChevronRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function BillSelectorTab({
-  bills,
-  selectedBillId,
-  onSelectBill
-}: {
-  bills: CongressBillProject[];
-  selectedBillId: string;
-  onSelectBill: (id: string) => void;
-}) {
-  const [selectedCat, setSelectedCat] = useState<'TODAS' | CongressBillCategory>('TODAS');
-  const [statusFilter, setStatusFilter] = useState<string>('TODAS');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [page, setPage] = useState<number>(0);
-
-  const filteredBills = useMemo(
-    () => bills.filter((b) => matchesBillFilters(b, selectedCat, statusFilter, searchQuery)),
-    [bills, selectedCat, statusFilter, searchQuery]
-  );
-
-  const totalPages = Math.max(1, Math.ceil(filteredBills.length / BILLS_PER_PAGE));
-  const safePage = Math.min(page, totalPages - 1);
-  const pageBills = filteredBills.slice(safePage * BILLS_PER_PAGE, (safePage + 1) * BILLS_PER_PAGE);
-
-  return (
-    <div className="space-y-3 border-b border-[#263142] pb-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap gap-1.5">
-          {BILL_CATEGORY_FILTERS.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => {
-                setSelectedCat(cat.id);
-                setPage(0);
-              }}
-              className={`px-2.5 py-1 rounded-sm text-[11px] font-mono font-bold border transition ${
-                selectedCat === cat.id
-                  ? 'bg-[#1d3250] text-amber-200 border-[#b89342]'
-                  : 'bg-[#090d14] text-slate-400 border-[#263142] hover:text-slate-200'
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setPage(0);
-            }}
-            aria-label="Filtrar proyectos por estado"
-            className="px-2.5 py-1.5 rounded-sm bg-[#090d14] border border-[#263142] text-xs text-slate-200 font-mono focus:border-[#b89342] focus:outline-none"
-          >
-            <option value="TODAS">Todos ({bills.length})</option>
-            <option value="PENDIENTE">Pendientes</option>
-            <option value="APROBADA">Sancionadas</option>
-            <option value="RECHAZADA">Rechazadas</option>
-          </select>
-
-          <label className="relative flex items-center">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setPage(0);
-              }}
-              placeholder="Buscar proyecto de ley..."
-              className="pl-8 pr-3 py-1.5 w-52 rounded-sm bg-[#090d14] border border-[#263142] focus:border-[#b89342] focus:outline-none text-xs text-slate-200 placeholder:text-slate-500 font-mono"
-            />
-          </label>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-        {pageBills.map((b) => (
-          <BillOptionButton
-            key={b.id}
-            bill={b}
-            isSelected={b.id === selectedBillId}
-            onSelect={() => onSelectBill(b.id)}
-          />
-        ))}
-      </div>
-
-      <BillPaginationBar
-        page={safePage}
-        totalPages={totalPages}
-        totalFiltered={filteredBills.length}
-        onPrev={() => setPage(Math.max(0, safePage - 1))}
-        onNext={() => setPage(Math.min(totalPages - 1, safePage + 1))}
-      />
-    </div>
-  );
+  if (isSelected) {
+    return { cls: 'bg-amber-950/80 border border-[#b89342] text-amber-200', text: 'EN ROSCA' };
+  }
+  return { cls: 'bg-[#090d14] border border-[#263142] text-slate-400', text: 'EN COMISIÓN' };
 }
 
 function ConsequencePill({ label, value, cls }: { label: string; value: string; cls: string }) {
   return (
-    <span className={`px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#263142] font-mono ${cls}`}>
+    <span className={`px-2 py-0.5 rounded-sm bg-[#090d14] border border-[#263142] font-mono text-[10px] ${cls}`}>
       {label}: {value}
     </span>
   );
@@ -343,7 +192,7 @@ function IpcPill({ delta }: { delta?: number }) {
 
 function RiesgoPill({ delta }: { delta?: number }) {
   if (!delta) return null;
-  return <ConsequencePill label="Riesgo país" value={`${delta} pb`} cls="text-amber-300" />;
+  return <ConsequencePill label="Riesgo" value={`${delta} pb`} cls="text-amber-300" />;
 }
 
 function ApprovalPill({ delta }: { delta?: number }) {
@@ -354,12 +203,327 @@ function ApprovalPill({ delta }: { delta?: number }) {
 
 function BillConsequencePills({ c }: { c: CongressBillProject['consequences'] }) {
   return (
-    <div className="flex flex-wrap gap-2 pt-1 text-xs">
+    <div className="flex flex-wrap gap-1.5 pt-1">
       <GdpPill delta={c.gdpGrowthDelta} />
       <SuperavitPill delta={c.primaryBalanceDelta} />
       <IpcPill delta={c.inflationDelta} />
       <RiesgoPill delta={c.countryRiskDelta} />
       <ApprovalPill delta={c.publicApprovalDelta} />
+    </div>
+  );
+}
+
+interface BillProjectCardProps {
+  bill: CongressBillProject;
+  state: SimulationState;
+  isSelected: boolean;
+  activeDeputiesYes: number;
+  activeSenateYes: number;
+  onSelect: () => void;
+  onQuickVote: () => void;
+}
+
+function resolveCardProjectedVotes(
+  bill: CongressBillProject,
+  state: SimulationState,
+  isSelected: boolean,
+  activeDeputiesYes: number,
+  activeSenateYes: number
+): { depYes: number; senYes: number } {
+  if (isSelected) {
+    return { depYes: activeDeputiesYes, senYes: activeSenateYes };
+  }
+  const previewBlocs = buildDynamicParliamentaryBlocs(state, bill.category);
+  return {
+    depYes: sumProjectedYesVotes(previewBlocs, 'deputies'),
+    senYes: sumProjectedYesVotes(previewBlocs, 'senate')
+  };
+}
+
+function BillCardVoteMetrics({ depYes, senYes }: { depYes: number; senYes: number }) {
+  const depColor = depYes >= 129 ? 'text-emerald-400' : 'text-amber-300';
+  const senColor = senYes >= 37 ? 'text-emerald-400' : 'text-amber-300';
+
+  return (
+    <div className="grid grid-cols-2 gap-2 pt-1.5 text-xs font-mono">
+      <div className="p-2 rounded-sm bg-[#090d14] border border-[#263142]">
+        <div className="text-[10px] text-slate-400 uppercase">Diputados (129)</div>
+        <div className={`font-bold text-sm mt-0.5 ${depColor}`}>{depYes} / 257</div>
+      </div>
+      <div className="p-2 rounded-sm bg-[#090d14] border border-[#263142]">
+        <div className="text-[10px] text-slate-400 uppercase">Senado (37)</div>
+        <div className={`font-bold text-sm mt-0.5 ${senColor}`}>{senYes} / 72</div>
+      </div>
+    </div>
+  );
+}
+
+function BillCardActionFooter({
+  isSelected,
+  isApproved,
+  onSelect,
+  onQuickVote
+}: {
+  isSelected: boolean;
+  isApproved: boolean;
+  onSelect: () => void;
+  onQuickVote: () => void;
+}) {
+  const selectCls = isSelected
+    ? 'bg-[#1d3250] text-amber-100 border-[#b89342]'
+    : 'bg-[#090d14] text-slate-300 border-[#263142] hover:border-[#8a6d33] hover:text-amber-100';
+  const voteCls = isApproved
+    ? 'bg-emerald-950/60 border border-emerald-700/60 text-emerald-300 cursor-default'
+    : 'hoi-btn-gold';
+
+  return (
+    <div className="pt-3 border-t border-[#263142] flex items-center justify-between gap-2">
+      <button
+        type="button"
+        onClick={() => {
+          playUiSound('tab');
+          onSelect();
+        }}
+        className={`px-3 py-2 rounded-sm text-[11px] font-mono font-bold uppercase tracking-wide border transition ${selectCls}`}
+      >
+        {isSelected ? '✓ En Mesa de Rosca' : 'Negociar proyecto'}
+      </button>
+
+      <button
+        type="button"
+        disabled={isApproved}
+        onClick={() => {
+          playUiSound('turn');
+          onQuickVote();
+        }}
+        className={`px-3.5 py-2 rounded-sm text-[11px] font-mono font-bold uppercase tracking-wide transition ${voteCls}`}
+      >
+        {isApproved ? 'Promulgada' : 'Votar ley'}
+      </button>
+    </div>
+  );
+}
+
+function BillProjectCard({
+  bill,
+  state,
+  isSelected,
+  activeDeputiesYes,
+  activeSenateYes,
+  onSelect,
+  onQuickVote
+}: BillProjectCardProps) {
+  const borderClass = resolveBillCardBorder(bill.status, isSelected);
+  const badge = resolveBillStatusBadge(bill.status, isSelected);
+  const { depYes, senYes } = resolveCardProjectedVotes(
+    bill,
+    state,
+    isSelected,
+    activeDeputiesYes,
+    activeSenateYes
+  );
+
+  return (
+    <div className={`rounded-sm border p-5 flex flex-col justify-between gap-4 transition ${borderClass}`}>
+      <div className="space-y-2.5">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-base font-serif font-bold text-amber-100 leading-tight">{bill.title}</h3>
+          <span className={`px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold shrink-0 ${badge.cls}`}>
+            {badge.text}
+          </span>
+        </div>
+
+        <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#132033] border border-[#334155] text-sky-200 inline-block">
+          {CATEGORY_SHORT_LABELS[bill.category]}
+        </span>
+
+        <p className="text-xs text-slate-300 leading-relaxed pt-0.5">{bill.shortDescription}</p>
+
+        <BillConsequencePills c={bill.consequences} />
+
+        <BillCardVoteMetrics depYes={depYes} senYes={senYes} />
+      </div>
+
+      <BillCardActionFooter
+        isSelected={isSelected}
+        isApproved={bill.status === 'APROBADA'}
+        onSelect={onSelect}
+        onQuickVote={onQuickVote}
+      />
+    </div>
+  );
+}
+
+function BillPaginationBar({
+  page,
+  totalPages,
+  totalFiltered,
+  onPrev,
+  onNext
+}: {
+  page: number;
+  totalPages: number;
+  totalFiltered: number;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2 pt-1 text-[11px] font-mono text-slate-400">
+      <span>Mostrando {totalFiltered} proyectos legislativos en catálogo</span>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={onPrev}
+          disabled={page <= 0}
+          className="p-1.5 rounded-sm border border-[#263142] bg-[#090d14] text-slate-300 disabled:opacity-35 hover:border-[#b89342]"
+          aria-label="Página anterior"
+        >
+          <ChevronLeft className="w-3.5 h-3.5" />
+        </button>
+        <span className="px-2.5 text-amber-200 font-bold">
+          Página {page + 1} / {totalPages}
+        </span>
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={page + 1 >= totalPages}
+          className="p-1.5 rounded-sm border border-[#263142] bg-[#090d14] text-slate-300 disabled:opacity-35 hover:border-[#b89342]"
+          aria-label="Página siguiente"
+        >
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function BillSelectorTab({
+  bills,
+  state,
+  selectedBillId,
+  activeDeputiesYes,
+  activeSenateYes,
+  onSelectBill,
+  onQuickVoteBill
+}: {
+  bills: CongressBillProject[];
+  state: SimulationState;
+  selectedBillId: string;
+  activeDeputiesYes: number;
+  activeSenateYes: number;
+  onSelectBill: (id: string) => void;
+  onQuickVoteBill: (id: string) => void;
+}) {
+  const [selectedCat, setSelectedCat] = useState<'TODAS' | CongressBillCategory>('TODAS');
+  const [statusFilter, setStatusFilter] = useState<string>('TODAS');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [page, setPage] = useState<number>(0);
+
+  const filteredBills = useMemo(
+    () => bills.filter((b) => matchesBillFilters(b, selectedCat, statusFilter, searchQuery)),
+    [bills, selectedCat, statusFilter, searchQuery]
+  );
+
+  const totalPages = Math.max(1, Math.ceil(filteredBills.length / BILLS_PER_PAGE));
+  const safePage = Math.min(page, totalPages - 1);
+  const pageBills = filteredBills.slice(safePage * BILLS_PER_PAGE, (safePage + 1) * BILLS_PER_PAGE);
+  const enactedCount = bills.filter((b) => b.status === 'APROBADA').length;
+
+  return (
+    <div className="space-y-4 border-b border-[#263142] pb-5">
+      <div className="hoi-panel hoi-header-steel p-4 rounded-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300">
+            Orden del Día Parlamentario · Sesiones Ordinarias y Extraordinarias
+          </div>
+          <h2 className="text-lg md:text-xl font-serif font-bold text-amber-100 mt-0.5 uppercase tracking-wide">
+            Catálogo de Proyectos de Ley y Rosca Parlamentaria
+          </h2>
+          <p className="text-xs text-slate-300 mt-1 max-w-2xl">
+            Seleccioná cualquier proyecto para abrir su mesa de negociación bloque por bloque o llevalo directo a votación nominal en Diputados (129) y Senado (37).
+          </p>
+        </div>
+        <div className="shrink-0 px-3.5 py-2 rounded-sm bg-[#090d14] border border-[#b89342]/60 font-mono text-xs font-extrabold text-amber-200 text-center">
+          {enactedCount} de {bills.length} sancionadas
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-1.5">
+          {BILL_CATEGORY_FILTERS.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => {
+                playUiSound('tab');
+                setSelectedCat(cat.id);
+                setPage(0);
+              }}
+              className={`px-3 py-1.5 rounded-sm text-xs font-mono font-bold border transition ${
+                selectedCat === cat.id
+                  ? 'bg-[#1d3250] text-amber-100 border-[#b89342]'
+                  : 'bg-[#090d14] text-slate-400 border-[#263142] hover:text-slate-100'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(0);
+            }}
+            aria-label="Filtrar proyectos por estado"
+            className="px-2.5 py-1.5 rounded-sm bg-[#090d14] border border-[#263142] text-xs text-slate-200 font-mono focus:border-[#b89342] focus:outline-none"
+          >
+            <option value="TODAS">Todos ({bills.length})</option>
+            <option value="PENDIENTE">En comisión</option>
+            <option value="APROBADA">Sancionadas</option>
+            <option value="RECHAZADA">Rechazadas</option>
+          </select>
+
+          <label className="relative flex items-center">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(0);
+              }}
+              placeholder={`Buscar (${filteredBills.length}/${bills.length})...`}
+              className="pl-8 pr-3 py-1.5 w-52 rounded-sm bg-[#090d14] border border-[#263142] focus:border-[#b89342] focus:outline-none text-xs text-slate-200 placeholder:text-slate-500 font-mono"
+            />
+          </label>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {pageBills.map((b) => (
+          <BillProjectCard
+            key={b.id}
+            bill={b}
+            state={state}
+            isSelected={b.id === selectedBillId}
+            activeDeputiesYes={activeDeputiesYes}
+            activeSenateYes={activeSenateYes}
+            onSelect={() => onSelectBill(b.id)}
+            onQuickVote={() => onQuickVoteBill(b.id)}
+          />
+        ))}
+      </div>
+
+      <BillPaginationBar
+        page={safePage}
+        totalPages={totalPages}
+        totalFiltered={filteredBills.length}
+        onPrev={() => setPage(Math.max(0, safePage - 1))}
+        onNext={() => setPage(Math.min(totalPages - 1, safePage + 1))}
+      />
     </div>
   );
 }
@@ -403,9 +567,9 @@ function BillOverviewCard({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-[#263142] pb-3">
         <div>
           <span className="text-[10px] font-mono uppercase tracking-wider text-amber-300 font-bold">
-            Proyecto de Ley · {bill.category}
+            Mesa de Rosca Activa · {bill.category}
           </span>
-          <h2 className="text-xl font-extrabold text-white mt-0.5">{bill.title}</h2>
+          <h2 className="text-xl font-serif font-bold text-amber-100 mt-0.5">{bill.title}</h2>
         </div>
         <BillSoftenedButton isSoftened={bill.isSoftened} onSoftToggle={onSoftToggle} />
       </div>
@@ -686,22 +850,39 @@ export function CongressBillsNegotiationSection({
     setVoteOutcome(null);
   };
 
-  const handleExecuteRecintoVote = () => {
-    const outcome = executeFullCongressVote(selectedBill, blocs, Date.now());
+  const executeVoteForBill = (targetBill: CongressBillProject, targetBlocs: CongressNegotiationBloc[]) => {
+    const outcome = executeFullCongressVote(targetBill, targetBlocs, Date.now());
     setVoteOutcome(outcome);
     if (outcome.passed) {
-      onDispatch({ type: 'ENACT_CONGRESS_BILL', billId: selectedBill.id });
+      onDispatch({ type: 'ENACT_CONGRESS_BILL', billId: targetBill.id });
     } else {
-      onDispatch({ type: 'REJECT_CONGRESS_BILL', billId: selectedBill.id });
+      onDispatch({ type: 'REJECT_CONGRESS_BILL', billId: targetBill.id });
     }
+  };
+
+  const handleQuickVoteBill = (billId: string) => {
+    const targetBill = bills.find((b) => b.id === billId);
+    if (!targetBill) return;
+    if (billId === selectedBill.id) {
+      executeVoteForBill(selectedBill, blocs);
+      return;
+    }
+    const targetBlocs = buildDynamicParliamentaryBlocs(state, targetBill.category);
+    setSelectedBillId(billId);
+    setBlocs(targetBlocs);
+    executeVoteForBill(targetBill, targetBlocs);
   };
 
   return (
     <div className="space-y-6">
       <BillSelectorTab
         bills={bills}
+        state={state}
         selectedBillId={selectedBill.id}
+        activeDeputiesYes={projectedDeputiesYes}
+        activeSenateYes={projectedSenateYes}
         onSelectBill={handleSelectBill}
+        onQuickVoteBill={handleQuickVoteBill}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -736,7 +917,7 @@ export function CongressBillsNegotiationSection({
           disabled={selectedBill.status === 'APROBADA'}
           onClick={() => {
             playUiSound('turn');
-            handleExecuteRecintoVote();
+            executeVoteForBill(selectedBill, blocs);
           }}
           className="hoi-btn-gold px-4 py-2 rounded-sm font-mono font-extrabold text-xs uppercase tracking-wide flex items-center gap-2 disabled:opacity-45 disabled:cursor-not-allowed"
         >
