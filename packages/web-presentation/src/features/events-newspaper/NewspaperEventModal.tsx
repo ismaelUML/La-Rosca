@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { GovernmentEventCategory } from '@argentina-sim/domain';
+import { OfficialInstitutionLogo, OfficialMediaLogo } from '../party-setup/OfficialLogoBadge.js';
 import {
   resolveEventImagePaths,
   resolveEventNewspaper,
@@ -40,6 +41,28 @@ function computeEditionNumber(eventId: string): number {
   return 1000 + hash;
 }
 
+function MastheadOutletBadge({ spec }: { spec: NewspaperMastheadSpec }) {
+  if (spec.institutionLogoId) {
+    return (
+      <div className="shrink-0 border border-[#232730]/40 bg-white/95 rounded-sm p-0.5 shadow-sm">
+        <OfficialInstitutionLogo institution={spec.institutionLogoId} heightPx={34} />
+      </div>
+    );
+  }
+  if (spec.mediaLogoId) {
+    return (
+      <div className="shrink-0 border border-[#232730]/35 bg-white/95 rounded-sm p-0.5 shadow-sm">
+        <OfficialMediaLogo media={spec.mediaLogoId} heightPx={32} />
+      </div>
+    );
+  }
+  return (
+    <div className={`hidden sm:flex w-10 h-10 border-2 border-[#232730] items-center justify-center shrink-0 ${spec.accentBgClass}`}>
+      <span className="font-serif font-black text-base leading-none">{spec.name.slice(0, 2).toUpperCase()}</span>
+    </div>
+  );
+}
+
 function MastheadHeader({
   spec,
   dateLabel,
@@ -59,9 +82,7 @@ function MastheadHeader({
       </div>
 
       <div className="px-6 py-3.5 border-b border-[#8e8676] flex items-center justify-between gap-4 bg-[#f3efe3]">
-        <div className={`hidden sm:flex w-10 h-10 border-2 border-[#232730] items-center justify-center shrink-0 ${spec.accentBgClass}`}>
-          <span className="font-serif font-black text-base leading-none">{spec.name.slice(0, 2).toUpperCase()}</span>
-        </div>
+        <MastheadOutletBadge spec={spec} />
 
         <div className="flex-1 text-center">
           <div className={`text-2xl sm:text-3xl md:text-4xl text-[#15181f] leading-none ${spec.titleFontClass}`}>

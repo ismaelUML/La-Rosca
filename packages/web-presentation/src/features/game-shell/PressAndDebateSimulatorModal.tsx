@@ -4,15 +4,19 @@ import { Mic, Radio, Sparkles, Tv, X } from 'lucide-react';
 import { playUiSound } from '@/lib/gameFeedback';
 import { getMahoganyWoodTexture } from '../map-3d/proceduralPbrTextures.js';
 import { loadGlbIntoAnchor } from '../map-3d/modelAssetLoader.js';
-import { OfficialInstitutionLogo } from '../party-setup/OfficialLogoBadge.js';
+import type { MediaOutletLogoId } from '../party-setup/officialLogosCatalog.js';
+import { OfficialInstitutionLogo, OfficialMediaLogo } from '../party-setup/OfficialLogoBadge.js';
 
 // Simulador 3D de Conferencia de Prensa en Casa Rosada / Cadena Nacional
 // y Debate Presidencial con Derechos a Replica y Chicanas en Vivo.
+
+const STUDIO_NETWORK_POOL: MediaOutletLogoId[] = ['TV_PUBLICA', 'TN', 'LN_MAS', 'C5N', 'CRONICA_TV', 'A24'];
 
 interface PressQuestionRound {
   id: string;
   journalist: string;
   outlet: string;
+  outletLogos: MediaOutletLogoId[];
   question: string;
   options: Array<{
     tone: 'ORTODOXO' | 'CHICANA' | 'INSTITUCIONAL';
@@ -29,7 +33,8 @@ const PRESS_ROUNDS: PressQuestionRound[] = [
   {
     id: 'ROUND_1',
     journalist: 'Acreditado Sala de Prensa · Economía',
-    outlet: 'LN+ / Ámbito Financiero',
+    outlet: 'LN+ / Ámbito / Bloomberg',
+    outletLogos: ['LN_MAS', 'AMBITO', 'BLOOMBERG'],
     question:
       '«Presidente, los formadores de precios remarcaron preventivamente esta semana y los gremios amenazan con no homologar paritarias debajo del IPC. ¿Va a convalidar una devaluación o mantiene el ancla fiscal a rajatabla?»',
     options: [
@@ -68,7 +73,8 @@ const PRESS_ROUNDS: PressQuestionRound[] = [
   {
     id: 'ROUND_2',
     journalist: 'Corresponsal Parlamentario · Política',
-    outlet: 'TN / Clarín',
+    outlet: 'TN / Clarín / LA NACION',
+    outletLogos: ['TN', 'CLARIN', 'LA_NACION'],
     question:
       '«Los gobernadores dialoguistas advierten que sin fondos para obras viales e infraestructura energética no habrá quórum para el próximo paquete de reformas en el Senado. ¿Habrá billetera abierta o decretazo?»',
     options: [
@@ -107,7 +113,8 @@ const PRESS_ROUNDS: PressQuestionRound[] = [
   {
     id: 'ROUND_3',
     journalist: 'Periodista Acreditado · Sociedad y Calle',
-    outlet: 'C5N / Crónica TV',
+    outlet: 'C5N / Crónica TV / Página/12',
+    outletLogos: ['C5N', 'CRONICA_TV', 'PAGINA_12'],
     question:
       '«Las columnas sindicales y universitarias anunciaron una movilización frente al Congreso por la caída del poder adquisitivo. ¿Aplicará el protocolo antipiquetes al 100% o abrirá un canal de negociación?»',
     options: [
@@ -140,6 +147,46 @@ const PRESS_ROUNDS: PressQuestionRound[] = [
         viralDelta: 0.5,
         marketDelta: 1.5,
         headline: 'ANUNCIAN REFUERZO SOCIAL DIRECTO SIN INTERMEDIARIOS PARA DESCOMPRIMIR LA CALLE'
+      }
+    ]
+  },
+  {
+    id: 'ROUND_4',
+    journalist: 'Mesa Redacción & Negocios · Inversiones y Medios',
+    outlet: 'A24 / Infobae / Forbes',
+    outletLogos: ['A24', 'INFOBAE', 'FORBES'],
+    question:
+      '«Grupos empresarios y fondos tech evalúan desembarcar en energía e IA bajo el RIGI, pero exigen estabilidad jurídica y reclaman señales sobre el rol de la pauta y las redes oficiales. ¿Qué garantía les da hoy?»',
+    options: [
+      {
+        tone: 'ORTODOXO',
+        toneLabel: 'Técnico-Ortodoxo (Blindaje RIGI 30 Años)',
+        replyText:
+          '«Estabilidad fiscal, giro libre de dividendos y cero discrecionalidad estatal. Argentina compite por capital global con reglas claras, no con favores de despacho.»',
+        imageDelta: 2.0,
+        viralDelta: 1.5,
+        marketDelta: 4.0,
+        headline: 'BLINDAN REGLAS DEL RIGI Y RATIFICAN PAUTA CERO ANTE CUMBRE EMPRESARIA'
+      },
+      {
+        tone: 'CHICANA',
+        toneLabel: 'Chicana al Hueso (Pauta Cero y Ensobrados)',
+        replyText:
+          '«Se terminó la época en que el Estado financiaba relatos con la tuya. El que quiera invertir en Argentina bienvenido sea; el que extrañe el sobre oficial, que consiga sponsors privados.»',
+        imageDelta: 0.5,
+        viralDelta: 6.5,
+        marketDelta: 1.0,
+        headline: 'CRUCE CON MEDIOS EN CASA ROSADA: REAFIRMAN RECORTES DE PAUTA OFICIAL'
+      },
+      {
+        tone: 'INSTITUCIONAL',
+        toneLabel: 'Institucional-Moderado (Mesa Sectorial)',
+        replyText:
+          '«Convocamos a una mesa de competitividad federal con pymes tecnológicas, gobernadores y prensa acreditada para asegurar seguridad jurídica de largo plazo.»',
+        imageDelta: 3.0,
+        viralDelta: 1.0,
+        marketDelta: 2.5,
+        headline: 'CONVOCAN MESA DE COMPETITIVIDAD FEDERAL PARA ATRAER CAPITALES PRODUCTIVOS'
       }
     ]
   }
@@ -264,6 +311,11 @@ function PressPodium3DCanvas({ activeHeadline }: { activeHeadline: string }) {
         <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
         EN VIVO · SALA DE PRENSA / CADENA NACIONAL
       </div>
+      <div className="hidden sm:flex absolute top-2 right-2.5 items-center gap-1 bg-[#05080d]/85 border border-slate-700/80 px-1.5 py-1 rounded-sm">
+        {STUDIO_NETWORK_POOL.map((mediaId) => (
+          <OfficialMediaLogo key={mediaId} media={mediaId} heightPx={17} />
+        ))}
+      </div>
       <div className="bg-gradient-to-r from-[#8b0000] via-[#b91c1c] to-[#7f1d1d] px-3 py-1.5 border-t border-amber-400/70 flex items-center justify-between text-xs font-mono">
         <span className="font-extrabold text-white uppercase tracking-wider truncate">
           {activeHeadline}
@@ -292,13 +344,18 @@ function ActivePressQuestionPanel({
 }) {
   return (
     <div className="space-y-3">
-      <div className="p-3.5 rounded-sm bg-[#090d14] border border-[#8a6d33]/80 space-y-1">
-        <div className="flex items-center justify-between text-[10px] font-mono text-amber-300">
+      <div className="p-3.5 rounded-sm bg-[#090d14] border border-[#8a6d33]/80 space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono text-amber-300">
           <span className="inline-flex items-center gap-1">
             <Mic className="w-3 h-3" />
             PREGUNTA {roundIdx + 1} DE {totalRounds} · {currentRound.journalist}
           </span>
-          <span className="text-sky-300">{currentRound.outlet}</span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {currentRound.outletLogos.map((logoId) => (
+              <OfficialMediaLogo key={logoId} media={logoId} heightPx={20} />
+            ))}
+            <span className="text-sky-300 ml-0.5">{currentRound.outlet}</span>
+          </div>
         </div>
         <p className="text-xs sm:text-sm font-serif italic text-slate-100 leading-relaxed">
           {currentRound.question}
@@ -435,7 +492,7 @@ function PressPodiumLiveStage({
               Conferencia Finalizada · Repercusión en Tapa y Mercados
             </div>
             <p className="text-xs text-slate-300">
-              Cerraste las 3 rondas con impacto de {formatSignedPts(totals.image)} en imagen y {formatSignedPts(totals.market)} en mercados.
+              Cerraste las {PRESS_ROUNDS.length} rondas con impacto de {formatSignedPts(totals.image)} en imagen y {formatSignedPts(totals.market)} en mercados.
             </p>
           </div>
           <button

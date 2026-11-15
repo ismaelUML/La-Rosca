@@ -187,6 +187,182 @@ export const INSTITUTIONAL_LOGOS: Record<InstitutionalLogoId, OfficialLogoSpec> 
   },
 };
 
+export type MediaOutletLogoId =
+  | 'CLARIN'
+  | 'LA_NACION'
+  | 'LN_MAS'
+  | 'TN'
+  | 'C5N'
+  | 'CRONICA_TV'
+  | 'A24'
+  | 'CANAL_26'
+  | 'TV_PUBLICA'
+  | 'INFOBAE'
+  | 'AMBITO'
+  | 'CRONISTA'
+  | 'PAGINA_12'
+  | 'VOZ_INTERIOR'
+  | 'EL_DESTAPE'
+  | 'REVISTA_BARCELONA'
+  | 'FORBES'
+  | 'BLOOMBERG'
+  | 'CNN_ESPANOL';
+
+export const MEDIA_OUTLET_LOGOS: Record<MediaOutletLogoId, OfficialLogoSpec> = {
+  CLARIN: {
+    id: 'CLARIN',
+    src: '/logos/medio-clarin.svg',
+    alt: 'Diario Clarín',
+    officialName: 'Clarín',
+    backdrop: 'light',
+    licenseNote: 'Wikimedia Commons · Clarín',
+  },
+  LA_NACION: {
+    id: 'LA_NACION',
+    src: '/logos/medio-la-nacion.png',
+    alt: 'Diario La Nación',
+    officialName: 'LA NACION',
+    backdrop: 'light',
+    licenseNote: 'Wikimedia Commons · LA NACION',
+  },
+  LN_MAS: {
+    id: 'LN_MAS',
+    src: '/logos/medio-ln-mas.svg',
+    alt: 'Señal LN+',
+    officialName: 'LN+ (La Nación Más)',
+    backdrop: 'light',
+    licenseNote: 'Wikimedia Commons · LN+',
+  },
+  TN: {
+    id: 'TN',
+    src: '/logos/medio-tn.svg',
+    alt: 'Todo Noticias (TN)',
+    officialName: 'TN (Todo Noticias)',
+    backdrop: 'light',
+    licenseNote: 'Wikimedia Commons · TN',
+  },
+  C5N: {
+    id: 'C5N',
+    src: '/logos/medio-c5n.svg',
+    alt: 'C5N Noticias',
+    officialName: 'C5N',
+    backdrop: 'light',
+    licenseNote: 'Wikimedia Commons · C5N',
+  },
+  CRONICA_TV: {
+    id: 'CRONICA_TV',
+    src: '/logos/medio-cronica-tv.png',
+    alt: 'Crónica TV',
+    officialName: 'Crónica TV',
+    backdrop: 'light',
+    licenseNote: 'Wikimedia Commons · Crónica TV',
+  },
+  A24: {
+    id: 'A24',
+    src: '/logos/medio-a24.svg',
+    alt: 'A24 América 24',
+    officialName: 'A24',
+    backdrop: 'dark',
+    licenseNote: 'Wikimedia Commons · A24',
+  },
+  CANAL_26: {
+    id: 'CANAL_26',
+    src: '/logos/medio-canal26.svg',
+    alt: 'Canal 26',
+    officialName: 'Canal 26',
+    backdrop: 'transparent',
+    licenseNote: 'Wikimedia Commons · Canal 26',
+  },
+  TV_PUBLICA: {
+    id: 'TV_PUBLICA',
+    src: '/logos/medio-tv-publica.svg',
+    alt: 'Televisión Pública Argentina',
+    officialName: 'TV Pública',
+    backdrop: 'light',
+    licenseNote: 'Wikimedia Commons · TV Pública',
+  },
+  INFOBAE: {
+    id: 'INFOBAE',
+    src: '/logos/medio-infobae.svg',
+    alt: 'Infobae',
+    officialName: 'Infobae',
+    backdrop: 'light',
+    licenseNote: 'Wikimedia Commons · Infobae',
+  },
+  AMBITO: {
+    id: 'AMBITO',
+    src: '/logos/medio-ambito.png',
+    alt: 'Ámbito Financiero',
+    officialName: 'Ámbito Financiero',
+    backdrop: 'light',
+    licenseNote: 'Wikimedia Commons · Ámbito Financiero',
+  },
+  CRONISTA: {
+    id: 'CRONISTA',
+    src: '/logos/medio-cronista.png',
+    alt: 'El Cronista Comercial',
+    officialName: 'El Cronista',
+    backdrop: 'light',
+    licenseNote: 'Wikimedia Commons · El Cronista',
+  },
+  PAGINA_12: {
+    id: 'PAGINA_12',
+    src: '/logos/medio-pagina12.svg',
+    alt: 'Página/12',
+    officialName: 'Página/12',
+    backdrop: 'light',
+    licenseNote: 'Wikimedia Commons · Página/12',
+  },
+  VOZ_INTERIOR: {
+    id: 'VOZ_INTERIOR',
+    src: '/logos/medio-lavoz.png',
+    alt: 'La Voz del Interior',
+    officialName: 'La Voz del Interior',
+    backdrop: 'light',
+    licenseNote: 'Wikimedia Commons · La Voz del Interior',
+  },
+  EL_DESTAPE: {
+    id: 'EL_DESTAPE',
+    src: '/logos/medio-el-destape.png',
+    alt: 'El Destape',
+    officialName: 'El Destape',
+    backdrop: 'light',
+    licenseNote: 'Wikimedia Commons · El Destape',
+  },
+  REVISTA_BARCELONA: {
+    id: 'REVISTA_BARCELONA',
+    src: '/logos/medio-revista-barcelona.jpg',
+    alt: 'Revista Barcelona',
+    officialName: 'Revista Barcelona',
+    backdrop: 'light',
+    licenseNote: 'Wikimedia Commons · Revista Barcelona',
+  },
+  FORBES: {
+    id: 'FORBES',
+    src: '/logos/medio-forbes.svg',
+    alt: 'Forbes Argentina',
+    officialName: 'Forbes Argentina',
+    backdrop: 'light',
+    licenseNote: 'Wikimedia Commons · Forbes',
+  },
+  BLOOMBERG: {
+    id: 'BLOOMBERG',
+    src: '/logos/medio-bloomberg.svg',
+    alt: 'Bloomberg',
+    officialName: 'Bloomberg Línea',
+    backdrop: 'light',
+    licenseNote: 'Wikimedia Commons · Bloomberg',
+  },
+  CNN_ESPANOL: {
+    id: 'CNN_ESPANOL',
+    src: '/logos/medio-cnn-espanol.svg',
+    alt: 'CNN en Español',
+    officialName: 'CNN en Español',
+    backdrop: 'light',
+    licenseNote: 'Wikimedia Commons · CNN en Español',
+  },
+};
+
 export function resolvePartyOfficialLogo(partyKey: string | null | undefined): OfficialLogoSpec | null {
   if (!partyKey) return null;
   const trimmed = partyKey.trim();

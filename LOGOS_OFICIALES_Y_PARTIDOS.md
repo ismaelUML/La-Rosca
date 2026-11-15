@@ -62,3 +62,42 @@ En [PressAndDebateSimulatorModal.tsx](file:///c:/Users/Danie/OneDrive/Desktop/Es
 - **DNU y Decretos**: poner el sello del `BOLETIN_OFICIAL` + `PRESIDENCIA` en la firma estampada al publicar cada decreto de necesidad y urgencia o veto presidencial.
 - **Cumbre de Gobernadores (`FederalSummitAndCrisisModal.tsx`)**: sumar `ESCUDO_NACIONAL` + logos partidarios al lado de cada gobernador cuando negocian ATN y Pacto Fiscal.
 - **Partidos locales / provinciales extra**: si más adelante querés sumar Fuerza Republicana, Juntos Somos Río Negro, Frente Renovador de la Concordia o Hacemos Unidos por Córdoba, se pueden agregar con el mismo patrón en `scripts/fetch-official-logos.mjs` y registrarlos en `PARTY_OFFICIAL_LOGOS`.
+
+---
+
+## 5. Canales de TV, Diarios, Portales y Revistas de Noticias (`MEDIA_OUTLET_LOGOS`)
+
+Sumamos **19 logos oficiales** de medios argentinos e internacionales de referencia política/económica en `packages/web-presentation/public/logos/`, renderizados mediante `<OfficialMediaLogo />` desde [OfficialLogoBadge.tsx](file:///c:/Users/Danie/OneDrive/Desktop/Estudio%20Y%20Proyectos/Complete/packages/web-presentation/src/features/party-setup/OfficialLogoBadge.tsx) y mapeados en [officialLogosCatalog.ts](file:///c:/Users/Danie/OneDrive/Desktop/Estudio%20Y%20Proyectos/Complete/packages/web-presentation/src/features/party-setup/officialLogosCatalog.ts):
+
+### Televisión y Señales de Noticias en Vivo
+| Clave en catálogo | Medio / Señal | Archivo local (`/logos/...`) | Origen Wikimedia Commons | Contraste / Dónde aparece |
+| :--- | :--- | :--- | :--- | :--- |
+| `TN` | **TN (Todo Noticias)** | `medio-tn.svg` | `File:TN todo noticias logo.svg` | Blanco (`light`) · Zócalo TV, Sala de Prensa Ronda 2, Entrevista/Debate |
+| `LN_MAS` | **LN+ (La Nación Más)** | `medio-ln-mas.svg` | `File:La-Nacion-Mas-Logo.svg` | Blanco (`light`) · Zócalo TV, Sala de Prensa Ronda 1, Entrevista |
+| `C5N` | **C5N (Canal 5 Noticias)** | `medio-c5n.svg` | `File:C5N logo.svg` | Blanco (`light`, tipografía negra pura) · Zócalo TV, Sala de Prensa Ronda 3, Entrevista/Debate |
+| `CRONICA_TV` | **Crónica TV** | `medio-cronica-tv.png` | `File:Crónica TV logotipo (2016).png` | Blanco (`light`) · Zócalo TV (`PLACA ROJA` forzada en crisis/paro/riesgo país), Ronda 3 |
+| `A24` | **A24 (América 24)** | `medio-a24.svg` | `File:A24 (2025).svg` | Oscuro (`dark`, cuadrados rojos `#E82121` con texto blanco) · Zócalo TV, Ronda 4, Entrevista |
+| `CANAL_26` | **Canal 26** | `medio-canal26.svg` | `File:Canal 26 logo (2022).svg` | Transparente (ya trae círculo blanco interno) · Zócalo TV rotativo |
+| `TV_PUBLICA` | **TV Pública (Canal 7)** | `medio-tv-publica.svg` | `File:Canal 7 Argentina.svg` | Blanco (`light`) · Zócalo TV, Cadena Nacional, Debate presidencial |
+| `CNN_ESPANOL` | **CNN en Español** | `medio-cnn-espanol.svg` | `File:Logo de CNN en Español (2010-2015).svg` | Blanco (`light`) · Card de Debate |
+
+### Diarios, Portales, Económicos y Revistas
+| Clave en catálogo | Medio / Publicación | Archivo local (`/logos/...`) | Origen Wikimedia Commons | Contraste / Dónde aparece |
+| :--- | :--- | :--- | :--- | :--- |
+| `CLARIN` | **Clarín** | `medio-clarin.svg` | `File:Clarín logo.svg` | Blanco (`light`) · Cabecera real en `NewspaperEventModal`, Ronda 2, Publicidad |
+| `LA_NACION` | **LA NACION** | `medio-la-nacion.png` | `File:La Nacion Logo.png` | Blanco (`light`) · Cabecera real de diario, Ronda 2, Publicidad |
+| `INFOBAE` | **Infobae** | `medio-infobae.svg` | `File:Infobae logo.svg` | Blanco (`light`) · Cabecera real de portal/edición especial, Ronda 4, Publicidad/Militancia Digital |
+| `AMBITO` | **Ámbito Financiero** | `medio-ambito.png` | `File:Ambito financ logo.png` | Blanco (`light`) · Cabecera diario, Pizarra Financiera footer, Ronda 1 |
+| `CRONISTA` | **El Cronista Comercial** | `medio-cronista.png` | `File:El Cronista logo.png` | Blanco (`light`) · Cabecera eventos de economía real y energía |
+| `PAGINA_12` | **Página/12** | `medio-pagina12.svg` | `File:Logo Página 12.svg` | Blanco (`light`, logo `#000000`) · Cabecera eventos gremiales/calle, Ronda 3 |
+| `VOZ_INTERIOR` | **La Voz del Interior** | `medio-lavoz.png` | `File:La Voz del Interior logo.png` | Blanco (`light`) · Cabecera de conflictos federales y gobernadores |
+| `EL_DESTAPE` | **El Destape** | `medio-el-destape.png` | `File:ElDestape.png` | Blanco (`light`) · Cabecera de filtraciones/inteligencia, Militancia Digital |
+| `FORBES` | **Forbes Argentina** | `medio-forbes.svg` | `File:Forbes logo.svg` | Blanco (`light`, negro puro) · Cabecera inversión/empresarios, Ronda 4, Publicidad |
+| `BLOOMBERG` | **Bloomberg Línea** | `medio-bloomberg.svg` | `File:Bloomberg logo.svg` | Blanco (`light`, negro puro) · Cabecera Wall Street/FMI/Fed, Pizarra Financiera, Ronda 1 |
+| `REVISTA_BARCELONA` | **Revista Barcelona** | `medio-revista-barcelona.jpg` | `File:Barcelona, logo.jpg` | Blanco (`light`) · Tapa satírica (deepfakes / criptoestafas), Militancia Digital |
+
+### Integraciones ya conectadas
+1. **Eventos de Tapa y Revistas (`NewspaperEventModal.tsx` + `newspaperMastheads.ts`)**: cada diario o revista (`Clarín`, `LA NACION`, `Infobae`, `Ámbito`, `El Cronista`, `Página/12`, `La Voz`, `El Destape`, `Forbes`, `Bloomberg`, `Revista Barcelona`, más `BOLETÍN OFICIAL`) muestra su logotipo oficial real en la cabecera del periódico al dispararse un evento.
+2. **Zócalo TV en Vivo y Pizarra Financiera (`LiveNewsAndMarketTicker.tsx`)**: en modo TV va rotando la señal acreditada (`CRONICA_TV`, `TN`, `LN+`, `C5N`, `A24`, `CANAL_26`, `TV_PUBLICA`), clavando automáticamente **Crónica TV** cuando salta la **Placa Roja** de paro general, IPC >= 6% o riesgo país >= 1350 pb; en Pizarra Financiera muestra el tridente `BCRA` + `Bloomberg` + `Ámbito Financiero`.
+3. **Conferencia de Prensa 3D / Cadena Nacional (`PressAndDebateSimulatorModal.tsx`)**: tira acreditada sobre la cámara del estudio (`TV Pública`, `TN`, `LN+`, `C5N`, `Crónica TV`, `A24`) y badges oficiales en las 4 rondas de periodistas.
+4. **Acciones de Campaña (`CampaignActionsView.tsx`)**: las tarjetas de `Entrevista`, `Publicidad`, `Debate` y `Militancia digital` muestran la pauta de medios reales donde impacta cada operación.

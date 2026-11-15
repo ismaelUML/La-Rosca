@@ -34,7 +34,28 @@ const LOGO_ASSETS = [
   { out: 'estado-senado.svg', title: 'File:Logo del Senado de Argentina.svg' },
   { out: 'estado-senado-inverse.svg', title: 'File:Logo del Senado de Argentina (Inverse).svg' },
   { out: 'estado-bcra.svg', title: 'File:BCRA logo.svg' },
-  { out: 'estado-corte-suprema.png', title: 'File:Corte suprema argentina logo.png' }
+  { out: 'estado-corte-suprema.png', title: 'File:Corte suprema argentina logo.png' },
+
+  // Diarios, portales, revistas y canales de noticias argentinos e internacionales
+  { out: 'medio-clarin.svg', title: 'File:Clarín logo.svg' },
+  { out: 'medio-la-nacion.png', title: 'File:La Nacion Logo.png' },
+  { out: 'medio-ln-mas.svg', title: 'File:La-Nacion-Mas-Logo.svg' },
+  { out: 'medio-tn.svg', title: 'File:TN todo noticias logo.svg' },
+  { out: 'medio-c5n.svg', title: 'File:C5N logo.svg' },
+  { out: 'medio-cronica-tv.png', title: 'File:Crónica TV logotipo (2016).png' },
+  { out: 'medio-a24.svg', title: 'File:A24 (2025).svg' },
+  { out: 'medio-canal26.svg', title: 'File:Canal 26 logo (2022).svg' },
+  { out: 'medio-tv-publica.svg', title: 'File:Canal 7 Argentina.svg' },
+  { out: 'medio-infobae.svg', title: 'File:Infobae logo.svg' },
+  { out: 'medio-ambito.png', title: 'File:Ambito financ logo.png' },
+  { out: 'medio-cronista.png', title: 'File:El Cronista logo.png' },
+  { out: 'medio-pagina12.svg', title: 'File:Logo Página 12.svg' },
+  { out: 'medio-lavoz.png', title: 'File:La Voz del Interior logo.png' },
+  { out: 'medio-el-destape.png', title: 'File:ElDestape.png' },
+  { out: 'medio-revista-barcelona.jpg', title: 'File:Barcelona, logo.jpg' },
+  { out: 'medio-bloomberg.svg', title: 'File:Bloomberg logo.svg' },
+  { out: 'medio-forbes.svg', title: 'File:Forbes logo.svg' },
+  { out: 'medio-cnn-espanol.svg', title: 'File:CNN en Español.svg' }
 ];
 
 const UA = { 'User-Agent': 'ArgentinaSim2027/1.0 (https://github.com/ismaelUML/La-Rosca)' };

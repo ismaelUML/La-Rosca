@@ -1,7 +1,8 @@
 import type { GovernmentEventCategory } from '@argentina-sim/domain';
+import type { InstitutionalLogoId, MediaOutletLogoId } from '../party-setup/officialLogosCatalog.js';
 
-// Cabeceras y mapeo editorial de Diarios Argentinos para eventos estilo HOI4.
-// Cada evento toma un diario coherente con la temática (o su override específico)
+// Cabeceras y mapeo editorial de Diarios y Revistas Argentinas/Internacionales para eventos estilo HOI4.
+// Cada evento toma un medio coherente con la temática (o su override específico), su logo oficial real
 // y resuelve la ruta de fotografía en /img/events/ con fallback seguro por categoría.
 
 export type NewspaperId =
@@ -12,7 +13,11 @@ export type NewspaperId =
   | 'CRONISTA'
   | 'PAGINA_12'
   | 'INFOBAE'
-  | 'VOZ_INTERIOR';
+  | 'VOZ_INTERIOR'
+  | 'EL_DESTAPE'
+  | 'FORBES'
+  | 'BLOOMBERG'
+  | 'REVISTA_BARCELONA';
 
 export interface NewspaperMastheadSpec {
   id: NewspaperId;
@@ -23,6 +28,8 @@ export interface NewspaperMastheadSpec {
   accentBgClass: string;
   titleFontClass: string;
   badgeTextClass: string;
+  mediaLogoId?: MediaOutletLogoId;
+  institutionLogoId?: InstitutionalLogoId;
 }
 
 export const NEWSPAPER_MASTHEADS: Record<NewspaperId, NewspaperMastheadSpec> = {
@@ -34,7 +41,8 @@ export const NEWSPAPER_MASTHEADS: Record<NewspaperId, NewspaperMastheadSpec> = {
     editionPrefix: 'AÑO CXXXV · N°',
     accentBgClass: 'bg-[#1c2738] text-[#f3ead3] border-[#3d4d66]',
     titleFontClass: 'font-serif tracking-[0.14em] font-black',
-    badgeTextClass: 'text-[#1c2738]'
+    badgeTextClass: 'text-[#1c2738]',
+    institutionLogoId: 'BOLETIN_OFICIAL',
   },
   CLARIN: {
     id: 'CLARIN',
@@ -44,7 +52,8 @@ export const NEWSPAPER_MASTHEADS: Record<NewspaperId, NewspaperMastheadSpec> = {
     editionPrefix: 'AÑO LXXXII · EDICIÓN N°',
     accentBgClass: 'bg-[#8f1d24] text-white border-[#681319]',
     titleFontClass: 'font-serif tracking-tight font-black',
-    badgeTextClass: 'text-[#8f1d24]'
+    badgeTextClass: 'text-[#8f1d24]',
+    mediaLogoId: 'CLARIN',
   },
   LA_NACION: {
     id: 'LA_NACION',
@@ -54,7 +63,8 @@ export const NEWSPAPER_MASTHEADS: Record<NewspaperId, NewspaperMastheadSpec> = {
     editionPrefix: 'AÑO CLVIII · N°',
     accentBgClass: 'bg-[#13293d] text-[#f5efe2] border-[#1f3b56]',
     titleFontClass: 'font-serif tracking-[0.22em] font-black',
-    badgeTextClass: 'text-[#13293d]'
+    badgeTextClass: 'text-[#13293d]',
+    mediaLogoId: 'LA_NACION',
   },
   AMBITO: {
     id: 'AMBITO',
@@ -64,7 +74,8 @@ export const NEWSPAPER_MASTHEADS: Record<NewspaperId, NewspaperMastheadSpec> = {
     editionPrefix: 'AÑO LI · CIERRE N°',
     accentBgClass: 'bg-[#163a5f] text-[#e8f1fa] border-[#265480]',
     titleFontClass: 'font-sans tracking-tighter font-black',
-    badgeTextClass: 'text-[#163a5f]'
+    badgeTextClass: 'text-[#163a5f]',
+    mediaLogoId: 'AMBITO',
   },
   CRONISTA: {
     id: 'CRONISTA',
@@ -74,7 +85,8 @@ export const NEWSPAPER_MASTHEADS: Record<NewspaperId, NewspaperMastheadSpec> = {
     editionPrefix: 'AÑO CXIX · N°',
     accentBgClass: 'bg-[#1a3a2f] text-[#e7f3ec] border-[#2d5a4b]',
     titleFontClass: 'font-serif tracking-tight font-extrabold',
-    badgeTextClass: 'text-[#1a3a2f]'
+    badgeTextClass: 'text-[#1a3a2f]',
+    mediaLogoId: 'CRONISTA',
   },
   PAGINA_12: {
     id: 'PAGINA_12',
@@ -84,7 +96,8 @@ export const NEWSPAPER_MASTHEADS: Record<NewspaperId, NewspaperMastheadSpec> = {
     editionPrefix: 'AÑO XL · N°',
     accentBgClass: 'bg-[#1b1f26] text-[#f5f2ea] border-[#343b46]',
     titleFontClass: 'font-sans tracking-tight font-black',
-    badgeTextClass: 'text-[#1b1f26]'
+    badgeTextClass: 'text-[#1b1f26]',
+    mediaLogoId: 'PAGINA_12',
   },
   INFOBAE: {
     id: 'INFOBAE',
@@ -94,7 +107,8 @@ export const NEWSPAPER_MASTHEADS: Record<NewspaperId, NewspaperMastheadSpec> = {
     editionPrefix: 'EDICIÓN ESPECIAL N°',
     accentBgClass: 'bg-[#9a4611] text-[#fff6ea] border-[#78350b]',
     titleFontClass: 'font-sans tracking-tight font-black lowercase',
-    badgeTextClass: 'text-[#9a4611]'
+    badgeTextClass: 'text-[#9a4611]',
+    mediaLogoId: 'INFOBAE',
   },
   VOZ_INTERIOR: {
     id: 'VOZ_INTERIOR',
@@ -104,7 +118,52 @@ export const NEWSPAPER_MASTHEADS: Record<NewspaperId, NewspaperMastheadSpec> = {
     editionPrefix: 'AÑO CXXIII · N°',
     accentBgClass: 'bg-[#2a3441] text-[#f4efe3] border-[#424f60]',
     titleFontClass: 'font-serif tracking-tight font-black',
-    badgeTextClass: 'text-[#2a3441]'
+    badgeTextClass: 'text-[#2a3441]',
+    mediaLogoId: 'VOZ_INTERIOR',
+  },
+  EL_DESTAPE: {
+    id: 'EL_DESTAPE',
+    name: 'El Destape',
+    subtitle: 'Investigación Política, Filtraciones y Tribunales',
+    sectionTag: 'EXCLUSIVO · INVESTIGACIÓN',
+    editionPrefix: 'INFORME ESPECIAL N°',
+    accentBgClass: 'bg-[#1e293b] text-[#f8fafc] border-[#334155]',
+    titleFontClass: 'font-sans tracking-tight font-black',
+    badgeTextClass: 'text-[#1e293b]',
+    mediaLogoId: 'EL_DESTAPE',
+  },
+  FORBES: {
+    id: 'FORBES',
+    name: 'Forbes Argentina',
+    subtitle: 'Negocios, Energía, Inversiones y Cúpula Empresaria',
+    sectionTag: 'INVERSIÓN Y CORPORATES',
+    editionPrefix: 'REVISTA N°',
+    accentBgClass: 'bg-[#14171f] text-[#f3efe3] border-[#333847]',
+    titleFontClass: 'font-serif tracking-wide font-black',
+    badgeTextClass: 'text-[#14171f]',
+    mediaLogoId: 'FORBES',
+  },
+  BLOOMBERG: {
+    id: 'BLOOMBERG',
+    name: 'Bloomberg',
+    subtitle: 'Wall Street, Bonos Soberanos, Tesoro y FMI',
+    sectionTag: 'MERCADOS GLOBALES',
+    editionPrefix: 'DESPACHO NY · N°',
+    accentBgClass: 'bg-[#111827] text-white border-[#374151]',
+    titleFontClass: 'font-sans tracking-tight font-black',
+    badgeTextClass: 'text-[#111827]',
+    mediaLogoId: 'BLOOMBERG',
+  },
+  REVISTA_BARCELONA: {
+    id: 'REVISTA_BARCELONA',
+    name: 'Revista Barcelona',
+    subtitle: 'Una solución europea a los problemas de los argentinos',
+    sectionTag: 'TAPA SATÍRICA · POLÍTICA NACIONAL',
+    editionPrefix: 'EDICIÓN QUINCENAL N°',
+    accentBgClass: 'bg-[#7f1d1d] text-[#fef2f2] border-[#450a0a]',
+    titleFontClass: 'font-serif tracking-tight font-black',
+    badgeTextClass: 'text-[#7f1d1d]',
+    mediaLogoId: 'REVISTA_BARCELONA',
   }
 };
 
@@ -117,20 +176,20 @@ const EVENT_NEWSPAPER_OVERRIDES: Record<string, NewspaperId> = {
   BLACKOUT_DE_VERANO: 'CLARIN',
   GOBERNADORES_RECLAMAN: 'VOZ_INTERIOR',
   CAUTELAR_CONTRA_DNU: 'BOLETIN_OFICIAL',
-  REVISION_FMI: 'AMBITO',
-  FED_SUBE_TASAS: 'AMBITO',
+  REVISION_FMI: 'BLOOMBERG',
+  FED_SUBE_TASAS: 'BLOOMBERG',
   RENUNCIA_MINISTRO: 'BOLETIN_OFICIAL',
   MARCHA_FEDERAL: 'PAGINA_12',
-  INVERSION_RECORD: 'CRONISTA',
+  INVERSION_RECORD: 'FORBES',
   // Campaña
-  DILEMMA_MES_5_EMPRESARIO: 'CLARIN',
-  DILEMMA_MES_7_FILTRACION: 'INFOBAE',
+  DILEMMA_MES_5_EMPRESARIO: 'FORBES',
+  DILEMMA_MES_7_FILTRACION: 'EL_DESTAPE',
   DILEMMA_MES_9_BARONES: 'CLARIN',
   // Expansión destacada
-  VENCIMIENTO_BONO_WALL_STREET_DURO: 'AMBITO',
+  VENCIMIENTO_BONO_WALL_STREET_DURO: 'BLOOMBERG',
   DISPARADA_BRECHA_CCL_45: 'AMBITO',
   QUIEBRA_BANCO_MEDIANO_PROVINCIAL: 'AMBITO',
-  JUICIO_YPF_EMBARGO_ACCIONES_EEUU: 'AMBITO',
+  JUICIO_YPF_EMBARGO_ACCIONES_EEUU: 'BLOOMBERG',
   GUERRA_ORIENTE_MEDIO_SUBA_PETROLEO: 'AMBITO',
   FALLO_CORTE_INCONSTITUCIONAL_DNU: 'BOLETIN_OFICIAL',
   PEDIDO_INTERVENCION_FEDERAL_CRISIS_PROV: 'BOLETIN_OFICIAL',
@@ -150,14 +209,14 @@ const EVENT_NEWSPAPER_OVERRIDES: Record<string, NewspaperId> = {
   PROTESTA_MEDICOS_RESIDENTES_GARRAHAN: 'PAGINA_12',
   MARCHA_JUBILADOS_CONGRESO_REPRESION: 'PAGINA_12',
   HUELGA_DOCENTE_INICIO_CLASES: 'PAGINA_12',
-  ESCANDALO_SERVICIOS_INTELIGENCIA: 'PAGINA_12',
+  ESCANDALO_SERVICIOS_INTELIGENCIA: 'EL_DESTAPE',
   DENUNCIA_VIOLENCIA_INST_EN_MARCHA: 'PAGINA_12',
-  FILTRACION_CHATS_GABINETE: 'INFOBAE',
-  FILTRACION_PANDORA_CUENTAS_MINISTRO: 'INFOBAE',
+  FILTRACION_CHATS_GABINETE: 'EL_DESTAPE',
+  FILTRACION_PANDORA_CUENTAS_MINISTRO: 'EL_DESTAPE',
   HACKERS_ROBAN_BASE_RENAPER_O_ANses: 'INFOBAE',
-  OPERETA_DEEPFAKE_EN_ELECCION: 'INFOBAE',
+  OPERETA_DEEPFAKE_EN_ELECCION: 'REVISTA_BARCELONA',
   SAQUEOS_COORDINADOS_CONURBANO: 'INFOBAE',
-  CRIPTOESTAFAS_O_PUBLICIDAD_OFICIAL: 'INFOBAE'
+  CRIPTOESTAFAS_O_PUBLICIDAD_OFICIAL: 'REVISTA_BARCELONA'
 };
 
 const CATEGORY_DEFAULT_NEWSPAPER: Record<GovernmentEventCategory | 'CAMPANA', NewspaperId> = {

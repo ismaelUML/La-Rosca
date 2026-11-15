@@ -1,10 +1,46 @@
 import React, { useEffect, useState } from 'react';
-import { Activity, Radio, Tv } from 'lucide-react';
+import { Activity, Radio } from 'lucide-react';
 import type { CampaignSimulationState, SimulationState } from '@argentina-sim/domain';
 import { playUiSound } from '@/lib/gameFeedback';
+import type { MediaOutletLogoId } from '../party-setup/officialLogosCatalog.js';
+import { OfficialInstitutionLogo, OfficialMediaLogo } from '../party-setup/OfficialLogoBadge.js';
 
 // Zocalo Dinamico de Television Argentina ("Placa Roja / Ultimo Momento")
 // y Cinta Financiera en Vivo (Bloomberg / Ambito / BCRA) acoplado al pie de pantalla.
+
+const TV_ROTATION_CHANNELS: MediaOutletLogoId[] = [
+  'CRONICA_TV',
+  'TN',
+  'LN_MAS',
+  'C5N',
+  'A24',
+  'CANAL_26',
+  'TV_PUBLICA'
+];
+
+function resolveActiveTvChannel(idx: number, redAlert: boolean): MediaOutletLogoId {
+  if (redAlert) return 'CRONICA_TV';
+  return TV_ROTATION_CHANNELS[idx % TV_ROTATION_CHANNELS.length] ?? 'TN';
+}
+
+function TickerSourceLogos({
+  isTvMode,
+  channel
+}: {
+  isTvMode: boolean;
+  channel: MediaOutletLogoId;
+}) {
+  if (isTvMode) {
+    return <OfficialMediaLogo media={channel} heightPx={20} />;
+  }
+  return (
+    <span className="hidden sm:inline-flex items-center gap-1 shrink-0">
+      <OfficialInstitutionLogo institution="BCRA" heightPx={20} />
+      <OfficialMediaLogo media="BLOOMBERG" heightPx={18} />
+      <OfficialMediaLogo media="AMBITO" heightPx={18} />
+    </span>
+  );
+}
 
 function buildGovBreakingHeadlines(state: SimulationState): string[] {
   const list: string[] = [];
@@ -130,11 +166,14 @@ export function LiveNewsAndMarketTicker({
   const theme = resolveTickerBarTheme(redAlert, mode);
   const activeHeadline = headlines[idx % headlines.length] ?? headlines[0]!;
   const isTvMode = mode === 'TV';
+  const activeChannel = resolveActiveTvChannel(idx, redAlert);
 
   return (
     <footer className={`z-30 shrink-0 px-3 py-1.5 transition-colors ${theme.barCls}`}>
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          <TickerSourceLogos isTvMode={isTvMode} channel={activeChannel} />
+
           <span
             className={`px-2 py-0.5 rounded-sm border text-[10px] font-mono font-extrabold uppercase shrink-0 inline-flex items-center gap-1 ${theme.badgeCls}`}
           >

@@ -1,6 +1,8 @@
 import {
   INSTITUTIONAL_LOGOS,
+  MEDIA_OUTLET_LOGOS,
   type InstitutionalLogoId,
+  type MediaOutletLogoId,
   resolvePartyOfficialLogo,
 } from './officialLogosCatalog';
 
@@ -58,24 +60,34 @@ interface OfficialInstitutionLogoProps {
   showLabel?: boolean;
 }
 
-export function OfficialInstitutionLogo({
-  institution,
+interface OfficialMediaLogoProps {
+  media: MediaOutletLogoId;
+  heightPx?: number;
+  className?: string;
+  showLabel?: boolean;
+}
+
+function OfficialFramedBadge({
+  spec,
   heightPx = 32,
   className = '',
   showLabel = false,
-}: OfficialInstitutionLogoProps) {
-  const spec = INSTITUTIONAL_LOGOS[institution];
-
+}: {
+  spec: { src: string; alt: string; officialName: string; backdrop: 'light' | 'dark' | 'transparent' };
+  heightPx?: number;
+  className?: string;
+  showLabel?: boolean;
+}) {
   return (
     <span className={`inline-flex items-center gap-2 shrink-0 ${className}`} title={spec.officialName}>
       <span
         style={{ height: heightPx }}
-        className={`inline-flex items-center justify-center rounded-sm overflow-hidden px-1 ${BACKDROP_STYLE[spec.backdrop]}`}
+        className={`inline-flex items-center justify-center rounded-sm overflow-hidden px-1.5 ${BACKDROP_STYLE[spec.backdrop]}`}
       >
         <img
           src={spec.src}
           alt={spec.alt}
-          style={{ height: Math.max(16, heightPx - 4), width: 'auto' }}
+          style={{ height: Math.max(14, heightPx - 5), width: 'auto', maxWidth: heightPx * 3.8 }}
           className="object-contain select-none"
           loading="lazy"
         />
@@ -86,5 +98,37 @@ export function OfficialInstitutionLogo({
         </span>
       ) : null}
     </span>
+  );
+}
+
+export function OfficialInstitutionLogo({
+  institution,
+  heightPx = 32,
+  className = '',
+  showLabel = false,
+}: OfficialInstitutionLogoProps) {
+  return (
+    <OfficialFramedBadge
+      spec={INSTITUTIONAL_LOGOS[institution]}
+      heightPx={heightPx}
+      className={className}
+      showLabel={showLabel}
+    />
+  );
+}
+
+export function OfficialMediaLogo({
+  media,
+  heightPx = 22,
+  className = '',
+  showLabel = false,
+}: OfficialMediaLogoProps) {
+  return (
+    <OfficialFramedBadge
+      spec={MEDIA_OUTLET_LOGOS[media]}
+      heightPx={heightPx}
+      className={className}
+      showLabel={showLabel}
+    />
   );
 }

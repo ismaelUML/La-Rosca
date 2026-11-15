@@ -6,10 +6,34 @@ import type {
 } from '@argentina-sim/domain';
 import { canExecuteCampaignAction } from '@argentina-sim/domain';
 import { CAMPAIGN_ACTIONS_CATALOG } from '@argentina-sim/infrastructure';
+import type { MediaOutletLogoId } from '../party-setup/officialLogosCatalog.js';
+import { OfficialMediaLogo } from '../party-setup/OfficialLogoBadge.js';
 
 // Vista de ESTRATEGIA -> Acciones de campana en estetica tactica acero/bronce:
 // catalogo de operaciones electorales con pildoras de impacto, fatiga de uso,
 // selector territorial federal y validacion de presupuesto y cupo mensual.
+
+const ACTION_MEDIA_STRIPS: Partial<Record<string, MediaOutletLogoId[]>> = {
+  ENTREVISTA: ['TN', 'LN_MAS', 'C5N', 'A24'],
+  PUBLICIDAD: ['CLARIN', 'INFOBAE', 'LA_NACION', 'FORBES'],
+  DEBATE: ['TV_PUBLICA', 'TN', 'C5N', 'CNN_ESPANOL'],
+  MILITANCIA_DIGITAL: ['EL_DESTAPE', 'REVISTA_BARCELONA', 'INFOBAE']
+};
+
+function ActionMediaStrip({ actionId }: { actionId: string }) {
+  const outlets = ACTION_MEDIA_STRIPS[actionId];
+  if (!outlets) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 mt-2.5 bg-[#090d14]/80 border border-[#1e293b] px-2 py-1.5 rounded-sm">
+      <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400 mr-0.5">
+        Pauta / Medios:
+      </span>
+      {outlets.map((mediaId) => (
+        <OfficialMediaLogo key={mediaId} media={mediaId} heightPx={17} />
+      ))}
+    </div>
+  );
+}
 
 function formatScaledNumber(num: number): string {
   const rounded = Math.round(num * 10) / 10;
@@ -254,6 +278,7 @@ function ActionCardItem({
       <div>
         <ActionCardHeader title={action.title} usageCount={usageCount} mult={mult} cost={action.cost} />
         <p className="text-xs text-slate-300 mt-2.5 leading-relaxed">{action.description}</p>
+        <ActionMediaStrip actionId={action.id} />
         <ActionPillsList effects={action.effects} multiplier={mult} />
 
         {action.requirementText ? (
