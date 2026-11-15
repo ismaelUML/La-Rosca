@@ -114,8 +114,54 @@ interface PartyEmblemSvgProps {
   className?: string;
 }
 
+function CustomLogoEmblemFrame({
+  config,
+  size,
+  className
+}: {
+  config: PartyEmblemConfig;
+  size: number;
+  className?: string;
+}) {
+  const isLightBg = logoNeedsLightBackdrop(config.customImageDataUrl);
+  const bgFill = isLightBg ? '#ffffff' : '#090d14';
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
+      className={className}
+      aria-label="Insignia partidaria"
+    >
+      <rect
+        x="2"
+        y="2"
+        width="96"
+        height="96"
+        rx="14"
+        fill={bgFill}
+        stroke={config.primaryColor}
+        strokeWidth="3.5"
+      />
+      <image
+        href={config.customImageDataUrl ?? ''}
+        x="8"
+        y="8"
+        width="84"
+        height="84"
+        preserveAspectRatio="xMidYMid meet"
+      />
+    </svg>
+  );
+}
+
 export function PartyEmblemSvg({ config, size = 96, className }: PartyEmblemSvgProps) {
   const clipId = React.useId();
+  if (config.customImageDataUrl) {
+    return <CustomLogoEmblemFrame config={config} size={size} className={className} />;
+  }
+
   const shapePath = SHAPE_CLIP_PATHS[config.shape];
   const symbolPath = SYMBOL_SVG_PATHS[config.symbol];
   const discColor = resolveDiscColor(config.disc, config);
@@ -137,37 +183,14 @@ export function PartyEmblemSvg({ config, size = 96, className }: PartyEmblemSvgP
       <g clipPath={`url(#${clipId})`}>
         <rect x="0" y="0" width="100" height="100" fill={config.primaryColor} />
         {renderPatternOverlay(config.pattern, config.secondaryColor, config.thirdColor)}
-        {config.customImageDataUrl ? (
-          <>
-            <rect
-              x="6"
-              y="6"
-              width="88"
-              height="88"
-              rx="10"
-              fill={logoNeedsLightBackdrop(config.customImageDataUrl) ? '#ffffff' : '#090d14'}
-            />
-            <image
-              href={config.customImageDataUrl}
-              x="10"
-              y="10"
-              width="80"
-              height="80"
-              preserveAspectRatio="xMidYMid meet"
-            />
-          </>
-        ) : (
-          <>
-            {discColor ? <circle cx="50" cy="50" r="27" fill={discColor} /> : null}
-            <path
-              d={symbolPath}
-              fill={config.symbolColor}
-              stroke={config.symbolColor}
-              strokeWidth="2.5"
-              strokeLinejoin="round"
-            />
-          </>
-        )}
+        {discColor ? <circle cx="50" cy="50" r="27" fill={discColor} /> : null}
+        <path
+          d={symbolPath}
+          fill={config.symbolColor}
+          stroke={config.symbolColor}
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+        />
       </g>
 
       <path d={shapePath} fill="none" stroke="#ffffff" strokeOpacity="0.22" strokeWidth="2.5" />
