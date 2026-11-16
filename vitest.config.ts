@@ -12,7 +12,8 @@ export default defineConfig({
     environment: 'node',
     include: [
       'packages/simulation-domain/tests/**/*.test.ts',
-      'packages/simulation-infrastructure/tests/**/*.test.ts'
+      'packages/simulation-infrastructure/tests/**/*.test.ts',
+      'packages/web-presentation/tests/**/*.test.ts'
     ],
     coverage: {
       provider: 'v8',

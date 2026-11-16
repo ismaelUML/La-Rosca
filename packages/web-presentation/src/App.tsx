@@ -992,15 +992,17 @@ export function App() {
         onRetrySave={handleExportSaveCode}
         onCloseSaveBanner={() => setPortableSaveBanner(null)}
         onExitToMenu={() => setScreenMode('LANDING')}
+        renderSection={(winSection) => (
+          <CampaignActivePanel
+            section={winSection}
+            state={campaignState}
+            onAdvanceMonth={handleAdvanceCampaign}
+            onNavigateActions={() => setCampaignNavSection('ACCIONES_CAMPAÑA')}
+            onExecuteAction={handleExecuteCampaignAction}
+            onUpdateCampaignState={setCampaignState}
+          />
+        )}
       >
-        <CampaignActivePanel
-          section={campaignNavSection}
-          state={campaignState}
-          onAdvanceMonth={handleAdvanceCampaign}
-          onNavigateActions={() => setCampaignNavSection('ACCIONES_CAMPAÑA')}
-          onExecuteAction={handleExecuteCampaignAction}
-          onUpdateCampaignState={setCampaignState}
-        />
         <CampaignModalsHost
           campaignState={campaignState}
           activeDilemma={activeDilemma}
@@ -1049,37 +1051,39 @@ export function App() {
       onCloseSaveBanner={() => setPortableSaveBanner(null)}
       onExitToMenu={() => setScreenMode('LANDING')}
       onSendAtn={(provinceId) => dispatchAction({ type: 'SEND_ATN_TO_PROVINCE', provinceId, amountPctGdp: 0.08 })}
+      renderSection={(winSection) => (
+        <ActiveSectionRenderer
+          section={winSection}
+          setup={setup}
+          state={state}
+          campaignState={campaignState}
+          ministers={ministers}
+          levers={levers}
+          measures={measures}
+          rigiSectors={rigiSectors}
+          customTaxes={customTaxes}
+          rigiPending={rigiPending}
+          saveError={saveError}
+          onRetrySave={handleExportSaveCode}
+          onApproveRigiProject={(projectId) => dispatchAction({ type: 'APPROVE_RIGI_PROJECT', projectId })}
+          onRejectRigiProject={(projectId) => dispatchAction({ type: 'REJECT_RIGI_PROJECT', projectId })}
+          onApproveAllRigiProjects={() => dispatchAction({ type: 'APPROVE_ALL_RIGI_PROJECTS' })}
+          onNavigate={setActiveSection}
+          onDispatch={dispatchAction}
+          onAdvanceTurn={handleAdvanceGovernmentTurn}
+          onReinforceMinister={(ministerId) => dispatchAction({ type: 'REINFORCE_MINISTER', ministerId })}
+          onReplaceMinister={(ministerId) => dispatchAction({ type: 'REPLACE_MINISTER', ministerId })}
+          onAppointMinister={(ministerId, minister) => dispatchAction({ type: 'APPOINT_MINISTER', ministerId, minister })}
+          onChangeLever={(id, level) => {
+            setLevers((prev) => prev.map((lv) => (lv.id === id ? { ...lv, level } : lv)));
+            applyLeverToMacroEngine(id, level, dispatchAction);
+          }}
+          onToggleMeasure={(measureId) => dispatchAction({ type: 'TOGGLE_MEASURE', measureId })}
+          onAddCustomTax={(proposal) => dispatchAction({ type: 'ADD_CUSTOM_TAX', proposal })}
+          onToggleRigi={(sectorId) => dispatchAction({ type: 'TOGGLE_RIGI_SECTOR', sectorId })}
+        />
+      )}
     >
-      <ActiveSectionRenderer
-        section={activeSection}
-        setup={setup}
-        state={state}
-        campaignState={campaignState}
-        ministers={ministers}
-        levers={levers}
-        measures={measures}
-        rigiSectors={rigiSectors}
-        customTaxes={customTaxes}
-        rigiPending={rigiPending}
-        saveError={saveError}
-        onRetrySave={handleExportSaveCode}
-        onApproveRigiProject={(projectId) => dispatchAction({ type: 'APPROVE_RIGI_PROJECT', projectId })}
-        onRejectRigiProject={(projectId) => dispatchAction({ type: 'REJECT_RIGI_PROJECT', projectId })}
-        onApproveAllRigiProjects={() => dispatchAction({ type: 'APPROVE_ALL_RIGI_PROJECTS' })}
-        onNavigate={setActiveSection}
-        onDispatch={dispatchAction}
-        onAdvanceTurn={handleAdvanceGovernmentTurn}
-        onReinforceMinister={(ministerId) => dispatchAction({ type: 'REINFORCE_MINISTER', ministerId })}
-        onReplaceMinister={(ministerId) => dispatchAction({ type: 'REPLACE_MINISTER', ministerId })}
-        onAppointMinister={(ministerId, minister) => dispatchAction({ type: 'APPOINT_MINISTER', ministerId, minister })}
-        onChangeLever={(id, level) => {
-          setLevers((prev) => prev.map((lv) => (lv.id === id ? { ...lv, level } : lv)));
-          applyLeverToMacroEngine(id, level, dispatchAction);
-        }}
-        onToggleMeasure={(measureId) => dispatchAction({ type: 'TOGGLE_MEASURE', measureId })}
-        onAddCustomTax={(proposal) => dispatchAction({ type: 'ADD_CUSTOM_TAX', proposal })}
-        onToggleRigi={(sectorId) => dispatchAction({ type: 'TOGGLE_RIGI_SECTOR', sectorId })}
-      />
       <GovernmentOverlays
         state={state}
         monthLabel={`Mes ${state.turnMonth}`}

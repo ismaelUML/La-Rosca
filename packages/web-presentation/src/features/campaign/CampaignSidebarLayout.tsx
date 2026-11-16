@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   CampaignSimulationState,
   GameSetupConfiguration,
@@ -17,6 +17,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Play,
+  Plus,
   RefreshCw,
   Save,
   Volume2,
@@ -27,6 +28,9 @@ import { OfficialInstitutionLogo } from '../party-setup/OfficialLogoBadge.js';
 import { Argentina3DMapCanvas } from '../map-3d/Argentina3DMapCanvas.js';
 import { LiveNewsAndMarketTicker } from '../game-shell/LiveNewsAndMarketTicker.js';
 import { isSoundEnabled, playUiSound, setSoundEnabled } from '../../lib/gameFeedback.js';
+import { DesktopTaskbarStrip } from '../desktop-wm/DesktopTaskbarStrip.js';
+import { DesktopWindowsLayer } from '../desktop-wm/DesktopWindowsLayer.js';
+import { useDesktopWindowManager } from '../desktop-wm/useDesktopWindowManager.js';
 
 // Shell de campana electoral 2027 sobre el mismo mapa 3D interactivo de Argentina.
 
@@ -59,7 +63,8 @@ interface CampaignSidebarLayoutProps {
   onRetrySave?: () => void;
   onCloseSaveBanner: () => void;
   onExitToMenu: () => void;
-  children: React.ReactNode;
+  renderSection: (section: CampaignNavSection) => React.ReactNode;
+  children?: React.ReactNode;
 }
 
 const GROUP_ICONS: Record<string, React.ReactNode> = {
@@ -133,6 +138,14 @@ function mapCampaignProvincesTo3D(provinces: ProvinceCampaignInfo[]): ProvinceSu
   }));
 }
 
+function resolveCampaignSectionTitle(sec: CampaignNavSection): string {
+  for (const grp of CAMPAIGN_NAV_GROUPS) {
+    const hit = grp.items.find((i) => i.id === sec);
+    if (hit) return `${grp.title} · ${hit.label}`;
+  }
+  return sec;
+}
+
 function findActiveCampaignGroup(activeSection: CampaignNavSection) {
   const found = CAMPAIGN_NAV_GROUPS.find((g) => g.items.some((i) => i.id === activeSection));
   return found ?? CAMPAIGN_NAV_GROUPS[0]!;
@@ -167,7 +180,7 @@ function CampaignTopBar({
   onExitToMenu
 }: Omit<
   CampaignSidebarLayoutProps,
-  'activeSection' | 'portableSaveBanner' | 'saveError' | 'onSelectSection' | 'onRetrySave' | 'onCloseSaveBanner' | 'children'
+  'activeSection' | 'portableSaveBanner' | 'saveError' | 'onSelectSection' | 'onRetrySave' | 'onCloseSaveBanner' | 'renderSection' | 'children'
 >) {
   return (
     <header className="hoi-header-steel px-4 py-2 z-30 shrink-0">
@@ -250,7 +263,7 @@ function CampaignDockNav({
   activeSection: CampaignNavSection;
   objectiveTitle: string;
   panelVisible: boolean;
-  onSelectSection: (sec: CampaignNavSection) => void;
+  onSelectSection: (sec: CampaignNavSection, openParallel?: boolean) => void;
   onTogglePanel: () => void;
 }) {
   const activeGroup = findActiveCampaignGroup(activeSection);
@@ -269,10 +282,9 @@ function CampaignDockNav({
                 <button
                   key={group.title}
                   type="button"
-                  onClick={() => {
+                  onClick={(ev) => {
                     const first = group.items[0];
-                    if (first) onSelectSection(first.id);
-                    if (!panelVisible) onTogglePanel();
+                    if (first) onSelectSection(first.id, ev.shiftKey);
                   }}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-t-sm text-[11px] font-mono font-bold uppercase tracking-wider transition ${cls}`}
                 >
@@ -298,7 +310,7 @@ function CampaignDockNav({
                 <PanelLeftOpen className="w-3.5 h-3.5" />
               )}
               <MapIcon className="w-3.5 h-3.5 text-amber-300" />
-              <span>{panelVisible ? 'Ver Mapa 3D' : 'Abrir Panel'}</span>
+              <span>{panelVisible ? 'Ver Mapa 3D' : 'Mostrar Ventanas'}</span>
             </button>
           </div>
         </div>
@@ -310,17 +322,23 @@ function CampaignDockNav({
               ? 'bg-[#1d3250] text-amber-200 border-[#c9a24d]'
               : 'bg-[#101622] text-slate-300 hover:bg-[#162032] border-[#283447]';
             return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  onSelectSection(item.id);
-                  if (!panelVisible) onTogglePanel();
-                }}
-                className={`px-3 py-1 rounded-sm border text-xs font-semibold transition ${itemCls}`}
-              >
-                {item.label}
-              </button>
+              <div key={item.id} className={`inline-flex items-center rounded-sm border transition ${itemCls}`}>
+                <button
+                  type="button"
+                  onClick={(ev) => onSelectSection(item.id, ev.shiftKey)}
+                  className="px-2.5 py-1 text-xs font-semibold"
+                >
+                  {item.label}
+                </button>
+                <button
+                  type="button"
+                  title={`Abrir "${item.label}" en ventana paralela`}
+                  onClick={() => onSelectSection(item.id, true)}
+                  className="pr-1.5 pl-0.5 py-1 text-slate-400 hover:text-amber-300"
+                >
+                  <Plus className="w-3 h-3" />
+                </button>
+              </div>
             );
           })}
         </div>
@@ -430,10 +448,20 @@ export function CampaignSidebarLayout({
   onRetrySave,
   onCloseSaveBanner,
   onExitToMenu,
+  renderSection,
   children
 }: CampaignSidebarLayoutProps) {
-  const [panelVisible, setPanelVisible] = useState(true);
   const [selectedProvId, setSelectedProvId] = useState<string | null>(null);
+  const titleResolver = useCallback((sec: CampaignNavSection) => resolveCampaignSectionTitle(sec), []);
+  const wm = useDesktopWindowManager('campaign', activeSection, titleResolver, onSelectSection);
+  const prevSectionRef = useRef(activeSection);
+
+  useEffect(() => {
+    if (prevSectionRef.current !== activeSection) {
+      prevSectionRef.current = activeSection;
+      wm.openSectionWindow(activeSection, false);
+    }
+  }, [activeSection, wm.openSectionWindow]);
 
   const mapProvinces = useMemo(
     () => mapCampaignProvincesTo3D(state.provinces),
@@ -444,9 +472,10 @@ export function CampaignSidebarLayout({
     ? state.provinces.find((p) => p.provinceId === selectedProvId) ?? null
     : null;
 
-  const selectSectionWithFx = (sec: CampaignNavSection) => {
+  const selectSectionWithFx = (sec: CampaignNavSection, openParallel = false) => {
     playUiSound('tab');
-    onSelectSection(sec);
+    prevSectionRef.current = sec;
+    wm.openSectionWindow(sec, openParallel);
   };
 
   return (
@@ -463,41 +492,46 @@ export function CampaignSidebarLayout({
       <CampaignDockNav
         activeSection={activeSection}
         objectiveTitle={state.stage.objectiveTitle}
-        panelVisible={panelVisible}
+        panelVisible={wm.hasVisibleWindows}
         onSelectSection={selectSectionWithFx}
         onTogglePanel={() => {
           playUiSound('tab');
-          setPanelVisible((prev) => !prev);
+          wm.toggleShowDesktop();
         }}
       />
 
-      <div className="relative flex-1 overflow-hidden">
-        <div className="absolute inset-0 z-0">
+      <div ref={wm.workspaceRef} className="relative flex-1 overflow-hidden">
+        <div className={wm.isDraggingWindow ? 'absolute inset-0 z-0 pointer-events-none' : 'absolute inset-0 z-0'}>
           <Argentina3DMapCanvas
             provinces={mapProvinces}
             selectedProvinceId={selectedProvId}
-            panelOpen={panelVisible}
+            panelOpen={wm.hasVisibleWindows}
             onSelectProvince={(id) => setSelectedProvId(id || null)}
           />
         </div>
 
-        {panelVisible ? (
-          <main className="relative z-10 h-full overflow-y-auto pointer-events-none">
-            <div
-              key={activeSection}
-              className="max-w-3xl mx-3 sm:mx-5 my-4 p-4 sm:p-5 rounded-sm bg-[#0c1119]/92 backdrop-blur-md border border-[#263142] pointer-events-auto shadow-2xl rosca-panel-enter"
-            >
-              <PortableSaveBanner
-                code={portableSaveBanner}
-                saveError={saveError}
-                onRetrySave={onRetrySave}
-                onClose={onCloseSaveBanner}
-              />
-
-              {children}
-            </div>
-          </main>
-        ) : null}
+        <DesktopWindowsLayer
+          visibleWindows={wm.visibleWindows}
+          focusedWindowId={wm.focusedWindowId}
+          bounds={wm.bounds}
+          topBanners={
+            <PortableSaveBanner
+              code={portableSaveBanner}
+              saveError={saveError}
+              onRetrySave={onRetrySave}
+              onClose={onCloseSaveBanner}
+            />
+          }
+          onFocusWindow={wm.focusWindow}
+          onUpdateRect={wm.updateWindowRect}
+          onDraggingChange={wm.setIsDraggingWindow}
+          onTogglePin={wm.togglePinWindow}
+          onSnap={wm.snapWindow}
+          onMinimize={wm.minimizeWindow}
+          onToggleMaximize={wm.toggleMaximizeWindow}
+          onClose={wm.closeWindow}
+          renderSection={renderSection}
+        />
 
         {selectedProvince ? (
           <CampaignProvinceCard
@@ -505,7 +539,19 @@ export function CampaignSidebarLayout({
             onClose={() => setSelectedProvId(null)}
           />
         ) : null}
+
+        {children}
       </div>
+
+      <DesktopTaskbarStrip
+        windows={wm.windows}
+        focusedWindowId={wm.focusedWindowId}
+        hasVisibleWindows={wm.hasVisibleWindows}
+        onFocusOrRestore={wm.focusWindow}
+        onCloseWindow={wm.closeWindow}
+        onToggleDesktopView={wm.toggleShowDesktop}
+        onResetLayout={wm.resetDesktopLayout}
+      />
 
       <LiveNewsAndMarketTicker campaignState={state} />
     </div>

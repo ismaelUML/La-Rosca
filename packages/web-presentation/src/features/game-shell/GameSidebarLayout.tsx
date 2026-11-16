@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { GameSetupConfiguration, SimulationState } from '@argentina-sim/domain';
 import {
   BarChart3,
@@ -9,6 +9,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Play,
+  Plus,
   RefreshCw,
   Save,
   Scale,
@@ -23,6 +24,9 @@ import { Argentina3DMapCanvas } from '../map-3d/Argentina3DMapCanvas.js';
 import { LiveNewsAndMarketTicker } from './LiveNewsAndMarketTicker.js';
 import { isSoundEnabled, playUiSound, setSoundEnabled } from '../../lib/gameFeedback.js';
 import { resolveRangeTone, SEMANTIC_TEXT_CLASS } from '../../lib/semanticColors.js';
+import { DesktopTaskbarStrip } from '../desktop-wm/DesktopTaskbarStrip.js';
+import { DesktopWindowsLayer } from '../desktop-wm/DesktopWindowsLayer.js';
+import { useDesktopWindowManager } from '../desktop-wm/useDesktopWindowManager.js';
 
 // Shell estilo estrategia sobre mapa 3D vivo:
 // barra superior de telemetria macro, dock horizontal de Ministerios con iconos lucide
@@ -421,7 +425,7 @@ function DockGroupTabs({
   groups: SidebarGroupSpec[];
   activeGroupTitle: string;
   panelVisible: boolean;
-  onSelectSection: (sec: InGameSidebarSection) => void;
+  onSelectSection: (sec: InGameSidebarSection, openParallel?: boolean) => void;
   onTogglePanel: () => void;
 }) {
   return (
@@ -436,9 +440,9 @@ function DockGroupTabs({
             <button
               key={group.groupTitle}
               type="button"
-              onClick={() => {
+              onClick={(ev) => {
                 const first = group.items[0];
-                if (first) onSelectSection(first.id);
+                if (first) onSelectSection(first.id, ev.shiftKey);
               }}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-t-sm text-[11px] font-mono font-bold uppercase tracking-wider transition ${cls}`}
             >
@@ -456,7 +460,7 @@ function DockGroupTabs({
       >
         {panelVisible ? <PanelLeftClose className="w-3.5 h-3.5" /> : <PanelLeftOpen className="w-3.5 h-3.5" />}
         <MapIcon className="w-3.5 h-3.5" />
-        <span>{panelVisible ? 'Ver Mapa 3D' : 'Abrir Panel'}</span>
+        <span>{panelVisible ? 'Ver Mapa 3D' : 'Mostrar Ventanas'}</span>
       </button>
     </div>
   );
@@ -479,19 +483,26 @@ function resolveSidebarItemLabel(
   return item.label;
 }
 
+function resolveGovSectionTitle(role: GameSetupConfiguration['role'], sec: InGameSidebarSection): string {
+  const groups = SIDEBAR_GROUPS_BY_ROLE[role];
+  for (const grp of groups) {
+    const hit = grp.items.find((i) => i.id === sec);
+    if (hit) return `${grp.groupTitle} · ${resolveSidebarItemLabel(hit, role)}`;
+  }
+  return sec;
+}
+
 function CommandDockNav({
   role,
   activeSection,
   panelVisible,
   onSelectSection,
-  onOpenPanel,
   onTogglePanel
 }: {
   role: GameSetupConfiguration['role'];
   activeSection: InGameSidebarSection;
   panelVisible: boolean;
-  onSelectSection: (sec: InGameSidebarSection) => void;
-  onOpenPanel: () => void;
+  onSelectSection: (sec: InGameSidebarSection, openParallel?: boolean) => void;
   onTogglePanel: () => void;
 }) {
   const groups = SIDEBAR_GROUPS_BY_ROLE[role];
@@ -504,33 +515,38 @@ function CommandDockNav({
           groups={groups}
           activeGroupTitle={activeGroup.groupTitle}
           panelVisible={panelVisible}
-          onSelectSection={(sec) => {
-            onSelectSection(sec);
-            onOpenPanel();
-          }}
+          onSelectSection={onSelectSection}
           onTogglePanel={onTogglePanel}
         />
 
-        {panelVisible ? (
-          <div className="flex flex-wrap items-center gap-1.5 py-2">
-            {activeGroup.items.map((item) => {
-              const isSelected = activeSection === item.id;
-              const itemCls = isSelected
-                ? 'bg-[#1d3250] text-amber-200 border-[#b89342]'
-                : 'bg-[#101622] text-slate-300 hover:bg-[#162032] border-[#263142]';
-              return (
+        <div className="flex flex-wrap items-center gap-1.5 py-2">
+          {activeGroup.items.map((item) => {
+            const isSelected = activeSection === item.id;
+            const itemCls = isSelected
+              ? 'bg-[#1d3250] text-amber-200 border-[#b89342]'
+              : 'bg-[#101622] text-slate-300 hover:bg-[#162032] border-[#263142]';
+            const label = resolveSidebarItemLabel(item, role);
+            return (
+              <div key={item.id} className={`inline-flex items-center rounded-sm border transition ${itemCls}`}>
                 <button
-                  key={item.id}
                   type="button"
-                  onClick={() => onSelectSection(item.id)}
-                  className={`px-3 py-1 rounded-sm border text-xs font-semibold transition ${itemCls}`}
+                  onClick={(ev) => onSelectSection(item.id, ev.shiftKey)}
+                  className="px-2.5 py-1 text-xs font-semibold"
                 >
-                  {resolveSidebarItemLabel(item, role)}
+                  {label}
                 </button>
-              );
-            })}
-          </div>
-        ) : null}
+                <button
+                  type="button"
+                  title={`Abrir "${label}" en ventana paralela`}
+                  onClick={() => onSelectSection(item.id, true)}
+                  className="pr-1.5 pl-0.5 py-1 text-slate-400 hover:text-amber-300"
+                >
+                  <Plus className="w-3 h-3" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </nav>
   );
@@ -549,7 +565,8 @@ interface GameSidebarLayoutProps {
   onCloseSaveBanner: () => void;
   onExitToMenu: () => void;
   onSendAtn?: (provinceId: string) => void;
-  children: React.ReactNode;
+  renderSection: (section: InGameSidebarSection) => React.ReactNode;
+  children?: React.ReactNode;
 }
 
 function SaveStatusBanners({
@@ -612,14 +629,28 @@ export function GameSidebarLayout({
   onCloseSaveBanner,
   onExitToMenu,
   onSendAtn,
+  renderSection,
   children
 }: GameSidebarLayoutProps) {
-  const [panelVisible, setPanelVisible] = useState(true);
   const [selectedProvId, setSelectedProvId] = useState<string | null>(state.selectedProvinceId);
+  const titleResolver = useCallback(
+    (sec: InGameSidebarSection) => resolveGovSectionTitle(setup.role, sec),
+    [setup.role]
+  );
+  const wm = useDesktopWindowManager('government', activeSection, titleResolver, onSelectSection);
+  const prevSectionRef = useRef(activeSection);
 
-  const selectSectionWithFx = (sec: InGameSidebarSection) => {
+  useEffect(() => {
+    if (prevSectionRef.current !== activeSection) {
+      prevSectionRef.current = activeSection;
+      wm.openSectionWindow(activeSection, false);
+    }
+  }, [activeSection, wm.openSectionWindow]);
+
+  const selectSectionWithFx = (sec: InGameSidebarSection, openParallel = false) => {
     playUiSound('tab');
-    onSelectSection(sec);
+    prevSectionRef.current = sec;
+    wm.openSectionWindow(sec, openParallel);
   };
 
   return (
@@ -635,44 +666,60 @@ export function GameSidebarLayout({
       <CommandDockNav
         role={setup.role}
         activeSection={activeSection}
-        panelVisible={panelVisible}
+        panelVisible={wm.hasVisibleWindows}
         onSelectSection={selectSectionWithFx}
-        onOpenPanel={() => setPanelVisible(true)}
         onTogglePanel={() => {
           playUiSound('tab');
-          setPanelVisible((v) => !v);
+          wm.toggleShowDesktop();
         }}
       />
 
-      <div className="relative flex-1 overflow-hidden">
-        <div className="absolute inset-0 z-0">
+      <div ref={wm.workspaceRef} className="relative flex-1 overflow-hidden">
+        <div className={wm.isDraggingWindow ? 'absolute inset-0 z-0 pointer-events-none' : 'absolute inset-0 z-0'}>
           <Argentina3DMapCanvas
             provinces={state.provinces}
             selectedProvinceId={selectedProvId}
-            panelOpen={panelVisible}
+            panelOpen={wm.hasVisibleWindows}
             onSelectProvince={(id) => setSelectedProvId(id || null)}
             onSendAtn={onSendAtn}
           />
         </div>
 
-        {panelVisible ? (
-          <main className="relative z-10 h-full overflow-y-auto pointer-events-none">
-            <div
-              key={activeSection}
-              className="max-w-3xl mx-3 sm:mx-5 my-4 p-4 sm:p-5 rounded-sm bg-[#0c1119]/92 backdrop-blur-md border border-[#263142] pointer-events-auto shadow-2xl rosca-panel-enter"
-            >
-              <SaveStatusBanners
-                portableSaveBanner={portableSaveBanner}
-                saveError={saveError}
-                onRetrySave={onRetrySave}
-                onCloseSaveBanner={onCloseSaveBanner}
-              />
+        <DesktopWindowsLayer
+          visibleWindows={wm.visibleWindows}
+          focusedWindowId={wm.focusedWindowId}
+          bounds={wm.bounds}
+          topBanners={
+            <SaveStatusBanners
+              portableSaveBanner={portableSaveBanner}
+              saveError={saveError}
+              onRetrySave={onRetrySave}
+              onCloseSaveBanner={onCloseSaveBanner}
+            />
+          }
+          onFocusWindow={wm.focusWindow}
+          onUpdateRect={wm.updateWindowRect}
+          onDraggingChange={wm.setIsDraggingWindow}
+          onTogglePin={wm.togglePinWindow}
+          onSnap={wm.snapWindow}
+          onMinimize={wm.minimizeWindow}
+          onToggleMaximize={wm.toggleMaximizeWindow}
+          onClose={wm.closeWindow}
+          renderSection={renderSection}
+        />
 
-              {children}
-            </div>
-          </main>
-        ) : null}
+        {children}
       </div>
+
+      <DesktopTaskbarStrip
+        windows={wm.windows}
+        focusedWindowId={wm.focusedWindowId}
+        hasVisibleWindows={wm.hasVisibleWindows}
+        onFocusOrRestore={wm.focusWindow}
+        onCloseWindow={wm.closeWindow}
+        onToggleDesktopView={wm.toggleShowDesktop}
+        onResetLayout={wm.resetDesktopLayout}
+      />
 
       <LiveNewsAndMarketTicker govState={state} />
     </div>
