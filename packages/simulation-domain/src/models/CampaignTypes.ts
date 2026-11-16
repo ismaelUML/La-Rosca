@@ -84,6 +84,8 @@ export interface LocalJurisdictionZone {
   visitsCount: number;
 }
 
+export type CampaignActionCategory = 'MEDIOS' | 'TERRITORIO' | 'ROSCA' | 'ESTRUCTURA';
+
 export type CampaignActionId =
   | 'RECORRIDA'
   | 'ENTREVISTA'
@@ -99,7 +101,44 @@ export type CampaignActionId =
   | 'ACTO_ESTADIO_PLAZA'
   | 'CONCILIACION_CIRCULO_ROJO'
   | 'GIRA_INTERNACIONAL'
-  | 'DESPLIEGUE_STREAMERS';
+  | 'DESPLIEGUE_STREAMERS'
+  | 'PRIME_TIME_MANO_A_MANO'
+  | 'TAPA_DOMINICAL_PRENSA'
+  | 'RADIOS_DEL_INTERIOR'
+  | 'MICROSEGMENTACION_TIKTOK'
+  | 'PODCAST_POLITICO_LARGO'
+  | 'CONTRASPOT_DEMOLEDOR'
+  | 'SPOT_EMOCIONAL_PAIS'
+  | 'EJERCITO_TUITERO_X'
+  | 'AFICHES_VIA_PUBLICA'
+  | 'PRESENTACION_LIBRO_PLAN'
+  | 'BUNKER_FACT_CHECKING'
+  | 'CAMINATA_CONURBANO'
+  | 'CARAVANA_FEDERAL_MOTORHOME'
+  | 'VISITA_RURAL_PALERMO'
+  | 'PARQUES_INDUSTRIALES'
+  | 'CUMBRE_MINERIA_LITIO'
+  | 'ACTO_VACA_MUERTA'
+  | 'HOSPITALES_Y_BOMBEROS'
+  | 'ASAMBLEA_UNIVERSITARIA'
+  | 'PUERTA_A_PUERTA_BARRIAL'
+  | 'MESAS_AFILIACION_PLAZAS'
+  | 'CARAVANA_CORDOBA_CENTRO'
+  | 'CONURBANO_CLUBES_BARRIO'
+  | 'FERIA_EMPRENDEDORES_TECH'
+  | 'PARRILLADA_SINDICAL_CGT'
+  | 'DESAYUNO_UIA_BANQUEROS'
+  | 'CENA_RECAUDACION_PYME'
+  | 'CUMBRE_SEGURIDAD_MUNICIPAL'
+  | 'ACUERDO_RECTORES_CIENCIA'
+  | 'MESA_AGROPECUARIA_ROSARIO'
+  | 'ENCUENTRO_IGLESIAS_ONG'
+  | 'OPERATIVO_DESEMBARCO_GOBERNADORES'
+  | 'BLINDAJE_FISCALES_GENERALES'
+  | 'CAPACITACION_BOLETA_UNICA'
+  | 'AUDITORIA_PADRON_ELECTORAL'
+  | 'CUARTO_DE_GUERRA_DATOS'
+  | 'ESCUELA_CUADROS_TECNICOS';
 
 export interface CampaignActionEffectPill {
   label: string;
@@ -111,6 +150,7 @@ export interface CampaignActionCard {
   id: CampaignActionId;
   title: string;
   description: string;
+  category?: CampaignActionCategory;
   cost: number;
   effects: CampaignActionEffectPill[];
   requirementText?: string;
@@ -191,6 +231,8 @@ export interface CampaignSimulationState {
   rejectedAlliances?: string[];
   resolvedDilemmas?: string[];
   activeMonthlyDilemmaId?: string | null;
+  activeDebateMode?: 'CAMPAÑA' | 'GENERALES' | 'BALOTAJE' | null;
+  resolvedDebates?: string[];
   budgetArgentums: number;
   actionsRemainingThisMonth: number;
   actionsTotalThisMonth: number;

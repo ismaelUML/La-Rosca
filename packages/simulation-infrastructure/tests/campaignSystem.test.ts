@@ -1,14 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import {
   advanceCampaignMonth,
+  applyDebateOutcomeToCampaign,
+  applySkipDebatePenalty,
+  buildDebateSession,
   canExecuteCampaignAction,
+  evaluateDebateReplyOutcome,
   executeCampaignAction
 } from '@argentina-sim/domain';
 import {
   CAMPAIGN_ACTIONS_CATALOG,
+  CAMPAIGN_DILEMMAS_CATALOG,
   createInitialCampaignState,
+  DEBATE_PROMPTS_CATALOG,
+  DEBATE_REBUTTALS_CATALOG,
+  drawPressConferenceRounds,
+  FULL_PRESS_QUESTIONS_CATALOG,
   INITIAL_ECONOMIC_LEVERS,
-  POLITICAL_PARTIES_2027
+  POLITICAL_PARTIES_2027,
+  resolveMonthlyDilemma
 } from '../src/index.js';
 
 describe('Sistema Electoral y Campaña 2027 (Screenshots)', () => {
@@ -185,5 +195,87 @@ describe('Sistema Electoral y Campaña 2027 (Screenshots)', () => {
     // Al avanzar de mes, la fatiga debe decaer de 2 a 1
     state = advanceCampaignMonth(state);
     expect(state.actionUsageCount?.PUBLICIDAD).toBe(1);
+  });
+
+  it('provee +50 acciones, +50 dilemas, +50 preguntas de prensa y +50 bloques de debate sin duplicados', () => {
+    expect(CAMPAIGN_ACTIONS_CATALOG.length).toBeGreaterThanOrEqual(50);
+    expect(CAMPAIGN_DILEMMAS_CATALOG.length).toBeGreaterThanOrEqual(50);
+    expect(DEBATE_PROMPTS_CATALOG.length).toBeGreaterThanOrEqual(50);
+    expect(FULL_PRESS_QUESTIONS_CATALOG.length).toBeGreaterThanOrEqual(50);
+
+    expect(new Set(CAMPAIGN_ACTIONS_CATALOG.map((a) => a.id)).size).toBe(CAMPAIGN_ACTIONS_CATALOG.length);
+    expect(new Set(CAMPAIGN_DILEMMAS_CATALOG.map((d) => d.id)).size).toBe(CAMPAIGN_DILEMMAS_CATALOG.length);
+    expect(new Set(DEBATE_PROMPTS_CATALOG.map((p) => p.id)).size).toBe(DEBATE_PROMPTS_CATALOG.length);
+    expect(new Set(FULL_PRESS_QUESTIONS_CATALOG.map((q) => q.id)).size).toBe(FULL_PRESS_QUESTIONS_CATALOG.length);
+
+    // Conferencias de prensa distintas no repiten preguntas dentro de la misma ronda ni devuelven exactamente el mismo set al variar nonce
+    const drawA = drawPressConferenceRounds(4, 'Tester', 0);
+    const drawB = drawPressConferenceRounds(4, 'Tester', 1);
+    expect(drawA).toHaveLength(4);
+    expect(drawA.map((r) => r.id).join(',')).not.toBe(drawB.map((r) => r.id).join(','));
+
+    // Todos los meses de campaña 2..11 resuelven dilemas únicos si acumulamos resolvedIds
+    const pickedIds: string[] = [];
+    for (let m = 2; m <= 11; m += 1) {
+      const dil = resolveMonthlyDilemma(m, pickedIds, null, 'RUN_A');
+      expect(dil).not.toBeNull();
+      expect(pickedIds.includes(dil!.id)).toBe(false);
+      pickedIds.push(dil!.id);
+    }
+  });
+
+  it('arma debates presidenciales 3D de 5 atriles en Generales y 2 cara a cara en Balotaje con impacto real', () => {
+    const proParty = POLITICAL_PARTIES_2027.find((p) => p.sigla === 'PRO')!;
+    const state = createInitialCampaignState(
+      { id: 'MAURICIO_MACRI', name: 'Mauricio Macri' },
+      proParty,
+      'PRESIDENTE',
+      'CABA'
+    );
+
+    const generalesSession = buildDebateSession(
+      state,
+      'GENERALES',
+      DEBATE_PROMPTS_CATALOG,
+      DEBATE_REBUTTALS_CATALOG,
+      0
+    );
+    expect(generalesSession.podiums).toHaveLength(5);
+    expect(generalesSession.rounds).toHaveLength(4);
+    expect(generalesSession.isMandatory).toBe(true);
+
+    const balotajeSession = buildDebateSession(
+      state,
+      'BALOTAJE',
+      DEBATE_PROMPTS_CATALOG,
+      DEBATE_REBUTTALS_CATALOG,
+      2
+    );
+    expect(balotajeSession.podiums).toHaveLength(2);
+    expect(balotajeSession.maxRebuttals).toBe(3);
+
+    // Verifica que chicana con alta vulnerabilidad dispara contragolpe penalizado
+    const highVulnState = { ...state, attributes: { ...state.attributes, vulnerabilidad: 42 } };
+    const chicanaOpt = generalesSession.rounds[0]!.options[1];
+    const evalVuln = evaluateDebateReplyOutcome(highVulnState, chicanaOpt);
+    expect(evalVuln.liveTag).toContain('VULNERABILIDAD');
+    expect(evalVuln.negDelta).toBeGreaterThan(chicanaOpt.negDelta);
+
+    const afterDebate = applyDebateOutcomeToCampaign(state, 'GENERALES', {
+      imageDelta: 3.5,
+      negDelta: 0.2,
+      convDelta: 4.0,
+      voteDelta: 2.2,
+      relDelta: 3.0,
+      intDelta: 2.5,
+      rebuttalsUsed: 1,
+      lastHeadline: 'TRIUNFO EN EL ATRIL'
+    });
+    expect(afterDebate.resolvedDebates).toContain('GENERALES_2027');
+    expect(afterDebate.votingIntention.intencionVotoGeneral).toBeGreaterThan(state.votingIntention.intencionVotoGeneral);
+
+    const skipped = applySkipDebatePenalty(state, 'BALOTAJE');
+    expect(skipped.resolvedDebates).toContain('BALOTAJE_2027');
+    expect(skipped.votingIntention.intencionVotoGeneral).toBeLessThan(state.votingIntention.intencionVotoGeneral);
   });
 });

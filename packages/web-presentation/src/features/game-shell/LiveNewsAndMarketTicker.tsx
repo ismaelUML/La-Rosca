@@ -42,34 +42,108 @@ function TickerSourceLogos({
   );
 }
 
+function buildGovDynamicPool(state: SimulationState): string[] {
+  const ofi = state.centralBank.officialDollarArs;
+  const ccl = state.centralBank.cclDollarArs;
+  const brecha = state.centralBank.exchangeBrechaPct.toFixed(0);
+  const ipc = state.inflation.realMonthlyIpcPct;
+  const embi = state.countryRiskEmbiPb;
+  const res = state.centralBank.netLiquidReservesBillionUsd;
+  const ap = state.publicOpinion.managementApprovalPct;
+  const cov = state.energy.userTariffCoveragePct;
+  const month = state.turnMonth;
+
+  return [
+    `CASA ROSADA · APROBACIÓN DE GESTIÓN EN ${ap}% · RESERVAS NETAS USD ${res}B`,
+    `MERCADO CAMBIARIO · DÓLAR OFICIAL $${ofi} · CCL $${ccl} (BRECHA ${brecha}%)`,
+    `ENERGÍA Y VACA MUERTA · COBERTURA TARIFARIA AL ${cov}% · RIESGO PAÍS ${embi} PB`,
+    `LICITACIÓN DEL TESORO · EL EQUIPO ECONÓMICO ABSORBE PESOS EN EL MES ${month} DE GESTIÓN`,
+    `BCRA EN VIVO · MESAS DE DINERO OPERAN CON DÓLAR A3500 EN $${ofi} Y TASA REAL POSITIVA`,
+    `PALACIO DE HACIENDA · RECAUDACIÓN REAL SIGUE LA REGLA DE EQUILIBRIO PRIMARIO SIN EMISIÓN`,
+    `PARITARIAS CALIENTES · GREMIOS DEL TRANSPORTE Y INDUSTRIA ANALIZAN IPC DEL ${ipc}%`,
+    `CONGRESO NACIONAL · JEFES DE BLOQUE NEGOCIAN QUÓRUM PARA REFORMAS Y PRESUPUESTO`,
+    `SENADO EN COMISIÓN · GOBERNADORES DEL INTERIOR EXIGEN COPARTICIPACIÓN DE IMPUESTOS`,
+    `INDEC · CANASTA BÁSICA Y PRECIOS REGULADOS PRESIONAN EL HUMOR EN EL GRAN BUENOS AIRES`,
+    `CITY PORTEÑA · BONOS SOBERANOS REACCIONAN AL EMBI+ DE ${embi} PUNTOS BÁSICOS`,
+    `HIDROVÍA Y PUERTOS · BUQUES GRANEROS EN ROSARIO ACELERAN LIQUIDACIÓN DE COSECHA`,
+    `LITIO EN EL NOA · NUEVAS SOLICITUDES DE ESTABILIDAD FISCAL BAJO EL PARAGUAS RIGI`,
+    `GASODUCTOS DEL SUR · REFUERZAN COMPRESIÓN EN NEUQUÉN PARA SUMAR SALDO EXPORTADOR`,
+    `COMODORO PY · TRIBUNALES FEDERALES REVISAN CAUTELARES SOBRE DECRETOS DEL EJECUTIVO`,
+    `CUENTAS PÚBLICAS · TESORERÍA DIFUNDE EJECUCIÓN MENSUAL CON SUPERÁVIT OPERATIVO`,
+    `BANCOS Y CRÉDITO · CONSULTAN POR LÍNEAS HIPOTECARIAS Y TASAS PARA PYMES`,
+    `CONSUMO MASIVO · SUPERMERCADOS REPORTAN PROMOCIONES FUERTES ANTE CAÍDA DE DEMANDA`,
+    `FONDO MONETARIO · MESA TÉCNICA EVALÚA CUMPLIMIENTO DE RESERVAS NETAS (USD ${res}B)`,
+    `MERCOSUR Y COMERCIO · EXPORTADORES AUTOMOTRICES RECLAMAN BAJA DE CARGAS INTERNAS`,
+    `SALUD Y UNIVERSIDADES · RECTORES Y HOSPITALES NACIONALES DEMANDAN ACTUALIZACIÓN DE PARTIDAS`,
+    `TRANSPORTE AMBA · DEBATE POR BRECHA DE SUBSIDIOS ENTRE EL CONURBANO Y EL INTERIOR`,
+    `WALL STREET · ANALISTAS PROYECTAN FLUJO DE DIVISAS ENERGETICAS CON RIESGO PAÍS EN ${embi}`,
+    `ENCUESTAS DE OPINIÓN · IMAGEN DE GESTIÓN MARCA ${ap}% TRAS LOS ANUNCIOS DEL MES ${month}`,
+    `SEGURIDAD FEDERAL · DESPLIEGUE DE FUERZAS CONJUNTAS EN ACCESOS A ROSARIO Y GBA`,
+    `ECONOMÍA DIGITAL · EXPORTADORES DE SOFTWARE RECLAMAN LIBRE GIRO DE HONORARIOS`,
+    `BOLETÍN OFICIAL · PUBLICAN REGLAMENTACIONES CLAVE DE DESREGULACIÓN Y ADUANAS`
+  ];
+}
+
 function buildGovBreakingHeadlines(state: SimulationState): string[] {
-  const list: string[] = [];
+  const alerts: string[] = [];
   if (state.labor.activeNationalStrike) {
-    list.push('ÚLTIMO MOMENTO · PARO NACIONAL DE LA CGT CON CORTES EN ACCESOS A CABA Y TRANSPORTE');
+    alerts.push('ÚLTIMO MOMENTO · PARO NACIONAL DE LA CGT CON CORTES EN ACCESOS A CABA Y TRANSPORTE');
   }
   if (state.inflation.realMonthlyIpcPct >= 5.5) {
-    list.push(
+    alerts.push(
       `ALERTA INFLACIONARIA · EL IPC MENSUAL MARCA ${state.inflation.realMonthlyIpcPct}% Y RECALIENTA PARITARIAS`
     );
   }
   if (state.countryRiskEmbiPb >= 1200) {
-    list.push(
+    alerts.push(
       `TENSIÓN EN LA CITY · EL RIESGO PAÍS ESCALA A ${state.countryRiskEmbiPb} PUNTOS BÁSICOS Y PRESIONA AL CCL`
     );
   }
-  list.push(
-    `CASA ROSADA · APROBACIÓN DE GESTIÓN EN ${state.publicOpinion.managementApprovalPct}% · RESERVAS NETAS USD ${state.centralBank.netLiquidReservesBillionUsd}B`,
-    `MERCADO CAMBIARIO · DÓLAR OFICIAL $${state.centralBank.officialDollarArs} · CCL $${state.centralBank.cclDollarArs} (BRECHA ${state.centralBank.exchangeBrechaPct.toFixed(0)}%)`,
-    `ENERGÍA Y VACA MUERTA · COBERTURA TARIFARIA AL ${state.energy.userTariffCoveragePct}% · RIESGO PAÍS ${state.countryRiskEmbiPb} PB`
-  );
-  return list;
+  return [...alerts, ...buildGovDynamicPool(state)];
 }
 
 function buildCampaignBreakingHeadlines(campaign: CampaignSimulationState): string[] {
+  const cand = campaign.candidateName.toUpperCase();
+  const sigla = campaign.partySigla.toUpperCase();
+  const voto = campaign.votingIntention.intencionVotoGeneral.toFixed(1);
+  const piso = campaign.votingIntention.piso.toFixed(1);
+  const techo = campaign.votingIntention.techo.toFixed(1);
+  const caja = campaign.budgetArgentums.toFixed(1);
+  const pos = campaign.image.imagenPositiva.toFixed(1);
+  const neg = campaign.image.imagenNegativa.toFixed(1);
+  const apoyo = campaign.attributes.apoyoPartidario.toFixed(0);
+  const rel = campaign.attributes.relevancia.toFixed(0);
+  const intel = campaign.attributes.inteligenciaPercibida.toFixed(0);
+  const prov = campaign.targetProvinceId.replace(/_/g, ' ');
+  const fecha = campaign.stage.formattedDate.toUpperCase();
+
   return [
-    `CAMPAÑA 2027 · ${campaign.stage.formattedDate.toUpperCase()} · ${campaign.candidateName.toUpperCase()} MIDE ${campaign.votingIntention.intencionVotoGeneral.toFixed(1)}% EN ENCUESTAS NACIONALES`,
-    `INTERNA Y TERRITORIO · PISO ELECTORAL EN ${campaign.votingIntention.piso.toFixed(1)}% Y TECHO EN ${campaign.votingIntention.techo.toFixed(1)}% · CAJA DE CAMPAÑA $${campaign.budgetArgentums.toFixed(1)}M`,
-    `IMAGEN PÚBLICA · POSITIVA ${campaign.image.imagenPositiva.toFixed(1)}% VS NEGATIVA ${campaign.image.imagenNegativa.toFixed(1)}% · APOYO PARTIDARIO ${campaign.attributes.apoyoPartidario.toFixed(0)}/100`
+    `CAMPAÑA 2027 · ${fecha} · ${cand} (${sigla}) MIDE ${voto}% EN ENCUESTAS NACIONALES`,
+    `INTERNA Y TERRITORIO · PISO ELECTORAL EN ${piso}% Y TECHO EN ${techo}% · CAJA $${caja}M`,
+    `IMAGEN PÚBLICA · POSITIVA ${pos}% VS NEGATIVA ${neg}% · APOYO PARTIDARIO ${apoyo}/100`,
+    `PRIME TIME TV · CRECE LA EXPECTATIVA POR LOS CRUCES DE ${cand} RUMBO A LAS URNAS`,
+    `ENCUESTADORAS DE LA CITY · EL VOTO INDECISO EN ${prov} DEFINE LA ELECCIÓN PAREJA`,
+    `RELEVANCIA MEDIÁTICA · ${cand} ALCANZA ${rel} PUNTOS DE INSTALACIÓN EN REDES Y CANALES`,
+    `FISCALIZACIÓN NACIONAL · COMANDOS DE ${sigla} ACELERAN ARMADO DE MESAS Y BOLETAS`,
+    `CÍRCULO ROJO · EMPRESARIOS PIDEN DEFINICIONES A ${cand} SOBRE DÓLAR, CEPO Y RIGI`,
+    `ESTRATEGIAS DIGITALES · GUERRA DE CLIPS EN TIKTOK Y STREAMERS EN TRAMO DECISIVO`,
+    `CÁMARA NACIONAL ELECTORAL · AVANZA EL CRONOGRAMA HACIA LA BOLETA ÚNICA DE PAPEL`,
+    `PERCEPCIÓN TÉCNICA · LOS EQUIPO DE ${sigla} SUMAN ${intel}/100 EN INTELIGENCIA PERCIBIDA`,
+    `ROSCA CON GOBERNADORES · MANDATARIOS DEL INTERIOR MIDEN APOYO SEGÚN COPARTICIPACIÓN`,
+    `ESTUDIO EN VIVO · LOS CANALES DE NOTICIAS PREPARAN COBERTURA ESPECIAL DE DEBATES`,
+    `TERMÓMETRO SOCIAL · SALARIOS, SEGURIDAD E INFLACIÓN DOMINAN LOS FOCUS GROUPS DE ${fecha}`,
+    `COMANDO DE CAMPAÑA · ${sigla} EVALÚA NUEVAS RECORRIDAS Y PAUTA EN EL INTERIOR PRODUCTIVO`,
+    `ALIANZAS Y FÓRMULA · RUMORES DE ACUERDOS PARLAMENTARIOS AGITAN LA PREVIA ELECTORAL`,
+    `CONURBANO BONAERENSE · INTENDENTES REFUERZAN TERRITORIO CON CAMINATAS Y ACTOS`,
+    `CORREDOR CENTRO · CÓRDOBA Y SANTA FE SE CONSOLIDAN COMO BASTIONES DISPUTADOS POR ${sigla}`,
+    `OPINIÓN JUVENIL · SUB-30 DEMANDAN EMPLEO FORMAL, ESTABILIDAD Y DÓLAR SIN TRABAS`,
+    `CIERRE DE PADRÓN · APODERADOS DE ${sigla} VERIFICAN PADRONES EN LOS 24 DISTRITOS`,
+    `CLIMA DE MERCADOS · BONOS ARGENTINOS SIGUEN DE CERCA EL ${voto}% PROYECTADO PARA ${sigla}`,
+    `RADIOS FEDERALES · ${cand} REFUERZA PRESENCIA EN EMISORAS DEL NORTE Y PATAGONIA`,
+    `MESAS DE CAMPAÑA · JEFES DE PRENSA REPORTAN ALTA POLARIZACIÓN CON TECHO DE ${techo}%`,
+    `CINTURÓN INDUSTRIAL · PYMES RECLAMAN BAJA TRIBUTARIA Y CRÉDITO A TASA ESTABLE`,
+    `CAMPAÑA PRESIDENCIAL · TODO LISTO PARA EL PRÓXIMO ROUND TELEVISADO EN CADENA`,
+    `SÍNTESIS ELECTORAL · ${cand} SOSTIENE PISO DE ${piso}% MIENTRAS DISPUTA EL VOTO BLANDO`
   ];
 }
 

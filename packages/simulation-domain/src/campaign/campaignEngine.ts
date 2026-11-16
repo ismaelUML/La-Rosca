@@ -205,7 +205,10 @@ function resolveActionUsage(
 }
 
 function computeActionExtraBudget(actionId: string): number {
-  return actionId === 'CONCILIACION_CIRCULO_ROJO' ? 45.0 : 0;
+  if (actionId === 'CONCILIACION_CIRCULO_ROJO') return 45.0;
+  if (actionId === 'CENA_RECAUDACION_PYME') return 26.0;
+  if (actionId === 'DESAYUNO_UIA_BANQUEROS') return 18.0;
+  return 0;
 }
 
 function formatFatigueNote(prevUsage: number, fatigueMult: number): string {
@@ -273,7 +276,44 @@ const ACTION_DELTAS_MAP: Record<CampaignActionCard['id'], ActionEffectDeltas> = 
   ACTO_ESTADIO_PLAZA: { dRelevancia: 3.5, dInteligencia: 0, dConvencimiento: 4.8, dApoyo: 3.0, dNegociacion: 0, dPositiva: 1.5, dNegativa: 0, internaBoost: 3.2, generalBoost: 1.5 },
   CONCILIACION_CIRCULO_ROJO: { dRelevancia: 1.0, dInteligencia: 2.8, dConvencimiento: 0, dApoyo: 0.5, dNegociacion: 1.5, dPositiva: 0, dNegativa: 0.5, internaBoost: 0.5, generalBoost: 0 },
   GIRA_INTERNACIONAL: { dRelevancia: 2.0, dInteligencia: 3.8, dConvencimiento: 0, dApoyo: 0, dNegociacion: 0, dPositiva: 3.0, dNegativa: 0, internaBoost: 1.5, generalBoost: 1.8 },
-  DESPLIEGUE_STREAMERS: { dRelevancia: 2.5, dInteligencia: 0, dConvencimiento: 2.0, dApoyo: 0, dNegociacion: 0, dPositiva: 1.5, dNegativa: 0, internaBoost: 2.0, generalBoost: 1.5 }
+  DESPLIEGUE_STREAMERS: { dRelevancia: 2.5, dInteligencia: 0, dConvencimiento: 2.0, dApoyo: 0, dNegociacion: 0, dPositiva: 1.5, dNegativa: 0, internaBoost: 2.0, generalBoost: 1.5 },
+  PRIME_TIME_MANO_A_MANO: { dRelevancia: 2.6, dInteligencia: 1.2, dConvencimiento: 1.6, dApoyo: 0, dNegociacion: 0, dPositiva: 1.1, dNegativa: 0.4, internaBoost: 1.4, generalBoost: 1.6 },
+  TAPA_DOMINICAL_PRENSA: { dRelevancia: 2.1, dInteligencia: 2.0, dConvencimiento: 1.2, dApoyo: 0.4, dNegociacion: 0, dPositiva: 1.3, dNegativa: 0.2, internaBoost: 1.0, generalBoost: 1.3 },
+  RADIOS_DEL_INTERIOR: { dRelevancia: 1.7, dInteligencia: 0.8, dConvencimiento: 1.5, dApoyo: 1.0, dNegociacion: 0, dPositiva: 1.2, dNegativa: 0, internaBoost: 0.9, generalBoost: 1.4 },
+  MICROSEGMENTACION_TIKTOK: { dRelevancia: 2.8, dInteligencia: 0, dConvencimiento: 1.9, dApoyo: 0.3, dNegociacion: 0, dPositiva: 1.4, dNegativa: 0.3, internaBoost: 1.6, generalBoost: 1.7 },
+  PODCAST_POLITICO_LARGO: { dRelevancia: 1.5, dInteligencia: 2.4, dConvencimiento: 1.3, dApoyo: 0.5, dNegociacion: 0, dPositiva: 1.1, dNegativa: 0, internaBoost: 1.2, generalBoost: 0.9 },
+  CONTRASPOT_DEMOLEDOR: { dRelevancia: 3.2, dInteligencia: 0, dConvencimiento: 1.2, dApoyo: 0.8, dNegociacion: 0, dPositiva: 0, dNegativa: 1.4, internaBoost: 2.8, generalBoost: 1.9 },
+  SPOT_EMOCIONAL_PAIS: { dRelevancia: 2.0, dInteligencia: 0.5, dConvencimiento: 2.6, dApoyo: 0.8, dNegociacion: 0, dPositiva: 2.2, dNegativa: 0, internaBoost: 1.3, generalBoost: 1.8 },
+  EJERCITO_TUITERO_X: { dRelevancia: 2.4, dInteligencia: 0, dConvencimiento: 0.6, dApoyo: 1.1, dNegociacion: 0, dPositiva: 0, dNegativa: 0.9, internaBoost: 2.1, generalBoost: 0.7 },
+  AFICHES_VIA_PUBLICA: { dRelevancia: 2.2, dInteligencia: 0, dConvencimiento: 0.9, dApoyo: 0.7, dNegociacion: 0, dPositiva: 0.8, dNegativa: 0.3, internaBoost: 1.1, generalBoost: 1.2 },
+  PRESENTACION_LIBRO_PLAN: { dRelevancia: 1.6, dInteligencia: 3.4, dConvencimiento: 1.4, dApoyo: 1.0, dNegociacion: 0.4, dPositiva: 1.2, dNegativa: 0, internaBoost: 1.3, generalBoost: 0.8 },
+  BUNKER_FACT_CHECKING: { dRelevancia: 1.2, dInteligencia: 2.1, dConvencimiento: 1.1, dApoyo: 0.8, dNegociacion: 0.5, dPositiva: 1.5, dNegativa: -1.1, internaBoost: 0.7, generalBoost: 0.9 },
+  CAMINATA_CONURBANO: { dRelevancia: 1.9, dInteligencia: 0, dConvencimiento: 2.2, dApoyo: 1.6, dNegociacion: 0, dPositiva: 1.9, dNegativa: 0.2, internaBoost: 1.7, generalBoost: 2.1 },
+  CARAVANA_FEDERAL_MOTORHOME: { dRelevancia: 2.6, dInteligencia: 0, dConvencimiento: 2.1, dApoyo: 1.9, dNegociacion: 0.4, dPositiva: 2.0, dNegativa: 0, internaBoost: 1.5, generalBoost: 1.9 },
+  VISITA_RURAL_PALERMO: { dRelevancia: 1.8, dInteligencia: 1.6, dConvencimiento: 1.4, dApoyo: 0.9, dNegociacion: 1.1, dPositiva: 1.5, dNegativa: 0.3, internaBoost: 0.9, generalBoost: 1.3 },
+  PARQUES_INDUSTRIALES: { dRelevancia: 1.3, dInteligencia: 2.2, dConvencimiento: 1.7, dApoyo: 1.2, dNegociacion: 0.8, dPositiva: 1.6, dNegativa: 0, internaBoost: 0.8, generalBoost: 1.4 },
+  CUMBRE_MINERIA_LITIO: { dRelevancia: 1.4, dInteligencia: 2.3, dConvencimiento: 1.1, dApoyo: 0.9, dNegociacion: 1.5, dPositiva: 1.1, dNegativa: 0, internaBoost: 0.7, generalBoost: 1.1 },
+  ACTO_VACA_MUERTA: { dRelevancia: 2.0, dInteligencia: 2.5, dConvencimiento: 1.5, dApoyo: 1.0, dNegociacion: 1.3, dPositiva: 1.7, dNegativa: 0, internaBoost: 1.0, generalBoost: 1.5 },
+  HOSPITALES_Y_BOMBEROS: { dRelevancia: 1.5, dInteligencia: 0.6, dConvencimiento: 2.4, dApoyo: 1.2, dNegociacion: 0, dPositiva: 2.6, dNegativa: -0.4, internaBoost: 1.1, generalBoost: 1.6 },
+  ASAMBLEA_UNIVERSITARIA: { dRelevancia: 2.1, dInteligencia: 1.9, dConvencimiento: 1.8, dApoyo: 1.6, dNegociacion: 0, dPositiva: 1.4, dNegativa: 0.5, internaBoost: 1.8, generalBoost: 1.2 },
+  PUERTA_A_PUERTA_BARRIAL: { dRelevancia: 1.1, dInteligencia: 0, dConvencimiento: 2.3, dApoyo: 2.1, dNegociacion: 0, dPositiva: 1.8, dNegativa: 0, internaBoost: 2.2, generalBoost: 1.5 },
+  MESAS_AFILIACION_PLAZAS: { dRelevancia: 1.6, dInteligencia: 0, dConvencimiento: 1.0, dApoyo: 2.7, dNegociacion: 0, dPositiva: 0.9, dNegativa: 0, internaBoost: 2.4, generalBoost: 0.8 },
+  CARAVANA_CORDOBA_CENTRO: { dRelevancia: 2.0, dInteligencia: 0.9, dConvencimiento: 1.9, dApoyo: 1.4, dNegociacion: 0.6, dPositiva: 1.7, dNegativa: 0, internaBoost: 1.2, generalBoost: 1.7 },
+  CONURBANO_CLUBES_BARRIO: { dRelevancia: 1.3, dInteligencia: 0, dConvencimiento: 2.1, dApoyo: 2.0, dNegociacion: 0.8, dPositiva: 1.9, dNegativa: 0, internaBoost: 1.6, generalBoost: 1.5 },
+  FERIA_EMPRENDEDORES_TECH: { dRelevancia: 1.7, dInteligencia: 2.6, dConvencimiento: 1.3, dApoyo: 0.6, dNegociacion: 0.5, dPositiva: 1.6, dNegativa: 0, internaBoost: 1.1, generalBoost: 1.2 },
+  PARRILLADA_SINDICAL_CGT: { dRelevancia: 0.9, dInteligencia: 0.4, dConvencimiento: 1.0, dApoyo: 2.2, dNegociacion: 2.8, dPositiva: 0.4, dNegativa: 0.6, internaBoost: 1.4, generalBoost: 1.3 },
+  DESAYUNO_UIA_BANQUEROS: { dRelevancia: 1.1, dInteligencia: 2.6, dConvencimiento: 0.4, dApoyo: 0.7, dNegociacion: 2.0, dPositiva: 0.5, dNegativa: 0.4, internaBoost: 0.6, generalBoost: 0.8 },
+  CENA_RECAUDACION_PYME: { dRelevancia: 0.8, dInteligencia: 1.0, dConvencimiento: 0.5, dApoyo: 1.6, dNegociacion: 1.7, dPositiva: 0.6, dNegativa: 0.2, internaBoost: 0.9, generalBoost: 0.6 },
+  CUMBRE_SEGURIDAD_MUNICIPAL: { dRelevancia: 1.9, dInteligencia: 1.5, dConvencimiento: 2.0, dApoyo: 1.4, dNegociacion: 1.9, dPositiva: 1.8, dNegativa: 0.2, internaBoost: 1.2, generalBoost: 1.9 },
+  ACUERDO_RECTORES_CIENCIA: { dRelevancia: 1.4, dInteligencia: 2.8, dConvencimiento: 1.6, dApoyo: 1.1, dNegociacion: 1.6, dPositiva: 1.5, dNegativa: 0, internaBoost: 1.3, generalBoost: 1.1 },
+  MESA_AGROPECUARIA_ROSARIO: { dRelevancia: 1.5, dInteligencia: 1.8, dConvencimiento: 1.4, dApoyo: 1.1, dNegociacion: 2.1, dPositiva: 1.4, dNegativa: 0, internaBoost: 0.9, generalBoost: 1.5 },
+  ENCUENTRO_IGLESIAS_ONG: { dRelevancia: 1.2, dInteligencia: 0.5, dConvencimiento: 2.2, dApoyo: 1.9, dNegociacion: 1.4, dPositiva: 1.7, dNegativa: 0.2, internaBoost: 1.5, generalBoost: 1.4 },
+  OPERATIVO_DESEMBARCO_GOBERNADORES: { dRelevancia: 1.8, dInteligencia: 1.4, dConvencimiento: 0.9, dApoyo: 2.4, dNegociacion: 3.1, dPositiva: 1.0, dNegativa: 0.2, internaBoost: 1.3, generalBoost: 2.0 },
+  BLINDAJE_FISCALES_GENERALES: { dRelevancia: 0.7, dInteligencia: 0.8, dConvencimiento: 1.1, dApoyo: 3.4, dNegociacion: 1.5, dPositiva: 0.8, dNegativa: 0, internaBoost: 2.1, generalBoost: 2.3 },
+  CAPACITACION_BOLETA_UNICA: { dRelevancia: 1.0, dInteligencia: 1.7, dConvencimiento: 1.8, dApoyo: 1.5, dNegociacion: 0.5, dPositiva: 1.3, dNegativa: 0, internaBoost: 1.2, generalBoost: 1.7 },
+  AUDITORIA_PADRON_ELECTORAL: { dRelevancia: 0.9, dInteligencia: 2.2, dConvencimiento: 1.2, dApoyo: 2.1, dNegociacion: 1.1, dPositiva: 1.0, dNegativa: 0, internaBoost: 1.6, generalBoost: 1.4 },
+  CUARTO_DE_GUERRA_DATOS: { dRelevancia: 1.4, dInteligencia: 3.1, dConvencimiento: 1.9, dApoyo: 1.2, dNegociacion: 0.9, dPositiva: 1.1, dNegativa: 0, internaBoost: 1.9, generalBoost: 1.6 },
+  ESCUELA_CUADROS_TECNICOS: { dRelevancia: 0.8, dInteligencia: 3.5, dConvencimiento: 1.0, dApoyo: 2.2, dNegociacion: 1.2, dPositiva: 1.1, dNegativa: 0, internaBoost: 1.5, generalBoost: 0.9 }
 };
 
 function applyStandardActionEffects(

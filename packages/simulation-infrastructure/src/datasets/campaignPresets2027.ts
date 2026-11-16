@@ -2,6 +2,8 @@ import {
   createInitialCountryMood,
   resolvePartyAxis,
   type CampaignActionCard,
+  type CampaignActionCategory,
+  type CampaignActionId,
   type CampaignSimulationState,
   type CandidateDemographics,
   type CandidatePersonalAttributes,
@@ -14,12 +16,36 @@ import {
   type RealPoliticianPreset
 } from '@argentina-sim/domain';
 
-// Catalogo completo de las 9 acciones de campana y fabrica de estados
-// electorales preconfigurados por cada fuerza politica real y personalizada.
+// Catalogo expandido de +50 acciones de campana (52 operaciones electorales reales)
+// categorizadas entre Medios, Territorio Federal, Rosca y Estructura de Fiscalizacion.
+
+function mkCampaignAction(
+  id: CampaignActionId,
+  category: CampaignActionCategory,
+  title: string,
+  description: string,
+  cost: number,
+  effects: CampaignActionCard['effects'],
+  minRelevanceRequired?: number
+): CampaignActionCard {
+  return {
+    id,
+    category,
+    title,
+    description,
+    cost,
+    effects,
+    minRelevanceRequired,
+    requirementText: minRelevanceRequired
+      ? `Requisito: Relevancia mínima de ${minRelevanceRequired}.`
+      : undefined
+  };
+}
 
 export const CAMPAIGN_ACTIONS_CATALOG: CampaignActionCard[] = [
   {
     id: 'RECORRIDA',
+    category: 'TERRITORIO',
     title: 'Recorrida',
     description: 'Visitar una provincia (o zona, si competís por una gobernación).',
     cost: 8.6,
@@ -200,6 +226,7 @@ export const CAMPAIGN_ACTIONS_CATALOG: CampaignActionCard[] = [
   },
   {
     id: 'DESPLIEGUE_STREAMERS',
+    category: 'MEDIOS',
     title: 'Estrategia en streamers e influencers',
     description: 'Copar plataformas de streaming (Twitch, Kick, YouTube) y micro-segmentación en TikTok para el voto sub-30.',
     cost: 5.0,
@@ -208,7 +235,45 @@ export const CAMPAIGN_ACTIONS_CATALOG: CampaignActionCard[] = [
       { label: 'DESCONOCIMIENTO', rangeText: '-4,2/-1,5' },
       { label: 'RELEVANCIA', rangeText: '+1,8/+3,4' }
     ]
-  }
+  },
+  // --- +37 NUEVAS OPERACIONES DE CAMPAÑA (52 TOTAL) ---
+  mkCampaignAction('PRIME_TIME_MANO_A_MANO', 'MEDIOS', 'Mano a mano en Prime Time', 'Entrevista central nocturna con panel político completo y derecho a réplica en piso.', 6.2, [{ label: 'RELEVANCIA', rangeText: '+1,8/+3,5' }, { label: 'VOTOS GENERALES', rangeText: '+1,0/+2,2' }, { label: 'IMAGEN POSITIVA', rangeText: '+0,6/+1,8' }]),
+  mkCampaignAction('TAPA_DOMINICAL_PRENSA', 'MEDIOS', 'Nota central de domingo en gráfica', 'Reportaje programático extenso para lectores decisores y círculos formadores de opinión.', 5.5, [{ label: 'INTELIGENCIA PERCIBIDA', rangeText: '+1,5/+2,8' }, { label: 'RELEVANCIA', rangeText: '+1,4/+2,6' }, { label: 'IMAGEN POSITIVA', rangeText: '+0,8/+1,7' }]),
+  mkCampaignAction('RADIOS_DEL_INTERIOR', 'MEDIOS', 'Cadena de radios AM/FM federales', 'Ronda matinal simultánea por emisoras líderes de Córdoba, Rosario, Mendoza, Tucumán y Salta.', 4.1, [{ label: 'CONVENCIMIENTO', rangeText: '+1,0/+2,0' }, { label: 'VOTOS GENERALES', rangeText: '+0,8/+1,9' }, { label: 'IMAGEN POSITIVA', rangeText: '+0,8/+1,5' }]),
+  mkCampaignAction('MICROSEGMENTACION_TIKTOK', 'MEDIOS', 'Microsegmentación en Reels y TikTok', 'Pauta algorítmica geolocalizada por barrio y edad para romper techo en menores de 35 años.', 6.8, [{ label: 'RELEVANCIA', rangeText: '+2,0/+3,8' }, { label: 'VOTOS GENERALES', rangeText: '+1,2/+2,4' }, { label: 'DESCONOCIMIENTO', rangeText: '-5,5/-2,0' }]),
+  mkCampaignAction('PODCAST_POLITICO_LARGO', 'MEDIOS', 'Charla de 2 horas en podcast', 'Formato relajado sin zócalos para mostrar perfil humano y bajar rechazo entre indecisos.', 3.2, [{ label: 'INTELIGENCIA PERCIBIDA', rangeText: '+1,8/+3,0' }, { label: 'IMAGEN POSITIVA', rangeText: '+0,9/+1,6' }, { label: 'RELEVANCIA', rangeText: '+1,0/+1,9' }]),
+  mkCampaignAction('CONTRASPOT_DEMOLEDOR', 'MEDIOS', 'Contraspot directo contra el puntero', 'Pieza filosa contrastando promesas incumplidas y archivos históricos del candidato rival.', 8.4, [{ label: 'RELEVANCIA', rangeText: '+2,4/+4,2' }, { label: 'VOTOS GENERALES', rangeText: '+1,2/+2,5' }, { label: 'IMAGEN NEGATIVA', rangeText: '+0,8/+2,0', isWarning: true }], 20),
+  mkCampaignAction('SPOT_EMOCIONAL_PAIS', 'MEDIOS', 'Spot cinematográfico federal', 'Relato audiovisual de alto impacto emocional apelando a futuro productivo y encuentro social.', 9.6, [{ label: 'IMAGEN POSITIVA', rangeText: '+1,5/+3,0' }, { label: 'CONVENCIMIENTO', rangeText: '+1,8/+3,4' }, { label: 'VOTOS GENERALES', rangeText: '+1,2/+2,3' }]),
+  mkCampaignAction('EJERCITO_TUITERO_X', 'MEDIOS', 'Sala digital de tendencias en X', 'Coordinación de voceros digitales para imponer agenda de discusión matinal en redes.', 4.4, [{ label: 'RELEVANCIA', rangeText: '+1,8/+3,1' }, { label: 'INTERNA', rangeText: '+1,4/+2,8' }, { label: 'IMAGEN NEGATIVA', rangeText: '+0,4/+1,3', isWarning: true }]),
+  mkCampaignAction('AFICHES_VIA_PUBLICA', 'MEDIOS', 'Empapelado masivo en vía pública', 'Cartelería en subtes, trenes, accesos al AMBA y rutas troncales de todo el país.', 7.9, [{ label: 'DESCONOCIMIENTO', rangeText: '-6,5/-2,5' }, { label: 'RELEVANCIA', rangeText: '+1,5/+2,9' }, { label: 'VOTOS GENERALES', rangeText: '+0,8/+1,6' }]),
+  mkCampaignAction('PRESENTACION_LIBRO_PLAN', 'MEDIOS', 'Presentación editorial del plan de gobierno', 'Acto cultural y económico con prensa acreditada para exhibir equipo técnico y programa.', 5.2, [{ label: 'INTELIGENCIA PERCIBIDA', rangeText: '+2,5/+4,2' }, { label: 'IMAGEN POSITIVA', rangeText: '+0,8/+1,7' }, { label: 'CONVENCIMIENTO', rangeText: '+0,9/+1,8' }]),
+  mkCampaignAction('BUNKER_FACT_CHECKING', 'MEDIOS', 'Unidad de respuesta rápida anti-fake', 'Desmentida inmediata en tiempo real con datos oficiales ante operetas y deepfakes rivales.', 4.9, [{ label: 'IMAGEN NEGATIVA', rangeText: '-1,6/-0,5' }, { label: 'IMAGEN POSITIVA', rangeText: '+1,0/+2,0' }, { label: 'INTELIGENCIA PERCIBIDA', rangeText: '+1,4/+2,6' }]),
+  mkCampaignAction('CAMINATA_CONURBANO', 'TERRITORIO', 'Desembarco a pie en Conurbano profundo', 'Recorrida sin vallas por ferias francas, estaciones y centros comerciales del GBA.', 7.4, [{ label: 'VOTOS GENERALES', rangeText: '+1,5/+2,8' }, { label: 'IMAGEN POSITIVA', rangeText: '+1,2/+2,5' }, { label: 'CONVENCIMIENTO', rangeText: '+1,5/+2,9' }]),
+  mkCampaignAction('CARAVANA_FEDERAL_MOTORHOME', 'TERRITORIO', 'Caravana federal por ciudades medias', 'Gira de 72 horas cruzando pueblos productivos y plazas del interior argentino.', 9.2, [{ label: 'RELEVANCIA', rangeText: '+2,0/+3,4' }, { label: 'APOYO PARTIDARIO', rangeText: '+1,4/+2,6' }, { label: 'VOTOS GENERALES', rangeText: '+1,4/+2,5' }]),
+  mkCampaignAction('VISITA_RURAL_PALERMO', 'TERRITORIO', 'Discurso ante el campo en Expoagro / Rural', 'Agenda agroexportadora de baja de retenciones, conectividad rural y seguridad en campos.', 5.8, [{ label: 'INTELIGENCIA PERCIBIDA', rangeText: '+1,1/+2,1' }, { label: 'NEGOCIACIÓN', rangeText: '+0,7/+1,5' }, { label: 'VOTOS GENERALES', rangeText: '+0,8/+1,8' }]),
+  mkCampaignAction('PARQUES_INDUSTRIALES', 'TERRITORIO', 'Visita a PyMEs y parques fabriles', 'Encuentro con dueños de fábricas y operarios sobre crédito productivo y alivio tributario.', 4.6, [{ label: 'INTELIGENCIA PERCIBIDA', rangeText: '+1,6/+2,9' }, { label: 'IMAGEN POSITIVA', rangeText: '+1,1/+2,2' }, { label: 'VOTOS GENERALES', rangeText: '+0,9/+1,9' }]),
+  mkCampaignAction('CUMBRE_MINERIA_LITIO', 'TERRITORIO', 'Gira minera y litio por el NOA', 'Agenda de infraestructura exportadora y proveedores locales en Salta, Jujuy y Catamarca.', 6.1, [{ label: 'NEGOCIACIÓN', rangeText: '+1,0/+2,0' }, { label: 'INTELIGENCIA PERCIBIDA', rangeText: '+1,7/+3,0' }, { label: 'VOTOS GENERALES', rangeText: '+0,7/+1,6' }]),
+  mkCampaignAction('ACTO_VACA_MUERTA', 'TERRITORIO', 'Acto energético en Neuquén y Añelo', 'Compromiso de seguridad jurídica por 30 años para gasoductos y exportación de GNL.', 6.5, [{ label: 'INTELIGENCIA PERCIBIDA', rangeText: '+1,8/+3,2' }, { label: 'IMAGEN POSITIVA', rangeText: '+1,2/+2,2' }, { label: 'VOTOS GENERALES', rangeText: '+1,0/+2,0' }]),
+  mkCampaignAction('HOSPITALES_Y_BOMBEROS', 'TERRITORIO', 'Visita a guardias médicas y cuarteles', 'Encuentro humano con médicos residentes, enfermeros y bomberos voluntarios sin aparato.', 3.4, [{ label: 'IMAGEN POSITIVA', rangeText: '+2,0/+3,3' }, { label: 'IMAGEN NEGATIVA', rangeText: '-0,8/-0,2' }, { label: 'CONVENCIMIENTO', rangeText: '+1,6/+3,0' }]),
+  mkCampaignAction('ASAMBLEA_UNIVERSITARIA', 'TERRITORIO', 'Charla abierta en universidad nacional', 'Debate cara a cara con estudiantes y docentes sobre ciencia, becas y futuro laboral.', 3.9, [{ label: 'RELEVANCIA', rangeText: '+1,5/+2,7' }, { label: 'INTELIGENCIA PERCIBIDA', rangeText: '+1,4/+2,5' }, { label: 'CONVENCIMIENTO', rangeText: '+1,2/+2,4' }]),
+  mkCampaignAction('PUERTA_A_PUERTA_BARRIAL', 'TERRITORIO', 'Operativo puerta a puerta con voluntarios', 'Timbreo organizado entregando instructivo de boleta en barrios clave de clase media.', 4.3, [{ label: 'CONVENCIMIENTO', rangeText: '+1,6/+3,0' }, { label: 'APOYO PARTIDARIO', rangeText: '+1,4/+2,8' }, { label: 'VOTOS GENERALES', rangeText: '+1,0/+2,0' }]),
+  mkCampaignAction('MESAS_AFILIACION_PLAZAS', 'ESTRUCTURA', 'Mesas partidarias simultáneas en plazas', 'Despliegue de sombrillas, afiliación y reclutamiento de voluntarios en 24 capitales.', 3.5, [{ label: 'APOYO PARTIDARIO', rangeText: '+2,0/+3,4' }, { label: 'INTERNA', rangeText: '+1,8/+3,2' }, { label: 'RELEVANCIA', rangeText: '+1,1/+2,1' }]),
+  mkCampaignAction('CARAVANA_CORDOBA_CENTRO', 'TERRITORIO', 'Desembarco fuerte en Córdoba y Santa Fe', 'Campaña intensiva en el corredor productivo centro donde se definen elecciones reñidas.', 7.2, [{ label: 'VOTOS GENERALES', rangeText: '+1,2/+2,4' }, { label: 'CONVENCIMIENTO', rangeText: '+1,3/+2,5' }, { label: 'IMAGEN POSITIVA', rangeText: '+1,2/+2,2' }]),
+  mkCampaignAction('CONURBANO_CLUBES_BARRIO', 'TERRITORIO', 'Encuentro con clubes de barrio y deporte', 'Agenda contra adicciones juveniles y apoyo comunitario en sociedades de fomento.', 4.8, [{ label: 'IMAGEN POSITIVA', rangeText: '+1,4/+2,5' }, { label: 'APOYO PARTIDARIO', rangeText: '+1,4/+2,6' }, { label: 'CONVENCIMIENTO', rangeText: '+1,4/+2,8' }]),
+  mkCampaignAction('FERIA_EMPRENDEDORES_TECH', 'TERRITORIO', 'Ronda con startups y economía digital', 'Propuesta de dólar libre para exportadores de servicios y cero trabas societarias.', 4.2, [{ label: 'INTELIGENCIA PERCIBIDA', rangeText: '+1,9/+3,3' }, { label: 'IMAGEN POSITIVA', rangeText: '+1,1/+2,1' }, { label: 'RELEVANCIA', rangeText: '+1,2/+2,2' }]),
+  mkCampaignAction('PARRILLADA_SINDICAL_CGT', 'ROSCA', 'Cumbre reservada con gremios dialoguistas', 'Negociación de paz social, paritarias productivas y reforma laboral consensuada.', 6.0, [{ label: 'NEGOCIACIÓN', rangeText: '+2,0/+3,5' }, { label: 'APOYO PARTIDARIO', rangeText: '+1,5/+2,9' }, { label: 'VOTOS GENERALES', rangeText: '+0,9/+1,8' }]),
+  mkCampaignAction('DESAYUNO_UIA_BANQUEROS', 'ROSCA', 'Mesa técnica con UIA, bancos y ADEBA', 'Presentación de metas fiscales, cronograma cambiario y recaudación de aportes transparentes.', 2.0, [{ label: 'PRESUPUESTO DE CAMPAÑA', rangeText: '+18,0 ¥' }, { label: 'INTELIGENCIA PERCIBIDA', rangeText: '+1,9/+3,3' }, { label: 'NEGOCIACIÓN', rangeText: '+1,5/+2,6' }]),
+  mkCampaignAction('CENA_RECAUDACION_PYME', 'ROSCA', 'Cena de financiamiento con empresarios PyME', 'Evento de recaudación con mesas sectoriales de comercio, construcción y servicios.', 2.5, [{ label: 'PRESUPUESTO DE CAMPAÑA', rangeText: '+26,0 ¥' }, { label: 'NEGOCIACIÓN', rangeText: '+1,2/+2,2' }, { label: 'APOYO PARTIDARIO', rangeText: '+1,1/+2,1' }]),
+  mkCampaignAction('CUMBRE_SEGURIDAD_MUNICIPAL', 'ROSCA', 'Foro de seguridad con intendentes del AMBA', 'Coordinación de anillos digitales, patrullaje federal y cárceles contra delito urbano.', 5.4, [{ label: 'VOTOS GENERALES', rangeText: '+1,3/+2,5' }, { label: 'NEGOCIACIÓN', rangeText: '+1,4/+2,5' }, { label: 'IMAGEN POSITIVA', rangeText: '+1,3/+2,3' }]),
+  mkCampaignAction('ACUERDO_RECTORES_CIENCIA', 'ROSCA', 'Acta programática con universidades y ciencia', 'Compromiso de auditoría transparente y financiamiento plurianual de investigación aplicada.', 4.5, [{ label: 'INTELIGENCIA PERCIBIDA', rangeText: '+2,1/+3,6' }, { label: 'NEGOCIACIÓN', rangeText: '+1,1/+2,1' }, { label: 'IMAGEN POSITIVA', rangeText: '+1,0/+2,0' }]),
+  mkCampaignAction('MESA_AGROPECUARIA_ROSARIO', 'ROSCA', 'Encuentro en Bolsa de Comercio de Rosario', 'Acuerdo sobre hidrovía, trenes de carga granarios y baja gradual de derechos de exportación.', 5.1, [{ label: 'NEGOCIACIÓN', rangeText: '+1,5/+2,7' }, { label: 'VOTOS GENERALES', rangeText: '+1,0/+2,0' }, { label: 'INTELIGENCIA PERCIBIDA', rangeText: '+1,3/+2,3' }]),
+  mkCampaignAction('ENCUENTRO_IGLESIAS_ONG', 'ROSCA', 'Mesa social con credos y redes barriales', 'Coordinación de asistencia directa sin punteros ni intermediarios en áreas vulnerables.', 3.8, [{ label: 'CONVENCIMIENTO', rangeText: '+1,6/+2,9' }, { label: 'APOYO PARTIDARIO', rangeText: '+1,3/+2,5' }, { label: 'IMAGEN POSITIVA', rangeText: '+1,2/+2,2' }]),
+  mkCampaignAction('OPERATIVO_DESEMBARCO_GOBERNADORES', 'ROSCA', 'Ronda bilateral con gobernadores aliados', 'Pacto federal por infraestructura energética y respaldo territorial de listas provinciales.', 7.6, [{ label: 'NEGOCIACIÓN', rangeText: '+2,3/+3,9' }, { label: 'APOYO PARTIDARIO', rangeText: '+1,8/+3,2' }, { label: 'VOTOS GENERALES', rangeText: '+1,4/+2,6' }], 25),
+  mkCampaignAction('BLINDAJE_FISCALES_GENERALES', 'ESTRUCTURA', 'Blindaje total de fiscales por escuela', 'Reclutamiento, viáticos y logística para cubrir el 100% de mesas el domingo electoral.', 11.2, [{ label: 'VOTOS GENERALES', rangeText: '+1,7/+3,1' }, { label: 'APOYO PARTIDARIO', rangeText: '+2,5/+4,2' }, { label: 'INTERNA', rangeText: '+1,5/+2,8' }]),
+  mkCampaignAction('CAPACITACION_BOLETA_UNICA', 'ESTRUCTURA', 'Instructivos ciudadanos de Boleta Única', 'Campaña pedagógica práctica para reducir voto nulo y enseñar tramo completo de lista.', 5.0, [{ label: 'VOTOS GENERALES', rangeText: '+1,2/+2,3' }, { label: 'CONVENCIMIENTO', rangeText: '+1,3/+2,4' }, { label: 'INTELIGENCIA PERCIBIDA', rangeText: '+1,2/+2,2' }]),
+  mkCampaignAction('AUDITORIA_PADRON_ELECTORAL', 'ESTRUCTURA', 'Auditoría técnica de padrón y software CNE', 'Despliegue de apoderados e ingenieros informáticos para controlar escrutinio provisorio.', 6.4, [{ label: 'INTELIGENCIA PERCIBIDA', rangeText: '+1,6/+2,9' }, { label: 'APOYO PARTIDARIO', rangeText: '+1,5/+2,8' }, { label: 'VOTOS GENERALES', rangeText: '+1,0/+1,9' }]),
+  mkCampaignAction('CUARTO_DE_GUERRA_DATOS', 'ESTRUCTURA', 'Cuarto de guerra con focus groups y tracking', 'Encuestas diarias de clivajes y ajuste fino de mensaje por distrito y franja etaria.', 7.5, [{ label: 'INTELIGENCIA PERCIBIDA', rangeText: '+2,2/+3,8' }, { label: 'CONVENCIMIENTO', rangeText: '+1,4/+2,6' }, { label: 'VOTOS GENERALES', rangeText: '+1,1/+2,1' }]),
+  mkCampaignAction('ESCUELA_CUADROS_TECNICOS', 'ESTRUCTURA', 'Escuela de formación de futuros funcionarios', 'Seminarios legales y de gestión estatal para preparar equipos de gabinete en caso de asumir.', 4.0, [{ label: 'INTELIGENCIA PERCIBIDA', rangeText: '+2,6/+4,3' }, { label: 'APOYO PARTIDARIO', rangeText: '+1,6/+2,9' }, { label: 'INTERNA', rangeText: '+1,0/+2,0' }])
 ];
 
 function resolvePartyPollPresets(

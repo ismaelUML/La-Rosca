@@ -8,6 +8,7 @@ export * from './campaign/campaignGovernmentBridge.js';
 export * from './campaign/electionEngine.js';
 export * from './campaign/countryMoodEngine.js';
 export * from './campaign/politicalAffinityEngine.js';
+export * from './campaign/debateEngine.js';
 export * from './economy/mathUtils.js';
 export * from './economy/inflationEngine.js';
 export * from './economy/centralBankAndBankingEngine.js';

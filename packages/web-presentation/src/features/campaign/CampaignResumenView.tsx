@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
-import type { CampaignSimulationState } from '@argentina-sim/domain';
+import {
+  applyDebateOutcomeToCampaign,
+  clamp,
+  round2,
+  type CampaignSimulationState
+} from '@argentina-sim/domain';
 import { PressAndDebateSimulatorModal } from '../game-shell/PressAndDebateSimulatorModal.js';
 import { OfficialPartyLogo } from '../party-setup/OfficialLogoBadge.js';
 import { playUiSound } from '../../lib/gameFeedback.js';
+import { PresidentialDebateModal } from './PresidentialDebateModal.js';
 
 // Vista de SITUACIÓN -> Resumen (capturas 1, 2 y 3):
 // Objetivo de la interna, imagen positiva/negativa/desconocimiento,
@@ -12,6 +18,7 @@ interface CampaignResumenViewProps {
   state: CampaignSimulationState;
   onAdvanceMonth: () => void;
   onNavigateActions: () => void;
+  onUpdateState?: (updater: (prev: CampaignSimulationState) => CampaignSimulationState) => void;
 }
 
 function CandidatePartyBadge({ partySigla, color }: { partySigla: string; color: string }) {
@@ -61,16 +68,42 @@ function CandidatePollBar({
   );
 }
 
+function applyPressImpactToCampaign(
+  prev: CampaignSimulationState,
+  deltas: { image: number; viral: number; market: number }
+): CampaignSimulationState {
+  const nextPos = clamp(prev.image.imagenPositiva + deltas.image * 0.25, 5, 88);
+  return {
+    ...prev,
+    image: {
+      ...prev.image,
+      imagenPositiva: round2(nextPos),
+      desconocimiento: Math.max(2, round2(100 - nextPos - prev.image.imagenNegativa))
+    },
+    attributes: {
+      ...prev.attributes,
+      relevancia: round2(clamp(prev.attributes.relevancia + Math.max(0.2, deltas.viral * 0.12), 0, 100))
+    },
+    historyLog: [
+      `Sala de Prensa TV: impacto en opinión pública (+${(deltas.image * 0.25).toFixed(1)} Img · +${Math.max(0.2, deltas.viral * 0.12).toFixed(1)} Rel).`,
+      ...prev.historyLog
+    ]
+  };
+}
+
 export function CampaignResumenView({
   state,
   onAdvanceMonth,
-  onNavigateActions
+  onNavigateActions,
+  onUpdateState
 }: CampaignResumenViewProps) {
+  const [pressOpen, setPressOpen] = useState(false);
   const [debateOpen, setDebateOpen] = useState(false);
   const attrs = state.attributes;
   const img = state.image;
   const poll = state.internalPoll;
   const vote = state.votingIntention;
+  const quickDebateMode = state.stage.stage === 'BALOTAJE' ? 'BALOTAJE' : 'CAMPAÑA';
 
   return (
     <div className="space-y-6">
@@ -83,22 +116,48 @@ export function CampaignResumenView({
             {state.stage.objectiveTitle}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            playUiSound('tab');
-            setDebateOpen(true);
-          }}
-          className="hoi-btn-gold px-3.5 py-2 rounded-sm text-xs font-mono font-extrabold uppercase tracking-wider shrink-0"
-        >
-          Estudio TV 3D · Debate y Prensa en Vivo
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              playUiSound('quorum');
+              setDebateOpen(true);
+            }}
+            className="hoi-btn-gold px-3.5 py-2 rounded-sm text-xs font-mono font-extrabold uppercase tracking-wider shrink-0"
+          >
+            Debate Presidencial 3D
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              playUiSound('tab');
+              setPressOpen(true);
+            }}
+            className="px-3.5 py-2 rounded-sm bg-[#101928] hover:bg-[#1a273b] border border-[#3a4f70] text-sky-200 text-xs font-mono font-bold uppercase tracking-wider shrink-0"
+          >
+            Sala de Prensa TV 3D
+          </button>
+        </div>
       </div>
 
-      <PressAndDebateSimulatorModal
+      <PresidentialDebateModal
         open={debateOpen}
-        speakerName={state.candidateName}
+        mode={quickDebateMode}
+        state={state}
+        onFinishDebate={(summary) =>
+          onUpdateState?.((prev) => applyDebateOutcomeToCampaign(prev, quickDebateMode, summary))
+        }
+        onSkipDebate={() => setDebateOpen(false)}
         onClose={() => setDebateOpen(false)}
+      />
+
+      <PressAndDebateSimulatorModal
+        open={pressOpen}
+        speakerName={state.candidateName}
+        onCompleteImpact={(deltas) =>
+          onUpdateState?.((prev) => applyPressImpactToCampaign(prev, deltas))
+        }
+        onClose={() => setPressOpen(false)}
       />
 
       <section className="space-y-3">

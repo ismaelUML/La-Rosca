@@ -1,196 +1,22 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Mic, Radio, Sparkles, Tv, X } from 'lucide-react';
+import {
+  drawPressConferenceRounds,
+  type PressQuestionRoundSpec
+} from '@argentina-sim/infrastructure';
 import { playUiSound } from '@/lib/gameFeedback';
 import { getMahoganyWoodTexture } from '../map-3d/proceduralPbrTextures.js';
 import { loadGlbIntoAnchor } from '../map-3d/modelAssetLoader.js';
 import type { MediaOutletLogoId } from '../party-setup/officialLogosCatalog.js';
 import { OfficialInstitutionLogo, OfficialMediaLogo } from '../party-setup/OfficialLogoBadge.js';
 
-// Simulador 3D de Conferencia de Prensa en Casa Rosada / Cadena Nacional
-// y Debate Presidencial con Derechos a Replica y Chicanas en Vivo.
+// Simulador 3D de Conferencia de Prensa en Casa Rosada / Cadena Nacional:
+// sortea 4 preguntas entre 54 rondas acreditadas en cada transmision para evitar repeticiones.
 
 const STUDIO_NETWORK_POOL: MediaOutletLogoId[] = ['TV_PUBLICA', 'TN', 'LN_MAS', 'C5N', 'CRONICA_TV', 'A24'];
 
-interface PressQuestionRound {
-  id: string;
-  journalist: string;
-  outlet: string;
-  outletLogos: MediaOutletLogoId[];
-  question: string;
-  options: Array<{
-    tone: 'ORTODOXO' | 'CHICANA' | 'INSTITUCIONAL';
-    toneLabel: string;
-    replyText: string;
-    imageDelta: number;
-    viralDelta: number;
-    marketDelta: number;
-    headline: string;
-  }>;
-}
-
-const PRESS_ROUNDS: PressQuestionRound[] = [
-  {
-    id: 'ROUND_1',
-    journalist: 'Acreditado Sala de Prensa · Economía',
-    outlet: 'LN+ / Ámbito / Bloomberg',
-    outletLogos: ['LN_MAS', 'AMBITO', 'BLOOMBERG'],
-    question:
-      '«Presidente, los formadores de precios remarcaron preventivamente esta semana y los gremios amenazan con no homologar paritarias debajo del IPC. ¿Va a convalidar una devaluación o mantiene el ancla fiscal a rajatabla?»',
-    options: [
-      {
-        tone: 'ORTODOXO',
-        toneLabel: 'Técnico-Ortodoxo (Rigor Fiscal)',
-        replyText:
-          '«El equilibrio fiscal no se negocia ni un milímetro. No vamos a convalidar la irresponsabilidad monetaria con devaluaciones bruscas: el que remarque por encima de la pauta se va a quedar sin vender.»',
-        imageDelta: 1.5,
-        viralDelta: 2.0,
-        marketDelta: 4.5,
-        headline: 'EL EJECUTIVO RATIFICA EL ANCLA FISCAL Y DESCARTA SALTO CAMBIARIO'
-      },
-      {
-        tone: 'CHICANA',
-        toneLabel: 'Chicana al Hueso (Cruzar a la Casta)',
-        replyText:
-          '«Los mismos economistas y sindicalistas que dejaron 200% de inflación ahora nos quieren explicar cómo manejar la mesa de dinero. Que vayan a competir sin subsidios del Estado.»',
-        imageDelta: 1.0,
-        viralDelta: 5.5,
-        marketDelta: 1.5,
-        headline: 'FUERTE CRUCE EN CASA ROSADA: "QUE COMPITAN SIN SUBSIDIOS DEL ESTADO"'
-      },
-      {
-        tone: 'INSTITUCIONAL',
-        toneLabel: 'Institucional-Moderado (Mesa Tripartita)',
-        replyText:
-          '«Vamos a convocar al Consejo del Salario y a las cámaras industriales para coordinar una transición ordenada de precios y haberes cuidando el empleo formal.»',
-        imageDelta: 2.5,
-        viralDelta: -1.0,
-        marketDelta: 1.0,
-        headline: 'EL GOBIERNO CONVOCA A EMPRESARIOS Y GREMIOS PARA ORDENAR PRECIOS'
-      }
-    ]
-  },
-  {
-    id: 'ROUND_2',
-    journalist: 'Corresponsal Parlamentario · Política',
-    outlet: 'TN / Clarín / LA NACION',
-    outletLogos: ['TN', 'CLARIN', 'LA_NACION'],
-    question:
-      '«Los gobernadores dialoguistas advierten que sin fondos para obras viales e infraestructura energética no habrá quórum para el próximo paquete de reformas en el Senado. ¿Habrá billetera abierta o decretazo?»',
-    options: [
-      {
-        tone: 'ORTODOXO',
-        toneLabel: 'Técnico-Ortodoxo (Auditoría Obra por Obra)',
-        replyText:
-          '«Cada peso de ATN o infraestructura va a estar atado a metas de superávit provincial y adhesión al RIGI. Se terminaron los cheques en blanco por votos.»',
-        imageDelta: 1.5,
-        viralDelta: 1.5,
-        marketDelta: 3.5,
-        headline: 'CONDICIONAN GIROS A PROVINCIAS AL CUMPLIMIENTO DE METAS FISCALES'
-      },
-      {
-        tone: 'CHICANA',
-        toneLabel: 'Chicana al Hueso (Exponer en Cadena)',
-        replyText:
-          '«Si los senadores quieren votar en contra del alivio impositivo para defender sus cajas políticas, vamos a exponer nombre por nombre en televisión quién vota contra la gente.»',
-        imageDelta: 0.5,
-        viralDelta: 6.0,
-        marketDelta: 0.5,
-        headline: 'TENSIÓN CON EL SENADO: ADVIERTEN QUE EXPONDRÁN A QUIENES BLOQUEEN LEYES'
-      },
-      {
-        tone: 'INSTITUCIONAL',
-        toneLabel: 'Institucional-Moderado (Pacto Federal)',
-        replyText:
-          '«El Ministro del Interior ya está reunido con las ligas provinciales para destrabar las obras estratégicas y garantizar una sanción con amplio consenso federal.»',
-        imageDelta: 3.0,
-        viralDelta: 0.5,
-        marketDelta: 2.5,
-        headline: 'ACERCAMIENTO CON GOBERNADORES PARA SELLAR EL PACTO FEDERAL EN EL SENADO'
-      }
-    ]
-  },
-  {
-    id: 'ROUND_3',
-    journalist: 'Periodista Acreditado · Sociedad y Calle',
-    outlet: 'C5N / Crónica TV / Página/12',
-    outletLogos: ['C5N', 'CRONICA_TV', 'PAGINA_12'],
-    question:
-      '«Las columnas sindicales y universitarias anunciaron una movilización frente al Congreso por la caída del poder adquisitivo. ¿Aplicará el protocolo antipiquetes al 100% o abrirá un canal de negociación?»',
-    options: [
-      {
-        tone: 'ORTODOXO',
-        toneLabel: 'Técnico-Ortodoxo (Orden Público Estricto)',
-        replyText:
-          '«El derecho a manifestarse existe sobre la vereda, pero la libre circulación está garantizada por ley. Las fuerzas federales van a hacer cumplir el protocolo sin excepciones.»',
-        imageDelta: 2.0,
-        viralDelta: 3.5,
-        marketDelta: 3.0,
-        headline: 'RATIFICAN APLICACIÓN ESTRICTA DEL PROTOCOLO DE ORDEN PÚBLICO EN ACCESOS'
-      },
-      {
-        tone: 'CHICANA',
-        toneLabel: 'Chicana al Hueso (Auditar Intermediarios)',
-        replyText:
-          '«El que corta no cobra y vamos a auditar hasta la última factura de los gerentes de la pobreza que usan a la gente de rehén para cuidar sus sellos.»',
-        imageDelta: 1.0,
-        viralDelta: 6.5,
-        marketDelta: 2.0,
-        headline: '"EL QUE CORTA NO COBRA": LANZAN AUDITORÍA MASIVA SOBRE INTERMEDIARIOS'
-      },
-      {
-        tone: 'INSTITUCIONAL',
-        toneLabel: 'Institucional-Moderado (Refuerzo Directo)',
-        replyText:
-          '«Reforzaremos de manera directa la Tarjeta Alimentar y las becas estudiantiles sin intermediarios, garantizando una jornada en paz y con diálogo institucional.»',
-        imageDelta: 3.0,
-        viralDelta: 0.5,
-        marketDelta: 1.5,
-        headline: 'ANUNCIAN REFUERZO SOCIAL DIRECTO SIN INTERMEDIARIOS PARA DESCOMPRIMIR LA CALLE'
-      }
-    ]
-  },
-  {
-    id: 'ROUND_4',
-    journalist: 'Mesa Redacción & Negocios · Inversiones y Medios',
-    outlet: 'A24 / Infobae / Forbes',
-    outletLogos: ['A24', 'INFOBAE', 'FORBES'],
-    question:
-      '«Grupos empresarios y fondos tech evalúan desembarcar en energía e IA bajo el RIGI, pero exigen estabilidad jurídica y reclaman señales sobre el rol de la pauta y las redes oficiales. ¿Qué garantía les da hoy?»',
-    options: [
-      {
-        tone: 'ORTODOXO',
-        toneLabel: 'Técnico-Ortodoxo (Blindaje RIGI 30 Años)',
-        replyText:
-          '«Estabilidad fiscal, giro libre de dividendos y cero discrecionalidad estatal. Argentina compite por capital global con reglas claras, no con favores de despacho.»',
-        imageDelta: 2.0,
-        viralDelta: 1.5,
-        marketDelta: 4.0,
-        headline: 'BLINDAN REGLAS DEL RIGI Y RATIFICAN PAUTA CERO ANTE CUMBRE EMPRESARIA'
-      },
-      {
-        tone: 'CHICANA',
-        toneLabel: 'Chicana al Hueso (Pauta Cero y Ensobrados)',
-        replyText:
-          '«Se terminó la época en que el Estado financiaba relatos con la tuya. El que quiera invertir en Argentina bienvenido sea; el que extrañe el sobre oficial, que consiga sponsors privados.»',
-        imageDelta: 0.5,
-        viralDelta: 6.5,
-        marketDelta: 1.0,
-        headline: 'CRUCE CON MEDIOS EN CASA ROSADA: REAFIRMAN RECORTES DE PAUTA OFICIAL'
-      },
-      {
-        tone: 'INSTITUCIONAL',
-        toneLabel: 'Institucional-Moderado (Mesa Sectorial)',
-        replyText:
-          '«Convocamos a una mesa de competitividad federal con pymes tecnológicas, gobernadores y prensa acreditada para asegurar seguridad jurídica de largo plazo.»',
-        imageDelta: 3.0,
-        viralDelta: 1.0,
-        marketDelta: 2.5,
-        headline: 'CONVOCAN MESA DE COMPETITIVIDAD FEDERAL PARA ATRAER CAPITALES PRODUCTIVOS'
-      }
-    ]
-  }
-];
+type PressQuestionRound = PressQuestionRoundSpec;
 
 function buildSculptedPressPodiumGroup(): THREE.Group {
   const anchor = new THREE.Group();
@@ -445,6 +271,7 @@ function PressPodiumLiveStage({
   headline,
   totals,
   roundIdx,
+  totalRounds,
   currentRound,
   finished,
   onSelectOption,
@@ -453,6 +280,7 @@ function PressPodiumLiveStage({
   headline: string;
   totals: { image: number; viral: number; market: number };
   roundIdx: number;
+  totalRounds: number;
   currentRound: PressQuestionRound;
   finished: boolean;
   onSelectOption: (opt: PressQuestionRound['options'][number]) => void;
@@ -480,7 +308,7 @@ function PressPodiumLiveStage({
       {!finished ? (
         <ActivePressQuestionPanel
           roundIdx={roundIdx}
-          totalRounds={PRESS_ROUNDS.length}
+          totalRounds={totalRounds}
           currentRound={currentRound}
           onSelectOption={onSelectOption}
         />
@@ -492,7 +320,7 @@ function PressPodiumLiveStage({
               Conferencia Finalizada · Repercusión en Tapa y Mercados
             </div>
             <p className="text-xs text-slate-300">
-              Cerraste las {PRESS_ROUNDS.length} rondas con impacto de {formatSignedPts(totals.image)} en imagen y {formatSignedPts(totals.market)} en mercados.
+              Cerraste las {totalRounds} rondas con impacto de {formatSignedPts(totals.image)} en imagen y {formatSignedPts(totals.market)} en mercados.
             </p>
           </div>
           <button
@@ -519,6 +347,7 @@ export function PressAndDebateSimulatorModal({
   onCompleteImpact?: (deltas: { image: number; viral: number; market: number }) => void;
   onClose: () => void;
 }) {
+  const [conferenceNonce, setConferenceNonce] = useState(0);
   const [roundIdx, setRoundIdx] = useState(0);
   const [totals, setTotals] = useState({ image: 0, viral: 0, market: 0 });
   const [headline, setHeadline] = useState(
@@ -527,8 +356,13 @@ export function PressAndDebateSimulatorModal({
   const [finished, setFinished] = useState(false);
   const [showIntroPlate, setShowIntroPlate] = useState(true);
 
+  const rounds = useMemo(
+    () => drawPressConferenceRounds(4, speakerName, conferenceNonce),
+    [speakerName, conferenceNonce]
+  );
+
   useEffect(() => {
-    if (!open) return;
+    if (!open) return undefined;
     setRoundIdx(0);
     setTotals({ image: 0, viral: 0, market: 0 });
     setHeadline('CONFERENCIA DE PRENSA Y DERECHO A RÉPLICA DESDE EL ATRIL OFICIAL');
@@ -541,7 +375,12 @@ export function PressAndDebateSimulatorModal({
 
   if (!open) return null;
 
-  const currentRound = PRESS_ROUNDS[roundIdx] ?? PRESS_ROUNDS[0]!;
+  const currentRound = rounds[roundIdx] ?? rounds[0]!;
+
+  const handleCloseConference = () => {
+    setConferenceNonce((n) => n + 1);
+    onClose();
+  };
 
   const handleSelectOption = (opt: PressQuestionRound['options'][number]) => {
     playUiSound('stamp');
@@ -553,7 +392,7 @@ export function PressAndDebateSimulatorModal({
     setTotals(nextTotals);
     setHeadline(opt.headline);
 
-    if (roundIdx + 1 >= PRESS_ROUNDS.length) {
+    if (roundIdx + 1 >= rounds.length) {
       setFinished(true);
       onCompleteImpact?.(nextTotals);
     } else {
@@ -577,7 +416,7 @@ export function PressAndDebateSimulatorModal({
               </h3>
             </div>
           </div>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-white p-1">
+          <button type="button" onClick={handleCloseConference} className="text-slate-400 hover:text-white p-1">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -592,10 +431,11 @@ export function PressAndDebateSimulatorModal({
             headline={headline}
             totals={totals}
             roundIdx={roundIdx}
+            totalRounds={rounds.length}
             currentRound={currentRound}
             finished={finished}
             onSelectOption={handleSelectOption}
-            onClose={onClose}
+            onClose={handleCloseConference}
           />
         )}
       </div>

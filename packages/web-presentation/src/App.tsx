@@ -4,9 +4,12 @@ import {
   advanceGovernmentMonth,
   advanceSimulationMonth,
   applyCampaignBridgeToGovernment,
+  applyDebateOutcomeToCampaign,
   applyGovernmentEventChoice,
   applyPolicyAction,
   applySetupConfigurationToState,
+  applySkipDebatePenalty,
+  canExecuteCampaignAction,
   getGovernmentRuntime,
   executeCampaignAction,
   type CabinetMinister,
@@ -46,6 +49,7 @@ import {
   type CampaignNavSection
 } from './features/campaign/CampaignSidebarLayout.js';
 import { CampaignResumenView } from './features/campaign/CampaignResumenView.js';
+import { PresidentialDebateModal } from './features/campaign/PresidentialDebateModal.js';
 import { CampaignImageAndMapView } from './features/campaign/CampaignImageAndMapView.js';
 import { CampaignActionsView } from './features/campaign/CampaignActionsView.js';
 import { CampaignApoyosView } from './features/campaign/CampaignApoyosView.js';
@@ -156,6 +160,7 @@ function CampaignActivePanel({
         state={state}
         onAdvanceMonth={onAdvanceMonth}
         onNavigateActions={onNavigateActions}
+        onUpdateState={onUpdateCampaignState}
       />
     ),
     IMAGEN_Y_MAPA: <CampaignImageAndMapView state={state} />,
@@ -530,6 +535,64 @@ function applyInternaSplitPenalty(state: CampaignSimulationState): CampaignSimul
   };
 }
 
+function checkShouldLaunchBalotajeDebate(
+  stage: ElectionStageType,
+  isRunoff: boolean
+): boolean {
+  return stage === 'GENERALES' && isRunoff;
+}
+
+function CampaignModalsHost({
+  campaignState,
+  activeDilemma,
+  activeElectionModal,
+  onResolveDilemma,
+  onUpdateCampaign,
+  onProceedElection,
+  onRetryCampaign,
+  onBreakPartySplit,
+  onNewGameSetup
+}: {
+  campaignState: CampaignSimulationState;
+  activeDilemma: ReturnType<typeof resolveMonthlyDilemma>;
+  activeElectionModal: ElectionStageType | null;
+  onResolveDilemma: (opt: CampaignDilemmaOption) => void;
+  onUpdateCampaign: React.Dispatch<React.SetStateAction<CampaignSimulationState>>;
+  onProceedElection: () => void;
+  onRetryCampaign: () => void;
+  onBreakPartySplit: () => void;
+  onNewGameSetup: () => void;
+}) {
+  const activeDebate = campaignState.activeDebateMode;
+  const isDebateOpen = Boolean(activeDebate) && !activeDilemma && !activeElectionModal;
+
+  return (
+    <>
+      <CampaignMonthlyDilemmaModal dilemma={activeDilemma} onSelectOption={onResolveDilemma} />
+      <PresidentialDebateModal
+        open={isDebateOpen}
+        mode={activeDebate ?? 'CAMPAÑA'}
+        state={campaignState}
+        onFinishDebate={(summary) =>
+          onUpdateCampaign((prev) => applyDebateOutcomeToCampaign(prev, prev.activeDebateMode ?? 'CAMPAÑA', summary))
+        }
+        onSkipDebate={() =>
+          onUpdateCampaign((prev) => applySkipDebatePenalty(prev, prev.activeDebateMode ?? 'GENERALES'))
+        }
+        onClose={() => onUpdateCampaign((prev) => ({ ...prev, activeDebateMode: null }))}
+      />
+      <ElectionNightModal
+        isOpen={Boolean(activeElectionModal)}
+        stageType={activeElectionModal ?? 'PASO'}
+        state={campaignState}
+        onProceed={onProceedElection}
+        onRetryCampaign={onRetryCampaign}
+        onBreakPartySplit={onBreakPartySplit}
+        onNewGameSetup={onNewGameSetup}
+      />
+    </>
+  );
+}
 function checkElectionTransitionToGovernment(
   stage: ElectionStageType,
   isVictory: boolean,
@@ -538,6 +601,10 @@ function checkElectionTransitionToGovernment(
   if (!isVictory) return false;
   if (stage === 'BALOTAJE') return true;
   return stage === 'GENERALES' && !isRunoff;
+}
+
+function resolvePostGeneralRunoffMode(stage: ElectionStageType, isRunoff: boolean) {
+  return stage === 'GENERALES' && isRunoff ? 'BALOTAJE' : null;
 }
 
 function resolveInitialRigiSectors(saved?: SimulationState['rigiSectors']): NonNullable<SimulationState['rigiSectors']> {
@@ -586,11 +653,25 @@ function resolveGovStageEntry(
   return { shouldAssume: true, modalStage: null, nextState: next };
 }
 
+function resolvePendingDebateModeForMonth(next: CampaignSimulationState) {
+  const done = next.resolvedDebates ?? [];
+  if (next.stage.currentMonthIndex === 9 && !done.includes('GENERALES_2027')) {
+    return 'GENERALES' as const;
+  }
+  return next.activeDebateMode ?? null;
+}
+
 function buildSteppedCampaignState(next: CampaignSimulationState): {
   modalStage: ElectionStageType | null;
   nextState: CampaignSimulationState;
 } {
-  const dilemma = resolveMonthlyDilemma(next.stage.currentMonthIndex, next.resolvedDilemmas);
+  const seedKey = `${next.candidateId}-${next.partySigla}`;
+  const dilemma = resolveMonthlyDilemma(
+    next.stage.currentMonthIndex,
+    next.resolvedDilemmas,
+    null,
+    seedKey
+  );
   const electionStage = resolveElectionStageForMonth(next.stage.currentMonthIndex);
   const isDefeat = electionStage ? computeEscrutinio(electionStage, next).isDefeat : false;
   return {
@@ -598,6 +679,7 @@ function buildSteppedCampaignState(next: CampaignSimulationState): {
     nextState: {
       ...next,
       activeMonthlyDilemmaId: dilemma ? dilemma.id : null,
+      activeDebateMode: resolvePendingDebateModeForMonth(next),
       electionDefeated: isDefeat ? true : next.electionDefeated
     }
   };
@@ -760,10 +842,18 @@ export function App() {
     setActiveElectionModal(null);
   };
 
-  const handleProceedElection = () => {
-    if (!activeElectionModal) {
-      return;
+  const finalizeElectionOutcome = (stage: ElectionStageType, isVictory: boolean, isRunoff: boolean) => {
+    if (checkElectionTransitionToGovernment(stage, isVictory, isRunoff)) {
+      startPresidentialGovernment();
+    } else {
+      const nextDebate = resolvePostGeneralRunoffMode(stage, isRunoff);
+      if (nextDebate) setCampaignState((prev) => ({ ...prev, activeDebateMode: nextDebate }));
     }
+    setActiveElectionModal(null);
+  };
+
+  const handleProceedElection = () => {
+    if (!activeElectionModal) return;
     const escrutinio = computeEscrutinio(activeElectionModal, campaignState);
     if (escrutinio.isDefeat) {
       handleRetryCampaign();
@@ -774,10 +864,7 @@ export function App() {
       setActiveElectionModal(null);
       return;
     }
-    if (checkElectionTransitionToGovernment(activeElectionModal, escrutinio.isVictory, escrutinio.isRunoff)) {
-      startPresidentialGovernment();
-    }
-    setActiveElectionModal(null);
+    finalizeElectionOutcome(activeElectionModal, escrutinio.isVictory, escrutinio.isRunoff);
   };
 
   const activeDilemma = useMemo(() => {
@@ -786,7 +873,8 @@ export function App() {
     }
     return resolveMonthlyDilemma(
       campaignState.stage.currentMonthIndex,
-      campaignState.resolvedDilemmas
+      campaignState.resolvedDilemmas,
+      campaignState.activeMonthlyDilemmaId
     );
   }, [
     campaignState.activeMonthlyDilemmaId,
@@ -812,7 +900,14 @@ export function App() {
     if (!card) {
       return;
     }
-    setCampaignState((prev) => executeCampaignAction(prev, card, payload));
+    setCampaignState((prev) => {
+      const allowed = canExecuteCampaignAction(prev, card).allowed;
+      const executed = executeCampaignAction(prev, card, payload);
+      if (allowed && payload.actionId === 'DEBATE') {
+        return { ...executed, activeDebateMode: 'CAMPAÑA' };
+      }
+      return executed;
+    });
   };
 
   const handleExportSaveCode = () => {
@@ -906,15 +1001,13 @@ export function App() {
           onExecuteAction={handleExecuteCampaignAction}
           onUpdateCampaignState={setCampaignState}
         />
-        <CampaignMonthlyDilemmaModal
-          dilemma={activeDilemma}
-          onSelectOption={handleResolveDilemma}
-        />
-        <ElectionNightModal
-          isOpen={Boolean(activeElectionModal)}
-          stageType={activeElectionModal ?? 'PASO'}
-          state={campaignState}
-          onProceed={handleProceedElection}
+        <CampaignModalsHost
+          campaignState={campaignState}
+          activeDilemma={activeDilemma}
+          activeElectionModal={activeElectionModal}
+          onResolveDilemma={handleResolveDilemma}
+          onUpdateCampaign={setCampaignState}
+          onProceedElection={handleProceedElection}
           onRetryCampaign={handleRetryCampaign}
           onBreakPartySplit={handleBreakPartySplit}
           onNewGameSetup={() => {

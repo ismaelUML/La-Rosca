@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import type {
   CampaignActionCard,
+  CampaignActionCategory,
   CampaignExecutePayload,
   CampaignSimulationState
 } from '@argentina-sim/domain';
@@ -10,15 +11,52 @@ import type { MediaOutletLogoId } from '../party-setup/officialLogosCatalog.js';
 import { OfficialMediaLogo } from '../party-setup/OfficialLogoBadge.js';
 
 // Vista de ESTRATEGIA -> Acciones de campana en estetica tactica acero/bronce:
-// catalogo de operaciones electorales con pildoras de impacto, fatiga de uso,
-// selector territorial federal y validacion de presupuesto y cupo mensual.
+// catalogo de 52 operaciones electorales con filtros por rubro, buscador,
+// pildoras de impacto, fatiga de uso y selector territorial federal.
 
 const ACTION_MEDIA_STRIPS: Partial<Record<string, MediaOutletLogoId[]>> = {
   ENTREVISTA: ['TN', 'LN_MAS', 'C5N', 'A24'],
   PUBLICIDAD: ['CLARIN', 'INFOBAE', 'LA_NACION', 'FORBES'],
   DEBATE: ['TV_PUBLICA', 'TN', 'C5N', 'CNN_ESPANOL'],
-  MILITANCIA_DIGITAL: ['EL_DESTAPE', 'REVISTA_BARCELONA', 'INFOBAE']
+  MILITANCIA_DIGITAL: ['EL_DESTAPE', 'REVISTA_BARCELONA', 'INFOBAE'],
+  PRIME_TIME_MANO_A_MANO: ['LN_MAS', 'TN', 'A24', 'CRONICA_TV'],
+  TAPA_DOMINICAL_PRENSA: ['CLARIN', 'LA_NACION', 'PAGINA_12', 'VOZ_INTERIOR'],
+  RADIOS_DEL_INTERIOR: ['VOZ_INTERIOR', 'CANAL_26', 'TV_PUBLICA'],
+  DESPLIEGUE_STREAMERS: ['INFOBAE', 'REVISTA_BARCELONA', 'CRONICA_TV'],
+  PRESENTACION_LIBRO_PLAN: ['CRONISTA', 'FORBES', 'LA_NACION', 'BLOOMBERG'],
+  CONTRASPOT_DEMOLEDOR: ['CRONICA_TV', 'C5N', 'A24', 'EL_DESTAPE'],
+  BUNKER_FACT_CHECKING: ['INFOBAE', 'CLARIN', 'CNN_ESPANOL']
 };
+
+const ACTION_CATEGORY_FALLBACK: Record<string, CampaignActionCategory> = {
+  RECORRIDA: 'TERRITORIO',
+  ENTREVISTA: 'MEDIOS',
+  PUBLICIDAD: 'MEDIOS',
+  ACTO_PARTIDARIO: 'TERRITORIO',
+  FORMACION_EQUIPOS: 'ESTRUCTURA',
+  DEBATE: 'MEDIOS',
+  MILITANCIA_DIGITAL: 'MEDIOS',
+  REUNION_AFILIADOS: 'ESTRUCTURA',
+  NEGOCIACION_SECTORES: 'ROSCA',
+  CARPETAZO_MEDIATICO: 'ROSCA',
+  PACTO_CON_INTENDENTES: 'ROSCA',
+  ACTO_ESTADIO_PLAZA: 'TERRITORIO',
+  CONCILIACION_CIRCULO_ROJO: 'ROSCA',
+  GIRA_INTERNACIONAL: 'MEDIOS',
+  DESPLIEGUE_STREAMERS: 'MEDIOS'
+};
+
+function resolveActionCategory(card: CampaignActionCard): CampaignActionCategory {
+  return card.category ?? ACTION_CATEGORY_FALLBACK[card.id] ?? 'MEDIOS';
+}
+
+const ACTION_CATEGORY_TABS: Array<{ id: 'TODAS' | CampaignActionCategory; label: string }> = [
+  { id: 'TODAS', label: 'Todas' },
+  { id: 'MEDIOS', label: 'Medios y Redes' },
+  { id: 'TERRITORIO', label: 'Territorio Federal' },
+  { id: 'ROSCA', label: 'Rosca y Círculo Rojo' },
+  { id: 'ESTRUCTURA', label: 'Estructura y Fiscales' }
+];
 
 function ActionMediaStrip({ actionId }: { actionId: string }) {
   const outlets = ACTION_MEDIA_STRIPS[actionId];
@@ -312,19 +350,89 @@ interface CampaignActionsViewProps {
   onAdvanceMonth: () => void;
 }
 
+function filterCampaignActions(
+  categoryFilter: 'TODAS' | CampaignActionCategory,
+  searchQuery: string
+): CampaignActionCard[] {
+  const q = searchQuery.trim().toLowerCase();
+  return CAMPAIGN_ACTIONS_CATALOG.filter((card) => {
+    const matchesCat = categoryFilter === 'TODAS' || resolveActionCategory(card) === categoryFilter;
+    if (!matchesCat) return false;
+    if (!q) return true;
+    return card.title.toLowerCase().includes(q) || card.description.toLowerCase().includes(q);
+  });
+}
+
+function ActionCategoryFilterBar({
+  categoryFilter,
+  searchQuery,
+  totalFiltered,
+  onSelectCategory,
+  onSearchChange
+}: {
+  categoryFilter: 'TODAS' | CampaignActionCategory;
+  searchQuery: string;
+  totalFiltered: number;
+  onSelectCategory: (cat: 'TODAS' | CampaignActionCategory) => void;
+  onSearchChange: (q: string) => void;
+}) {
+  return (
+    <div className="hoi-panel rounded-sm p-3.5 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center gap-1.5">
+        {ACTION_CATEGORY_TABS.map((tab) => {
+          const active = categoryFilter === tab.id;
+          const cls = active
+            ? 'bg-[#b89342] text-[#090d14] border-[#d4b26a]'
+            : 'bg-[#090d14] text-slate-300 border-[#263142] hover:border-slate-500';
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => onSelectCategory(tab.id)}
+              className={`px-3 py-1 rounded-sm border text-[11px] font-mono font-bold uppercase tracking-wider transition ${cls}`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Buscar operación..."
+          className="bg-[#090d14] border border-[#263142] focus:border-[#b89342] rounded-sm px-3 py-1 text-xs font-mono text-slate-200 focus:outline-none w-48"
+        />
+        <span className="text-[11px] font-mono text-amber-300 shrink-0">
+          {totalFiltered}/{CAMPAIGN_ACTIONS_CATALOG.length}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function CampaignActionsView({
   state,
   onExecuteAction,
   onAdvanceMonth
 }: CampaignActionsViewProps) {
   const [selectedProvinceId, setSelectedProvinceId] = useState(state.targetProvinceId || 'PBA');
+  const [categoryFilter, setCategoryFilter] = useState<'TODAS' | CampaignActionCategory>('TODAS');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredActions = useMemo(
+    () => filterCampaignActions(categoryFilter, searchQuery),
+    [categoryFilter, searchQuery]
+  );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <header className="hoi-panel hoi-header-steel rounded-sm p-5 flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-400">
-            ESTRATEGIA · OPERACIONES DE CAMPAÑA
+            ESTRATEGIA · {CAMPAIGN_ACTIONS_CATALOG.length} OPERACIONES DE CAMPAÑA
           </div>
           <h1 className="text-2xl md:text-3xl font-serif font-bold text-amber-100 mt-0.5 uppercase tracking-wide">
             Acciones de campaña
@@ -348,8 +456,16 @@ export function CampaignActionsView({
         </div>
       </header>
 
+      <ActionCategoryFilterBar
+        categoryFilter={categoryFilter}
+        searchQuery={searchQuery}
+        totalFiltered={filteredActions.length}
+        onSelectCategory={setCategoryFilter}
+        onSearchChange={setSearchQuery}
+      />
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {CAMPAIGN_ACTIONS_CATALOG.map((action) => (
+        {filteredActions.map((action) => (
           <ActionCardItem
             key={action.id}
             action={action}
