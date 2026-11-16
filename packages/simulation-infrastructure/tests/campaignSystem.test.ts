@@ -120,6 +120,27 @@ describe('Sistema Electoral y Campaña 2027 (Screenshots)', () => {
     );
     expect(customState.candidateName).toBe('Ana Rivas');
     expect(customState.partySigla).toBe('MIP');
+    expect(customState.partyAxis).toEqual({ economic: 50, cultural: 50 });
+
+    const leftCustomState = createInitialCampaignState(
+      { id: 'CUSTOM', name: 'Lucas Paz' },
+      {
+        id: 'CUSTOM',
+        sigla: 'FLP',
+        name: 'Frente Laboral Popular',
+        colorName: 'Carmín',
+        primaryColor: '#e11d48',
+        ideology: 'Izquierda / Socialismo',
+        description: 'Partido propio progresista',
+        economicPosition: 18,
+        culturalPosition: 22,
+        socialBase: 'Trabajadores y estudiantes',
+        emblem: llaParty.emblem
+      },
+      'PRESIDENTE',
+      'PBA'
+    );
+    expect(leftCustomState.partyAxis).toEqual({ economic: 18, cultural: 22 });
   });
 
   it('avanza los meses de campaña hasta desbloquear la asunción en diciembre', () => {

@@ -11,7 +11,10 @@ import {
 } from '@argentina-sim/domain';
 import { REAL_POLITICIANS_2027 } from '@argentina-sim/infrastructure';
 import { OfficialPartyLogo } from '../party-setup/OfficialLogoBadge.js';
-import { VicePresidentSelectionModal } from './VicePresidentSelectionModal.js';
+import {
+  findViceCandidateById,
+  VicePresidentSelectionModal
+} from './VicePresidentSelectionModal.js';
 
 // Vista de POLITICO -> Candidatura y coaliciones en estetica tactica acero/bronce:
 // Oficializacion de candidatura, designacion de companero de formula y armado de alianzas electorales.
@@ -270,48 +273,97 @@ interface CandidaturaSectionProps {
   onConfirm: (candidateId: string, candidateName: string) => void;
 }
 
+function ConfirmedCandidacyPanel({ state }: { state: CampaignSimulationState }) {
+  return (
+    <section className="hoi-panel rounded-sm p-5 space-y-3">
+      <div className="flex items-center justify-between border-b border-[#263142] pb-2.5">
+        <h2 className="text-sm font-serif font-bold uppercase tracking-wider text-amber-100">
+          1 · Candidatura Oficializada
+        </h2>
+        <span className="text-[10px] font-mono font-bold text-emerald-300 bg-emerald-950/60 border border-emerald-600/60 px-2.5 py-0.5 rounded-sm uppercase">
+          ✓ Ratificada
+        </span>
+      </div>
+      <div className="p-4 rounded-sm bg-[#090d14] border border-[#263142] space-y-1.5">
+        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Candidato proclamado:</div>
+        <div className="text-base font-serif font-bold text-amber-100 flex items-center gap-2">
+          <span>{state.candidateName}</span>
+          <span className="text-xs font-mono font-normal text-sky-300">
+            ({state.partySigla})
+          </span>
+        </div>
+        <p className="text-xs text-slate-400 pt-1">
+          La candidatura ya fue oficializada ante la junta electoral partidaria y quedó firme para los comicios.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function CandidaturaBodyPanel({
+  candidateMode,
+  candidateName,
+  ownPartyDirigentes,
+  selectedDelegateId,
+  assessment,
+  onSelectDelegate
+}: {
+  candidateMode: 'YO' | 'OTRO';
+  candidateName: string;
+  ownPartyDirigentes: (typeof REAL_POLITICIANS_2027)[number][];
+  selectedDelegateId: string;
+  assessment: DelegateAssessment | null;
+  onSelectDelegate: (id: string) => void;
+}) {
+  if (candidateMode === 'YO') {
+    return <CandidateLeadText name={candidateName} />;
+  }
+  if (ownPartyDirigentes.length === 0) {
+    return (
+      <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142] text-xs font-mono text-slate-300 leading-relaxed">
+        Tu fuerza personalizada todavía no tiene dirigentes reclutados para delegar la cabeza de lista. Encabezá la boleta o cerrá un pase en la pestaña Apoyos.
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-3.5 pt-1">
+      <DelegateSelector
+        candidates={ownPartyDirigentes}
+        selectedId={selectedDelegateId}
+        onSelect={onSelectDelegate}
+      />
+      <div className="p-3 rounded-sm bg-amber-950/30 border border-[#8a6d33]/70 text-xs font-mono text-amber-200/90 leading-relaxed">
+        Si tu delegado gana las generales, conducís el espacio desde las sombras pero con riesgo de rebelión de palacio.
+      </div>
+      <DelegateAssessmentPill assessment={assessment} />
+    </div>
+  );
+}
+
+function resolveOwnAndRecruitedDirigentes(state: CampaignSimulationState) {
+  const defections = state.diplomacy?.defections ?? {};
+  return REAL_POLITICIANS_2027.filter(
+    (p) => p.partySigla === state.partySigla || defections[p.id]?.verdict === 'ACEPTO'
+  );
+}
+
 function CandidaturaSection({ state, onConfirm }: CandidaturaSectionProps) {
   const [candidateMode, setCandidateMode] = useState<'YO' | 'OTRO'>('YO');
-  const ownPartyDirigentes = useMemo(
-    () => REAL_POLITICIANS_2027.filter((p) => p.partySigla === state.partySigla),
-    [state.partySigla]
+  const ownPartyDirigentes = useMemo(() => resolveOwnAndRecruitedDirigentes(state), [state]);
+  const [selectedDelegateId, setSelectedDelegateId] = useState(
+    ownPartyDirigentes[0]?.id ?? state.candidateId
   );
-  const defaultId = ownPartyDirigentes[0]?.id ?? state.candidateId;
-  const [selectedDelegateId, setSelectedDelegateId] = useState(defaultId);
 
   const { assessment } = useMemo(
     () => resolveDelegateData(ownPartyDirigentes, selectedDelegateId, state.targetRole),
     [ownPartyDirigentes, selectedDelegateId, state.targetRole]
   );
 
-  const canConfirm = candidateMode === 'YO' ? true : Boolean(assessment?.eligible);
-
   if (state.isCandidacyConfirmed) {
-    return (
-      <section className="hoi-panel rounded-sm p-5 space-y-3">
-        <div className="flex items-center justify-between border-b border-[#263142] pb-2.5">
-          <h2 className="text-sm font-serif font-bold uppercase tracking-wider text-amber-100">
-            1 · Candidatura Oficializada
-          </h2>
-          <span className="text-[10px] font-mono font-bold text-emerald-300 bg-emerald-950/60 border border-emerald-600/60 px-2.5 py-0.5 rounded-sm uppercase">
-            ✓ Ratificada
-          </span>
-        </div>
-        <div className="p-4 rounded-sm bg-[#090d14] border border-[#263142] space-y-1.5">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Candidato proclamado:</div>
-          <div className="text-base font-serif font-bold text-amber-100 flex items-center gap-2">
-            <span>{state.candidateName}</span>
-            <span className="text-xs font-mono font-normal text-sky-300">
-              ({state.partySigla})
-            </span>
-          </div>
-          <p className="text-xs text-slate-400 pt-1">
-            La candidatura ya fue oficializada ante la junta electoral partidaria y quedó firme para los comicios.
-          </p>
-        </div>
-      </section>
-    );
+    return <ConfirmedCandidacyPanel state={state} />;
   }
+
+  const canConfirm = candidateMode === 'YO' ? true : Boolean(assessment?.eligible);
 
   const handleConfirmClick = () => {
     if (candidateMode === 'YO') {
@@ -333,21 +385,14 @@ function CandidaturaSection({ state, onConfirm }: CandidaturaSectionProps) {
 
       <CandidateModeToggle candidateMode={candidateMode} onChangeMode={setCandidateMode} />
 
-      {candidateMode === 'YO' ? (
-        <CandidateLeadText name={state.candidateName} />
-      ) : (
-        <div className="space-y-3.5 pt-1">
-          <DelegateSelector
-            candidates={ownPartyDirigentes}
-            selectedId={selectedDelegateId}
-            onSelect={setSelectedDelegateId}
-          />
-          <div className="p-3 rounded-sm bg-amber-950/30 border border-[#8a6d33]/70 text-xs font-mono text-amber-200/90 leading-relaxed">
-            Si tu delegado gana las generales, conducís el espacio desde las sombras pero con riesgo de rebelión de palacio.
-          </div>
-          <DelegateAssessmentPill assessment={assessment} />
-        </div>
-      )}
+      <CandidaturaBodyPanel
+        candidateMode={candidateMode}
+        candidateName={state.candidateName}
+        ownPartyDirigentes={ownPartyDirigentes}
+        selectedDelegateId={selectedDelegateId}
+        assessment={assessment}
+        onSelectDelegate={setSelectedDelegateId}
+      />
 
       <div>
         <button
@@ -364,12 +409,15 @@ function CandidaturaSection({ state, onConfirm }: CandidaturaSectionProps) {
 }
 
 interface VicepresidenciaSectionProps {
-  runningMateId?: string | null;
+  state: CampaignSimulationState;
   onOpenModal: () => void;
 }
 
-function VicepresidenciaSection({ runningMateId, onOpenModal }: VicepresidenciaSectionProps) {
-  const viceObj = REAL_POLITICIANS_2027.find((p) => p.id === runningMateId);
+function VicepresidenciaSection({ state, onOpenModal }: VicepresidenciaSectionProps) {
+  const viceObj = useMemo(
+    () => findViceCandidateById(state, state.runningMateId),
+    [state]
+  );
 
   return (
     <section className="hoi-panel rounded-sm p-5 space-y-3.5">
@@ -707,7 +755,7 @@ export function CampaignCoalicionesView({ state, onUpdateState }: CampaignCoalic
       <CandidaturaSection state={state} onConfirm={handleConfirmCandidacy} />
 
       <VicepresidenciaSection
-        runningMateId={state.runningMateId}
+        state={state}
         onOpenModal={() => setIsViceModalOpen(true)}
       />
 

@@ -395,6 +395,15 @@ const GENERIC_LOCAL_ZONES = [
   { id: 'ZONA_SUR', name: 'Zona sur y sierras', visitsCount: 0 }
 ];
 
+function resolveInitialPartyAxis(party: PoliticalPartyPreset) {
+  const fallback = resolvePartyAxis(party.sigla);
+  const hasExplicitPos =
+    Number.isFinite(party.economicPosition) && Number.isFinite(party.culturalPosition);
+  return hasExplicitPos
+    ? { economic: party.economicPosition, cultural: party.culturalPosition }
+    : fallback;
+}
+
 export function createInitialCampaignState(
   candidate: RealPoliticianPreset | { id: string; name: string },
   party: PoliticalPartyPreset,
@@ -429,7 +438,7 @@ export function createInitialCampaignState(
     partyId: party.id,
     partySigla: party.sigla,
     partyColor: party.primaryColor,
-    partyAxis: resolvePartyAxis(party.sigla),
+    partyAxis: resolveInitialPartyAxis(party),
     countryMood: createInitialCountryMood(),
     diplomacy: {
       endorsements: {},

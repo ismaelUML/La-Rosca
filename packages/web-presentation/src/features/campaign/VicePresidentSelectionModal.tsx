@@ -1,15 +1,25 @@
 import React, { useMemo } from 'react';
-import type { CampaignSimulationState } from '@argentina-sim/domain';
+import {
+  affinityPctFromDistance,
+  buildPoliticianProfile,
+  ideologicalDistance,
+  resolvePartyAxis,
+  type CampaignSimulationState,
+  type IdeologicalAxisPosition
+} from '@argentina-sim/domain';
 import { REAL_POLITICIANS_2027 } from '@argentina-sim/infrastructure';
+import { OfficialPartyLogo } from '../party-setup/OfficialLogoBadge.js';
 
 // Modal de seleccion de Vicepresidente en estetica tactica acero/bronce:
-// El vice equilibra el binomio presidencial y desempata votaciones en el Senado.
+// Evita caer en un slice crudo del dataset (que tiraba siempre los primeros 8 de LLA)
+// cuando jugas con partido propio: genera cuadros propios + pases/socios + afines por eje.
 
-interface ViceCandidateOption {
+export interface ViceCandidateOption {
   id: string;
   name: string;
   partySigla: string;
   roleDescription: string;
+  sourceLabel: string;
   relevance: number;
   structure: number;
 }
@@ -22,38 +32,204 @@ function computePolHash(polId: string, salt: number, mod: number): number {
   return h % mod;
 }
 
-function resolveAvailableViceCandidates(state: CampaignSimulationState): ViceCandidateOption[] {
-  const allowedParties = [state.partySigla, ...(state.coalitionParties ?? [])];
+function resolveEconomicCadre(economic: number): { idSuffix: string; name: string; roleDescription: string } {
+  if (economic <= 36) {
+    return {
+      idSuffix: 'ECO_IND',
+      name: 'Dr. Ricardo Altamirano',
+      roleDescription: 'Economista industrial y exdirector de banca de desarrollo (cuadro propio)'
+    };
+  }
+  if (economic <= 66) {
+    return {
+      idSuffix: 'ECO_DES',
+      name: 'Lic. Mariana Sosa Etcheverry',
+      roleDescription: 'Economista desarrollista, especialista en cuentas federales y producción'
+    };
+  }
+  return {
+    idSuffix: 'ECO_LIB',
+    name: 'Mg. Tomás Urquiza',
+    roleDescription: 'Economista fiscal y tributario, exasesor parlamentario de presupuesto'
+  };
+}
 
-  const matched = REAL_POLITICIANS_2027.filter((p) => {
-    if (p.id === state.candidateId) {
-      return false;
-    }
-    return allowedParties.includes(p.partySigla);
-  });
+function resolveCulturalCadre(cultural: number): { idSuffix: string; name: string; roleDescription: string } {
+  if (cultural <= 38) {
+    return {
+      idSuffix: 'CUL_SOC',
+      name: 'Dra. Valeria Benítez',
+      roleDescription: 'Referente en derechos laborales, educación pública y gestión social'
+    };
+  }
+  if (cultural <= 66) {
+    return {
+      idSuffix: 'CUL_REP',
+      name: 'Dr. Esteban Morales',
+      roleDescription: 'Constitucionalista federal y exsecretario parlamentario'
+    };
+  }
+  return {
+    idSuffix: 'CUL_ORD',
+    name: 'Cnel. (RE) Hernán Salgado',
+    roleDescription: 'Especialista en seguridad interior, defensa y orden institucional'
+  };
+}
 
-  const pool =
-    matched.length > 0
-      ? matched
-      : REAL_POLITICIANS_2027.filter((p) => p.id !== state.candidateId).slice(0, 8);
+function buildCustomPartyViceCadres(state: CampaignSimulationState): ViceCandidateOption[] {
+  const axis = state.partyAxis ?? resolvePartyAxis(state.partySigla);
+  const eco = resolveEconomicCadre(axis.economic);
+  const cul = resolveCulturalCadre(axis.cultural);
+  const provTag = state.targetProvinceId.replace(/_/g, ' ');
 
-  return pool.map((p) => ({
+  const cadres = [
+    eco,
+    {
+      idSuffix: 'TERR',
+      name: 'Cecilia Ferreyra',
+      roleDescription: `Armadora territorial y exlegisladora por ${provTag} (estructura orgánica)`
+    },
+    cul
+  ];
+
+  return cadres.map((c, idx) => ({
+    id: `CUSTOM_VICE_${state.partySigla}_${c.idSuffix}`,
+    name: c.name,
+    partySigla: state.partySigla,
+    roleDescription: c.roleDescription,
+    sourceLabel: `Cuadro propio · ${state.partySigla}`,
+    relevance: 64 + idx * 4,
+    structure: 74 - idx * 3
+  }));
+}
+
+function getAcceptedDefectionIds(state: CampaignSimulationState): Set<string> {
+  const out = new Set<string>();
+  const entries = Object.entries(state.diplomacy?.defections ?? {});
+  for (const [id, rec] of entries) {
+    if (rec.verdict === 'ACEPTO') out.add(id);
+  }
+  return out;
+}
+
+function mapPoliticianToViceOption(
+  p: (typeof REAL_POLITICIANS_2027)[number],
+  sourceLabel: string,
+  overrideSigla?: string
+): ViceCandidateOption {
+  return {
     id: p.id,
     name: p.name,
-    partySigla: p.partySigla,
+    partySigla: overrideSigla ?? p.partySigla,
     roleDescription: p.roleDescription,
+    sourceLabel,
     relevance: 55 + computePolHash(p.id, 31, 20),
     structure: 60 + computePolHash(p.id, 19, 25)
-  }));
+  };
+}
+
+function rankAlignedExternalCandidates(
+  state: CampaignSimulationState,
+  excludeIds: Set<string>,
+  playerAxis: IdeologicalAxisPosition,
+  maxTotal: number
+): ViceCandidateOption[] {
+  const ranked = REAL_POLITICIANS_2027
+    .filter((p) => !excludeIds.has(p.id))
+    .map((p) => {
+      const dist = ideologicalDistance(buildPoliticianProfile(p).axis, playerAxis);
+      return { p, dist, affinity: affinityPctFromDistance(dist) };
+    })
+    .sort((a, b) => a.dist - b.dist);
+
+  const perPartyCount: Record<string, number> = {};
+  const result: ViceCandidateOption[] = [];
+
+  for (const item of ranked) {
+    const sigla = item.p.partySigla;
+    const used = perPartyCount[sigla] ?? 0;
+    if (used >= 2) continue;
+    perPartyCount[sigla] = used + 1;
+    result.push(mapPoliticianToViceOption(item.p, `Extrapartidario afín (${item.affinity}%)`));
+    if (result.length >= maxTotal) break;
+  }
+
+  return result;
+}
+
+function resolveAffiliatedSourceTag(
+  polId: string,
+  polPartySigla: string,
+  playerSigla: string,
+  coalitionSet: Set<string>,
+  defectedIds: Set<string>
+): { tag: string; displaySigla: string } {
+  if (defectedIds.has(polId)) {
+    return { tag: `Pase a ${playerSigla}`, displaySigla: playerSigla };
+  }
+  if (coalitionSet.has(polPartySigla)) {
+    return { tag: `Socio · ${polPartySigla}`, displaySigla: polPartySigla };
+  }
+  return { tag: `Dirigente · ${polPartySigla}`, displaySigla: polPartySigla };
+}
+
+function collectAffiliatedCandidates(state: CampaignSimulationState): ViceCandidateOption[] {
+  const coalitionSet = new Set(state.coalitionParties ?? []);
+  const defectedIds = getAcceptedDefectionIds(state);
+
+  return REAL_POLITICIANS_2027
+    .filter((p) => {
+      if (p.id === state.candidateId) return false;
+      return p.partySigla === state.partySigla || coalitionSet.has(p.partySigla) || defectedIds.has(p.id);
+    })
+    .map((p) => {
+      const { tag, displaySigla } = resolveAffiliatedSourceTag(
+        p.id,
+        p.partySigla,
+        state.partySigla,
+        coalitionSet,
+        defectedIds
+      );
+      return mapPoliticianToViceOption(p, tag, displaySigla);
+    });
+}
+
+export function resolveAvailableViceCandidates(state: CampaignSimulationState): ViceCandidateOption[] {
+  const playerAxis = state.partyAxis ?? resolvePartyAxis(state.partySigla);
+  const hasNativeRoster = REAL_POLITICIANS_2027.some((p) => p.partySigla === state.partySigla);
+  const affiliated = collectAffiliatedCandidates(state);
+
+  if (!hasNativeRoster) {
+    const customCadres = buildCustomPartyViceCadres(state);
+    const exclude = new Set([state.candidateId, ...affiliated.map((a) => a.id)]);
+    const externals = rankAlignedExternalCandidates(state, exclude, playerAxis, 5);
+    return [...customCadres, ...affiliated, ...externals];
+  }
+
+  if (affiliated.length > 0) return affiliated;
+  const exclude = new Set([state.candidateId]);
+  return rankAlignedExternalCandidates(state, exclude, playerAxis, 6);
+}
+
+export function findViceCandidateById(
+  state: CampaignSimulationState,
+  candidateId?: string | null
+): ViceCandidateOption | null {
+  if (!candidateId) return null;
+  const fromPool = resolveAvailableViceCandidates(state).find((c) => c.id === candidateId);
+  if (fromPool) return fromPool;
+  const fromCatalog = REAL_POLITICIANS_2027.find((p) => p.id === candidateId);
+  return fromCatalog ? mapPoliticianToViceOption(fromCatalog, `Dirigente · ${fromCatalog.partySigla}`) : null;
 }
 
 interface ViceCandidateCardProps {
   candidate: ViceCandidateOption;
+  partyColor: string;
   isSelected: boolean;
   onSelect: (c: ViceCandidateOption) => void;
 }
 
-function ViceCandidateCard({ candidate, isSelected, onSelect }: ViceCandidateCardProps) {
+function ViceCandidateCard({ candidate, partyColor, isSelected, onSelect }: ViceCandidateCardProps) {
   return (
     <div
       className={`rounded-sm bg-[#090d14] border p-4 flex flex-col justify-between space-y-3 transition ${
@@ -62,15 +238,17 @@ function ViceCandidateCard({ candidate, isSelected, onSelect }: ViceCandidateCar
     >
       <div className="space-y-2">
         <div className="flex items-center gap-2.5 border-b border-[#1e293b] pb-2">
-          <div className="w-8 h-8 rounded-sm bg-[#0c1119] border border-[#8a6d33]/80 flex items-center justify-center font-mono font-bold text-xs text-amber-200 shrink-0">
-            {candidate.partySigla}
-          </div>
+          <OfficialPartyLogo
+            partyIdOrSigla={candidate.partySigla}
+            sizePx={32}
+            fallbackColor={partyColor}
+          />
           <div>
             <h4 className="text-sm font-serif font-bold text-amber-100 uppercase tracking-wide leading-tight">
               {candidate.name}
             </h4>
-            <div className="text-[11px] font-mono text-slate-400">
-              Referente de {candidate.partySigla} · Relevancia {candidate.relevance}
+            <div className="text-[11px] font-mono text-sky-300">
+              {candidate.sourceLabel} · Relevancia {candidate.relevance}
             </div>
           </div>
         </div>
@@ -155,6 +333,7 @@ export function VicePresidentSelectionModal({
             <ViceCandidateCard
               key={opt.id}
               candidate={opt}
+              partyColor={state.partyColor}
               isSelected={state.runningMateId === opt.id}
               onSelect={handleSelect}
             />
