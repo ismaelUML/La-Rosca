@@ -161,7 +161,22 @@ function resolvePlayerSeatStyle(state: CampaignSimulationState): DebateRivalSeat
   return 'FEDERAL';
 }
 
-export function resolveDebateRivals(
+function resolveInternalPollRivals(state: CampaignSimulationState): DebateRivalSeat[] {
+  const playerStyle = resolvePlayerSeatStyle(state);
+  return state.internalPoll.candidates
+    .filter((c) => !c.isPlayer)
+    .slice(0, 4)
+    .map((c) => ({
+      partySigla: c.partySigla || state.partySigla,
+      partyName: state.partySigla,
+      candidateName: c.name,
+      partyColor: c.color || state.partyColor,
+      pollingPct: round2(c.voteSharePct),
+      styleTag: playerStyle
+    }));
+}
+
+function resolveExternalPresetRivals(
   state: CampaignSimulationState,
   mode: DebateMode
 ): DebateRivalSeat[] {
@@ -174,6 +189,17 @@ export function resolveDebateRivals(
     .map((r) => ({ ...r, pollingPct: round2(polling[r.partySigla] ?? r.pollingPct) }))
     .sort((a, b) => b.pollingPct - a.pollingPct)
     .slice(0, maxRivals);
+}
+
+export function resolveDebateRivals(
+  state: CampaignSimulationState,
+  mode: DebateMode
+): DebateRivalSeat[] {
+  if (mode === 'CAMPAÑA' && state.stage.stage === 'INTERNA') {
+    const internalRivals = resolveInternalPollRivals(state);
+    if (internalRivals.length > 0) return internalRivals;
+  }
+  return resolveExternalPresetRivals(state, mode);
 }
 
 function rotateWithSeed<T>(items: readonly T[], seed: number): T[] {
@@ -217,7 +243,7 @@ function pickPromptForRound(
   return shuffled.find((p) => !usedIds.has(p.id)) ?? shuffled[0]!;
 }
 
-function resolveSessionMeta(mode: DebateMode) {
+function resolveSessionMeta(mode: DebateMode, stage: CampaignSimulationState['stage']['stage']) {
   if (mode === 'BALOTAJE') {
     return {
       title: 'Debate Presidencial de Balotaje · Cara a Cara',
@@ -232,11 +258,32 @@ function resolveSessionMeta(mode: DebateMode) {
       isMandatory: true
     };
   }
+  if (stage === 'INTERNA') {
+    return {
+      title: 'Debate de Interna Partidaria · Estudio TV',
+      subtitle: 'Cruce televisado entre precandidatos del espacio · Sin carácter CNE',
+      isMandatory: false
+    };
+  }
   return {
-    title: 'Estudio TV 3D · Debate Abierto de Campaña',
-    subtitle: 'Transmisión multiplataforma en vivo · Bloques temáticos y derecho a réplica',
+    title: 'Debate Televisado de Campaña · Prime Time',
+    subtitle: 'Mesa redonda en vivo por canales de noticias · Transmisión privada',
     isMandatory: false
   };
+}
+
+function arrangeDebatePodiums(
+  playerSeat: DebateRivalSeat,
+  rivals: DebateRivalSeat[],
+  mode: DebateMode
+): DebateRivalSeat[] {
+  if (mode === 'BALOTAJE' || rivals.length <= 1) {
+    return rivals[0] ? [playerSeat, rivals[0]] : [playerSeat];
+  }
+  if (rivals.length === 2) {
+    return [rivals[0]!, playerSeat, rivals[1]!];
+  }
+  return [rivals[0]!, rivals[1]!, playerSeat, ...rivals.slice(2)];
 }
 
 export function buildDebateSession(
@@ -256,7 +303,7 @@ export function buildDebateSession(
     styleTag: resolvePlayerSeatStyle(state)
   };
 
-  const podiums = mode === 'BALOTAJE' ? [playerSeat, rivals[0]!] : [rivals[0]!, rivals[1]!, playerSeat, ...rivals.slice(2)];
+  const podiums = arrangeDebatePodiums(playerSeat, rivals, mode);
   const playerPodiumIndex = podiums.indexOf(playerSeat);
 
   const seed = computeDeterministicSeed(`${state.candidateId}-${state.partySigla}-${state.stage.currentMonthIndex}-${mode}-${seedOffset}`);
@@ -281,7 +328,7 @@ export function buildDebateSession(
   });
 
   const rebuttals = rotateWithSeed(rebuttalsCatalog, seed + 71).slice(0, 6);
-  const meta = resolveSessionMeta(mode);
+  const meta = resolveSessionMeta(mode, state.stage.stage);
 
   return {
     mode,

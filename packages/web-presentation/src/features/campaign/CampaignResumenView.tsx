@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import {
   applyDebateOutcomeToCampaign,
-  clamp,
-  round2,
-  type CampaignSimulationState
+  applySkipDebatePenalty,
+  type CampaignSimulationState,
+  type DebateMode
 } from '@argentina-sim/domain';
-import { PressAndDebateSimulatorModal } from '../game-shell/PressAndDebateSimulatorModal.js';
 import { OfficialPartyLogo } from '../party-setup/OfficialLogoBadge.js';
 import { playUiSound } from '../../lib/gameFeedback.js';
 import { PresidentialDebateModal } from './PresidentialDebateModal.js';
@@ -68,27 +67,80 @@ function CandidatePollBar({
   );
 }
 
-function applyPressImpactToCampaign(
-  prev: CampaignSimulationState,
-  deltas: { image: number; viral: number; market: number }
-): CampaignSimulationState {
-  const nextPos = clamp(prev.image.imagenPositiva + deltas.image * 0.25, 5, 88);
+interface OfficialDebateScheduleStatus {
+  canLaunchOfficial: boolean;
+  officialMode: DebateMode;
+  statusLabel: string;
+}
+
+function buildOfficialStageStatus(
+  completed: boolean,
+  officialMode: DebateMode,
+  doneText: string,
+  readyText: string
+): OfficialDebateScheduleStatus {
   return {
-    ...prev,
-    image: {
-      ...prev.image,
-      imagenPositiva: round2(nextPos),
-      desconocimiento: Math.max(2, round2(100 - nextPos - prev.image.imagenNegativa))
-    },
-    attributes: {
-      ...prev.attributes,
-      relevancia: round2(clamp(prev.attributes.relevancia + Math.max(0.2, deltas.viral * 0.12), 0, 100))
-    },
-    historyLog: [
-      `Sala de Prensa TV: impacto en opinión pública (+${(deltas.image * 0.25).toFixed(1)} Img · +${Math.max(0.2, deltas.viral * 0.12).toFixed(1)} Rel).`,
-      ...prev.historyLog
-    ]
+    canLaunchOfficial: !completed,
+    officialMode,
+    statusLabel: completed ? doneText : readyText
   };
+}
+
+function resolveOfficialDebateScheduleStatus(state: CampaignSimulationState): OfficialDebateScheduleStatus {
+  const month = state.stage.currentMonthIndex;
+  const done = state.resolvedDebates ?? [];
+  if (month >= 11) {
+    return buildOfficialStageStatus(
+      done.includes('BALOTAJE_2027'),
+      'BALOTAJE',
+      '✓ Debate Presidencial de Balotaje realizado',
+      'Fecha oficial activa: Debate Cara a Cara de Balotaje (CNE)'
+    );
+  }
+  if (month >= 9) {
+    return buildOfficialStageStatus(
+      done.includes('GENERALES_2027'),
+      'GENERALES',
+      '✓ Debate Presidencial CNE (Generales) completado',
+      'Fecha oficial activa: Debate Presidencial Obligatorio Ley 27.337'
+    );
+  }
+  return {
+    canLaunchOfficial: false,
+    officialMode: 'GENERALES',
+    statusLabel: 'Próximo Debate Presidencial CNE: Septiembre (Mes 9 · Previa Generales)'
+  };
+}
+
+function DebateScheduleActionSlot({
+  schedule,
+  onLaunchOfficialDebate,
+  onNavigateActions
+}: {
+  schedule: OfficialDebateScheduleStatus;
+  onLaunchOfficialDebate: () => void;
+  onNavigateActions: () => void;
+}) {
+  if (schedule.canLaunchOfficial) {
+    return (
+      <button
+        type="button"
+        onClick={onLaunchOfficialDebate}
+        className="hoi-btn-gold px-3.5 py-2 rounded-sm text-xs font-mono font-extrabold uppercase tracking-wider shrink-0"
+      >
+        Ir al Debate Presidencial CNE
+      </button>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onNavigateActions}
+      className="px-3.5 py-2 rounded-sm bg-[#101928] hover:bg-[#1a273b] border border-[#3a4f70] text-sky-200 text-xs font-mono font-bold uppercase tracking-wider shrink-0"
+    >
+      Ir a Acciones de Campaña →
+    </button>
+  );
 }
 
 export function CampaignResumenView({
@@ -97,13 +149,12 @@ export function CampaignResumenView({
   onNavigateActions,
   onUpdateState
 }: CampaignResumenViewProps) {
-  const [pressOpen, setPressOpen] = useState(false);
   const [debateOpen, setDebateOpen] = useState(false);
   const attrs = state.attributes;
   const img = state.image;
   const poll = state.internalPoll;
   const vote = state.votingIntention;
-  const quickDebateMode = state.stage.stage === 'BALOTAJE' ? 'BALOTAJE' : 'CAMPAÑA';
+  const schedule = resolveOfficialDebateScheduleStatus(state);
 
   return (
     <div className="space-y-6">
@@ -115,49 +166,31 @@ export function CampaignResumenView({
           <div className="text-xl md:text-2xl font-serif font-bold text-white mt-0.5">
             {state.stage.objectiveTitle}
           </div>
+          <div className="text-[11px] font-mono text-sky-300/90 mt-1">
+            {schedule.statusLabel}
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              playUiSound('quorum');
-              setDebateOpen(true);
-            }}
-            className="hoi-btn-gold px-3.5 py-2 rounded-sm text-xs font-mono font-extrabold uppercase tracking-wider shrink-0"
-          >
-            Debate Presidencial 3D
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              playUiSound('tab');
-              setPressOpen(true);
-            }}
-            className="px-3.5 py-2 rounded-sm bg-[#101928] hover:bg-[#1a273b] border border-[#3a4f70] text-sky-200 text-xs font-mono font-bold uppercase tracking-wider shrink-0"
-          >
-            Sala de Prensa TV 3D
-          </button>
-        </div>
+        <DebateScheduleActionSlot
+          schedule={schedule}
+          onLaunchOfficialDebate={() => {
+            playUiSound('quorum');
+            setDebateOpen(true);
+          }}
+          onNavigateActions={onNavigateActions}
+        />
       </div>
 
       <PresidentialDebateModal
         open={debateOpen}
-        mode={quickDebateMode}
+        mode={schedule.officialMode}
         state={state}
         onFinishDebate={(summary) =>
-          onUpdateState?.((prev) => applyDebateOutcomeToCampaign(prev, quickDebateMode, summary))
+          onUpdateState?.((prev) => applyDebateOutcomeToCampaign(prev, schedule.officialMode, summary))
         }
-        onSkipDebate={() => setDebateOpen(false)}
+        onSkipDebate={() =>
+          onUpdateState?.((prev) => applySkipDebatePenalty(prev, schedule.officialMode))
+        }
         onClose={() => setDebateOpen(false)}
-      />
-
-      <PressAndDebateSimulatorModal
-        open={pressOpen}
-        speakerName={state.candidateName}
-        onCompleteImpact={(deltas) =>
-          onUpdateState?.((prev) => applyPressImpactToCampaign(prev, deltas))
-        }
-        onClose={() => setPressOpen(false)}
       />
 
       <section className="space-y-3">

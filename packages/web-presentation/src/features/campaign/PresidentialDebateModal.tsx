@@ -159,13 +159,15 @@ function DebateStudio3DCanvas({
   activeSpeakerIdx,
   activeHeadline,
   shotSecondsLeft,
-  isRebuttalMode
+  isRebuttalMode,
+  isMandatory
 }: {
   podiums: DebateRivalSeat[];
   activeSpeakerIdx: number;
   activeHeadline: string;
   shotSecondsLeft: number;
   isRebuttalMode: boolean;
+  isMandatory: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const speakerRef = useRef(activeSpeakerIdx);
@@ -214,7 +216,7 @@ function DebateStudio3DCanvas({
       <div className="absolute top-2.5 left-2.5 flex items-center gap-2">
         <span className="px-2 py-0.5 rounded-sm bg-rose-700 text-[10px] font-mono font-extrabold uppercase text-white flex items-center gap-1.5 shadow">
           <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-          CADENA CNE · DEBATE EN VIVO
+          {isMandatory ? 'CADENA CNE · DEBATE EN VIVO' : 'PRIME TIME TV · DEBATE EN VIVO'}
         </span>
         <span className={`px-2 py-0.5 rounded-sm border text-[10px] font-mono font-extrabold text-white inline-flex items-center gap-1 shadow ${timerBadgeCls}`}>
           <Timer className="w-3 h-3 text-amber-300" />
@@ -232,7 +234,9 @@ function DebateStudio3DCanvas({
         <span className="font-extrabold text-white uppercase tracking-wider truncate">
           {activeHeadline}
         </span>
-        <span className="text-[10px] text-amber-200 shrink-0 ml-2">LEY 27.337</span>
+        <span className="text-[10px] text-amber-200 shrink-0 ml-2">
+          {isMandatory ? 'LEY 27.337' : 'ESPECIAL TV'}
+        </span>
       </div>
     </div>
   );
@@ -241,12 +245,17 @@ function DebateStudio3DCanvas({
 function DebateNacionalIntroPlate({
   title,
   subtitle,
+  isMandatory,
   onSkip
 }: {
   title: string;
   subtitle: string;
+  isMandatory: boolean;
   onSkip: () => void;
 }) {
+  const plateTag = isMandatory
+    ? 'TRANSMISIÓN NACIONAL OBLIGATORIA · CNE'
+    : 'ESPECIAL TELEVISIVO EN VIVO · COBERTURA MULTICANAL';
   return (
     <div className="rounded-sm bg-[#060b14] border-2 border-[#75aadb]/70 overflow-hidden shadow-2xl">
       <div className="h-2.5 w-full flex">
@@ -256,15 +265,17 @@ function DebateNacionalIntroPlate({
       </div>
 
       <div className="p-6 sm:p-8 text-center space-y-5 bg-[radial-gradient(circle_at_top,rgba(117,170,219,0.22),#060b14_70%)]">
-        <div className="flex items-center justify-center gap-4">
-          <OfficialInstitutionLogo institution="ESCUDO_NACIONAL" heightPx={66} />
-          <OfficialInstitutionLogo institution="BOLETIN_OFICIAL" heightPx={44} />
-        </div>
+        {isMandatory ? (
+          <div className="flex items-center justify-center gap-4">
+            <OfficialInstitutionLogo institution="ESCUDO_NACIONAL" heightPx={66} />
+            <OfficialInstitutionLogo institution="BOLETIN_OFICIAL" heightPx={44} />
+          </div>
+        ) : null}
 
         <div className="space-y-1.5">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-sm bg-sky-950/70 border border-sky-400/50 text-[10px] font-mono font-bold uppercase tracking-[0.22em] text-sky-200 animate-pulse">
             <Radio className="w-3.5 h-3.5 text-red-400" />
-            TRANSMISIÓN NACIONAL OBLIGATORIA · CNE
+            {plateTag}
           </div>
           <h4 className="text-xl sm:text-2xl font-serif font-black uppercase tracking-wide text-white">
             {title}
@@ -555,6 +566,7 @@ function DebateStudioStageWrapper({
         activeHeadline={headline}
         shotSecondsLeft={shotClock}
         isRebuttalMode={usedRebuttalThisRound}
+        isMandatory={session.isMandatory}
       />
       <PodiumScoreboardRow podiums={session.podiums} playerIndex={session.playerPodiumIndex} activeSpeakerIdx={activeSpeakerIdx} />
       <DebateMetricsGrid totals={totals} />
@@ -741,7 +753,12 @@ export function PresidentialDebateModal({
 
         <div className="p-4 space-y-3.5 bg-[#0a0f17]">
           {showIntro ? (
-            <DebateNacionalIntroPlate title={session.title} subtitle={session.subtitle} onSkip={() => setShowIntro(false)} />
+            <DebateNacionalIntroPlate
+              title={session.title}
+              subtitle={session.subtitle}
+              isMandatory={session.isMandatory}
+              onSkip={() => setShowIntro(false)}
+            />
           ) : (
             <DebateStudioStageWrapper
               session={session}

@@ -233,6 +233,17 @@ describe('Sistema Electoral y Campaña 2027 (Screenshots)', () => {
       'CABA'
     );
 
+    const internaSession = buildDebateSession(
+      state,
+      'CAMPAÑA',
+      DEBATE_PROMPTS_CATALOG,
+      DEBATE_REBUTTALS_CATALOG,
+      0
+    );
+    expect(internaSession.isMandatory).toBe(false);
+    expect(internaSession.title).toContain('Interna Partidaria');
+    expect(internaSession.podiums.every((p) => p.partySigla === 'PRO')).toBe(true);
+
     const generalesSession = buildDebateSession(
       state,
       'GENERALES',
