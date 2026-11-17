@@ -14,7 +14,7 @@ export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDiv
   return <div className={cn('hoi-header-steel flex flex-col space-y-1.5 px-4 py-3', className)} {...props} />;
 }
 
-export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
+export function CardTitle({ className, children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
       className={cn(
@@ -22,7 +22,9 @@ export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHead
         className
       )}
       {...props}
-    />
+    >
+      {children}
+    </h3>
   );
 }
 

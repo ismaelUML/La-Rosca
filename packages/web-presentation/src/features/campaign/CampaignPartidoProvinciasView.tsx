@@ -1011,9 +1011,9 @@ function scaleRangeString(rangeText: string, mult: number): string {
   if (Math.abs(mult - 1) < 0.02) return rangeText;
   const parts = rangeText.split('/');
   if (parts.length !== 2) return rangeText;
-  const n1 = parseFloat(parts[0]!.replace(',', '.'));
-  const n2 = parseFloat(parts[1]!.replace(',', '.'));
-  if (isNaN(n1) || isNaN(n2)) return rangeText;
+  const n1 = Number.parseFloat(parts[0]!.replace(',', '.'));
+  const n2 = Number.parseFloat(parts[1]!.replace(',', '.'));
+  if (Number.isNaN(n1) || Number.isNaN(n2)) return rangeText;
   return `${formatScaledProvNumber(n1 * mult)}/${formatScaledProvNumber(n2 * mult)}`;
 }
 
@@ -1648,43 +1648,44 @@ function TurnCardItem({ prov, onOpen }: TurnCardProps) {
   const shareText = playerShare > 0 ? `${playerShare.toFixed(1).replace('.', ',')} %` : 'sin datos';
 
   return (
-    <div
+    <button
+      type="button"
       onClick={() => {
         playUiSound('select');
         onOpen(prov.id);
       }}
-      className="hoi-panel rounded-sm p-4 flex flex-col justify-between text-center gap-3 hover:border-[#b89342] cursor-pointer transition group"
+      className="hoi-panel rounded-sm p-4 flex flex-col justify-between text-center gap-3 hover:border-[#b89342] cursor-pointer transition group w-full"
     >
-      <div>
-        <h4 className="font-extrabold text-white text-sm group-hover:text-amber-200 transition leading-tight">
+      <span className="block">
+        <span className="block font-extrabold text-white text-sm group-hover:text-amber-200 transition leading-tight">
           {prov.name}
-        </h4>
-        <div className="text-[10px] font-mono text-slate-400 mt-0.5">{prov.electionDate}</div>
-      </div>
+        </span>
+        <span className="block text-[10px] font-mono text-slate-400 mt-0.5">{prov.electionDate}</span>
+      </span>
 
-      <div className="relative w-20 h-20 mx-auto flex items-center justify-center">
-        <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center flex-col ${borderClass}`}>
+      <span className="relative w-20 h-20 mx-auto flex items-center justify-center">
+        <span className={`w-16 h-16 rounded-full border-4 flex items-center justify-center flex-col ${borderClass}`}>
           <span className="text-xs font-mono font-extrabold text-white">{shareText}</span>
           <span className="text-[8px] text-slate-500">tu fórmula</span>
-        </div>
-      </div>
+        </span>
+      </span>
 
       {isLeading ? (
-        <div className="text-[9px] font-mono font-extrabold text-emerald-300 bg-emerald-950/80 border border-emerald-700/70 rounded-sm px-1.5 py-0.5 inline-block mx-auto">
+        <span className="text-[9px] font-mono font-extrabold text-emerald-300 bg-emerald-950/80 border border-emerald-700/70 rounded-sm px-1.5 py-0.5 inline-block mx-auto">
           Lidera tu fórmula
-        </div>
+        </span>
       ) : null}
 
-      <div className="border-t border-[#263142] pt-2 space-y-1">
-        <div className="text-[9px] font-mono uppercase font-bold text-slate-400 tracking-wider">
+      <span className="block w-full border-t border-[#263142] pt-2 space-y-1">
+        <span className="block text-[9px] font-mono uppercase font-bold text-slate-400 tracking-wider">
           Fórmula desde {prov.formulaOpensDate.toUpperCase()}
-        </div>
-        <div className="text-[10px] font-mono font-bold text-amber-300 group-hover:underline inline-flex items-center justify-center gap-1">
+        </span>
+        <span className="text-[10px] font-mono font-bold text-amber-300 group-hover:underline inline-flex items-center justify-center gap-1">
           Ver campaña y fórmula
           <ArrowRight className="w-3 h-3" />
-        </div>
-      </div>
-    </div>
+        </span>
+      </span>
+    </button>
   );
 }
 

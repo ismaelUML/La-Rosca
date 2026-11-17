@@ -811,12 +811,16 @@ const DIFFICULTY_MAP = {
 };
 
 function slugify(name) {
-  return name
+  const raw = name
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '');
+    .replace(/[^A-Z0-9]+/g, '_');
+  let start = 0;
+  let end = raw.length;
+  while (start < end && raw.charCodeAt(start) === 95) start += 1;
+  while (end > start && raw.charCodeAt(end - 1) === 95) end -= 1;
+  return raw.slice(start, end);
 }
 
 function resolveRole(roleDesc) {
@@ -853,14 +857,32 @@ function resolveProvince(roleDesc, party) {
   return 'CABA';
 }
 
-const blocks = RAW_TEXT.trim().split(/\n\s*\n/);
+function splitBlocksLinear(text) {
+  const blocks = [];
+  let current = [];
+  for (const rawLine of text.split(/\r?\n/)) {
+    const trimmed = rawLine.trim();
+    if (trimmed.length === 0) {
+      if (current.length > 0) {
+        blocks.push(current);
+        current = [];
+      }
+    } else {
+      current.push(trimmed);
+    }
+  }
+  if (current.length > 0) blocks.push(current);
+  return blocks;
+}
+
+const blocks = splitBlocksLinear(RAW_TEXT);
 const seenIds = new Set();
 const politicians = [];
 
-for (const b of blocks) {
-  const lines = b.trim().split('\n').map(l => l.trim()).filter(Boolean);
+for (const lines of blocks) {
   if (lines.length < 4) continue;
-  const name = lines[0].replace(/^"|"$/g, '');
+  const rawFirst = lines[0];
+  const name = rawFirst.startsWith('"') && rawFirst.endsWith('"') ? rawFirst.slice(1, -1) : rawFirst;
   const [partySigla, ideology] = lines[1].split('·').map(s => s.trim());
   const roleDescription = lines[2];
   const diffLine = lines[3]; // e.g. Dificultad: Fácil · Dogmático

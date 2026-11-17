@@ -82,7 +82,7 @@ function buildSingleDebatePodium(
   top.position.y = 1.24;
   top.rotation.x = 0.16;
 
-  const colorInt = parseInt(seat.partyColor.replace('#', ''), 16) || 0x38bdf8;
+  const colorInt = Number.parseInt(seat.partyColor.replace('#', ''), 16) || 0x38bdf8;
   const ledMat = new THREE.MeshStandardMaterial({
     color: colorInt,
     emissive: colorInt,

@@ -50,7 +50,7 @@ const LOCAL_LEADERS_BY_PROVINCE: Record<string, LocalMayorLeader[]> = {
 };
 
 function getPartyPairKey(p1: string, p2: string): string {
-  return [p1, p2].sort().join('_');
+  return [p1, p2].sort((a, b) => a.localeCompare(b)).join('_');
 }
 
 const PARTY_AFFINITY_MODIFIERS: Record<string, number> = {
@@ -315,10 +315,11 @@ export function CampaignApoyoProvinciasView({ state, onUpdateState }: CampaignAp
 
       <div className="hoi-panel rounded-sm p-4 flex flex-wrap items-end justify-between gap-4">
         <div className="w-full sm:w-72 space-y-1.5">
-          <label className="block text-[10px] font-mono uppercase tracking-wider text-amber-300">
+          <label htmlFor="apoyo-prov-selector" className="block text-[10px] font-mono uppercase tracking-wider text-amber-300">
             Seleccionar Provincia
           </label>
           <select
+            id="apoyo-prov-selector"
             value={selectedProvince}
             onChange={(e) => {
               setSelectedProvince(e.target.value);

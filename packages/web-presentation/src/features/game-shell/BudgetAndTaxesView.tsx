@@ -266,10 +266,11 @@ export function CustomTaxesAndRigiView({
       <div className="hoi-panel rounded-sm p-4 md:p-5 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2">
-            <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-300 mb-1">
+            <label htmlFor="custom-tax-name" className="block text-[11px] font-mono uppercase tracking-wider text-slate-300 mb-1">
               Nombre del impuesto
             </label>
             <input
+              id="custom-tax-name"
               type="text"
               value={taxName}
               onChange={(e) => setTaxName(e.target.value)}
@@ -278,10 +279,11 @@ export function CustomTaxesAndRigiView({
             />
           </div>
           <div>
-            <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-300 mb-1">
+            <label htmlFor="custom-tax-rate" className="block text-[11px] font-mono uppercase tracking-wider text-slate-300 mb-1">
               Alícuota propuesta ({taxRate}%)
             </label>
             <input
+              id="custom-tax-rate"
               type="range"
               min={0.5}
               max={38}
@@ -294,10 +296,11 @@ export function CustomTaxesAndRigiView({
         </div>
 
         <div>
-          <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-300 mb-1">
+          <label htmlFor="custom-tax-articles" className="block text-[11px] font-mono uppercase tracking-wider text-slate-300 mb-1">
             Articulado y sujeto alcanzado
           </label>
           <textarea
+            id="custom-tax-articles"
             rows={3}
             value={taxArticles}
             onChange={(e) => setTaxArticles(e.target.value)}

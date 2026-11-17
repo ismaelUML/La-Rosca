@@ -5,13 +5,21 @@ import { strFromU8, strToU8, unzlibSync, zlibSync } from 'fflate';
 // aca comprimimos el binario con zlib en el cliente, le pegamos un prefijo
 // versionado y lo validamos deterministamente antes de tocar el estado.
 
+function stripTrailingEquals(value: string): string {
+  let end = value.length;
+  while (end > 0 && value.charCodeAt(end - 1) === 61) {
+    end -= 1;
+  }
+  return value.slice(0, end);
+}
+
 function uint8ToBase64Url(bytes: Uint8Array): string {
   let binary = '';
   for (let i = 0; i < bytes.length; i += 1) {
     binary += String.fromCharCode(bytes[i] ?? 0);
   }
-  const base64 = btoa(binary);
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const base64 = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_');
+  return stripTrailingEquals(base64);
 }
 
 function base64UrlToUint8(base64Url: string): Uint8Array {

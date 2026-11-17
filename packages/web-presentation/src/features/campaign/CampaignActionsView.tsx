@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useId, useMemo, useState } from 'react';
 import type {
   CampaignActionCard,
   CampaignActionCategory,
@@ -91,9 +91,9 @@ function scaleRangeText(rangeText: string, mult: number): string {
   if (Math.abs(mult - 1) < 0.02) return rangeText;
   const parts = rangeText.split('/');
   if (parts.length !== 2) return rangeText;
-  const n1 = parseFloat(parts[0]!.replace(',', '.'));
-  const n2 = parseFloat(parts[1]!.replace(',', '.'));
-  if (isNaN(n1) || isNaN(n2)) return rangeText;
+  const n1 = Number.parseFloat(parts[0]!.replace(',', '.'));
+  const n2 = Number.parseFloat(parts[1]!.replace(',', '.'));
+  if (Number.isNaN(n1) || Number.isNaN(n2)) return rangeText;
   const s1 = formatScaledBound(n1, mult, true);
   const s2 = formatScaledBound(n2, mult, false);
   return `${s1}/${s2}`;
@@ -168,15 +168,17 @@ function ActionProvinceSelector({
   selectedProvinceId,
   onProvinceChange
 }: ActionProvinceSelectorProps) {
+  const controlId = useId();
   const isGovernor = state.targetRole === 'GOBERNADOR' && Boolean(state.localZones?.length);
 
   if (isGovernor && state.localZones) {
     return (
       <div className="space-y-1.5 my-2 pt-2.5 border-t border-[#263142]">
-        <label className="block text-[10px] font-mono uppercase tracking-wider text-amber-300">
+        <label htmlFor={controlId} className="block text-[10px] font-mono uppercase tracking-wider text-amber-300">
           Sección / Zona de Recorrida
         </label>
         <select
+          id={controlId}
           value={selectedProvinceId}
           onChange={(e) => onProvinceChange(e.target.value)}
           className="w-full bg-[#090d14] border border-[#263142] rounded-sm px-3 py-1.5 text-xs font-mono text-amber-100"
@@ -199,10 +201,11 @@ function ActionProvinceSelector({
 
   return (
     <div className="space-y-1.5 my-2 pt-2.5 border-t border-[#263142]">
-      <label className="block text-[10px] font-mono uppercase tracking-wider text-amber-300">
+      <label htmlFor={controlId} className="block text-[10px] font-mono uppercase tracking-wider text-amber-300">
         Jurisdicción Destino
       </label>
       <select
+        id={controlId}
         value={selectedProvinceId}
         onChange={(e) => onProvinceChange(e.target.value)}
         className="w-full bg-[#090d14] border border-[#263142] rounded-sm px-3 py-1.5 text-xs font-mono text-amber-100"

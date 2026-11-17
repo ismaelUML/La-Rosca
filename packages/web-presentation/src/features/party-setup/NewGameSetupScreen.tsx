@@ -347,10 +347,11 @@ function CustomPartyCreatorPanel({
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
         <div className="sm:col-span-2">
-          <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
+          <label htmlFor="custom-party-name" className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
             Nombre de la fuerza o coalición
           </label>
           <input
+            id="custom-party-name"
             type="text"
             value={party.name}
             onChange={(e) => onChangeParty({ ...party, name: e.target.value })}
@@ -359,10 +360,11 @@ function CustomPartyCreatorPanel({
           />
         </div>
         <div>
-          <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
+          <label htmlFor="custom-party-sigla" className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
             Sigla (2-5 letras)
           </label>
           <input
+            id="custom-party-sigla"
             type="text"
             maxLength={5}
             value={party.sigla}
@@ -375,10 +377,11 @@ function CustomPartyCreatorPanel({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
         <div>
-          <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
+          <label htmlFor="custom-party-social-base" className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
             Base social electoral
           </label>
           <input
+            id="custom-party-social-base"
             type="text"
             value={party.socialBase}
             onChange={(e) => onChangeParty({ ...party, socialBase: e.target.value })}
@@ -387,10 +390,11 @@ function CustomPartyCreatorPanel({
           />
         </div>
         <div>
-          <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
+          <label htmlFor="custom-party-description" className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
             Plataforma resumida
           </label>
           <input
+            id="custom-party-description"
             type="text"
             value={party.description}
             onChange={(e) => onChangeParty({ ...party, description: e.target.value })}
@@ -549,10 +553,11 @@ function CargoSelectorSection({
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch">
         <div className="lg:col-span-5">
-          <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
+          <label htmlFor="setup-origin-province" className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
             Distrito de Origen (+8 Lealtad inicial del Gobernador)
           </label>
           <select
+            id="setup-origin-province"
             value={provinceId}
             onChange={(e) => onChangeProvince(e.target.value)}
             className="w-full bg-[#080c13] border border-[#263142] rounded-sm px-3 py-2 text-xs text-white focus:border-[#b89342] focus:outline-none"
@@ -597,10 +602,11 @@ function CharacterIdentityContent({
   if (characterMode === 'MI_PERSONAJE') {
     return (
       <div>
-        <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
+        <label htmlFor="setup-leader-name" className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
           Nombre completo del candidato o presidente
         </label>
         <input
+          id="setup-leader-name"
           type="text"
           value={characterName}
           onChange={(e) => onChangeName(e.target.value)}
