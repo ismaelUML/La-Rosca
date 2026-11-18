@@ -148,10 +148,12 @@ function generateHemicycleDots(totalSeats: number, rowsCount: number, rMin: numb
 }
 
 function getOrderedForces(forces: PartySeatShare[]): PartySeatShare[] {
-  const order = ['FIT', 'UXP', 'UCR', 'PF', 'PRO', 'LLA'];
-  return order
+  const order = ['FIT', 'UXP', 'UCR', 'PF', 'PROVINCIALES', 'PRO', 'LLA'];
+  const known = order
     .map((id) => forces.find((f) => f.id === id))
     .filter((f): f is PartySeatShare => f !== undefined);
+  const rest = forces.filter((f) => !order.includes(f.id));
+  return [...known, ...rest];
 }
 
 function getChamberSeats(f: PartySeatShare, chamber: 'deputies' | 'senate'): number {
@@ -164,26 +166,31 @@ interface HemicycleDot {
   color: string;
 }
 
+function expandSeatColors(
+  orderedForces: PartySeatShare[],
+  chamber: 'deputies' | 'senate'
+): string[] {
+  const colors: string[] = [];
+  for (const force of orderedForces) {
+    const seatCount = getChamberSeats(force, chamber);
+    for (let s = 0; s < seatCount; s++) {
+      colors.push(force.color);
+    }
+  }
+  return colors;
+}
+
 function assignColorsToDots(
   dots: Array<{ x: number; y: number }>,
   forces: PartySeatShare[],
   chamber: 'deputies' | 'senate'
 ): HemicycleDot[] {
-  const orderedForces = getOrderedForces(forces);
-  const colored: Array<{ x: number; y: number; color: string }> = [];
-  let dotIndex = 0;
-
-  for (const f of orderedForces) {
-    const seatCount = getChamberSeats(f, chamber);
-    for (let s = 0; s < seatCount && dotIndex < dots.length; s++) {
-      const currentDot = dots[dotIndex];
-      if (currentDot) {
-        colored.push({ x: currentDot.x, y: currentDot.y, color: f.color });
-      }
-      dotIndex++;
-    }
-  }
-  return colored;
+  const seatColors = expandSeatColors(getOrderedForces(forces), chamber);
+  return dots.map((dot, idx) => ({
+    x: dot.x,
+    y: dot.y,
+    color: seatColors[idx] ?? '#475569'
+  }));
 }
 
 function HemicycleCard({

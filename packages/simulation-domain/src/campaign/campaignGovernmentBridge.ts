@@ -53,14 +53,20 @@ function computeBlocAllocation(
   return { id: blocId, deputiesSeats: base.dep, senateSeats: base.sen, relation: base.rel };
 }
 
-function reconcileTotalDeputies(blocs: CongressBlocAllocation[], playerId: string): CongressBlocAllocation[] {
-  const total = blocs.reduce((acc, b) => acc + b.deputiesSeats, 0);
-  const diff = 257 - total;
+function reconcileChamberTotal(
+  blocs: CongressBlocAllocation[],
+  field: 'deputiesSeats' | 'senateSeats',
+  targetTotal: number,
+  playerId: string
+): CongressBlocAllocation[] {
+  const total = blocs.reduce((acc, b) => acc + b[field], 0);
+  const diff = targetTotal - total;
   if (diff === 0) return blocs;
 
   const targetId = playerId === 'UXP' ? 'PRO' : 'UXP';
+  const minSeats = field === 'deputiesSeats' ? 10 : 2;
   return blocs.map((b) =>
-    b.id === targetId ? { ...b, deputiesSeats: Math.max(10, b.deputiesSeats + diff) } : b
+    b.id === targetId ? { ...b, [field]: Math.max(minSeats, b[field] + diff) } : b
   );
 }
 
@@ -70,7 +76,8 @@ export function buildCongressFromCampaign(campaign: CampaignSimulationState): Co
   const seatScale = buildSeatScale(campaign.votingIntention.intencionVotoGeneral, coalitionSet.size);
 
   const raw = BASE_BLOC_IDS.map((id) => computeBlocAllocation(id, playerId, coalitionSet, seatScale));
-  return reconcileTotalDeputies(raw, playerId);
+  const withDeputies = reconcileChamberTotal(raw, 'deputiesSeats', 257, playerId);
+  return reconcileChamberTotal(withDeputies, 'senateSeats', 72, playerId);
 }
 
 function mapCampaignProvinceToGov(
