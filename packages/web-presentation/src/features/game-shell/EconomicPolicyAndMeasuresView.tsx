@@ -574,7 +574,7 @@ export function SectorMeasuresView({ measures, onToggleMeasure }: SectorMeasures
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar entre 121 medidas..."
+                placeholder={`Buscar entre ${measures.length} medidas...`}
                 className="pl-8 pr-3 py-1.5 w-56 rounded-sm bg-[#090d14] border border-[#263142] focus:border-[#b89342] focus:outline-none text-xs text-slate-200 placeholder:text-slate-500 font-mono"
               />
             </label>
