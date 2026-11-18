@@ -419,20 +419,20 @@ function DockGroupTabs({
   groups,
   activeGroupTitle,
   panelVisible,
-  onSelectSection,
+  onSelectGroup,
   onTogglePanel
 }: {
   groups: SidebarGroupSpec[];
   activeGroupTitle: string;
   panelVisible: boolean;
-  onSelectSection: (sec: InGameSidebarSection, openParallel?: boolean) => void;
+  onSelectGroup: (groupTitle: string) => void;
   onTogglePanel: () => void;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-b border-[#1d2738]">
       <div className="flex flex-wrap gap-1">
         {groups.map((group) => {
-          const isGroupActive = panelVisible && group.groupTitle === activeGroupTitle;
+          const isGroupActive = group.groupTitle === activeGroupTitle;
           const cls = isGroupActive
             ? 'bg-[#17253b] text-amber-100 border-t-2 border-x border-[#b89342] border-x-[#2e415e]'
             : 'bg-[#0e141f] text-slate-400 hover:text-slate-200 border border-[#1f293b]';
@@ -440,9 +440,9 @@ function DockGroupTabs({
             <button
               key={group.groupTitle}
               type="button"
-              onClick={(ev) => {
-                const first = group.items[0];
-                if (first) onSelectSection(first.id, ev.shiftKey);
+              onClick={() => {
+                playUiSound('tab');
+                onSelectGroup(group.groupTitle);
               }}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-t-sm text-[11px] font-mono font-bold uppercase tracking-wider transition ${cls}`}
             >
@@ -507,20 +507,27 @@ function CommandDockNav({
 }) {
   const groups = SIDEBAR_GROUPS_BY_ROLE[role];
   const activeGroup = findActiveGroup(groups, activeSection);
+  const [browsedGroupTitle, setBrowsedGroupTitle] = useState(activeGroup.groupTitle);
+
+  useEffect(() => {
+    setBrowsedGroupTitle(findActiveGroup(groups, activeSection).groupTitle);
+  }, [groups, activeSection]);
+
+  const visibleGroup = groups.find((g) => g.groupTitle === browsedGroupTitle) ?? activeGroup;
 
   return (
     <nav className="bg-[#0b1018] border-b border-[#263142] z-20 shrink-0">
       <div className="max-w-7xl mx-auto px-4">
         <DockGroupTabs
           groups={groups}
-          activeGroupTitle={activeGroup.groupTitle}
+          activeGroupTitle={visibleGroup.groupTitle}
           panelVisible={panelVisible}
-          onSelectSection={onSelectSection}
+          onSelectGroup={setBrowsedGroupTitle}
           onTogglePanel={onTogglePanel}
         />
 
         <div className="flex flex-wrap items-center gap-1.5 py-2">
-          {activeGroup.items.map((item) => {
+          {visibleGroup.items.map((item) => {
             const isSelected = activeSection === item.id;
             const itemCls = isSelected
               ? 'bg-[#1d3250] text-amber-200 border-[#b89342]'

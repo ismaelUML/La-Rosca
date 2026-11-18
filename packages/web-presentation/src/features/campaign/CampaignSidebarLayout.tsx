@@ -267,6 +267,14 @@ function CampaignDockNav({
   onTogglePanel: () => void;
 }) {
   const activeGroup = findActiveCampaignGroup(activeSection);
+  const [browsedGroupTitle, setBrowsedGroupTitle] = useState(activeGroup.title);
+
+  useEffect(() => {
+    setBrowsedGroupTitle(findActiveCampaignGroup(activeSection).title);
+  }, [activeSection]);
+
+  const visibleGroup =
+    CAMPAIGN_NAV_GROUPS.find((g) => g.title === browsedGroupTitle) ?? activeGroup;
 
   return (
     <nav className="bg-[#0b1018]/95 backdrop-blur-md border-b border-[#283447] z-20 shrink-0">
@@ -274,7 +282,7 @@ function CampaignDockNav({
         <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-b border-[#1d2738]">
           <div className="flex flex-wrap gap-1">
             {CAMPAIGN_NAV_GROUPS.map((group) => {
-              const isGroupActive = group.title === activeGroup.title;
+              const isGroupActive = group.title === visibleGroup.title;
               const cls = isGroupActive
                 ? 'bg-[#17253b] text-amber-100 border-t-2 border-x border-[#c9a24d] border-x-[#2e415e]'
                 : 'bg-[#0e141f] text-slate-400 hover:text-slate-200 border border-[#1f293b]';
@@ -282,9 +290,9 @@ function CampaignDockNav({
                 <button
                   key={group.title}
                   type="button"
-                  onClick={(ev) => {
-                    const first = group.items[0];
-                    if (first) onSelectSection(first.id, ev.shiftKey);
+                  onClick={() => {
+                    playUiSound('tab');
+                    setBrowsedGroupTitle(group.title);
                   }}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-t-sm text-[11px] font-mono font-bold uppercase tracking-wider transition ${cls}`}
                 >
@@ -316,7 +324,7 @@ function CampaignDockNav({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5 py-2">
-          {activeGroup.items.map((item) => {
+          {visibleGroup.items.map((item) => {
             const isSelected = activeSection === item.id;
             const itemCls = isSelected
               ? 'bg-[#1d3250] text-amber-200 border-[#c9a24d]'
