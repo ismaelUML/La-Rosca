@@ -17,12 +17,12 @@ interface DesktopTaskbarStripProps<TSection extends string> {
 
 function resolveTaskPillStyle(isActive: boolean, minimized: boolean): string {
   if (isActive && !minimized) {
-    return 'bg-[#1a2940] text-amber-200 border-[#c9a24d]';
+    return 'bg-[#1a2940]/90 text-amber-200 border-amber-400/60 shadow-[0_0_12px_rgba(201,162,77,0.12)]';
   }
   if (minimized) {
-    return 'bg-[#080b11] text-slate-400 border-[#1e293b] italic hover:text-slate-200';
+    return 'bg-[#080b11]/80 text-slate-400 border-white/10 italic hover:text-slate-200';
   }
-  return 'bg-[#0e1522] text-slate-200 border-[#2b384d] hover:border-slate-400';
+  return 'bg-[#0e1522]/85 text-slate-200 border-[#2b384d]/80 hover:border-slate-400';
 }
 
 export function DesktopTaskbarStrip<TSection extends string>({
@@ -54,7 +54,7 @@ export function DesktopTaskbarStrip<TSection extends string>({
               return (
                 <div
                   key={win.id}
-                  className={`inline-flex items-center rounded-sm border text-[10px] font-mono transition shrink-0 ${pillCls}`}
+                  className={`inline-flex items-center rounded-md border text-[10px] font-mono transition shrink-0 ${pillCls}`}
                 >
                   <button
                     type="button"
@@ -82,7 +82,7 @@ export function DesktopTaskbarStrip<TSection extends string>({
             type="button"
             onClick={onResetLayout}
             title="Restaurar posición y tamaño inicial de ventanas"
-            className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-[#0c1119] hover:bg-[#172233] border border-[#263142] text-[10px] font-mono text-slate-300"
+            className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#0c1119] hover:bg-[#172233] border border-[#263142] text-[10px] font-mono text-slate-300 transition"
           >
             <RotateCcw className="w-3 h-3" />
             <span>Reordenar</span>
@@ -91,7 +91,7 @@ export function DesktopTaskbarStrip<TSection extends string>({
           <button
             type="button"
             onClick={onToggleDesktopView}
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-sm bg-[#121d2d] hover:bg-[#1c2b42] border border-[#3a4f70] text-[10px] font-mono font-bold text-sky-200"
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-[#121d2d] hover:bg-[#1c2b42] border border-[#3a4f70] text-[10px] font-mono font-bold text-sky-200 transition"
           >
             <MapIcon className="w-3 h-3 text-amber-300" />
             <span>{hasVisibleWindows ? 'Minimizar Todo' : 'Mostrar Ventanas'}</span>

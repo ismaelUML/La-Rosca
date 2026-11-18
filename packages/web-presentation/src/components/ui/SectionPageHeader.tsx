@@ -16,13 +16,13 @@ export function SectionPageHeader({
   rightSlot
 }: SectionPageHeaderProps) {
   return (
-    <div className="border-b border-[#263142] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="border-b border-[#263142]/80 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
       <div>
         <div className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-widest text-amber-400">
           {icon}
           <span>{eyebrow}</span>
         </div>
-        <h1 className="text-2xl md:text-3xl font-serif font-black tracking-tight text-amber-50 mt-0.5">
+        <h1 className="text-xl md:text-2xl font-serif font-black tracking-tight text-amber-50 mt-0.5">
           {title}
         </h1>
         {description ? (

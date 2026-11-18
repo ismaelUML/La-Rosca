@@ -3,10 +3,88 @@
 @tailwind utilities;
 
 @layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.28) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.24);
+    border-radius: 9999px;
+    transition: background-color 150ms ease;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(201, 162, 77, 0.72);
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
   body {
     background-color: #0b0f14;
     color: #e6edf3;
     font-variant-numeric: tabular-nums;
+  }
+}
+
+.rosca-window-body {
+  container-type: inline-size;
+  container-name: rosca-win;
+  scrollbar-gutter: stable;
+}
+
+.rosca-window-body .grid > * {
+  min-width: 0;
+}
+
+.rosca-window-body > div > header.hoi-panel {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+}
+
+.rosca-window-body h1 {
+  font-size: clamp(1.05rem, 2.2cqw, 1.375rem);
+  line-height: 1.2;
+}
+
+.rosca-window-body .hoi-panel {
+  border-radius: 0.5rem;
+  border-color: rgba(51, 65, 85, 0.72);
+}
+
+@container rosca-win (max-width: 840px) {
+  .rosca-window-body .md\:grid-cols-3,
+  .rosca-window-body .lg\:grid-cols-3,
+  .rosca-window-body .lg\:grid-cols-4,
+  .rosca-window-body .xl\:grid-cols-3,
+  .rosca-window-body .xl\:grid-cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container rosca-win (max-width: 560px) {
+  .rosca-window-body .sm\:grid-cols-2,
+  .rosca-window-body .sm\:grid-cols-3,
+  .rosca-window-body .md\:grid-cols-2,
+  .rosca-window-body .md\:grid-cols-3,
+  .rosca-window-body .lg\:grid-cols-2,
+  .rosca-window-body .lg\:grid-cols-3,
+  .rosca-window-body .lg\:grid-cols-4,
+  .rosca-window-body .xl\:grid-cols-2,
+  .rosca-window-body .xl\:grid-cols-3,
+  .rosca-window-body .xl\:grid-cols-4 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
   }
 }
 

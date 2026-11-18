@@ -36,8 +36,8 @@ interface DesktopWindowFrameProps<TSection extends string> {
 
 function WindowPinButton({ pinned, onTogglePin }: { pinned: boolean; onTogglePin: () => void }) {
   const cls = pinned
-    ? 'bg-amber-500/20 text-amber-300 border-amber-500/60'
-    : 'bg-[#090d14] text-slate-400 hover:text-slate-200 border-[#263142]';
+    ? 'bg-amber-500/15 text-amber-300 border-amber-400/45'
+    : 'bg-transparent text-slate-400 hover:text-slate-100 hover:bg-white/5 border-transparent';
   const title = pinned
     ? 'Desfijar ventana (las pestañas nuevas volverán a usarla)'
     : 'Fijar ventana (permite abrir otra pestaña al lado)';
@@ -46,7 +46,7 @@ function WindowPinButton({ pinned, onTogglePin }: { pinned: boolean; onTogglePin
       type="button"
       onClick={onTogglePin}
       title={title}
-      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm border text-[10px] font-mono transition ${cls}`}
+      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[10px] font-mono transition ${cls}`}
     >
       <Pin className="w-3 h-3" />
       <span className="hidden sm:inline">{pinned ? 'Fija' : 'Fijar'}</span>
@@ -74,52 +74,56 @@ function WindowTitleControls({
   const stopDragPropagation = (ev: React.PointerEvent) => ev.stopPropagation();
 
   return (
-    <div className="flex items-center gap-1 shrink-0" onPointerDown={stopDragPropagation}>
+    <div className="flex items-center gap-0.5 shrink-0" onPointerDown={stopDragPropagation}>
       <WindowPinButton pinned={pinned} onTogglePin={onTogglePin} />
+
+      <span className="hidden sm:inline-block w-px h-3 bg-white/10 mx-1" />
 
       <button
         type="button"
         onClick={() => onSnap('LEFT')}
         title="Acoplar a la izquierda (deja el mapa libre a la derecha)"
-        className="hidden sm:inline-flex p-1 rounded-sm bg-[#090d14] hover:bg-[#1a273b] border border-[#263142] text-slate-300 hover:text-amber-200"
+        className="hidden sm:inline-flex p-1 rounded text-slate-400 hover:text-amber-200 hover:bg-white/10 transition"
       >
-        <PanelLeft className="w-3 h-3" />
+        <PanelLeft className="w-3.5 h-3.5" />
       </button>
 
       <button
         type="button"
         onClick={() => onSnap('RIGHT')}
         title="Acoplar a la derecha (deja el mapa libre a la izquierda)"
-        className="hidden sm:inline-flex p-1 rounded-sm bg-[#090d14] hover:bg-[#1a273b] border border-[#263142] text-slate-300 hover:text-amber-200"
+        className="hidden sm:inline-flex p-1 rounded text-slate-400 hover:text-amber-200 hover:bg-white/10 transition"
       >
-        <PanelRight className="w-3 h-3" />
+        <PanelRight className="w-3.5 h-3.5" />
       </button>
+
+      <span className="hidden sm:inline-block w-px h-3 bg-white/10 mx-1" />
 
       <button
         type="button"
         onClick={onMinimize}
         title="Minimizar a la barra inferior"
-        className="p-1 rounded-sm bg-[#090d14] hover:bg-[#1a273b] border border-[#263142] text-slate-300 hover:text-white"
+        className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/10 transition"
       >
-        <Minus className="w-3 h-3" />
+        <Minus className="w-3.5 h-3.5" />
       </button>
 
       <button
         type="button"
         onClick={onToggleMaximize}
         title={maximized ? 'Restaurar tamaño' : 'Maximizar ventana'}
-        className="p-1 rounded-sm bg-[#090d14] hover:bg-[#1a273b] border border-[#263142] text-slate-300 hover:text-white"
+        className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/10 transition"
       >
-        {maximized ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
+        {maximized ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
       </button>
 
       <button
         type="button"
         onClick={onClose}
         title="Cerrar ventana"
-        className="p-1 rounded-sm bg-[#231015] hover:bg-rose-700 border border-rose-800/60 text-rose-200 hover:text-white transition"
+        className="p-1 rounded text-slate-400 hover:text-white hover:bg-rose-500/80 transition"
       >
-        <X className="w-3 h-3" />
+        <X className="w-3.5 h-3.5" />
       </button>
     </div>
   );
@@ -157,7 +161,7 @@ function WindowResizeHandles({
       <div
         onPointerDown={startInteraction('bottom-right')}
         title="Ajustar tamaño"
-        className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize z-30 flex items-end justify-end p-0.5 text-amber-400/60 hover:text-amber-300"
+        className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize z-30 flex items-end justify-end p-0.5 text-slate-500/35 group-hover:text-amber-300/80 transition-colors"
       >
         <span className="text-[9px] leading-none select-none">◢</span>
       </div>
@@ -214,27 +218,31 @@ export function DesktopWindowFrame<TSection extends string>({
   if (win.minimized) return null;
 
   const focusFrameCls = isFocused
-    ? 'border-[#4a5d7a] border-t-2 border-t-[#c9a24d] shadow-[0_20px_55px_rgba(0,0,0,0.82)]'
-    : 'border-[#253042] opacity-95 shadow-xl';
+    ? 'bg-[#0a1019]/88 backdrop-blur-xl border-[#4a6282]/75 shadow-[0_22px_58px_rgba(0,0,0,0.78),0_0_0_1px_rgba(201,162,77,0.2)]'
+    : 'bg-[#080c13]/76 backdrop-blur-md border-[#1f293b]/80 opacity-85 hover:opacity-95 shadow-[0_10px_28px_rgba(0,0,0,0.55)]';
 
   return (
     <section
       onPointerDown={onFocus}
       style={resolveWindowBoxStyle(win, bounds)}
-      className={`absolute pointer-events-auto rounded-sm bg-[#0c1119]/94 backdrop-blur-md border flex flex-col overflow-hidden transition-shadow ${focusFrameCls}`}
+      className={`group absolute pointer-events-auto rounded-lg border flex flex-col overflow-hidden transition-[box-shadow,opacity,border-color] duration-150 ${focusFrameCls}`}
     >
       <div
         onPointerDown={startInteraction('move')}
         onDoubleClick={onToggleMaximize}
-        className="hoi-header-steel px-3 py-1.5 border-b border-[#283447] flex items-center justify-between gap-2 cursor-grab active:cursor-grabbing select-none shrink-0"
+        className={`px-3 py-1 border-b flex items-center justify-between gap-2 cursor-grab active:cursor-grabbing select-none shrink-0 ${
+          isFocused
+            ? 'bg-gradient-to-r from-[#131e2f]/95 via-[#0f1724]/95 to-[#131e2f]/95 border-amber-400/25'
+            : 'bg-[#0d1420]/90 border-white/5'
+        }`}
       >
         <div className="flex items-center gap-2 min-w-0">
           <span
-            className={`w-2 h-2 rounded-full shrink-0 ${
+            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
               isFocused ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.7)]' : 'bg-slate-500'
             }`}
           />
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-100 truncate">
+          <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-200 truncate">
             {win.title}
           </span>
         </div>
@@ -250,7 +258,7 @@ export function DesktopWindowFrame<TSection extends string>({
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-5">{children}</div>
+      <div className="rosca-window-body flex-1 overflow-auto p-3 sm:p-3.5">{children}</div>
 
       <WindowResizeHandles maximized={win.maximized} startInteraction={startInteraction} />
     </section>
