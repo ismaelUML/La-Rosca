@@ -163,6 +163,8 @@ export interface SectorMeasureCard {
   durationType: 'TEMPORAL' | 'PERMANENTE';
   frequencyLabel?: string;
   cooldownMonths?: number;
+  remainingMonths?: number;
+  cooldownRemainingMonths?: number;
   ideologyTag?: 'IZQUIERDA' | 'CENTRO' | 'DERECHA';
   effectsBadges?: MeasureEffectBadge[];
   mutuallyExclusiveWith?: string;

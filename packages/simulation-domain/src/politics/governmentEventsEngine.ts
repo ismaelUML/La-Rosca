@@ -156,7 +156,8 @@ export interface MandateVerdict {
 
 export function evaluateMandateStatus(state: SimulationState, gov: GovernmentRuntimeState): MandateVerdict {
   const monthsInOffice = state.turnMonth - 1;
-  if (monthsInOffice >= MANDATE_MONTHS) {
+  const targetMonths = gov.mandateTargetMonths ?? MANDATE_MONTHS;
+  if (monthsInOffice >= targetMonths) {
     return { status: 'MANDATO_COMPLETADO', reason: describeMandateGrade(computeMandateScore(state)) };
   }
   if (monthsInOffice < GRACE_MONTHS) {

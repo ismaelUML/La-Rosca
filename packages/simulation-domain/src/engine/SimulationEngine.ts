@@ -18,6 +18,7 @@ import {
   stepPublicOpinion
 } from '../politics/judicialLaborAndOpinionEngine.js';
 import { stepRoleMandateMonthly } from '../politics/roleMandateEngine.js';
+import { applyPoliticalCyclePostStep, stepTemporalMeasuresLifecycle } from './politicalCycleEngine.js';
 
 // El orden del pipeline mensual importa muchisimo: primero impactan la energia y el mercado cambiario,
 // despues se forma la inflacion del mes, luego se ajustan paritarias y recaudacion (con Olivera-Tanzi),
@@ -105,6 +106,7 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
   const dynamics = DIFFICULTY_DYNAMICS[state.difficulty] ?? DIFFICULTY_DYNAMICS.ESTANDAR_2027;
   const fiscalDeficitPctGdp = Math.max(0, -state.treasury.financialResultPctGdp);
   const mod = computeDomainPolicyModifiers(state);
+  const temporal = stepTemporalMeasuresLifecycle(state.measures);
   const macroLags = consumeMonthlyMacroLags(state.laggedMacroShocks);
 
   const nextEnergy = stepEnergyAndCammesa(
@@ -147,7 +149,7 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
       inertiaFloor: dynamics.inertiaFloor,
       fiscalDeficitPctGdp,
       deficitMonetizationMult: dynamics.deficitMonetizationMult,
-      measuresInflationDeltaPp: mod.measuresInflationDeltaPp + macroLags.inflationDeltaPp
+      measuresInflationDeltaPp: mod.measuresInflationDeltaPp + temporal.reboundInflationPp + macroLags.inflationDeltaPp
     }
   );
 
@@ -211,7 +213,7 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
     {
       gdpGrowthAnnualPct,
       approvalPainMult: dynamics.approvalPainMult,
-      measuresApprovalDeltaPp: mod.measuresApprovalDeltaPp + macroLags.approvalDeltaPp
+      measuresApprovalDeltaPp: mod.measuresApprovalDeltaPp + temporal.reboundApprovalPp + macroLags.approvalDeltaPp
     }
   );
   const nextJudicial = stepJudicialAndLawfare(
@@ -248,7 +250,7 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
     presidentialImagePct: state.publicOpinion.presidentialPersonalImagePct
   };
 
-  return {
+  const rawNextState: SimulationState = {
     ...state,
     turnMonth: nextTurnMonth,
     currentYear: nextYear,
@@ -273,6 +275,37 @@ export function advanceSimulationMonth(state: SimulationState): SimulationState 
     previousTurnMetrics,
     ...roleStep,
     ...rigiStep
+  };
+
+  return applyPoliticalCyclePostStep(state, rawNextState, temporal);
+}
+
+export interface NextMonthMacroPreview {
+  nextIpcPct: number;
+  ipcDeltaPp: number;
+  nextNetReservesUsdB: number;
+  reservesDeltaUsdB: number;
+  nextApprovalPct: number;
+  approvalDeltaPp: number;
+  nextRiskPb: number;
+  riskDeltaPb: number;
+}
+
+export function previewNextMonthImpact(state: SimulationState): NextMonthMacroPreview {
+  const projected = advanceSimulationMonth(state);
+  return {
+    nextIpcPct: round2(projected.inflation.realMonthlyIpcPct),
+    ipcDeltaPp: round2(projected.inflation.realMonthlyIpcPct - state.inflation.realMonthlyIpcPct),
+    nextNetReservesUsdB: round2(projected.centralBank.netLiquidReservesBillionUsd),
+    reservesDeltaUsdB: round2(
+      projected.centralBank.netLiquidReservesBillionUsd - state.centralBank.netLiquidReservesBillionUsd
+    ),
+    nextApprovalPct: round2(projected.publicOpinion.managementApprovalPct),
+    approvalDeltaPp: round2(
+      projected.publicOpinion.managementApprovalPct - state.publicOpinion.managementApprovalPct
+    ),
+    nextRiskPb: Math.round(projected.countryRiskEmbiPb),
+    riskDeltaPb: Math.round(projected.countryRiskEmbiPb - state.countryRiskEmbiPb)
   };
 }
 

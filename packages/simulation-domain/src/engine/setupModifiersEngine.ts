@@ -11,6 +11,8 @@ import type {
 } from '../models/SimulationTypes.js';
 import { PARTY_IDEOLOGY_AXIS } from '../campaign/politicalAffinityEngine.js';
 import { clamp, round2 } from '../economy/mathUtils.js';
+import { DEFAULT_POLITICAL_CAPITAL } from './politicalCycleEngine.js';
+import { buildInitialCampaignPromises } from '../politics/promisesAndCrisisEngine.js';
 
 // Single source of truth for setup modifiers: UI displays these numbers verbatim
 // so the player never picks a "cosmetic" trait that secretly does nothing in the engine.
@@ -154,45 +156,45 @@ export const DIFFICULTY_CATALOG: DifficultyScenarioSpec[] = [
   {
     id: 'VIENTO_DE_COLA',
     label: 'Viento de Cola',
-    reservesLabel: 'USD 55.0B',
+    reservesLabel: 'US$ 55,0 B brutas (22,2 B netas)',
     riskLabel: '380 pb',
-    inflationLabel: '1.4% mens.',
+    inflationLabel: '1,4 % mens.',
     climateLabel: 'El Niño',
     note: 'Soja récord, dólar calmo y margen holgado para reformas graduales.'
   },
   {
     id: 'ESTANDAR_2027',
     label: 'Estándar 2027',
-    reservesLabel: 'USD 50.0B',
+    reservesLabel: 'US$ 50,0 B brutas (17,2 B netas)',
     riskLabel: '620 pb',
-    inflationLabel: '1.9% mens.',
+    inflationLabel: '1,9 % mens.',
     climateLabel: 'Neutro',
     note: 'Escenario base: macro ordenada pero con vencimientos y tensión social latente.'
   },
   {
     id: 'HERENCIA_MALDITA',
     label: 'Herencia Maldita',
-    reservesLabel: 'USD 25.0B',
-    riskLabel: '1180 pb',
-    inflationLabel: '5.8% mens.',
+    reservesLabel: 'US$ 25,0 B brutas (-7,8 B netas)',
+    riskLabel: '1.180 pb',
+    inflationLabel: '5,8 % mens.',
     climateLabel: 'Neutro',
     note: 'Pocos dólares líquidos y precios reprimidos; cualquier error dispara la brecha.'
   },
   {
     id: 'TORMENTA_PERFECTA',
     label: 'Tormenta Perfecta',
-    reservesLabel: 'USD 22.5B',
-    riskLabel: '1450 pb',
-    inflationLabel: '7.4% mens.',
+    reservesLabel: 'US$ 22,5 B brutas (-10,3 B netas)',
+    riskLabel: '1.450 pb',
+    inflationLabel: '7,4 % mens.',
     climateLabel: 'La Niña',
     note: 'Sequía en la Pampa Húmeda, fuga de divisas y conflictividad en ascenso.'
   },
   {
     id: 'DICIEMBRE_2001',
     label: 'Modo Diciembre 2001',
-    reservesLabel: 'USD 19.5B',
-    riskLabel: '2150 pb',
-    inflationLabel: '12.5% mens.',
+    reservesLabel: 'US$ 19,5 B brutas (-13,3 B netas)',
+    riskLabel: '2.150 pb',
+    inflationLabel: '12,5 % mens.',
     climateLabel: 'La Niña',
     note: 'Borde de hiperinflación, corridas bancarias y gobernadores emitiendo cuasimonedas.'
   }
@@ -362,6 +364,8 @@ export function applySetupConfigurationToState(
       ...baseState.structural,
       anchorCredibilityIndex: round2(clamp(baseState.structural.anchorCredibilityIndex + archetype.credibilityDelta, 10, 95))
     },
+    politicalCapital: DEFAULT_POLITICAL_CAPITAL,
+    campaignPromises: baseState.campaignPromises ?? buildInitialCampaignPromises(setup.party.sigla),
     eventLog: [
       `Configuración de Mandato: ${leaderLabel} (${setup.party.sigla}) · Perfil ${archetype.label} · Base ${setup.provinceId}.`,
       ...baseState.eventLog.slice(0, 14)

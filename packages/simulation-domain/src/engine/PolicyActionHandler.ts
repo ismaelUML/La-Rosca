@@ -4,6 +4,12 @@ import { clamp, round2 } from '../economy/mathUtils.js';
 import { INITIAL_CONGRESS_BILLS } from '../politics/congressEngine.js';
 import { INITIAL_FIXED_REFORMS, toggleFixedReformState } from '../politics/reformasInstitucionalesEngine.js';
 import { executeRolePolicyAction } from '../politics/roleMandateEngine.js';
+import { resolveCrisisArcAction } from '../politics/promisesAndCrisisEngine.js';
+import { applyCoalitionMinisterOustPenalty } from '../politics/cabinetDynamicsEngine.js';
+import { resolveDebtMilestoneAction } from '../economy/debtMilestonesEngine.js';
+import { applyStartReelectionTerm } from '../politics/mandateLegacyEngine.js';
+import { resolveOppositionBillAction } from '../politics/oppositionBillEngine.js';
+import { getPoliticalCapital, TEMPORAL_MEASURE_DEFAULT_MONTHS } from './politicalCycleEngine.js';
 import { approveAllRigiProjects, approveRigiProject } from './rigiEngine.js';
 import { adjustTrustLedger, enqueueMacroShock } from './trustAndLagEngine.js';
 
@@ -369,6 +375,30 @@ function applyInstitutionalReformToggle(state: SimulationState, reformId: string
   };
 }
 
+function applyCabinetReplacement(
+  state: SimulationState,
+  ministerId: string,
+  replacement?: SimulationState['ministers'] extends Array<infer T> | undefined ? T : never
+): SimulationState {
+  const ministers = state.ministers ?? [];
+  const previous = ministers.find((m) => m.id === ministerId);
+  const penalty = applyCoalitionMinisterOustPenalty(
+    state.congressBlocs,
+    previous,
+    replacement?.partySigla
+  );
+  const nextMinisters = ministers.map((m) => {
+    if (m.id !== ministerId) return m;
+    return replacement ?? { ...m, ministerName: `${m.ministerName} (Recambio)`, performance: 62, risk: 12 };
+  });
+  return {
+    ...state,
+    ministers: nextMinisters,
+    congressBlocs: penalty.nextBlocs,
+    eventLog: penalty.log ? [penalty.log, ...state.eventLog.slice(0, 14)] : state.eventLog
+  };
+}
+
 function applyCabinetAction(state: SimulationState, action: PolicyAction): SimulationState | null {
   const ministers = state.ministers ?? [];
   if (action.type === 'REINFORCE_MINISTER') {
@@ -381,22 +411,8 @@ function applyCabinetAction(state: SimulationState, action: PolicyAction): Simul
       )
     };
   }
-  if (action.type === 'REPLACE_MINISTER') {
-    return {
-      ...state,
-      ministers: ministers.map((m) =>
-        m.id === action.ministerId
-          ? { ...m, ministerName: `${m.ministerName} (Recambio)`, performance: 62, risk: 12 }
-          : m
-      )
-    };
-  }
-  if (action.type === 'APPOINT_MINISTER') {
-    return {
-      ...state,
-      ministers: ministers.map((m) => (m.id === action.ministerId ? action.minister : m))
-    };
-  }
+  if (action.type === 'REPLACE_MINISTER') return applyCabinetReplacement(state, action.ministerId);
+  if (action.type === 'APPOINT_MINISTER') return applyCabinetReplacement(state, action.ministerId, action.minister);
   return null;
 }
 
@@ -404,17 +420,52 @@ function isMeasureExcluded(candidate: SectorMeasureCard, target: SectorMeasureCa
   return candidate.id === target.mutuallyExclusiveWith || candidate.mutuallyExclusiveWith === target.id;
 }
 
+function activateTargetMeasure(m: SectorMeasureCard): SectorMeasureCard {
+  const remainingMonths = m.durationType === 'TEMPORAL' ? TEMPORAL_MEASURE_DEFAULT_MONTHS : undefined;
+  return { ...m, active: true, remainingMonths };
+}
+
+function deactivateTargetMeasure(m: SectorMeasureCard): SectorMeasureCard {
+  if (m.durationType === 'TEMPORAL') {
+    return { ...m, active: false, remainingMonths: 0, cooldownRemainingMonths: 2 };
+  }
+  return { ...m, active: false };
+}
+
+function applyMeasureActivation(
+  state: SimulationState,
+  measures: SectorMeasureCard[],
+  target: SectorMeasureCard
+): SimulationState {
+  if ((target.cooldownRemainingMonths ?? 0) > 0) return state;
+  const cap = getPoliticalCapital(state);
+  if (cap.remaining <= 0) return state;
+
+  const nextMeasures = measures.map((m) => {
+    if (m.id === target.id) return activateTargetMeasure(m);
+    if (isMeasureExcluded(m, target)) return { ...m, active: false };
+    return m;
+  });
+  return {
+    ...state,
+    measures: nextMeasures,
+    politicalCapital: { ...cap, remaining: Math.max(0, cap.remaining - 1) },
+    eventLog: [`Decreto firmado: "${target.title}".`, ...state.eventLog.slice(0, 14)]
+  };
+}
+
 function handleToggleMeasure(state: SimulationState, measureId: string): SimulationState {
   const measures = state.measures ?? [];
   const target = measures.find((m) => m.id === measureId);
   if (!target) return state;
-  const activating = !target.active;
-  const nextMeasures = measures.map((m) => {
-    if (m.id === measureId) return { ...m, active: activating };
-    if (activating && isMeasureExcluded(m, target)) return { ...m, active: false };
-    return m;
-  });
-  return { ...state, measures: nextMeasures };
+  if (!target.active) return applyMeasureActivation(state, measures, target);
+
+  const nextMeasures = measures.map((m) => (m.id === measureId ? deactivateTargetMeasure(m) : m));
+  return {
+    ...state,
+    measures: nextMeasures,
+    eventLog: [`Medida derogada: "${target.title}".`, ...state.eventLog.slice(0, 14)]
+  };
 }
 
 function handleToggleRigiSector(state: SimulationState, sectorId: string): SimulationState {
@@ -482,12 +533,90 @@ function applySecondaryPasses(state: SimulationState, action: PolicyAction): Sim
   return applyCabinetAction(state, action);
 }
 
+function applyProvinceWorksAction(state: SimulationState, provinceId: string): SimulationState {
+  const prov = state.provinces.find((p) => p.id === provinceId);
+  const label = prov?.name ?? provinceId;
+  const provinces = state.provinces.map((p) =>
+    p.id === provinceId
+      ? { ...p, governorLoyaltyToPresident: round2(clamp(p.governorLoyaltyToPresident + 5, 0, 100)) }
+      : p
+  );
+  const laggedMacroShocks = enqueueMacroShock(state.laggedMacroShocks, {
+    id: `obra-${provinceId}-${state.turnMonth}`,
+    sourceLabel: `Obra federal en ${label}`,
+    monthsRemaining: 2,
+    inflationDeltaPerMonth: 0.04,
+    gdpGrowthDeltaPerMonth: 0.12,
+    approvalDeltaPerMonth: 0.45
+  });
+  return {
+    ...state,
+    provinces,
+    laggedMacroShocks,
+    treasury: { ...state.treasury, publicWorksPctGdp: round2(state.treasury.publicWorksPctGdp + 0.05) },
+    eventLog: [`Obra federal comprometida en ${label} (+5 lealtad · impacto en actividad/imagen 2 meses).`, ...state.eventLog.slice(0, 14)]
+  };
+}
+
+function applyCallGovernorForQuorum(state: SimulationState, provinceId: string): SimulationState {
+  const cap = getPoliticalCapital(state);
+  if (cap.remaining <= 0) return state;
+  const prov = state.provinces.find((p) => p.id === provinceId);
+  const label = prov?.name ?? provinceId;
+  const boostedBlocs = (state.congressBlocs ?? []).map((b) =>
+    b.id === 'PROVINCIALES' || b.id === 'PF' || b.id === 'UCR'
+      ? { ...b, relation: clamp(b.relation + 6, 0, 100) }
+      : b
+  );
+  const provinces = state.provinces.map((p) =>
+    p.id === provinceId
+      ? { ...p, governorLoyaltyToPresident: round2(clamp(p.governorLoyaltyToPresident + 4, 0, 100)) }
+      : p
+  );
+  return {
+    ...state,
+    provinces,
+    congressBlocs: boostedBlocs,
+    politicalCapital: { ...cap, remaining: Math.max(0, cap.remaining - 1) },
+    eventLog: [`Llamado a ${label}: el gobernador alineó bancas federales (+6 relación Provinciales/PF/UCR).`, ...state.eventLog.slice(0, 14)]
+  };
+}
+
+function applyMidtermOrReelectionAction(state: SimulationState, action: PolicyAction): SimulationState | null {
+  if (action.type === 'START_REELECTION_TERM') return applyStartReelectionTerm(state);
+  if (action.type === 'RESOLVE_OPPOSITION_BILL') return resolveOppositionBillAction(state, action.resolution);
+  if (action.type === 'DISMISS_MIDTERM_MODAL' && state.midterm2029Result) {
+    return { ...state, midterm2029Result: { ...state.midterm2029Result, dismissed: true } };
+  }
+  return null;
+}
+
+function applyMapFederalAction(state: SimulationState, action: PolicyAction): SimulationState | null {
+  if (action.type === 'PROMISE_PROVINCIAL_WORKS') return applyProvinceWorksAction(state, action.provinceId);
+  if (action.type === 'CALL_GOVERNOR_FOR_QUORUM') return applyCallGovernorForQuorum(state, action.provinceId);
+  return null;
+}
+
+function applyPoliticalCycleAction(state: SimulationState, action: PolicyAction): SimulationState | null {
+  if (action.type === 'RESOLVE_CRISIS_ARC') return resolveCrisisArcAction(state, action.strategy);
+  if (action.type === 'RESOLVE_DEBT_MILESTONE') return resolveDebtMilestoneAction(state, action.option);
+  return applyMidtermOrReelectionAction(state, action) ?? applyMapFederalAction(state, action);
+}
+
+function applyTertiaryPasses(state: SimulationState, action: PolicyAction): SimulationState | null {
+  const m = applyMeasureAndTaxAction(state, action);
+  if (m) return m;
+  const r = applyRigiProjectAction(state, action);
+  if (r) return r;
+  return applyPoliticalCycleAction(state, action);
+}
+
 export function applyPolicyAction(state: SimulationState, action: PolicyAction): SimulationState {
   const primary = applyPrimaryPasses(state, action);
   if (primary) return primary;
   const secondary = applySecondaryPasses(state, action);
   if (secondary) return secondary;
-  const domainExtra = applyMeasureAndTaxAction(state, action) ?? applyRigiProjectAction(state, action);
-  if (domainExtra) return domainExtra;
+  const tertiary = applyTertiaryPasses(state, action);
+  if (tertiary) return tertiary;
   return applyJudicialOrTaxAction(state, action);
 }

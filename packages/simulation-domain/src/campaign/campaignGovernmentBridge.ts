@@ -1,6 +1,8 @@
 import type { CampaignSimulationState } from '../models/CampaignTypes.js';
 import type { CongressBlocAllocation, ProvinceSummary, SimulationState } from '../models/SimulationTypes.js';
 import { clamp, round2 } from '../economy/mathUtils.js';
+import { DEFAULT_POLITICAL_CAPITAL } from '../engine/politicalCycleEngine.js';
+import { buildPromisesFromSelection } from '../politics/promisesAndCrisisEngine.js';
 
 const BASE_BLOC_IDS = ['LLA', 'PRO', 'UCR', 'PF', 'PROVINCIALES', 'UXP', 'FIT'] as const;
 
@@ -127,6 +129,8 @@ export function applyCampaignBridgeToGovernment(
       ...baseState.structural,
       anchorCredibilityIndex: round2(clamp(baseState.structural.anchorCredibilityIndex + endorsementsCount * 1.5, 20, 90))
     },
+    politicalCapital: DEFAULT_POLITICAL_CAPITAL,
+    campaignPromises: buildPromisesFromSelection(campaign.selectedPromiseIds, campaign.partySigla),
     eventLog: [
       `10 de Diciembre de 2027: Asume ${campaign.candidateName} (${coalitionLabel}) con ${votePct.toFixed(1)}% de respaldo electoral.`,
       ...baseState.eventLog.slice(0, 14)

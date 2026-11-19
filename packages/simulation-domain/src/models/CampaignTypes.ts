@@ -228,6 +228,7 @@ export interface CampaignSimulationState {
   isCandidacyConfirmed?: boolean;
   coalitionParties?: string[];
   runningMateId?: string | null;
+  selectedPromiseIds?: string[];
   rejectedAlliances?: string[];
   resolvedDilemmas?: string[];
   activeMonthlyDilemmaId?: string | null;

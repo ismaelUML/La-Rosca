@@ -261,6 +261,7 @@ export interface GovernmentRuntimeState {
   defaultRiskMonths: number;
   hyperinflationMonths: number;
   mandateStatus: MandateStatus;
+  mandateTargetMonths?: number;
   endReason?: string;
   finalScore?: number;
 }
@@ -372,6 +373,117 @@ export interface SimulationState {
   governorMandate?: GovernorMandateState;
   legislatorMandate?: LegislatorMandateState;
   previousTurnMetrics?: PreviousTurnMacroSnapshot;
+  politicalCapital?: PoliticalCapitalState;
+  monthlyBalanceSummary?: string[];
+  campaignPromises?: CampaignPromiseRecord[];
+  midterm2029Done?: boolean;
+  midterm2029Result?: MidtermElection2029Result;
+  activeCrisisArc?: ActiveCrisisArcState | null;
+  historySnapshots?: MonthlyHistorySnapshot[];
+  pendingDebtMilestone?: PendingDebtMilestone | null;
+  resolvedDebtMilestones?: string[];
+  pendingOppositionBill?: PendingOppositionBill | null;
+  resolvedOppositionBills?: string[];
+}
+
+export interface MonthlyHistorySnapshot {
+  turnMonth: number;
+  label: string;
+  monthlyIpcPct: number;
+  interannualIpcPct: number;
+  foodInflationPct: number;
+  unemploymentPct: number;
+  informalityPct: number;
+  realWageIndex: number;
+  gdpGrowthPct: number;
+  gdpNominalUsdB: number;
+  povertyPct: number;
+  indigencePct: number;
+  giniCoefficient: number;
+  officialDollarArs: number;
+  cclDollarArs: number;
+  brechaPct: number;
+  grossReservesUsdB: number;
+  netReservesUsdB: number;
+  policyRatePct: number;
+  countryRiskPb: number;
+  primaryResultPctGdp: number;
+  revenuePctGdp: number;
+  primarySpendingPctGdp: number;
+  tariffCoveragePct: number;
+  approvalPct: number;
+  personalImagePct: number;
+  expectation12mPct: number;
+}
+
+export type DebtMilestoneOption = 'PAGAR_RESERVAS' | 'CANJE_MERCADO' | 'REESTRUCTURAR';
+
+export interface PendingDebtMilestone {
+  id: string;
+  turnMonth: number;
+  title: string;
+  amountBillionUsd: number;
+  summary: string;
+}
+
+export type OppositionBillResolution = 'PROMULGAR' | 'VETAR' | 'NEGOCIAR';
+
+export interface PendingOppositionBill {
+  id: string;
+  turnMonth: number;
+  title: string;
+  sponsorBloc: string;
+  summary: string;
+  fiscalCostPctGdp: number;
+  tariffHitPp?: number;
+  limitsPoliticalCapital?: boolean;
+}
+
+export interface PoliticalCapitalState {
+  remaining: number;
+  maxPerMonth: number;
+}
+
+export type CampaignPromiseStatus = 'PENDIENTE' | 'CUMPLIDA' | 'ROTA';
+
+export type CampaignPromiseMetricKey =
+  | 'IPC_BAJO'
+  | 'SUPERAVIT_FISCAL'
+  | 'POBREZA_BAJA'
+  | 'RESERVAS_ALTAS'
+  | 'IMAGEN_ALTA'
+  | 'BRECHA_BAJA';
+
+export interface CampaignPromiseRecord {
+  id: string;
+  title: string;
+  targetSummary: string;
+  status: CampaignPromiseStatus;
+  metricKey: CampaignPromiseMetricKey;
+  deadlineMonth: number;
+}
+
+export interface MidtermElection2029Result {
+  turnMonth: number;
+  playerVotePct: number;
+  oppositionVotePct: number;
+  deputiesDelta: number;
+  senateDelta: number;
+  verdictLabel: string;
+  headline: string;
+  dismissed: boolean;
+}
+
+export type CrisisArcId = 'REBELION_FEDERAL' | 'INTERNA_FORMULA' | 'CORRIDA_CITY';
+
+export interface ActiveCrisisArcState {
+  id: CrisisArcId;
+  title: string;
+  stage: 1 | 2 | 3;
+  headline: string;
+  detail: string;
+  negotiateLabel: string;
+  confrontLabel: string;
 }
 
 export type PolicyAction =
@@ -403,5 +515,12 @@ export type PolicyAction =
   | { type: 'TOGGLE_INSTITUTIONAL_REFORM'; reformId: string }
   | { type: 'REJECT_CONGRESS_BILL'; billId: string }
   | { type: 'GRANT_BLOC_CONCESSION'; blocId: string; concession: 'ARGENTUMS' | 'GABINETE' | 'SUAVIZAR' | 'GOBERNADORES' }
-  | { type: 'EXECUTE_ROLE_ACTION'; actionId: RoleActionId };
+  | { type: 'EXECUTE_ROLE_ACTION'; actionId: RoleActionId }
+  | { type: 'RESOLVE_CRISIS_ARC'; strategy: 'NEGOCIAR' | 'CONFRONTAR' }
+  | { type: 'DISMISS_MIDTERM_MODAL' }
+  | { type: 'RESOLVE_DEBT_MILESTONE'; option: DebtMilestoneOption }
+  | { type: 'START_REELECTION_TERM' }
+  | { type: 'RESOLVE_OPPOSITION_BILL'; resolution: OppositionBillResolution }
+  | { type: 'PROMISE_PROVINCIAL_WORKS'; provinceId: string }
+  | { type: 'CALL_GOVERNOR_FOR_QUORUM'; provinceId: string };
 
