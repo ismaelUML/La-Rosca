@@ -610,8 +610,8 @@ function syncLandmarkAnchorHeights(
 }
 
 const NIGHT_ENVIRONMENT = {
-  true: { bgHex: 0x020409, fogDensity: 0.0062 },
-  false: { bgHex: 0x06090f, fogDensity: 0.0042 }
+  true: { bgHex: 0x040204, fogDensity: 0.0058 },
+  false: { bgHex: 0x090407, fogDensity: 0.0036 }
 } as const;
 
 export function applyNightSatelliteMode(

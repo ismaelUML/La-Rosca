@@ -65,7 +65,7 @@ function DossierRow({
   subvalue?: string;
 }) {
   return (
-    <div className="p-2.5 rounded-sm bg-[#090d14] border border-[#1e293b]">
+    <div className="p-2.5 rounded-sm bg-[#0b0508] border border-white/10">
       <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-400">
         {icon}
         <span>{label}</span>
@@ -78,9 +78,9 @@ function DossierRow({
 
 function AlliesBadgeRow({ allies }: { allies: string[] }) {
   return (
-    <div className="p-2.5 rounded-sm bg-[#090d14] border border-[#1e293b]">
+    <div className="p-2.5 rounded-sm bg-[#0b0508] border border-white/10">
       <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-400">
-        <Users className="w-3.5 h-3.5 text-amber-400" />
+        <Users className="w-3.5 h-3.5 text-[#EB3F7D]" />
         <span>Aliados Ideológicos Iniciales</span>
       </div>
       <div className="flex flex-wrap gap-1.5 mt-1.5">
@@ -88,7 +88,7 @@ function AlliesBadgeRow({ allies }: { allies: string[] }) {
           allies.map((ally) => (
             <span
               key={ally}
-              className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-sm bg-[#162133] border border-[#32445d] text-amber-200"
+              className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-sm bg-[#1b0e15] border border-white/20 text-[#EFE9DA]"
             >
               {ally}
             </span>
@@ -120,6 +120,12 @@ function resolveCatalogSpecs(
   };
 }
 
+function formatCongressNote(description: string, startMode: GameStartMode): string {
+  return startMode === 'CAMPAIGN'
+    ? `${description} (Al ganar, las bancas finales escalan según tu voto).`
+    : description;
+}
+
 export function SetupSummarySidebar({
   leaderName,
   role,
@@ -140,23 +146,23 @@ export function SetupSummarySidebar({
 
   return (
     <aside className="hoi-panel rounded-sm p-4 space-y-3 lg:sticky lg:top-4">
-      <div className="pb-2.5 border-b border-[#243042] flex items-center justify-between gap-2">
+      <div className="pb-2.5 border-b border-white/10 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <OfficialInstitutionLogo institution={ROLE_INSTITUTION_LOGO[role]} heightPx={24} />
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-300 truncate">
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#f472b6] truncate">
             Dossier de Partida
           </span>
         </div>
-        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-sm bg-[#162133] border border-[#32445d] text-slate-200 shrink-0">
+        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-sm bg-[#1b0e15] border border-white/20 text-slate-200 shrink-0">
           {modeTag}
         </span>
       </div>
 
-      <div className="p-3 rounded-sm bg-[#080c13] border border-[#283548] flex items-center gap-3">
+      <div className="p-3 rounded-sm bg-[#0a0508] border border-white/15 flex items-center gap-3">
         <PartyEmblemSvg config={party.emblem} size={56} />
         <div className="min-w-0">
           <div className="text-sm font-extrabold text-white truncate">{leaderName || 'Mi Personaje'}</div>
-          <div className="text-xs font-mono text-amber-300 truncate">
+          <div className="text-xs font-mono text-[#f472b6] truncate">
             {party.sigla} · {party.name}
           </div>
           <div className="text-[11px] text-slate-400 truncate mt-0.5">{party.ideology}</div>
@@ -165,7 +171,7 @@ export function SetupSummarySidebar({
 
       <div className="space-y-2">
         <DossierRow
-          icon={<MapPin className="w-3.5 h-3.5 text-amber-400" />}
+          icon={<MapPin className="w-3.5 h-3.5 text-[#EB3F7D]" />}
           label="Cargo y Base Territorial"
           value={`${ROLE_LABELS[role]} (${provinceName})`}
           subvalue={formatProvinceSubvalue(province)}
@@ -186,10 +192,10 @@ export function SetupSummarySidebar({
         />
 
         <DossierRow
-          icon={<Landmark className="w-3.5 h-3.5 text-amber-300" />}
+          icon={<Landmark className="w-3.5 h-3.5 text-[#f472b6]" />}
           label="Correlación en Cámaras"
           value={`${congress.label} (${congress.seatTag})`}
-          subvalue={congress.description}
+          subvalue={formatCongressNote(congress.description, startMode)}
         />
 
         <AlliesBadgeRow allies={allies} />

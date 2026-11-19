@@ -232,19 +232,19 @@ interface ViceCandidateCardProps {
 function ViceCandidateCard({ candidate, partyColor, isSelected, onSelect }: ViceCandidateCardProps) {
   return (
     <div
-      className={`rounded-sm bg-[#090d14] border p-4 flex flex-col justify-between space-y-3 transition ${
-        isSelected ? 'border-emerald-500/70 bg-[#0d1917]' : 'border-[#263142] hover:border-[#8a6d33]'
+      className={`rounded-sm bg-[#0b0508] border p-4 flex flex-col justify-between space-y-3 transition ${
+        isSelected ? 'border-emerald-500/70 bg-[#0d1917]' : 'border-white/15 hover:border-[#EB3F7D]/55'
       }`}
     >
       <div className="space-y-2">
-        <div className="flex items-center gap-2.5 border-b border-[#1e293b] pb-2">
+        <div className="flex items-center gap-2.5 border-b border-white/10 pb-2">
           <OfficialPartyLogo
             partyIdOrSigla={candidate.partySigla}
             sizePx={32}
             fallbackColor={partyColor}
           />
           <div>
-            <h4 className="text-sm font-serif font-bold text-amber-100 uppercase tracking-wide leading-tight">
+            <h4 className="text-sm font-serif font-bold text-[#F5EFE6] uppercase tracking-wide leading-tight">
               {candidate.name}
             </h4>
             <div className="text-[11px] font-mono text-sky-300">
@@ -256,10 +256,10 @@ function ViceCandidateCard({ candidate, partyColor, isSelected, onSelect }: Vice
           {candidate.roleDescription}
         </p>
         <div className="grid grid-cols-2 gap-2 pt-1 font-mono text-[11px]">
-          <div className="p-1.5 rounded-sm bg-[#0c1119] border border-[#1e293b] text-slate-300">
-            Relevancia: <strong className="text-amber-300">{candidate.relevance}</strong>
+          <div className="p-1.5 rounded-sm bg-[#11080d] border border-white/10 text-slate-300">
+            Relevancia: <strong className="text-[#f472b6]">{candidate.relevance}</strong>
           </div>
-          <div className="p-1.5 rounded-sm bg-[#0c1119] border border-[#1e293b] text-slate-300">
+          <div className="p-1.5 rounded-sm bg-[#11080d] border border-white/10 text-slate-300">
             Estructura: <strong className="text-emerald-400">{candidate.structure}</strong>
           </div>
         </div>
@@ -306,13 +306,13 @@ export function VicePresidentSelectionModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="hoi-panel rounded-sm border-2 border-[#8a6d33] w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
-        <div className="hoi-header-steel p-5 border-b border-[#263142] flex items-start justify-between">
+      <div className="hoi-panel rounded-sm border-2 border-[#EB3F7D]/55 w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+        <div className="hoi-header-steel p-5 border-b border-white/15 flex items-start justify-between">
           <div className="space-y-1">
-            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-400">
+            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#EB3F7D]">
               FÓRMULA PRESIDENCIAL 2027 · PRESIDENCIA DEL SENADO
             </div>
-            <h2 className="text-2xl font-serif font-bold text-amber-100 uppercase tracking-wide">
+            <h2 className="text-2xl font-serif font-bold text-[#F5EFE6] uppercase tracking-wide">
               Elegí a tu vicepresidente
             </h2>
             <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
@@ -322,13 +322,13 @@ export function VicePresidentSelectionModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-300 hover:text-amber-200 px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#263142] font-mono text-xs"
+            className="text-slate-300 hover:text-[#EFE9DA] px-2.5 py-1 rounded-sm bg-[#0b0508] border border-white/15 font-mono text-xs"
           >
             ✕
           </button>
         </div>
 
-        <div className="p-5 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-4 bg-[#0c1119]">
+        <div className="p-5 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-4 bg-[#11080d]">
           {options.map((opt) => (
             <ViceCandidateCard
               key={opt.id}
@@ -340,11 +340,11 @@ export function VicePresidentSelectionModal({
           ))}
         </div>
 
-        <div className="p-4 bg-[#090d14] border-t border-[#263142] flex justify-end">
+        <div className="p-4 bg-[#0b0508] border-t border-white/15 flex justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 rounded-sm text-xs font-mono font-bold uppercase tracking-wider text-slate-300 hover:text-amber-200 bg-[#0c1119] border border-[#263142]"
+            className="px-5 py-2 rounded-sm text-xs font-mono font-bold uppercase tracking-wider text-slate-300 hover:text-[#EFE9DA] bg-[#11080d] border border-white/15"
           >
             Cerrar
           </button>

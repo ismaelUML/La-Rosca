@@ -24,7 +24,7 @@
   }
 
   *::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(201, 162, 77, 0.72);
+    background-color: rgba(235, 63, 125, 0.78);
   }
 
   *::-webkit-scrollbar-corner {
@@ -32,8 +32,8 @@
   }
 
   body {
-    background-color: #0b0f14;
-    color: #e6edf3;
+    background-color: #090407;
+    color: #f5efe6;
     font-variant-numeric: tabular-nums;
   }
 }
@@ -44,11 +44,11 @@
   scrollbar-gutter: stable;
 }
 
-.rosca-window-body .grid > * {
+.rosca-window-body .grid>* {
   min-width: 0;
 }
 
-.rosca-window-body > div > header.hoi-panel {
+.rosca-window-body>div>header.hoi-panel {
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
 }
@@ -60,10 +60,15 @@
 
 .rosca-window-body .hoi-panel {
   border-radius: 0.5rem;
-  border-color: rgba(51, 65, 85, 0.72);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.rosca-obsidian-stage {
+  background: radial-gradient(circle at 50% 42%, rgba(235, 63, 125, 0.14) 0%, rgba(42, 10, 24, 0.35) 38%, #090407 78%);
 }
 
 @container rosca-win (max-width: 840px) {
+
   .rosca-window-body .md\:grid-cols-3,
   .rosca-window-body .lg\:grid-cols-3,
   .rosca-window-body .lg\:grid-cols-4,
@@ -74,6 +79,7 @@
 }
 
 @container rosca-win (max-width: 560px) {
+
   .rosca-window-body .sm\:grid-cols-2,
   .rosca-window-body .sm\:grid-cols-3,
   .rosca-window-body .md\:grid-cols-2,
@@ -89,18 +95,18 @@
 }
 
 .hoi-panel {
-  background-color: #11161f;
-  border: 1px solid #263142;
+  background-color: #10090d;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .hoi-header-steel {
-  background-color: #162233;
-  border-bottom: 1px solid #8a6d33;
+  background-color: #170d12;
+  border-bottom: 1px solid rgba(235, 63, 125, 0.48);
 }
 
 .hoi-header-crimson {
-  background-color: #3d1419;
-  border-bottom: 1px solid #6f232c;
+  background-color: #360c1b;
+  border-bottom: 1px solid rgba(235, 63, 125, 0.58);
 }
 
 .hoi-paper-event {
@@ -109,16 +115,14 @@
 }
 
 .hoi-newspaper-fold {
-  background-image: linear-gradient(
-    90deg,
-    rgba(0, 0, 0, 0.04) 0%,
-    rgba(255, 255, 255, 0) 22%,
-    rgba(0, 0, 0, 0) 48%,
-    rgba(0, 0, 0, 0.06) 50%,
-    rgba(255, 255, 255, 0.08) 51%,
-    rgba(0, 0, 0, 0) 78%,
-    rgba(0, 0, 0, 0.04) 100%
-  );
+  background-image: linear-gradient(90deg,
+      rgba(0, 0, 0, 0.04) 0%,
+      rgba(255, 255, 255, 0) 22%,
+      rgba(0, 0, 0, 0) 48%,
+      rgba(0, 0, 0, 0.06) 50%,
+      rgba(255, 255, 255, 0.08) 51%,
+      rgba(0, 0, 0, 0) 78%,
+      rgba(0, 0, 0, 0.04) 100%);
 }
 
 .hoi-newspaper-photo {
@@ -126,13 +130,14 @@
 }
 
 .hoi-btn-gold {
-  background-color: #b89342;
-  border: 1px solid #8d6e2c;
-  color: #100e09;
+  background-color: #eb3f7d;
+  border: 1px solid #f472b6;
+  color: #090407;
+  font-weight: 800;
 }
 
 .hoi-btn-gold:hover {
-  background-color: #c7a14e;
+  background-color: #f45b93;
 }
 
 @keyframes roscaPanelEnter {
@@ -140,6 +145,7 @@
     opacity: 0;
     transform: translateY(6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -150,6 +156,7 @@
   0% {
     box-shadow: 0 0 0 0 rgba(201, 162, 77, 0.55);
   }
+
   100% {
     box-shadow: 0 0 0 10px rgba(201, 162, 77, 0);
   }
@@ -160,6 +167,7 @@
     opacity: 0;
     transform: translateY(8px) scale(0.96);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);

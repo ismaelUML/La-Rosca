@@ -88,14 +88,14 @@ function resolveDeptWinner(
 function ForcesLegendBar({ results }: { results?: CandidateVoteResult[] }) {
   if (!results || results.length === 0) return null;
   return (
-    <div className="w-full flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-sm bg-[#090d14] border border-[#263142] text-[11px] font-mono">
+    <div className="w-full flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-sm bg-[#0b0508] border border-white/15 text-[11px] font-mono">
       <span className="text-slate-400 uppercase tracking-wider">Fuerza ganadora por distrito:</span>
       <div className="flex flex-wrap items-center gap-3">
         {results.map((r) => (
           <span key={r.fuerza} className="inline-flex items-center gap-1.5 text-slate-200">
             <span style={{ backgroundColor: r.color }} className="w-2.5 h-2.5 rounded-sm inline-block" />
             <span>{r.fuerza}</span>
-            <strong className="text-amber-300">{r.pct.toFixed(1)}%</strong>
+            <strong className="text-[#f472b6]">{r.pct.toFixed(1)}%</strong>
           </span>
         ))}
       </div>
@@ -116,14 +116,14 @@ function ConurbanoResultsInset({
 }) {
   if (features.length === 0) return null;
   return (
-    <div className="w-full md:w-[235px] rounded-sm bg-[#090d14] border border-[#263142] p-2.5 space-y-2">
-      <div className="flex items-center justify-between border-b border-[#1e293b] pb-1.5">
-        <span className="text-[10px] font-serif font-bold uppercase tracking-wider text-amber-200">
+    <div className="w-full md:w-[235px] rounded-sm bg-[#0b0508] border border-white/15 p-2.5 space-y-2">
+      <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+        <span className="text-[10px] font-serif font-bold uppercase tracking-wider text-[#EFE9DA]">
           Zoom Conurbano (AMBA)
         </span>
         <span className="text-[9px] font-mono text-sky-400">24 Partidos</span>
       </div>
-      <div className="h-[235px] w-full bg-[#070a10] rounded-sm border border-[#1a2434] p-1">
+      <div className="h-[235px] w-full bg-[#090407] rounded-sm border border-[#1a2434] p-1">
         <svg viewBox="70 -10 210 270" className="w-full h-full filter drop-shadow-xl">
           {features.map((feat) => {
             const deptWin = resolveDeptWinner(feat.name, pbaData, results);
@@ -162,9 +162,9 @@ function ProvincialWinnersList({
   onSelect: (id: string) => void;
 }) {
   return (
-    <div className="w-full lg:w-64 rounded-sm bg-[#090d14] border border-[#263142] p-2.5 space-y-2 text-xs">
-      <div className="flex items-center justify-between border-b border-[#1e293b] pb-1.5">
-        <span className="text-[10px] font-serif font-bold uppercase tracking-wider text-amber-100">
+    <div className="w-full lg:w-64 rounded-sm bg-[#0b0508] border border-white/15 p-2.5 space-y-2 text-xs">
+      <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+        <span className="text-[10px] font-serif font-bold uppercase tracking-wider text-[#F5EFE6]">
           Actas por Provincia (24)
         </span>
         <span className="text-[9px] font-mono text-emerald-400">CNE</span>
@@ -179,8 +179,8 @@ function ProvincialWinnersList({
               onClick={() => onSelect(p.provinceId)}
               className={`w-full text-left px-2.5 py-1.5 rounded-sm border transition flex items-center justify-between ${
                 isSelected
-                  ? 'bg-[#172234] border-[#c9a24d] text-amber-100 font-bold'
-                  : 'bg-[#0c1119] border-[#1e293b] text-slate-300 hover:border-[#344661]'
+                  ? 'bg-[#172234] border-[#EB3F7D] text-[#F5EFE6] font-bold'
+                  : 'bg-[#11080d] border-white/10 text-slate-300 hover:border-white/20'
               }`}
             >
               <span className="flex items-center gap-1.5 min-w-0">
@@ -190,7 +190,7 @@ function ProvincialWinnersList({
                 />
                 <span className="truncate text-[11px]">{p.provinceName}</span>
               </span>
-              <span className="font-mono text-[10px] text-amber-300 shrink-0 ml-1">
+              <span className="font-mono text-[10px] text-[#f472b6] shrink-0 ml-1">
                 {p.playerVotePct.toFixed(1)}%
               </span>
             </button>
@@ -302,11 +302,11 @@ export function ElectionResultsSvgMap({
   const bannerText = formatResultsBannerText(hovered, colorMap[selectedId]);
 
   return (
-    <div className="flex flex-col gap-3 p-3.5 rounded-sm bg-[#0b1018] border border-[#263142] relative select-none">
+    <div className="flex flex-col gap-3 p-3.5 rounded-sm bg-[#0e070b] border border-white/15 relative select-none">
       <ForcesLegendBar results={results} />
 
-      <div className="flex items-center justify-between px-3 py-1.5 rounded-sm bg-[#090d14] border border-[#1e293b] text-[11px] font-mono">
-        <span className="text-amber-200">⌖ {bannerText}</span>
+      <div className="flex items-center justify-between px-3 py-1.5 rounded-sm bg-[#0b0508] border border-white/10 text-[11px] font-mono">
+        <span className="text-[#EFE9DA]">⌖ {bannerText}</span>
         <span className="text-slate-400 hidden sm:inline">
           Vista: {mode === 'PROVINCIA' ? '24 Provincias' : '527 Departamentos'}
         </span>
@@ -314,7 +314,7 @@ export function ElectionResultsSvgMap({
 
       <div className="flex flex-col lg:flex-row items-center justify-between gap-3">
         <div className="flex flex-col md:flex-row items-center justify-center gap-3 flex-1">
-          <div className="w-full max-w-[290px] h-[360px] rounded-sm bg-[#070a10] border border-[#263142] p-1.5 relative">
+          <div className="w-full max-w-[290px] h-[360px] rounded-sm bg-[#090407] border border-white/15 p-1.5 relative">
             <svg
               viewBox="50 50 330 660"
               className="w-full h-full filter drop-shadow-2xl"

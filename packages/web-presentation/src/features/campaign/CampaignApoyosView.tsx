@@ -90,7 +90,7 @@ function PoliticianToggleSwitch({
 }) {
   if (cooldownMonths > 0) {
     return (
-      <div className="flex items-center gap-2 text-xs text-amber-400 py-1 font-mono">
+      <div className="flex items-center gap-2 text-xs text-[#EB3F7D] py-1 font-mono">
         <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
         <span>Rechazó la propuesta · Disponible en {cooldownMonths} meses</span>
       </div>
@@ -140,7 +140,7 @@ function PoliticianActionButtons({
         <button
           type="button"
           disabled
-          className="w-full py-2 rounded-sm text-xs font-mono font-semibold bg-[#090d14] border border-amber-900/50 text-amber-400/80 cursor-not-allowed"
+          className="w-full py-2 rounded-sm text-xs font-mono font-semibold bg-[#0b0508] border border-amber-900/50 text-[#EB3F7D]/80 cursor-not-allowed"
         >
           Rechazó la propuesta ({cooldownMonths} meses restantes)
         </button>
@@ -157,7 +157,7 @@ function PoliticianActionButtons({
           playUiSound('select');
           onRequestEndorsement();
         }}
-        className="px-3.5 py-2 rounded-sm text-xs font-mono font-bold bg-[#111824] border border-[#344661] hover:border-[#b89342] text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition inline-flex items-center gap-1.5"
+        className="px-3.5 py-2 rounded-sm text-xs font-mono font-bold bg-[#111824] border border-white/20 hover:border-[#EB3F7D] text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition inline-flex items-center gap-1.5"
       >
         {isAccepted ? (
           <>
@@ -405,10 +405,10 @@ export function CampaignApoyosView({ state, onUpdateState }: CampaignApoyosViewP
         eyebrow="Político · Red de Dirigentes"
         title="Apoyos"
         description="Cada figura es dialoguista (puede apoyar a cualquiera) o dogmática (solo apoya a ideologías relativamente cercanas). Si el pedido no es posible, el interruptor aparece apagado y se indica el motivo."
-        icon={<Users className="w-4 h-4 text-amber-300" />}
+        icon={<Users className="w-4 h-4 text-[#f472b6]" />}
         rightSlot={
-          <div className="px-3 py-1.5 rounded-sm bg-[#090d14] border border-[#263142] text-xs font-mono font-bold text-slate-300">
-            Te apoyan <strong className="text-amber-300 text-sm ml-1">{acceptedEndorsementsCount}</strong>
+          <div className="px-3 py-1.5 rounded-sm bg-[#0b0508] border border-white/15 text-xs font-mono font-bold text-slate-300">
+            Te apoyan <strong className="text-[#f472b6] text-sm ml-1">{acceptedEndorsementsCount}</strong>
           </div>
         }
       />
@@ -444,7 +444,7 @@ export function CampaignApoyosView({ state, onUpdateState }: CampaignApoyosViewP
               handlePrevPage();
             }}
             aria-label="Página anterior"
-            className="p-1.5 rounded-sm bg-[#090d14] border border-[#263142] hover:border-[#b89342] disabled:opacity-30 disabled:cursor-not-allowed text-white transition"
+            className="p-1.5 rounded-sm bg-[#0b0508] border border-white/15 hover:border-[#EB3F7D] disabled:opacity-30 disabled:cursor-not-allowed text-white transition"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -460,7 +460,7 @@ export function CampaignApoyosView({ state, onUpdateState }: CampaignApoyosViewP
               handleNextPage();
             }}
             aria-label="Página siguiente"
-            className="p-1.5 rounded-sm bg-[#090d14] border border-[#263142] hover:border-[#b89342] disabled:opacity-30 disabled:cursor-not-allowed text-white transition"
+            className="p-1.5 rounded-sm bg-[#0b0508] border border-white/15 hover:border-[#EB3F7D] disabled:opacity-30 disabled:cursor-not-allowed text-white transition"
           >
             <ChevronRight className="w-4 h-4" />
           </button>

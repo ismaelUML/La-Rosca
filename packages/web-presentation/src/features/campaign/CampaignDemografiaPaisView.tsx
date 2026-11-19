@@ -182,7 +182,7 @@ function PoblacionTabPanel({ demo }: { demo: ComputedDemographics }) {
           </div>
         </div>
         <div className="hoi-panel rounded-sm p-4">
-          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#d4b26a]">
+          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#EB3F7D]">
             PADRÓN ELECTORAL CNE
           </div>
           <div className="text-2xl md:text-3xl font-mono font-extrabold text-white mt-1">
@@ -190,7 +190,7 @@ function PoblacionTabPanel({ demo }: { demo: ComputedDemographics }) {
           </div>
         </div>
         <div className="hoi-panel rounded-sm p-4">
-          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
+          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#EB3F7D]">
             INMIGRANTES RESIDENTES
           </div>
           <div className="text-2xl md:text-3xl font-mono font-extrabold text-white mt-1">
@@ -201,22 +201,22 @@ function PoblacionTabPanel({ demo }: { demo: ComputedDemographics }) {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 font-mono text-xs">
-        <div className="hoi-panel rounded-sm p-3.5 bg-[#090d14]">
+        <div className="hoi-panel rounded-sm p-3.5 bg-[#0b0508]">
           <div className="text-[10px] text-slate-400 uppercase">Esperanza de Vida</div>
           <div className="text-lg font-extrabold text-emerald-400 mt-0.5">77,4 años</div>
           <div className="text-[10px] text-slate-500">Mujeres 80,6 · Hombres 74,2</div>
         </div>
-        <div className="hoi-panel rounded-sm p-3.5 bg-[#090d14]">
+        <div className="hoi-panel rounded-sm p-3.5 bg-[#0b0508]">
           <div className="text-[10px] text-slate-400 uppercase">Tasa de Urbanización</div>
           <div className="text-lg font-extrabold text-sky-400 mt-0.5">92,5 %</div>
           <div className="text-[10px] text-slate-500">AMBA concentra 35,8% nac.</div>
         </div>
-        <div className="hoi-panel rounded-sm p-3.5 bg-[#090d14]">
+        <div className="hoi-panel rounded-sm p-3.5 bg-[#0b0508]">
           <div className="text-[10px] text-slate-400 uppercase">Edad Mediana</div>
-          <div className="text-lg font-extrabold text-amber-300 mt-0.5">33,1 años</div>
+          <div className="text-lg font-extrabold text-[#f472b6] mt-0.5">33,1 años</div>
           <div className="text-[10px] text-slate-500">Bono demográfico activo</div>
         </div>
-        <div className="hoi-panel rounded-sm p-3.5 bg-[#090d14]">
+        <div className="hoi-panel rounded-sm p-3.5 bg-[#0b0508]">
           <div className="text-[10px] text-slate-400 uppercase">Tasa de Natalidad</div>
           <div className="text-lg font-extrabold text-slate-200 mt-0.5">11,2 ‰</div>
           <div className="text-[10px] text-slate-500">Fecundidad: 1,54 hijos/mujer</div>
@@ -225,14 +225,14 @@ function PoblacionTabPanel({ demo }: { demo: ComputedDemographics }) {
 
       <div className="hoi-panel rounded-sm p-5 space-y-3">
         <div className="flex flex-wrap justify-between items-center gap-2 text-xs text-slate-400">
-          <span className="font-serif font-bold uppercase tracking-wider text-amber-100">
+          <span className="font-serif font-bold uppercase tracking-wider text-[#F5EFE6]">
             Curva de Población y Saldo Migratorio Nacional (RENAPER / INDEC)
           </span>
-          <span className="font-mono text-[11px] text-[#d4b26a]">
+          <span className="font-mono text-[11px] text-[#EB3F7D]">
             Impulsores macro: {demo.driverSummary}
           </span>
         </div>
-        <div className="h-44 w-full flex items-center justify-center border-b border-[#1c2432] bg-[#070a10] rounded-sm p-2">
+        <div className="h-44 w-full flex items-center justify-center border-b border-white/10 bg-[#090407] rounded-sm p-2">
           <svg viewBox="0 0 500 120" className="w-full h-full">
             <line x1="20" y1="30" x2="480" y2="30" stroke="#1b2333" strokeDasharray="3 3" />
             <line x1="20" y1="70" x2="480" y2="70" stroke="#1b2333" strokeDasharray="3 3" />
@@ -293,7 +293,7 @@ function MigracionTabPanel({ activeTab, demo }: MigracionTabPanelProps) {
     <div className="space-y-5">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
         <div className="hoi-panel rounded-sm p-4">
-          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
+          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#EB3F7D]">
             {cfg.mainCardTitle}
           </div>
           <div className="text-2xl md:text-3xl font-mono font-extrabold text-white mt-1">
@@ -327,7 +327,7 @@ function MigracionTabPanel({ activeTab, demo }: MigracionTabPanelProps) {
       <div className="hoi-panel rounded-sm p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className="text-xs font-serif font-bold uppercase tracking-wider text-amber-100">
+            <div className="text-xs font-serif font-bold uppercase tracking-wider text-[#F5EFE6]">
               {cfg.listTitle}
             </div>
             <div className="text-[11px] font-mono text-slate-400 mt-0.5">
@@ -339,14 +339,14 @@ function MigracionTabPanel({ activeTab, demo }: MigracionTabPanelProps) {
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
             placeholder="Buscar país..."
-            className="bg-[#080b11] border border-[#263142] rounded-sm px-3 py-1.5 text-xs font-mono text-white max-w-xs"
+            className="bg-[#090407] border border-white/15 rounded-sm px-3 py-1.5 text-xs font-mono text-white max-w-xs"
           />
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-[#263142] text-slate-400 font-mono uppercase text-[10px]">
+              <tr className="border-b border-white/15 text-slate-400 font-mono uppercase text-[10px]">
                 <th className="py-2">País</th>
                 <th className="py-2 text-right">{cfg.colCountTitle}</th>
                 <th className="py-2 text-right">Último mes</th>
@@ -357,7 +357,7 @@ function MigracionTabPanel({ activeTab, demo }: MigracionTabPanelProps) {
             </thead>
             <tbody className="divide-y divide-[#1c2432] font-mono">
               {filteredRows.map((row) => (
-                <tr key={row.country} className="hover:bg-[#121926]">
+                <tr key={row.country} className="hover:bg-[#170c12]">
                   <td className="py-2.5 font-sans font-semibold text-white">{row.country}</td>
                   <td className="py-2.5 text-right text-slate-200">{row.count.toLocaleString('es-AR')}</td>
                   <td className="py-2.5 text-right text-emerald-400">+{row.lastMonth}</td>
@@ -396,7 +396,7 @@ function TejidoSocialTabPanel({ demo }: { demo: ComputedDemographics }) {
     <div className="space-y-5">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 font-mono">
         <div className="hoi-panel rounded-sm p-4">
-          <div className="text-[10px] text-amber-300 uppercase">Clase Media Integrada</div>
+          <div className="text-[10px] text-[#f472b6] uppercase">Clase Media Integrada</div>
           <div className="text-2xl font-extrabold text-emerald-400 mt-1">{middleClass.toFixed(1)}%</div>
           <div className="text-[10px] text-slate-400 mt-0.5">EPH 31 Aglomerados Urbanos</div>
         </div>
@@ -412,29 +412,29 @@ function TejidoSocialTabPanel({ demo }: { demo: ComputedDemographics }) {
         </div>
         <div className="hoi-panel rounded-sm p-4">
           <div className="text-[10px] text-teal-300 uppercase">Déficit Habitacional</div>
-          <div className="text-2xl font-extrabold text-amber-200 mt-1">3,65M</div>
+          <div className="text-2xl font-extrabold text-[#EFE9DA] mt-1">3,65M</div>
           <div className="text-[10px] text-slate-400 mt-0.5">Hogares (1,3M cuantitativo)</div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="hoi-panel rounded-sm p-5 space-y-3 text-xs">
-          <div className="border-b border-[#263142] pb-2">
-            <span className="text-[10px] font-mono text-amber-300 uppercase block">SALUD Y SEGURIDAD SOCIAL</span>
-            <h3 className="text-sm font-serif font-bold uppercase text-amber-100">
+          <div className="border-b border-white/15 pb-2">
+            <span className="text-[10px] font-mono text-[#f472b6] uppercase block">SALUD Y SEGURIDAD SOCIAL</span>
+            <h3 className="text-sm font-serif font-bold uppercase text-[#F5EFE6]">
               Cobertura del Sistema Sanitario Argentino
             </h3>
           </div>
           <div className="space-y-2 font-mono">
-            <div className="flex justify-between p-2 rounded-sm bg-[#090d14] border border-[#1e293b]">
+            <div className="flex justify-between p-2 rounded-sm bg-[#0b0508] border border-white/10">
               <span className="text-slate-300">Obras Sociales Sindicales y PAMI</span>
               <strong className="text-sky-300">48,6 %</strong>
             </div>
-            <div className="flex justify-between p-2 rounded-sm bg-[#090d14] border border-[#1e293b]">
+            <div className="flex justify-between p-2 rounded-sm bg-[#0b0508] border border-white/10">
               <span className="text-slate-300">Red Hospitalaria Pública Exclusiva</span>
-              <strong className="text-amber-300">37,2 %</strong>
+              <strong className="text-[#f472b6]">37,2 %</strong>
             </div>
-            <div className="flex justify-between p-2 rounded-sm bg-[#090d14] border border-[#1e293b]">
+            <div className="flex justify-between p-2 rounded-sm bg-[#0b0508] border border-white/10">
               <span className="text-slate-300">Medicina Prepaga Privada</span>
               <strong className="text-emerald-400">14,2 %</strong>
             </div>
@@ -442,22 +442,22 @@ function TejidoSocialTabPanel({ demo }: { demo: ComputedDemographics }) {
         </div>
 
         <div className="hoi-panel rounded-sm p-5 space-y-3 text-xs">
-          <div className="border-b border-[#263142] pb-2">
-            <span className="text-[10px] font-mono text-amber-300 uppercase block">EDUCACIÓN Y CIENCIA</span>
-            <h3 className="text-sm font-serif font-bold uppercase text-amber-100">
+          <div className="border-b border-white/15 pb-2">
+            <span className="text-[10px] font-mono text-[#f472b6] uppercase block">EDUCACIÓN Y CIENCIA</span>
+            <h3 className="text-sm font-serif font-bold uppercase text-[#F5EFE6]">
               Indicadores Educativos y Universitarios
             </h3>
           </div>
           <div className="space-y-2 font-mono">
-            <div className="flex justify-between p-2 rounded-sm bg-[#090d14] border border-[#1e293b]">
+            <div className="flex justify-between p-2 rounded-sm bg-[#0b0508] border border-white/10">
               <span className="text-slate-300">Egreso Secundario en Tiempo y Forma</span>
-              <strong className="text-amber-200">61,4 %</strong>
+              <strong className="text-[#EFE9DA]">61,4 %</strong>
             </div>
-            <div className="flex justify-between p-2 rounded-sm bg-[#090d14] border border-[#1e293b]">
+            <div className="flex justify-between p-2 rounded-sm bg-[#0b0508] border border-white/10">
               <span className="text-slate-300">Universidades Nacionales (57 casas)</span>
               <strong className="text-emerald-400">2,02M estudiantes</strong>
             </div>
-            <div className="flex justify-between p-2 rounded-sm bg-[#090d14] border border-[#1e293b]">
+            <div className="flex justify-between p-2 rounded-sm bg-[#0b0508] border border-white/10">
               <span className="text-slate-300">Investigadores CONICET / I+D</span>
               <strong className="text-sky-300">11.850 científicos</strong>
             </div>
@@ -477,13 +477,13 @@ function MatrizProductivaTabPanel({ demo }: { demo: ComputedDemographics }) {
     <div className="space-y-5">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 font-mono">
         <div className="hoi-panel rounded-sm p-4">
-          <div className="text-[10px] text-amber-300 uppercase">Crudo Vaca Muerta</div>
+          <div className="text-[10px] text-[#f472b6] uppercase">Crudo Vaca Muerta</div>
           <div className="text-2xl font-extrabold text-emerald-400 mt-1">{oilBbl}k bbl/d</div>
           <div className="text-[10px] text-slate-400 mt-0.5">Cuenca Neuquina + Golfo San Jorge</div>
         </div>
         <div className="hoi-panel rounded-sm p-4">
           <div className="text-[10px] text-sky-300 uppercase">Cosecha Granaria Total</div>
-          <div className="text-2xl font-extrabold text-amber-200 mt-1">{agroTons} M Ton</div>
+          <div className="text-2xl font-extrabold text-[#EFE9DA] mt-1">{agroTons} M Ton</div>
           <div className="text-[10px] text-slate-400 mt-0.5">Soja, Maíz, Trigo y Girasol</div>
         </div>
         <div className="hoi-panel rounded-sm p-4">
@@ -499,26 +499,26 @@ function MatrizProductivaTabPanel({ demo }: { demo: ComputedDemographics }) {
       </div>
 
       <div className="hoi-panel rounded-sm p-5 space-y-3 text-xs">
-        <div className="border-b border-[#263142] pb-2">
-          <span className="text-[10px] font-mono text-amber-300 uppercase block">COMPLEJOS EXPORTADORES Y PRODUCTIVOS</span>
-          <h3 className="text-sm font-serif font-bold uppercase text-amber-100">
+        <div className="border-b border-white/15 pb-2">
+          <span className="text-[10px] font-mono text-[#f472b6] uppercase block">COMPLEJOS EXPORTADORES Y PRODUCTIVOS</span>
+          <h3 className="text-sm font-serif font-bold uppercase text-[#F5EFE6]">
             Motores Regionales del PBI Argentino
           </h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono">
-          <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142] space-y-1">
-            <div className="text-amber-200 font-bold">1. Polo Agroindustrial Pampeano</div>
+          <div className="p-3 rounded-sm bg-[#0b0508] border border-white/15 space-y-1">
+            <div className="text-[#EFE9DA] font-bold">1. Polo Agroindustrial Pampeano</div>
             <div className="text-[11px] text-slate-400">
               PBA, Santa Fe, Córdoba y Entre Ríos · 54% de las divisas FOB por harinas, aceites y granos.
             </div>
           </div>
-          <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142] space-y-1">
+          <div className="p-3 rounded-sm bg-[#0b0508] border border-white/15 space-y-1">
             <div className="text-sky-300 font-bold">2. Corredor Energético Patagónico</div>
             <div className="text-[11px] text-slate-400">
               Neuquén, Río Negro, Chubut y Santa Cruz · Gasoductos troncales, petróleo shale y terminales GNL.
             </div>
           </div>
-          <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142] space-y-1">
+          <div className="p-3 rounded-sm bg-[#0b0508] border border-white/15 space-y-1">
             <div className="text-emerald-300 font-bold">3. Arco Minero Andino y NOA</div>
             <div className="text-[11px] text-slate-400">
               San Juan, Catamarca, Salta y Jujuy · Megaproyectos de cobre porfírico y salares de litio.
@@ -578,14 +578,14 @@ export function CampaignDemografiaPaisView({
     <div className="space-y-5 rosca-panel-enter">
       <div className="hoi-panel hoi-header-steel rounded-sm p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-sm bg-[#090d14] border border-[#8a6d33] flex items-center justify-center shrink-0">
-            <Globe className="w-5 h-5 text-amber-300" />
+          <div className="w-10 h-10 rounded-sm bg-[#0b0508] border border-[#EB3F7D]/55 flex items-center justify-center shrink-0">
+            <Globe className="w-5 h-5 text-[#f472b6]" />
           </div>
           <div>
-            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300">
+            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#f472b6]">
               RADIOGRAFÍA ESTRUCTURAL DE LA REPÚBLICA ARGENTINA · PAÍS
             </div>
-            <h1 className="text-xl md:text-2xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5">
+            <h1 className="text-xl md:text-2xl font-serif font-extrabold uppercase tracking-wide text-[#F5EFE6] mt-0.5">
               {currentTabLabel}
             </h1>
           </div>
@@ -595,8 +595,8 @@ export function CampaignDemografiaPaisView({
           {COUNTRY_TABS_META.map((tab) => {
             const isSelected = activeTab === tab.id;
             const cls = isSelected
-              ? 'bg-[#1d3250] text-amber-100 border-[#b89342]'
-              : 'bg-[#090d14] text-slate-300 border-[#263142] hover:border-[#8a6d33]';
+              ? 'bg-[#EB3F7D]/20 text-[#F5EFE6] border-[#EB3F7D]'
+              : 'bg-[#0b0508] text-slate-300 border-white/15 hover:border-[#EB3F7D]/55';
             return (
               <button
                 key={tab.id}

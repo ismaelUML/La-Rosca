@@ -82,9 +82,9 @@ function GovernorsBlocSvgMap({
   }, []);
 
   return (
-    <div className="w-full md:w-[300px] h-[410px] rounded-sm bg-[#070a10] border border-[#263142] p-2 relative select-none shrink-0">
+    <div className="w-full md:w-[300px] h-[410px] rounded-sm bg-[#090407] border border-white/15 p-2 relative select-none shrink-0">
       {hoveredText ? (
-        <div className="absolute top-2 left-2 z-20 px-2.5 py-1 rounded-sm bg-[#090d14]/95 border border-[#8a6d33] text-[10px] font-mono text-amber-200 pointer-events-none">
+        <div className="absolute top-2 left-2 z-20 px-2.5 py-1 rounded-sm bg-[#0b0508]/95 border border-[#EB3F7D]/55 text-[10px] font-mono text-[#EFE9DA] pointer-events-none">
           ⌖ {hoveredText}
         </div>
       ) : null}
@@ -122,8 +122,8 @@ function GovernorsBlocSvgMap({
         onClick={() => onSelectProv('CABA')}
         className={`absolute top-40 right-2.5 px-2 py-1 rounded-sm border text-[10px] font-mono font-bold transition shadow ${
           selectedProvId === 'CABA'
-            ? 'bg-[#b89342] text-[#090d14] border-amber-200'
-            : 'bg-[#090d14]/95 text-amber-200 border-[#8a6d33] hover:bg-[#162234]'
+            ? 'bg-[#EB3F7D] text-[#090407] border-[#EFE9DA]'
+            : 'bg-[#0b0508]/95 text-[#EFE9DA] border-[#EB3F7D]/55 hover:bg-[#1c0e16]'
         }`}
       >
         ● CABA
@@ -162,11 +162,11 @@ function GovernorDossierPanel({ gov }: { gov: GovernorInfo }) {
 
   return (
     <div className="hoi-panel rounded-sm p-5 space-y-4">
-      <div className="border-b border-[#263142] pb-3">
-        <div className="text-[10px] font-mono uppercase tracking-widest text-amber-400">
+      <div className="border-b border-white/15 pb-3">
+        <div className="text-[10px] font-mono uppercase tracking-widest text-[#EB3F7D]">
           DOSSIER DE MANDATARIO PROVINCIAL
         </div>
-        <div className="text-xl font-serif font-bold text-amber-100 mt-0.5 uppercase tracking-wide">
+        <div className="text-xl font-serif font-bold text-[#F5EFE6] mt-0.5 uppercase tracking-wide">
           {gov.provinceName}
         </div>
         <div className="flex flex-wrap items-center gap-2 mt-1.5">
@@ -189,21 +189,21 @@ function GovernorDossierPanel({ gov }: { gov: GovernorInfo }) {
       </div>
 
       <div className="space-y-3.5 text-xs font-mono">
-        <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142]">
+        <div className="p-3 rounded-sm bg-[#0b0508] border border-white/15">
           <div className="flex justify-between text-slate-300">
             <span>Posición ideológica:</span>
-            <strong className="text-amber-200">
+            <strong className="text-[#EFE9DA]">
               {gov.politicalPosition > 0 ? `+${gov.politicalPosition}` : gov.politicalPosition} (escala -100 a +100)
             </strong>
           </div>
         </div>
 
-        <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142] space-y-1.5">
+        <div className="p-3 rounded-sm bg-[#0b0508] border border-white/15 space-y-1.5">
           <div className="flex justify-between text-slate-300">
             <span>Afinidad con tu espacio:</span>
-            <strong className="text-amber-300">{gov.affinityWithPlayerPct}%</strong>
+            <strong className="text-[#f472b6]">{gov.affinityWithPlayerPct}%</strong>
           </div>
-          <div className="w-full h-2 rounded-sm bg-[#141c28] border border-[#263142] overflow-hidden">
+          <div className="w-full h-2 rounded-sm bg-[#141c28] border border-white/15 overflow-hidden">
             <div
               style={{ width: `${gov.affinityWithPlayerPct}%` }}
               className="h-full bg-amber-400"
@@ -211,12 +211,12 @@ function GovernorDossierPanel({ gov }: { gov: GovernorInfo }) {
           </div>
         </div>
 
-        <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142] space-y-1.5">
+        <div className="p-3 rounded-sm bg-[#0b0508] border border-white/15 space-y-1.5">
           <div className="flex justify-between text-slate-300">
             <span>Relación institucional y gobernabilidad:</span>
             <strong className="text-sky-400">{gov.relationshipScore} / 100</strong>
           </div>
-          <div className="w-full h-2 rounded-sm bg-[#141c28] border border-[#263142] overflow-hidden">
+          <div className="w-full h-2 rounded-sm bg-[#141c28] border border-white/15 overflow-hidden">
             <div
               style={{ width: `${gov.relationshipScore}%` }}
               className="h-full bg-sky-500"
@@ -241,8 +241,8 @@ const BLOC_FILTER_SPECS: Array<{
   {
     id: 'TODOS',
     label: 'Todos · 24',
-    activeCls: 'bg-[#b89342] text-[#090d14] border-amber-200',
-    idleCls: 'bg-[#090d14] text-slate-300 border-[#263142]'
+    activeCls: 'bg-[#EB3F7D] text-[#090407] border-[#EFE9DA]',
+    idleCls: 'bg-[#0b0508] text-slate-300 border-white/15'
   },
   {
     id: 'DERECHA',
@@ -305,10 +305,10 @@ export function CampaignGobernantesView({ state: _state }: CampaignGobernantesVi
     <div className="space-y-6">
       <header className="hoi-panel hoi-header-steel rounded-sm p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-400">
+          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#EB3F7D]">
             POLÍTICO · LIGA DE GOBERNADORES
           </div>
-          <h1 className="text-2xl md:text-3xl font-serif font-bold text-amber-100 mt-0.5 uppercase tracking-wide">
+          <h1 className="text-2xl md:text-3xl font-serif font-bold text-[#F5EFE6] mt-0.5 uppercase tracking-wide">
             Gobernantes
           </h1>
         </div>
@@ -320,7 +320,7 @@ export function CampaignGobernantesView({ state: _state }: CampaignGobernantesVi
           <GovernorsBlocSvgMap selectedProvId={selectedProvId} onSelectProv={setSelectedProvId} />
 
           <div className="flex-1 w-full space-y-2.5">
-            <div className="text-xs font-serif font-bold uppercase tracking-wider text-amber-100 border-b border-[#263142] pb-2 flex items-center justify-between">
+            <div className="text-xs font-serif font-bold uppercase tracking-wider text-[#F5EFE6] border-b border-white/15 pb-2 flex items-center justify-between">
               <span>Distribución de Poder Provincial (2027)</span>
               <span className="text-[10px] font-mono text-slate-400">{visibleGovernors.length} distritos</span>
             </div>
@@ -334,8 +334,8 @@ export function CampaignGobernantesView({ state: _state }: CampaignGobernantesVi
                     onClick={() => setSelectedProvId(gov.provinceId)}
                     className={`text-left p-2.5 rounded-sm border transition ${
                       isSelected
-                        ? 'bg-[#172234] border-[#c9a24d] text-amber-100 font-bold'
-                        : 'bg-[#090d14] border-[#263142] text-slate-300 hover:border-[#8a6d33]'
+                        ? 'bg-[#172234] border-[#EB3F7D] text-[#F5EFE6] font-bold'
+                        : 'bg-[#0b0508] border-white/15 text-slate-300 hover:border-[#EB3F7D]/55'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-1.5 mb-0.5">
@@ -346,7 +346,7 @@ export function CampaignGobernantesView({ state: _state }: CampaignGobernantesVi
                         />
                         <span className="truncate text-xs font-serif font-bold">{gov.provinceName}</span>
                       </span>
-                      <span className="text-[10px] font-mono text-amber-300 shrink-0">
+                      <span className="text-[10px] font-mono text-[#f472b6] shrink-0">
                         {gov.affinityWithPlayerPct}%
                       </span>
                     </div>

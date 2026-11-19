@@ -30,7 +30,7 @@ function InflationAutopsyCard({ state, onDispatch }: MacroAndBankingViewProps) {
         <div className="grid grid-cols-2 gap-2 rounded-lg bg-slate-950 p-3 border border-slate-800">
           <div>
             <div className="text-slate-400">IPC Mensual Real (Calle / Congreso)</div>
-            <div className="text-lg font-bold text-amber-400">{inflation.realMonthlyIpcPct} %</div>
+            <div className="text-lg font-bold text-[#EB3F7D]">{inflation.realMonthlyIpcPct} %</div>
           </div>
           <div>
             <div className="text-slate-400">IPC Oficial Publicado (INDEC)</div>
@@ -41,19 +41,19 @@ function InflationAutopsyCard({ state, onDispatch }: MacroAndBankingViewProps) {
         <div className="space-y-1.5 text-slate-300">
           <div className="flex justify-between">
             <span>1. Inercia Indexada y Paritarias Pasadas:</span>
-            <span className="font-mono text-amber-300">+{inflation.inertiaComponentPp} pp</span>
+            <span className="font-mono text-[#f472b6]">+{inflation.inertiaComponentPp} pp</span>
           </div>
           <div className="flex justify-between">
             <span>2. Pass-Through Cambiario + Derrame Brecha CCL:</span>
-            <span className="font-mono text-amber-300">+{inflation.passThroughComponentPp} pp</span>
+            <span className="font-mono text-[#f472b6]">+{inflation.passThroughComponentPp} pp</span>
           </div>
           <div className="flex justify-between">
             <span>3. Tarifazos Regulados (CAMMESA / Combustibles):</span>
-            <span className="font-mono text-amber-300">+{inflation.tarifazoComponentPp} pp</span>
+            <span className="font-mono text-[#f472b6]">+{inflation.tarifazoComponentPp} pp</span>
           </div>
           <div className="flex justify-between">
             <span>4. Desequilibrio Monetario y Caída Demanda de Pesos:</span>
-            <span className="font-mono text-amber-300">+{inflation.monetaryDropComponentPp} pp</span>
+            <span className="font-mono text-[#f472b6]">+{inflation.monetaryDropComponentPp} pp</span>
           </div>
         </div>
 
@@ -128,7 +128,7 @@ function CentralBankAndSilobolsaCard({ state, onDispatch }: MacroAndBankingViewP
           </div>
           <div className="flex justify-between">
             <span>Expectativa Devaluación a 90 días (Mercado Futuro Rofex):</span>
-            <span className="font-mono text-amber-300">+{structural.expectedDevaluation3mPct} %</span>
+            <span className="font-mono text-[#f472b6]">+{structural.expectedDevaluation3mPct} %</span>
           </div>
         </div>
 
@@ -187,7 +187,7 @@ function PrivateBanksAndDebtCard({ state, onDispatch }: MacroAndBankingViewProps
           </div>
           <div className="flex justify-between">
             <span>Stock de PUTs del BCRA en poder de Bancos (Ejecutados hoy):</span>
-            <span className="font-mono text-amber-300">
+            <span className="font-mono text-[#f472b6]">
               ${bankingSystem.bcraPutsBillionArs}B (${bankingSystem.putsExecutedThisMonthBillionArs}B ejecutados)
             </span>
           </div>

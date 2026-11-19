@@ -77,7 +77,7 @@ export function loadPersistedWindows<TSection extends string>(
   storageKey: string
 ): DesktopWindowInstance<TSection>[] | null {
   try {
-    const raw = window.localStorage.getItem(`la-rosca-wm-${storageKey}-v1`);
+    const raw = window.localStorage.getItem(`la-rosca-wm-${storageKey}-v2`);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
@@ -91,7 +91,7 @@ export function savePersistedWindows<TSection extends string>(
   windows: DesktopWindowInstance<TSection>[]
 ): void {
   try {
-    window.localStorage.setItem(`la-rosca-wm-${storageKey}-v1`, JSON.stringify(windows));
+    window.localStorage.setItem(`la-rosca-wm-${storageKey}-v2`, JSON.stringify(windows));
   } catch {
     // Si localStorage esta lleno o en privado, no frenamos la UI.
   }

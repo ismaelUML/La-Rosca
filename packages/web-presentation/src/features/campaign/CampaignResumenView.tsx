@@ -8,6 +8,7 @@ import {
 import { OfficialPartyLogo } from '../party-setup/OfficialLogoBadge.js';
 import { playUiSound } from '../../lib/gameFeedback.js';
 import { PresidentialDebateModal } from './PresidentialDebateModal.js';
+import { CampaignPromisesPickerCard } from './CampaignPromisesPickerCard.js';
 
 // Vista de SITUACIÓN -> Resumen (capturas 1, 2 y 3):
 // Objetivo de la interna, imagen positiva/negativa/desconocimiento,
@@ -158,9 +159,9 @@ export function CampaignResumenView({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-sm bg-gradient-to-r from-[#131924] via-[#101620] to-[#1a160f] border border-[#263142] border-l-2 border-l-[#c5a059] p-5 shadow-lg flex flex-wrap items-center justify-between gap-3">
+      <div className="rounded-sm bg-gradient-to-r from-[#131924] via-[#101620] to-[#1a160f] border border-white/15 border-l-2 border-l-[#c5a059] p-5 shadow-lg flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#d4b26a]">
+          <div className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#EB3F7D]">
             Objetivo de Campaña
           </div>
           <div className="text-xl md:text-2xl font-serif font-bold text-white mt-0.5">
@@ -204,7 +205,7 @@ export function CampaignResumenView({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-          <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
+          <div className="rounded-sm bg-[#11080d] border border-white/15 p-4">
             <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
               IMAGEN POSITIVA · VERDE
             </div>
@@ -216,7 +217,7 @@ export function CampaignResumenView({
             </div>
           </div>
 
-          <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
+          <div className="rounded-sm bg-[#11080d] border border-white/15 p-4">
             <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
               IMAGEN NEGATIVA · ROJO
             </div>
@@ -228,7 +229,7 @@ export function CampaignResumenView({
             </div>
           </div>
 
-          <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
+          <div className="rounded-sm bg-[#11080d] border border-white/15 p-4">
             <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
               DESCONOCIMIENTO · GRIS
             </div>
@@ -248,7 +249,7 @@ export function CampaignResumenView({
         </h2>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-          <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
+          <div className="rounded-sm bg-[#11080d] border border-white/15 p-4">
             <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
               INTENCIÓN DE VOTO (GENERAL)
             </div>
@@ -256,15 +257,15 @@ export function CampaignResumenView({
               {vote.intencionVotoGeneral.toFixed(1)} %
             </div>
           </div>
-          <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
+          <div className="rounded-sm bg-[#11080d] border border-white/15 p-4">
             <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
               PISO · BRONCE
             </div>
-            <div className="text-2xl font-mono font-extrabold text-amber-500 mt-1">
+            <div className="text-2xl font-mono font-extrabold text-[#F5EFE6]0 mt-1">
               {vote.piso.toFixed(1)} %
             </div>
           </div>
-          <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
+          <div className="rounded-sm bg-[#11080d] border border-white/15 p-4">
             <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
               TU INTERNA
             </div>
@@ -272,7 +273,7 @@ export function CampaignResumenView({
               {vote.tuInterna.toFixed(1)} %
             </div>
           </div>
-          <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
+          <div className="rounded-sm bg-[#11080d] border border-white/15 p-4">
             <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
               TECHO · AZUL
             </div>
@@ -283,7 +284,7 @@ export function CampaignResumenView({
         </div>
       </section>
 
-      <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-5 space-y-4">
+      <div className="rounded-sm bg-[#11080d] border border-white/15 p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-white">
             Encuesta de la interna
@@ -313,12 +314,12 @@ export function CampaignResumenView({
             <span className="text-[#c5a059]">■</span> Características propias
           </h2>
           <span className="text-xs font-mono text-slate-400">
-            Estado de tu espacio: <strong className="text-[#d4b26a]">{attrs.espacioEstado.toLowerCase()}</strong>
+            Estado de tu espacio: <strong className="text-[#EB3F7D]">{attrs.espacioEstado.toLowerCase()}</strong>
           </span>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-          <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
+          <div className="rounded-sm bg-[#11080d] border border-white/15 p-4">
             <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400">
               INTELIGENCIA PERCIBIDA · TURQUESA
             </div>
@@ -330,7 +331,7 @@ export function CampaignResumenView({
             </div>
           </div>
 
-          <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
+          <div className="rounded-sm bg-[#11080d] border border-white/15 p-4">
             <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-pink-400">
               CONVENCIMIENTO · FRAMBUESA
             </div>
@@ -342,7 +343,7 @@ export function CampaignResumenView({
             </div>
           </div>
 
-          <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
+          <div className="rounded-sm bg-[#11080d] border border-white/15 p-4">
             <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-sky-400">
               RELEVANCIA · AZUL
             </div>
@@ -354,7 +355,7 @@ export function CampaignResumenView({
             </div>
           </div>
 
-          <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
+          <div className="rounded-sm bg-[#11080d] border border-white/15 p-4">
             <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-orange-400">
               APOYO PARTIDARIO · NARANJA
             </div>
@@ -372,33 +373,35 @@ export function CampaignResumenView({
         </p>
       </section>
 
-      <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-5 space-y-3.5">
+      <CampaignPromisesPickerCard state={state} onUpdateState={onUpdateState} />
+
+      <div className="rounded-sm bg-[#11080d] border border-white/15 p-5 space-y-3.5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-sm font-mono font-bold text-white">
               Acciones este mes: {state.actionsRemainingThisMonth} de {state.actionsTotalThisMonth}
             </div>
             <div className="text-xs font-mono text-slate-400 mt-0.5">
-              Presupuesto: <strong className="text-emerald-400">{state.budgetArgentums.toFixed(1)} ¥</strong>
+              Caja: <strong className="text-[#EB3F7D]">US$ {state.budgetArgentums.toFixed(1).replace('.', ',')} M</strong>
             </div>
           </div>
           <button
             type="button"
             onClick={onNavigateActions}
-            className="px-3.5 py-1.5 rounded-sm bg-[#121926] hover:bg-[#192233] border border-[#2c384b] text-xs font-mono font-bold uppercase tracking-wider text-white transition"
+            className="px-3.5 py-1.5 rounded-sm bg-[#170c12] hover:bg-[#211019] border border-white/15 text-xs font-mono font-bold uppercase tracking-wider text-white transition"
           >
             Ver acciones de campaña →
           </button>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2 border-t border-[#1c2432]">
-          <div className="flex-1 rounded-sm bg-[#16130d] border border-[#8a6d33]/50 px-3.5 py-2 text-xs font-mono text-amber-200/90">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2 border-t border-white/10">
+          <div className="flex-1 rounded-sm bg-[#190b12] border border-[#EB3F7D]/55/50 px-3.5 py-2 text-xs font-mono text-[#EFE9DA]/90">
             Usá al menos una acción antes de avanzar (o quedate sin presupuesto).
           </div>
           <button
             type="button"
             onClick={onAdvanceMonth}
-            className="px-5 py-2.5 rounded-sm bg-gradient-to-b from-[#d8b76c] to-[#9b7a38] hover:from-[#e6c87d] hover:to-[#b08c42] text-slate-950 font-mono font-extrabold uppercase tracking-wider text-xs border border-[#f3d893]/40 transition shadow shrink-0"
+            className="px-5 py-2.5 rounded-sm bg-[#EB3F7D] hover:bg-[#f45b93] text-slate-950 font-mono font-extrabold uppercase tracking-wider text-xs border border-[#f472b6]/60 transition shadow shrink-0"
           >
             Avanzar al mes siguiente →
           </button>

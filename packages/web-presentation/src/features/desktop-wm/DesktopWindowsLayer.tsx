@@ -39,7 +39,7 @@ export function DesktopWindowsLayer<TSection extends string>({
   if (visibleWindows.length === 0) return null;
 
   return (
-    <main className="relative z-10 h-full w-full pointer-events-none overflow-hidden">
+    <main className="relative z-30 h-full w-full pointer-events-none overflow-hidden">
       {visibleWindows.map((win) => (
         <DesktopWindowFrame
           key={win.id}

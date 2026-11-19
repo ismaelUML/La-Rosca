@@ -15,7 +15,7 @@ interface OfficialPartyLogoProps {
 
 const BACKDROP_STYLE: Record<'light' | 'dark' | 'transparent', string> = {
   light: 'bg-white/95 border border-slate-300/40 p-0.5',
-  dark: 'bg-[#090d14] border border-slate-700/80 p-0.5',
+  dark: 'bg-[#0b0508] border border-slate-700/80 p-0.5',
   transparent: 'bg-transparent p-0',
 };
 

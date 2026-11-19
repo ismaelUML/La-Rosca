@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { OfficialInstitutionLogo } from './OfficialLogoBadge.js';
+import { RoscaLogoMark } from '../../components/ui/RoscaLogoMark.js';
 
-// Pantalla de inicio estilo comando estrategico (HOI4 / Millennium Dawn):
-// panel central metalico con cabecera carmesi, menu de operaciones en bronce/acero
-// y dossier de situacion nacional 2027.
+// Pantalla de inicio en estetica La Rosca (Obsidiana + Rosado Casa Rosada + Papel Crema):
+// portada editorial de estrategia politica argentina 2027.
 
 interface LandingScreenProps {
   hasSavedSession: boolean;
@@ -34,14 +34,14 @@ function CodeImportBox({
   onRetry: () => void;
 }) {
   return (
-    <div className="mt-4 p-3 rounded-sm bg-[#0b1018] border border-[#334155] space-y-2">
+    <div className="mt-4 p-3 rounded-sm bg-[#0e070b] border border-white/20 space-y-2">
       <div className="flex flex-col sm:flex-row gap-2">
         <input
           type="text"
           value={codeText}
           onChange={(e) => onChangeCode(e.target.value)}
           placeholder="Pegá acá tu código ARG2027Z:..."
-          className="flex-1 bg-[#070a0f] border border-[#283447] rounded-sm px-3 py-2 text-xs font-mono text-amber-200"
+          className="flex-1 bg-[#090407] border border-white/15 rounded-sm px-3 py-2 text-xs font-mono text-[#EFE9DA]"
         />
         <button
           type="button"
@@ -88,31 +88,32 @@ export function LandingScreen({
   const continueLabel = hasSavedSession ? 'Continuar Operación' : 'Escenario Rápido (2027)';
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-8">
-      <div className="hoi-panel rounded-sm w-full max-w-5xl overflow-hidden">
-        <div className="hoi-header-crimson px-6 py-3 flex flex-wrap items-center justify-between gap-2">
+    <div className="min-h-screen rosca-obsidian-stage flex items-center justify-center p-4 sm:p-8">
+      <div className="hoi-panel rounded-lg w-full max-w-5xl overflow-hidden border border-[#EB3F7D]/45 shadow-2xl">
+        <div className="bg-[#16080f] border-b border-[#EB3F7D]/40 px-6 py-3 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
             <OfficialInstitutionLogo institution="ESCUDO_NACIONAL" heightPx={26} />
             <OfficialInstitutionLogo institution="PRESIDENCIA" heightPx={24} />
-            <span className="text-xs font-mono font-bold uppercase tracking-widest text-amber-100">
+            <span className="text-xs font-mono font-bold uppercase tracking-widest text-[#F5EFE6]">
               REPÚBLICA ARGENTINA · SALA DE SITUACIÓN 2027
             </span>
           </div>
-          <span className="text-[10px] font-mono uppercase tracking-widest text-rose-200/80">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-[#EB3F7D]">
             SIMULADOR DE ALTA ESTRATEGIA POLÍTICA
           </span>
         </div>
 
         <div className="p-6 md:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-7 space-y-6">
-            <div className="space-y-2 border-l-2 border-[#c9a24d] pl-4">
-              <div className="text-[11px] font-mono uppercase tracking-[0.2em] text-amber-400">
-                COMANDO NACIONAL
+            <div className="space-y-2 border-l-4 border-[#EB3F7D] pl-4">
+              <div className="inline-flex items-center gap-2 text-[11px] font-mono font-bold uppercase tracking-[0.2em] text-[#EB3F7D]">
+                <RoscaLogoMark size={20} />
+                <span>COMANDO NACIONAL</span>
               </div>
-              <h1 className="text-4xl md:text-6xl font-serif font-black tracking-tight text-amber-50 leading-none">
+              <h1 className="font-display text-5xl md:text-7xl tracking-wide uppercase text-[#F5EFE6] leading-none">
                 LA ROSCA
               </h1>
-              <p className="text-xs md:text-sm text-slate-300 leading-relaxed pt-1">
+              <p className="text-xs md:text-sm text-slate-300 leading-relaxed pt-1 max-w-lg">
                 Campaña presidencial, interna partidaria y 48 meses de gobierno bajo fuego real: dólar, Congreso,
                 gobernadores, sindicatos y Comodoro Py.
               </p>
@@ -122,25 +123,25 @@ export function LandingScreen({
               <button
                 type="button"
                 onClick={onStartNewGame}
-                className="hoi-btn-gold w-full py-3 px-5 rounded-sm text-sm font-extrabold uppercase tracking-wider flex items-center justify-between transition"
+                className="hoi-btn-gold w-full py-3 px-5 rounded text-sm font-extrabold uppercase tracking-wider flex items-center justify-between transition"
               >
                 <span>Nueva Campaña / Gobierno</span>
-                <span className="text-[10px] font-mono opacity-80">INICIAR</span>
+                <span className="text-[10px] font-mono opacity-85">INICIAR →</span>
               </button>
 
               <button
                 type="button"
                 onClick={onContinueGame}
-                className="w-full py-2.5 px-5 rounded-sm bg-[#162133] hover:bg-[#1e2d45] border border-[#344661] text-slate-100 text-xs font-bold uppercase tracking-wider flex items-center justify-between transition"
+                className="w-full py-2.5 px-5 rounded bg-[#EFE9DA] hover:bg-[#f7f2e7] border border-[#d6cebc] text-[#090407] text-xs font-extrabold uppercase tracking-wider flex items-center justify-between transition"
               >
                 <span>{continueLabel}</span>
-                <span className="text-[10px] font-mono text-amber-400">REANUDAR</span>
+                <span className="text-[10px] font-mono text-[#B82358] font-bold">REANUDAR</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setShowCodeModal(!showCodeModal)}
-                className="w-full py-2.5 px-5 rounded-sm bg-[#101722] hover:bg-[#172131] border border-[#283447] text-slate-300 text-xs font-bold uppercase tracking-wider flex items-center justify-between transition"
+                className="w-full py-2.5 px-5 rounded bg-[#140b10] hover:bg-[#1e1018] border border-white/15 text-slate-200 text-xs font-bold uppercase tracking-wider flex items-center justify-between transition"
               >
                 <span>Importar Código Zlib</span>
                 <span className="text-[10px] font-mono text-slate-400">ARG2027Z</span>
@@ -162,8 +163,8 @@ export function LandingScreen({
           </div>
 
           <div className="lg:col-span-5 space-y-3">
-            <div className="hoi-header-steel px-3.5 py-2 rounded-t-sm">
-              <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-amber-200">
+            <div className="bg-[#180b12] border-b border-[#EB3F7D]/50 px-3.5 py-2 rounded-t">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#EFE9DA]">
                 DOSSIER OPERATIVO · TABLERO 2027
               </span>
             </div>
@@ -171,13 +172,13 @@ export function LandingScreen({
               {BRIEFING_ITEMS.map((item) => (
                 <div
                   key={item.code}
-                  className="rounded-sm bg-[#0b1018] border border-[#283447] p-3 space-y-1"
+                  className="rounded bg-[#0b0508] border border-white/15 p-3 space-y-1"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono font-bold text-amber-400">{item.code}</span>
-                    <span className="text-[10px] font-mono text-slate-500">ACTIVO</span>
+                    <span className="text-[10px] font-mono font-bold text-[#EB3F7D]">{item.code}</span>
+                    <span className="text-[10px] font-mono text-slate-400">ACTIVO</span>
                   </div>
-                  <div className="text-xs font-bold text-slate-100">{item.title}</div>
+                  <div className="text-xs font-bold text-[#F5EFE6]">{item.title}</div>
                   <p className="text-[11px] text-slate-400 leading-snug">{item.detail}</p>
                 </div>
               ))}

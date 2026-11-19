@@ -107,7 +107,7 @@ function LocalLeaderFooterButton({
       <button
         type="button"
         disabled
-        className="w-full py-2 rounded-sm text-xs font-mono font-bold bg-[#090d14] border border-amber-800/50 text-amber-400/80 cursor-not-allowed"
+        className="w-full py-2 rounded-sm text-xs font-mono font-bold bg-[#0b0508] border border-amber-800/50 text-[#EB3F7D]/80 cursor-not-allowed"
       >
         En enfriamiento ({cooldownMonths} meses)
       </button>
@@ -135,16 +135,16 @@ function LocalLeaderCard({
   effectiveProb,
   onRequestSupport
 }: LocalLeaderCardProps) {
-  const cardBorder = isEndorsed ? 'border-emerald-500/50 bg-[#0d1917]' : 'border-[#263142] hover:border-[#8a6d33]';
+  const cardBorder = isEndorsed ? 'border-emerald-500/50 bg-[#0d1917]' : 'border-white/15 hover:border-[#EB3F7D]/55';
 
   return (
     <div className={`hoi-panel rounded-sm p-4 flex flex-col justify-between space-y-3 transition ${cardBorder}`}>
       <div>
-        <div className="flex items-start justify-between gap-2 border-b border-[#1e293b] pb-2">
+        <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2">
           <div className="flex items-start gap-2 min-w-0">
             <OfficialPartyLogo partyIdOrSigla={leader.partySigla} sizePx={26} />
             <div className="min-w-0">
-              <div className="font-serif font-bold text-amber-100 text-sm uppercase tracking-wide truncate">
+              <div className="font-serif font-bold text-[#F5EFE6] text-sm uppercase tracking-wide truncate">
                 {leader.name}
               </div>
               <div className="text-[11px] font-mono text-slate-400 mt-0.5 truncate">
@@ -152,13 +152,13 @@ function LocalLeaderCard({
               </div>
             </div>
           </div>
-          <span className="px-2 py-0.5 rounded-sm bg-[#090d14] border border-[#263142] text-[10px] font-mono font-bold text-amber-300 shrink-0">
+          <span className="px-2 py-0.5 rounded-sm bg-[#0b0508] border border-white/15 text-[10px] font-mono font-bold text-[#f472b6] shrink-0">
             {leader.partySigla}
           </span>
         </div>
 
         <div className="flex flex-wrap gap-1.5 my-2.5">
-          <span className="px-2 py-0.5 rounded-sm text-[9px] font-mono font-bold bg-[#090d14] border border-[#263142] text-slate-300">
+          <span className="px-2 py-0.5 rounded-sm text-[9px] font-mono font-bold bg-[#0b0508] border border-white/15 text-slate-300">
             {leader.styleTrait.toUpperCase()}
           </span>
           {leader.isOfficial ? (
@@ -171,20 +171,20 @@ function LocalLeaderCard({
         <p className="text-xs text-slate-300 leading-relaxed">{leader.roleText}</p>
 
         <div className="grid grid-cols-2 gap-2 mt-3 font-mono text-[11px]">
-          <div className="p-2 rounded-sm bg-[#090d14] border border-[#1e293b]">
+          <div className="p-2 rounded-sm bg-[#0b0508] border border-white/10">
             <div className="text-[9px] text-slate-500 uppercase">Relevancia / Infl.</div>
             <div className="text-slate-200 font-bold mt-0.5">
               {leader.relevance} / {leader.influence}
             </div>
           </div>
-          <div className="p-2 rounded-sm bg-[#090d14] border border-[#1e293b]">
+          <div className="p-2 rounded-sm bg-[#0b0508] border border-white/10">
             <div className="text-[9px] text-slate-500 uppercase">Apoyo estimado</div>
-            <div className="text-amber-300 font-bold mt-0.5">{effectiveProb}%</div>
+            <div className="text-[#f472b6] font-bold mt-0.5">{effectiveProb}%</div>
           </div>
         </div>
       </div>
 
-      <div className="pt-2.5 border-t border-[#263142]">
+      <div className="pt-2.5 border-t border-white/15">
         <LocalLeaderFooterButton
           isEndorsed={isEndorsed}
           cooldownMonths={cooldownMonths}
@@ -285,23 +285,23 @@ export function CampaignApoyoProvinciasView({ state, onUpdateState }: CampaignAp
     <div className="space-y-6">
       <header className="hoi-panel hoi-header-steel rounded-sm p-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-400">
+          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#EB3F7D]">
             POLÍTICO · INTENDENTES Y APARATO MUNICIPAL
           </div>
-          <h1 className="text-2xl md:text-3xl font-serif font-bold text-amber-100 mt-0.5 uppercase tracking-wide">
+          <h1 className="text-2xl md:text-3xl font-serif font-bold text-[#F5EFE6] mt-0.5 uppercase tracking-wide">
             Apoyo en Provincias
           </h1>
           <p className="text-xs text-slate-300 mt-1 max-w-3xl">
             La rosca territorial con intendentes del Conurbano y cabeceras del interior asegura fiscalización y corte de boleta.
           </p>
         </div>
-        <div className="px-3 py-1.5 rounded-sm bg-[#090d14] border border-[#8a6d33]/80 text-xs font-mono text-amber-200">
+        <div className="px-3 py-1.5 rounded-sm bg-[#0b0508] border border-[#EB3F7D]/55/80 text-xs font-mono text-[#EFE9DA]">
           Distrito activo: <strong>{selectedProvince}</strong>
         </div>
       </header>
 
       {bannerMessage ? (
-        <div className="flex items-center justify-between p-3.5 rounded-sm bg-[#090d14] border border-[#8a6d33] text-xs font-mono text-amber-100">
+        <div className="flex items-center justify-between p-3.5 rounded-sm bg-[#0b0508] border border-[#EB3F7D]/55 text-xs font-mono text-[#F5EFE6]">
           <span>{bannerMessage}</span>
           <button
             type="button"
@@ -315,7 +315,7 @@ export function CampaignApoyoProvinciasView({ state, onUpdateState }: CampaignAp
 
       <div className="hoi-panel rounded-sm p-4 flex flex-wrap items-end justify-between gap-4">
         <div className="w-full sm:w-72 space-y-1.5">
-          <label htmlFor="apoyo-prov-selector" className="block text-[10px] font-mono uppercase tracking-wider text-amber-300">
+          <label htmlFor="apoyo-prov-selector" className="block text-[10px] font-mono uppercase tracking-wider text-[#f472b6]">
             Seleccionar Provincia
           </label>
           <select
@@ -325,7 +325,7 @@ export function CampaignApoyoProvinciasView({ state, onUpdateState }: CampaignAp
               setSelectedProvince(e.target.value);
               setPartyFilter('TODOS');
             }}
-            className="w-full bg-[#090d14] border border-[#263142] rounded-sm px-3 py-2 text-xs font-mono text-amber-100"
+            className="w-full bg-[#0b0508] border border-white/15 rounded-sm px-3 py-2 text-xs font-mono text-[#F5EFE6]"
           >
             <option value="Buenos Aires">Buenos Aires (Conurbano e Interior)</option>
             <option value="Córdoba">Córdoba (Capital y Gran Córdoba)</option>
@@ -342,8 +342,8 @@ export function CampaignApoyoProvinciasView({ state, onUpdateState }: CampaignAp
               onClick={() => setPartyFilter(sigla)}
               className={`px-3 py-1.5 rounded-sm text-xs font-mono font-bold uppercase tracking-wider transition border ${
                 partyFilter === sigla
-                  ? 'bg-[#b89342] text-[#090d14] border-amber-300 shadow'
-                  : 'bg-[#090d14] text-slate-300 border-[#263142] hover:border-[#8a6d33]'
+                  ? 'bg-[#EB3F7D] text-[#090407] border-[#f472b6] shadow'
+                  : 'bg-[#0b0508] text-slate-300 border-white/15 hover:border-[#EB3F7D]/55'
               }`}
             >
               {sigla === 'TODOS' ? `Todos (${provinceLeaders.length})` : sigla}

@@ -44,10 +44,10 @@ function EnergyMixHeader({ state }: { state: SimulationState }) {
   const { energy } = state;
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-sm bg-[#090d14] p-2.5 border border-[#263142] text-center text-xs">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-sm bg-[#0b0508] p-2.5 border border-white/15 text-center text-xs">
         <div>
           <span className="text-slate-400 block text-[11px]">Térmica (Gas)</span>
-          <span className="font-bold text-amber-300 font-mono">{energy.thermalSharePct}%</span>
+          <span className="font-bold text-[#f472b6] font-mono">{energy.thermalSharePct}%</span>
         </div>
         <div>
           <span className="text-slate-400 block text-[11px]">Hidroeléctrica</span>
@@ -55,7 +55,7 @@ function EnergyMixHeader({ state }: { state: SimulationState }) {
         </div>
         <div>
           <span className="text-slate-400 block text-[11px]">Nuclear</span>
-          <span className="font-bold text-amber-200 font-mono">{energy.nuclearSharePct}%</span>
+          <span className="font-bold text-[#EFE9DA] font-mono">{energy.nuclearSharePct}%</span>
         </div>
         <div>
           <span className="text-slate-400 block text-[11px]">Renovable</span>
@@ -64,11 +64,11 @@ function EnergyMixHeader({ state }: { state: SimulationState }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-        <div className="flex items-center justify-between rounded-sm bg-[#090d14] border border-[#263142] px-3 py-2">
+        <div className="flex items-center justify-between rounded-sm bg-[#0b0508] border border-white/15 px-3 py-2">
           <span className="text-slate-400">Subsidio mensual del Tesoro</span>
           <span className="font-mono font-bold text-rose-400">-{energy.cammesaMonthlyDeficitMillionUsd} M USD/mes</span>
         </div>
-        <div className="flex items-center justify-between rounded-sm bg-[#090d14] border border-[#263142] px-3 py-2">
+        <div className="flex items-center justify-between rounded-sm bg-[#0b0508] border border-white/15 px-3 py-2">
           <span className="text-slate-400">Costo generar energía</span>
           <span className="font-mono font-bold text-slate-200">{energy.generationCostUsdPerMwh} USD/MWh</span>
         </div>
@@ -104,7 +104,7 @@ function EnergyTariffStrip({ state, onDispatch }: EnergyAndLaborViewProps) {
   return (
     <ActionStripCard
       icon="MEM"
-      iconTileClass="bg-[#231b10] text-amber-300"
+      iconTileClass="bg-[#231b10] text-[#f472b6]"
       urgentLabel={urgentLabel}
       urgentClass="bg-rose-700 text-white"
       title={`Tarifas eléctricas y gas · Cobertura ${energy.userTariffCoveragePct}%`}
@@ -216,8 +216,8 @@ function EnergyTabContent({ state, onDispatch }: EnergyAndLaborViewProps) {
       <YpfPolicyStrip state={state} onDispatch={onDispatch} />
       <IndustrialGasStrip state={state} onDispatch={onDispatch} />
 
-      <div className="rounded-sm border border-[#263142] bg-[#0b1018] px-3.5 py-2.5 text-xs">
-        <span className="font-mono font-bold uppercase text-amber-400 mr-1.5">ESTADO:</span>
+      <div className="rounded-sm border border-white/15 bg-[#0e070b] px-3.5 py-2.5 text-xs">
+        <span className="font-mono font-bold uppercase text-[#EB3F7D] mr-1.5">ESTADO:</span>
         <span className="text-slate-300">{buildEnergyAlert(state)}</span>
       </div>
     </div>
@@ -227,14 +227,14 @@ function EnergyTabContent({ state, onDispatch }: EnergyAndLaborViewProps) {
 function LaborStatsStrip({ state }: { state: SimulationState }) {
   const { labor } = state;
   return (
-    <div className="grid grid-cols-3 gap-2 rounded-sm bg-[#090d14] p-2.5 border border-[#263142] text-xs">
+    <div className="grid grid-cols-3 gap-2 rounded-sm bg-[#0b0508] p-2.5 border border-white/15 text-xs">
       <div>
         <span className="text-slate-400 block text-[11px]">Salario real</span>
         <span className="font-bold text-slate-100 font-mono">{labor.realWageIndex} pts</span>
       </div>
       <div>
         <span className="text-slate-400 block text-[11px]">Desempleo</span>
-        <span className="font-bold text-amber-300 font-mono">{labor.unemploymentPct}%</span>
+        <span className="font-bold text-[#f472b6] font-mono">{labor.unemploymentPct}%</span>
       </div>
       <div>
         <span className="text-slate-400 block text-[11px]">Juicios laborales</span>
@@ -319,8 +319,8 @@ function LaborTabContent({ state, onDispatch }: EnergyAndLaborViewProps) {
         ))}
       </div>
 
-      <div className="rounded-sm border border-[#263142] bg-[#0b1018] px-3.5 py-2.5 text-xs">
-        <span className="font-mono font-bold uppercase text-amber-400 mr-1.5">ESTADO:</span>
+      <div className="rounded-sm border border-white/15 bg-[#0e070b] px-3.5 py-2.5 text-xs">
+        <span className="font-mono font-bold uppercase text-[#EB3F7D] mr-1.5">ESTADO:</span>
         <span className="text-slate-300">{buildLaborAlert(state)}</span>
       </div>
     </div>
@@ -341,7 +341,7 @@ function EnergyLaborHeader({
     : `Informalidad: ${state.labor.informalityPct}%`;
   const tabClass = (tab: EnergyLaborTab) =>
     activeTab === tab
-      ? 'bg-[#1a2b44] text-amber-100 border-b-2 border-amber-400'
+      ? 'bg-[#1a2b44] text-[#F5EFE6] border-b-2 border-amber-400'
       : 'text-slate-400 hover:text-slate-200 border-b-2 border-transparent';
 
   return (
@@ -358,7 +358,7 @@ function EnergyLaborHeader({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 rounded-sm bg-[#0b1018] border border-[#283447]">
+      <div className="grid grid-cols-2 rounded-sm bg-[#0e070b] border border-white/15">
         <button
           type="button"
           onClick={() => onSelectTab('energy')}

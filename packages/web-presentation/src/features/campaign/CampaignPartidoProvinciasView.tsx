@@ -739,7 +739,7 @@ function ProvincialLeadingBadge({ isLeading, diff, rivalName }: { isLeading: boo
     );
   }
   return (
-    <span className="px-2 py-0.5 rounded-sm bg-amber-950/40 border border-[#8a6d33]/70 font-mono text-amber-200 text-[11px]">
+    <span className="px-2 py-0.5 rounded-sm bg-amber-950/40 border border-[#EB3F7D]/55/70 font-mono text-[#EFE9DA] text-[11px]">
       Escoltas a {rivalName} (-{diff} pp)
     </span>
   );
@@ -795,15 +795,15 @@ function resolveProvincialLogoKey(partyName: string): string {
 
 function VoteRowItem({ share }: { share: ProvincialPartyShare }) {
   const label = formatVoteRowLabel(share);
-  const textClass = share.isPlayer ? 'font-bold text-amber-100' : 'text-slate-300';
-  const rowBg = share.isPlayer ? 'bg-[#121a28] border-[#8a6d33]/60' : 'bg-[#090d14] border-[#1e293b]';
+  const textClass = share.isPlayer ? 'font-bold text-[#F5EFE6]' : 'text-slate-300';
+  const rowBg = share.isPlayer ? 'bg-[#121a28] border-[#EB3F7D]/55/60' : 'bg-[#0b0508] border-white/10';
   return (
     <div className={`flex items-center justify-between px-3 py-1.5 rounded-sm border text-xs ${rowBg}`}>
       <div className="flex items-center gap-2 min-w-0">
         <OfficialPartyLogo partyIdOrSigla={resolveProvincialLogoKey(share.partyName)} sizePx={20} fallbackColor={share.color} />
         <span className={`${textClass} truncate`}>{label}</span>
       </div>
-      <span className="font-mono font-extrabold text-amber-200 shrink-0 ml-2">
+      <span className="font-mono font-extrabold text-[#EFE9DA] shrink-0 ml-2">
         {share.sharePct.toFixed(1).replace('.', ',')} %
       </span>
     </div>
@@ -824,19 +824,19 @@ function ProvincialVoteBar({ shares }: ProvincialVoteBarProps) {
 
   return (
     <div className="hoi-panel rounded-sm p-5 space-y-3.5">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#263142] pb-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 pb-2.5">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-widest text-amber-300 block">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-[#f472b6] block">
             SONDEO ELECTORAL DISTRITAL
           </span>
-          <span className="font-serif font-bold uppercase tracking-wide text-amber-100 text-sm">
+          <span className="font-serif font-bold uppercase tracking-wide text-[#F5EFE6] text-sm">
             Intención de voto provincial a Gobernador
           </span>
         </div>
         <ProvincialLeadingBadge isLeading={isLeading} diff={diff} rivalName={rival.name} />
       </div>
 
-      <div className="w-full h-3.5 rounded-sm overflow-hidden flex bg-[#090d14] border border-[#263142]">
+      <div className="w-full h-3.5 rounded-sm overflow-hidden flex bg-[#0b0508] border border-white/15">
         {sortedShares.map((s) => (
           <div
             key={s.partyName}
@@ -879,8 +879,8 @@ function FormulaCandidateSlotCard({
 }) {
   return (
     <div className="hoi-panel rounded-sm p-4 space-y-3">
-      <div className="flex items-center justify-between border-b border-[#1e293b] pb-2">
-        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300">
+      <div className="flex items-center justify-between border-b border-white/10 pb-2">
+        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#f472b6]">
           {roleTitle}
         </span>
         <span className="text-[10px] font-mono text-sky-300">
@@ -888,11 +888,11 @@ function FormulaCandidateSlotCard({
         </span>
       </div>
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-sm bg-[#162233] border border-[#8a6d33] flex items-center justify-center font-mono font-bold text-xs text-amber-200 shrink-0">
+        <div className="w-10 h-10 rounded-sm bg-[#1c0e16] border border-[#EB3F7D]/55 flex items-center justify-center font-mono font-bold text-xs text-[#EFE9DA] shrink-0">
           {badgeCode}
         </div>
         <div className="min-w-0">
-          <div className="text-sm font-serif font-bold text-amber-100 truncate">{selected?.name}</div>
+          <div className="text-sm font-serif font-bold text-[#F5EFE6] truncate">{selected?.name}</div>
           <div className="text-[11px] font-mono text-slate-400 truncate">{selected?.roleDescription}</div>
         </div>
       </div>
@@ -900,7 +900,7 @@ function FormulaCandidateSlotCard({
         value={selectedId}
         onChange={(e) => onChange(e.target.value)}
         aria-label={roleTitle}
-        className="w-full bg-[#090d14] border border-[#263142] focus:border-[#b89342] rounded-sm px-3 py-2 text-xs font-mono text-amber-100"
+        className="w-full bg-[#0b0508] border border-white/15 focus:border-[#EB3F7D] rounded-sm px-3 py-2 text-xs font-mono text-[#F5EFE6]"
       >
         {candidates.map((c) => (
           <option key={c.id} value={c.id}>
@@ -1137,15 +1137,15 @@ function ProvincialCoalitionCard({
 }: ProvincialCoalitionCardProps) {
   const potentialBoost = Math.max(0.3, Math.round(party.sharePct * 0.6 * 10) / 10);
   const referente = resolveDistrictReferente(party.partyName);
-  const borderCls = isInAlliance ? 'border-emerald-700/80' : 'border-[#263142] hover:border-[#8a6d33]';
+  const borderCls = isInAlliance ? 'border-emerald-700/80' : 'border-white/15 hover:border-[#EB3F7D]/55';
 
   return (
     <div className={`hoi-panel rounded-sm p-4 flex flex-col justify-between space-y-3 transition ${borderCls}`}>
       <div className="space-y-2">
-        <div className="flex items-center justify-between border-b border-[#1e293b] pb-2">
+        <div className="flex items-center justify-between border-b border-white/10 pb-2">
           <div className="flex items-center gap-2 min-w-0">
             <OfficialPartyLogo partyIdOrSigla={resolveProvincialLogoKey(party.partyName)} sizePx={22} fallbackColor={party.color} />
-            <span className="text-sm font-serif font-bold text-amber-100 truncate">{party.partyName}</span>
+            <span className="text-sm font-serif font-bold text-[#F5EFE6] truncate">{party.partyName}</span>
           </div>
           {isInAlliance ? (
             <span className="text-[10px] font-mono font-bold text-emerald-300 bg-emerald-950/70 border border-emerald-700/70 px-2 py-0.5 rounded-sm shrink-0">
@@ -1157,22 +1157,22 @@ function ProvincialCoalitionCard({
         </div>
 
         <div className="text-[11px] text-slate-300">
-          Referente territorial: <span className="font-semibold text-amber-100">{referente}</span>
+          Referente territorial: <span className="font-semibold text-[#F5EFE6]">{referente}</span>
         </div>
 
         <div className="grid grid-cols-2 gap-2 pt-1 text-xs font-mono">
-          <div className="p-2 rounded-sm bg-[#090d14] border border-[#1e293b]">
+          <div className="p-2 rounded-sm bg-[#0b0508] border border-white/10">
             <div className="text-[9px] text-slate-400 uppercase">Caudal propio</div>
             <div className="font-bold text-white mt-0.5">{party.sharePct.toFixed(1).replace('.', ',')} %</div>
           </div>
-          <div className="p-2 rounded-sm bg-[#090d14] border border-[#1e293b]">
+          <div className="p-2 rounded-sm bg-[#0b0508] border border-white/10">
             <div className="text-[9px] text-slate-400 uppercase">Transferencia</div>
             <div className="font-bold text-emerald-400 mt-0.5">+{potentialBoost.toFixed(1).replace('.', ',')} %</div>
           </div>
         </div>
       </div>
 
-      <div className="pt-2 border-t border-[#1e293b]">
+      <div className="pt-2 border-t border-white/10">
         <CoalitionActionFooter
           isInAlliance={isInAlliance}
           canAddMore={canAddMore}
@@ -1197,16 +1197,16 @@ function LocalActionCard({
 }) {
   const btnCls = allowed
     ? 'hoi-btn-gold'
-    : 'bg-[#090d14] text-slate-500 border border-[#1e293b] cursor-not-allowed';
+    : 'bg-[#0b0508] text-slate-500 border border-white/10 cursor-not-allowed';
 
   return (
-    <div className="hoi-panel rounded-sm p-4 flex flex-col justify-between space-y-3 hover:border-[#8a6d33] transition">
+    <div className="hoi-panel rounded-sm p-4 flex flex-col justify-between space-y-3 hover:border-[#EB3F7D]/55 transition">
       <div className="space-y-2">
-        <div className="flex items-center justify-between border-b border-[#1e293b] pb-2">
-          <span className="text-sm font-serif font-bold uppercase tracking-wide text-amber-100">
+        <div className="flex items-center justify-between border-b border-white/10 pb-2">
+          <span className="text-sm font-serif font-bold uppercase tracking-wide text-[#F5EFE6]">
             {act.title}
           </span>
-          <span className="px-2 py-0.5 rounded-sm bg-amber-950/30 border border-[#8a6d33]/80 font-mono font-bold text-[11px] text-amber-300">
+          <span className="px-2 py-0.5 rounded-sm bg-amber-950/30 border border-[#EB3F7D]/55/80 font-mono font-bold text-[11px] text-[#f472b6]">
             -${act.cost.toFixed(1).replace('.', ',')}M
           </span>
         </div>
@@ -1215,7 +1215,7 @@ function LocalActionCard({
           {act.badges.map((b) => (
             <span
               key={b}
-              className="px-2 py-0.5 rounded-sm text-[9px] font-mono font-bold bg-[#090d14] border border-[#263142] text-emerald-400"
+              className="px-2 py-0.5 rounded-sm text-[9px] font-mono font-bold bg-[#0b0508] border border-white/15 text-emerald-400"
             >
               {scaleProvincialBadge(b, fatigueMult)}
             </span>
@@ -1223,7 +1223,7 @@ function LocalActionCard({
         </div>
       </div>
 
-      <div className="pt-2 border-t border-[#1e293b]">
+      <div className="pt-2 border-t border-white/10">
         <button
           type="button"
           disabled={!allowed}
@@ -1248,7 +1248,7 @@ function ProvincialActionsGrid({ budget, actionsLeft, onExecute }: ProvincialAct
       <div className="hoi-panel rounded-sm px-4 py-3 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
         <div>
           CAJA DE CAMPAÑA LOCAL:{' '}
-          <strong className="text-amber-300 text-sm">${budget.toFixed(1)}M argentums</strong>
+          <strong className="text-[#f472b6] text-sm">${budget.toFixed(1)}M argentums</strong>
         </div>
         <div className="text-slate-300">
           OPERACIONES DISPONIBLES ESTE MES:{' '}
@@ -1277,16 +1277,16 @@ function ProvincialElectorateBar({ prov }: { prov: DeepProvincialData }) {
   return (
     <div className="hoi-panel rounded-sm p-4 space-y-2.5 text-xs">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="font-mono font-bold uppercase tracking-wider text-amber-200">
+        <span className="font-mono font-bold uppercase tracking-wider text-[#EFE9DA]">
           Composición Ideológica del Padrón de {prov.name}
         </span>
         <span className="font-mono text-[11px] text-slate-400">
           Izquierda <strong className="text-rose-400">{izq}%</strong> · Centro{' '}
           <strong className="text-sky-300">{centro}%</strong> · Derecha{' '}
-          <strong className="text-amber-300">{der}%</strong>
+          <strong className="text-[#f472b6]">{der}%</strong>
         </span>
       </div>
-      <div className="w-full h-2.5 rounded-sm overflow-hidden flex bg-[#090d14] border border-[#263142]">
+      <div className="w-full h-2.5 rounded-sm overflow-hidden flex bg-[#0b0508] border border-white/15">
         <div style={{ width: `${izq}%` }} className="bg-rose-500/80 h-full" />
         <div style={{ width: `${centro}%` }} className="bg-sky-500/80 h-full" />
         <div style={{ width: `${der}%` }} className="bg-amber-500/80 h-full" />
@@ -1311,40 +1311,40 @@ function ProvincialCandidateProfilePanel({ prov }: { prov: DeepProvincialData })
 
   return (
     <div className="hoi-panel rounded-sm p-5 space-y-4 text-xs">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#263142] pb-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 pb-2.5">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-widest text-amber-300 block">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-[#f472b6] block">
             DOSSIER DE INTELIGENCIA ELECTORAL
           </span>
-          <h4 className="text-sm font-serif font-bold uppercase tracking-wide text-amber-100">
+          <h4 className="text-sm font-serif font-bold uppercase tracking-wide text-[#F5EFE6]">
             Atributos del binomio: {gov?.name} — {vice?.name}
           </h4>
         </div>
-        <span className="px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#8a6d33] font-mono text-[11px] text-amber-200">
+        <span className="px-2.5 py-1 rounded-sm bg-[#0b0508] border border-[#EB3F7D]/55 font-mono text-[11px] text-[#EFE9DA]">
           Lealtad con Casa Rosada: {prov.loyaltyIndex}%
         </span>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center font-mono">
-        <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142]">
+        <div className="p-3 rounded-sm bg-[#0b0508] border border-white/15">
           <div className="text-slate-400 text-[10px] uppercase">Relevancia</div>
-          <div className="text-lg font-extrabold text-amber-200 mt-1">{relevance} pts</div>
+          <div className="text-lg font-extrabold text-[#EFE9DA] mt-1">{relevance} pts</div>
         </div>
-        <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142]">
+        <div className="p-3 rounded-sm bg-[#0b0508] border border-white/15">
           <div className="text-slate-400 text-[10px] uppercase">Estructura Local</div>
           <div className="text-lg font-extrabold text-sky-400 mt-1">
             {Math.min(95, Math.round(prov.loyaltyIndex * 0.85 + 12))} %
           </div>
         </div>
-        <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142]">
+        <div className="p-3 rounded-sm bg-[#0b0508] border border-white/15">
           <div className="text-slate-400 text-[10px] uppercase">Intención de Voto</div>
           <div className="text-lg font-extrabold text-emerald-400 mt-1">
             {playerShare.toFixed(1).replace('.', ',')} %
           </div>
         </div>
-        <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142]">
+        <div className="p-3 rounded-sm bg-[#0b0508] border border-white/15">
           <div className="text-slate-400 text-[10px] uppercase">Fiscalización Mesas</div>
-          <div className="text-lg font-extrabold text-amber-300 mt-1">
+          <div className="text-lg font-extrabold text-[#f472b6] mt-1">
             {Math.min(100, Math.round(relevance * 1.4 + 28))} %
           </div>
         </div>
@@ -1376,28 +1376,28 @@ function ProvincialDrilldownHeader({
               playUiSound('tab');
               onBack();
             }}
-            className="px-3 py-1.5 rounded-sm bg-[#090d14] border border-[#263142] hover:border-[#b89342] text-xs font-mono font-bold text-amber-100 transition inline-flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-sm bg-[#0b0508] border border-white/15 hover:border-[#EB3F7D] text-xs font-mono font-bold text-[#F5EFE6] transition inline-flex items-center gap-1.5"
           >
-            <ArrowLeft className="w-3.5 h-3.5 text-amber-300" />
+            <ArrowLeft className="w-3.5 h-3.5 text-[#f472b6]" />
             Volver a turnos
           </button>
           <div>
-            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300">
+            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#f472b6]">
               COMANDO DE ELECCIÓN PROVINCIAL · TURNO {prov.turnYear}
             </div>
-            <h1 className="text-xl md:text-2xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5">
+            <h1 className="text-xl md:text-2xl font-serif font-extrabold uppercase tracking-wide text-[#F5EFE6] mt-0.5">
               {prov.name}
             </h1>
           </div>
         </div>
-        <div className="text-xs font-mono font-bold text-amber-200 bg-[#090d14] border border-[#8a6d33] px-3 py-1.5 rounded-sm">
+        <div className="text-xs font-mono font-bold text-[#EFE9DA] bg-[#0b0508] border border-[#EB3F7D]/55 px-3 py-1.5 rounded-sm">
           {prov.statusBadge}
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-[#263142] text-xs font-mono text-slate-300">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-white/15 text-xs font-mono text-slate-300">
         <span>
-          Comicio a Gobernador: <strong className="text-amber-200">{prov.electionDate}</strong> · Mayoría / Balotaje Provincial
+          Comicio a Gobernador: <strong className="text-[#EFE9DA]">{prov.electionDate}</strong> · Mayoría / Balotaje Provincial
         </span>
         <span>
           Gobernador en ejercicio: <strong className="text-white">{prov.currentGovernor}</strong> ({prov.governingParty})
@@ -1447,11 +1447,11 @@ function ProvincialDrilldownSubTabs({
   ];
 
   return (
-    <div className="flex flex-wrap gap-1 border-b border-[#263142] pb-1">
+    <div className="flex flex-wrap gap-1 border-b border-white/15 pb-1">
       {tabs.map((tab) => {
         const isSelected = subTab === tab.id;
         const cls = isSelected
-          ? 'bg-[#17253b] text-amber-100 border-b-2 border-[#b89342]'
+          ? 'bg-[#17253b] text-[#F5EFE6] border-b-2 border-[#EB3F7D]'
           : 'text-slate-400 hover:text-slate-200 border-b-2 border-transparent';
         return (
           <button
@@ -1488,7 +1488,7 @@ function ProvincialCoalitionPanel({
   return (
     <div className="space-y-4">
       <div className="hoi-panel rounded-sm p-4 text-xs text-slate-300 space-y-1.5">
-        <h4 className="text-sm font-serif font-bold uppercase tracking-wide text-amber-100">
+        <h4 className="text-sm font-serif font-bold uppercase tracking-wide text-[#F5EFE6]">
           Pactos y Frentes Electorales en {prov.name}
         </h4>
         <p className="text-slate-400 leading-relaxed">
@@ -1498,12 +1498,12 @@ function ProvincialCoalitionPanel({
       </div>
 
       {coalitionBanner ? (
-        <div className="rounded-sm p-3 bg-amber-950/50 border border-[#b89342] text-amber-100 text-xs font-mono flex items-center justify-between">
+        <div className="rounded-sm p-3 bg-amber-950/50 border border-[#EB3F7D] text-[#F5EFE6] text-xs font-mono flex items-center justify-between">
           <span>{coalitionBanner}</span>
           <button
             type="button"
             onClick={onClearBanner}
-            className="text-amber-300 hover:text-white font-bold ml-2"
+            className="text-[#f472b6] hover:text-white font-bold ml-2"
           >
             ✕
           </button>
@@ -1644,7 +1644,7 @@ function checkIsPlayerLeading(shares: ProvincialPartyShare[]): { playerShare: nu
 
 function TurnCardItem({ prov, onOpen }: TurnCardProps) {
   const { playerShare, isLeading } = checkIsPlayerLeading(prov.shares);
-  const borderClass = isLeading ? 'border-[#b89342] shadow-md shadow-amber-950/30' : 'border-[#263142]';
+  const borderClass = isLeading ? 'border-[#EB3F7D] shadow-md shadow-amber-950/30' : 'border-white/15';
   const shareText = playerShare > 0 ? `${playerShare.toFixed(1).replace('.', ',')} %` : 'sin datos';
 
   return (
@@ -1654,10 +1654,10 @@ function TurnCardItem({ prov, onOpen }: TurnCardProps) {
         playUiSound('select');
         onOpen(prov.id);
       }}
-      className="hoi-panel rounded-sm p-4 flex flex-col justify-between text-center gap-3 hover:border-[#b89342] cursor-pointer transition group w-full"
+      className="hoi-panel rounded-sm p-4 flex flex-col justify-between text-center gap-3 hover:border-[#EB3F7D] cursor-pointer transition group w-full"
     >
       <span className="block">
-        <span className="block font-extrabold text-white text-sm group-hover:text-amber-200 transition leading-tight">
+        <span className="block font-extrabold text-white text-sm group-hover:text-[#EFE9DA] transition leading-tight">
           {prov.name}
         </span>
         <span className="block text-[10px] font-mono text-slate-400 mt-0.5">{prov.electionDate}</span>
@@ -1676,11 +1676,11 @@ function TurnCardItem({ prov, onOpen }: TurnCardProps) {
         </span>
       ) : null}
 
-      <span className="block w-full border-t border-[#263142] pt-2 space-y-1">
+      <span className="block w-full border-t border-white/15 pt-2 space-y-1">
         <span className="block text-[9px] font-mono uppercase font-bold text-slate-400 tracking-wider">
           Fórmula desde {prov.formulaOpensDate.toUpperCase()}
         </span>
-        <span className="text-[10px] font-mono font-bold text-amber-300 group-hover:underline inline-flex items-center justify-center gap-1">
+        <span className="text-[10px] font-mono font-bold text-[#f472b6] group-hover:underline inline-flex items-center justify-center gap-1">
           Ver campaña y fórmula
           <ArrowRight className="w-3 h-3" />
         </span>
@@ -1751,13 +1751,13 @@ export function CampaignPartidoProvinciasView({ state }: CampaignPartidoProvinci
         eyebrow="Político · Estructura Federal"
         title="Partido en las provincias"
         description="Cronograma constitucional de las 24 gobernaciones y comandos locales."
-        icon={<Flag className="w-4 h-4 text-amber-300" />}
+        icon={<Flag className="w-4 h-4 text-[#f472b6]" />}
       />
 
       <div className="hoi-panel hoi-header-steel rounded-sm p-5 space-y-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-sm bg-[#162233] border border-[#344661] flex items-center justify-center shrink-0">
-            <Landmark className="w-5 h-5 text-amber-300" />
+          <div className="w-10 h-10 rounded-sm bg-[#1c0e16] border border-white/20 flex items-center justify-center shrink-0">
+            <Landmark className="w-5 h-5 text-[#f472b6]" />
           </div>
           <div>
             <h3 className="text-base font-extrabold text-white">Comando de campaña provincial</h3>
@@ -1767,7 +1767,7 @@ export function CampaignPartidoProvinciasView({ state }: CampaignPartidoProvinci
           </div>
         </div>
 
-        <p className="text-[11px] text-slate-400 leading-relaxed border-t border-[#263142] pt-3">
+        <p className="text-[11px] text-slate-400 leading-relaxed border-t border-white/15 pt-3">
           Las 24 jurisdicciones votan en cuatro turnos de 6 (2028, 2029, 2030 y 2031, y cada cuatro
           años después): en 2027 no se elige ningún gobernador. La fórmula se elige un año antes de
           cada elección. Hacé clic en cualquier provincia para gestionar su binomio y sus acciones.
@@ -1792,8 +1792,8 @@ export function CampaignPartidoProvinciasView({ state }: CampaignPartidoProvinci
                 }}
                 className={`px-4 py-2 rounded-sm text-xs font-mono font-bold transition border ${
                   isSelected
-                    ? 'bg-[#1d3250] text-amber-100 border-[#b89342]'
-                    : 'bg-[#090d14] text-slate-300 border-[#263142] hover:border-slate-500'
+                    ? 'bg-[#EB3F7D]/20 text-[#F5EFE6] border-[#EB3F7D]'
+                    : 'bg-[#0b0508] text-slate-300 border-white/15 hover:border-slate-500'
                 }`}
               >
                 {tabLabel}
@@ -1805,7 +1805,7 @@ export function CampaignPartidoProvinciasView({ state }: CampaignPartidoProvinci
 
       {selectedTurn === 'MAPA' ? (
         <div className="hoi-panel rounded-sm overflow-hidden">
-          <div className="p-4 border-b border-[#263142]">
+          <div className="p-4 border-b border-white/15">
             <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-white">
               Mapa de los 24 Gobernadores e Intervención Federal (Art. 6 CN)
             </h3>
@@ -1815,7 +1815,7 @@ export function CampaignPartidoProvinciasView({ state }: CampaignPartidoProvinci
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#090d14] border-b border-[#263142] text-[10px] font-mono font-bold uppercase text-slate-400">
+              <thead className="bg-[#0b0508] border-b border-white/15 text-[10px] font-mono font-bold uppercase text-slate-400">
                 <tr>
                   <th className="py-3 px-4">Provincia</th>
                   <th className="py-3 px-4">Turno Electoral</th>
@@ -1832,13 +1832,13 @@ export function CampaignPartidoProvinciasView({ state }: CampaignPartidoProvinci
                       playUiSound('select');
                       setSelectedProvinceId(prov.id);
                     }}
-                    className="border-b border-[#263142]/60 hover:bg-[#131d2d] cursor-pointer transition"
+                    className="border-b border-white/15/60 hover:bg-[#131d2d] cursor-pointer transition"
                   >
                     <td className="py-3 px-4 font-bold text-white">{prov.name}</td>
-                    <td className="py-3 px-4 font-mono text-amber-300">{prov.turnYear}</td>
+                    <td className="py-3 px-4 font-mono text-[#f472b6]">{prov.turnYear}</td>
                     <td className="py-3 px-4 text-slate-300">{prov.currentGovernor}</td>
                     <td className="py-3 px-4">
-                      <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#090d14] border border-[#263142] text-slate-300">
+                      <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#0b0508] border border-white/15 text-slate-300">
                         {prov.governingParty}
                       </span>
                     </td>

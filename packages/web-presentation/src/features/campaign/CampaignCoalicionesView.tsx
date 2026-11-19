@@ -124,12 +124,12 @@ function CoalitionAlertBanner({
     return null;
   }
   return (
-    <div className="flex items-center justify-between p-3.5 rounded-sm bg-amber-950/40 border border-[#8a6d33] text-amber-200 text-xs font-mono">
+    <div className="flex items-center justify-between p-3.5 rounded-sm bg-amber-950/40 border border-[#EB3F7D]/55 text-[#EFE9DA] text-xs font-mono">
       <span>{message}</span>
       <button
         type="button"
         onClick={onDismiss}
-        className="text-amber-300 hover:text-white px-2 py-0.5 rounded-sm text-xs font-bold"
+        className="text-[#f472b6] hover:text-white px-2 py-0.5 rounded-sm text-xs font-bold"
       >
         ✕
       </button>
@@ -156,12 +156,12 @@ function CoalitionHeaderSummary({
         <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-rose-400">
           CRONOGRAMA ELECTORAL CNE
         </div>
-        <div className="text-sm font-serif font-bold text-amber-100 mt-0.5 uppercase tracking-wide">
+        <div className="text-sm font-serif font-bold text-[#F5EFE6] mt-0.5 uppercase tracking-wide">
           Elección General: 24 de octubre de 2027 · faltan {monthsRemaining} meses
         </div>
       </div>
-      <div className="px-3 py-1.5 rounded-sm bg-[#090d14] border border-[#263142] text-xs font-mono text-slate-300">
-        Fórmula: <strong className="text-amber-200">{candidateName}</strong>
+      <div className="px-3 py-1.5 rounded-sm bg-[#0b0508] border border-white/15 text-xs font-mono text-slate-300">
+        Fórmula: <strong className="text-[#EFE9DA]">{candidateName}</strong>
         <span className="text-sky-300">{coalitionText}</span>
       </div>
     </div>
@@ -176,12 +176,12 @@ function CandidateModeToggle({
   onChangeMode: (mode: 'YO' | 'OTRO') => void;
 }) {
   return (
-    <div className="inline-flex p-1 rounded-sm bg-[#090d14] border border-[#263142]">
+    <div className="inline-flex p-1 rounded-sm bg-[#0b0508] border border-white/15">
       <button
         type="button"
         onClick={() => onChangeMode('YO')}
         className={`px-4 py-1.5 rounded-sm text-xs font-mono font-bold uppercase tracking-wider transition ${
-          candidateMode === 'YO' ? 'bg-[#b89342] text-[#090d14] shadow' : 'text-slate-300 hover:bg-[#151e2c]'
+          candidateMode === 'YO' ? 'bg-[#EB3F7D] text-[#090407] shadow' : 'text-slate-300 hover:bg-[#1c0e16]'
         }`}
       >
         Encabezo yo la boleta
@@ -190,7 +190,7 @@ function CandidateModeToggle({
         type="button"
         onClick={() => onChangeMode('OTRO')}
         className={`px-4 py-1.5 rounded-sm text-xs font-mono font-bold uppercase tracking-wider transition ${
-          candidateMode === 'OTRO' ? 'bg-[#b89342] text-[#090d14] shadow' : 'text-slate-300 hover:bg-[#151e2c]'
+          candidateMode === 'OTRO' ? 'bg-[#EB3F7D] text-[#090407] shadow' : 'text-slate-300 hover:bg-[#1c0e16]'
         }`}
       >
         Designar delegado partidario
@@ -202,7 +202,7 @@ function CandidateModeToggle({
 function CandidateLeadText({ name }: { name: string }) {
   return (
     <p className="text-xs text-slate-300 leading-relaxed">
-      Vas a encabezar personalmente la boleta como <strong className="text-amber-100">{name}</strong>. Tus atributos de inteligencia percibida, relevancia e imagen impactan de lleno en debates, recorridas y spots.
+      Vas a encabezar personalmente la boleta como <strong className="text-[#F5EFE6]">{name}</strong>. Tus atributos de inteligencia percibida, relevancia e imagen impactan de lleno en debates, recorridas y spots.
     </p>
   );
 }
@@ -218,14 +218,14 @@ function DelegateSelector({
 }) {
   return (
     <div className="space-y-1.5">
-      <label htmlFor="delegate-picker" className="text-[10px] font-mono uppercase tracking-wider text-amber-300 block">
+      <label htmlFor="delegate-picker" className="text-[10px] font-mono uppercase tracking-wider text-[#f472b6] block">
         Seleccionar dirigente de tu espacio
       </label>
       <select
         id="delegate-picker"
         value={selectedId}
         onChange={(e) => onSelect(e.target.value)}
-        className="w-full bg-[#090d14] border border-[#263142] rounded-sm px-3.5 py-2 text-xs font-mono text-amber-100 focus:outline-none focus:border-[#8a6d33]"
+        className="w-full bg-[#0b0508] border border-white/15 rounded-sm px-3.5 py-2 text-xs font-mono text-[#F5EFE6] focus:outline-none focus:border-[#EB3F7D]/55"
       >
         {candidates.map((c) => (
           <option key={c.id} value={c.id}>
@@ -245,10 +245,10 @@ function DelegateAssessmentPill({ assessment }: { assessment: DelegateAssessment
     ? 'text-emerald-400 font-bold'
     : 'text-rose-400 font-bold';
   return (
-    <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142] flex items-center justify-between text-xs font-mono">
+    <div className="p-3 rounded-sm bg-[#0b0508] border border-white/15 flex items-center justify-between text-xs font-mono">
       <span className={color}>{assessment.verdictText}</span>
       <span className="text-slate-400">
-        Riesgo corte propio: <strong className="text-amber-300">{assessment.betrayalRiskPct}%</strong>
+        Riesgo corte propio: <strong className="text-[#f472b6]">{assessment.betrayalRiskPct}%</strong>
       </span>
     </div>
   );
@@ -276,17 +276,17 @@ interface CandidaturaSectionProps {
 function ConfirmedCandidacyPanel({ state }: { state: CampaignSimulationState }) {
   return (
     <section className="hoi-panel rounded-sm p-5 space-y-3">
-      <div className="flex items-center justify-between border-b border-[#263142] pb-2.5">
-        <h2 className="text-sm font-serif font-bold uppercase tracking-wider text-amber-100">
+      <div className="flex items-center justify-between border-b border-white/15 pb-2.5">
+        <h2 className="text-sm font-serif font-bold uppercase tracking-wider text-[#F5EFE6]">
           1 · Candidatura Oficializada
         </h2>
         <span className="text-[10px] font-mono font-bold text-emerald-300 bg-emerald-950/60 border border-emerald-600/60 px-2.5 py-0.5 rounded-sm uppercase">
           ✓ Ratificada
         </span>
       </div>
-      <div className="p-4 rounded-sm bg-[#090d14] border border-[#263142] space-y-1.5">
+      <div className="p-4 rounded-sm bg-[#0b0508] border border-white/15 space-y-1.5">
         <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Candidato proclamado:</div>
-        <div className="text-base font-serif font-bold text-amber-100 flex items-center gap-2">
+        <div className="text-base font-serif font-bold text-[#F5EFE6] flex items-center gap-2">
           <span>{state.candidateName}</span>
           <span className="text-xs font-mono font-normal text-sky-300">
             ({state.partySigla})
@@ -320,7 +320,7 @@ function CandidaturaBodyPanel({
   }
   if (ownPartyDirigentes.length === 0) {
     return (
-      <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142] text-xs font-mono text-slate-300 leading-relaxed">
+      <div className="p-3 rounded-sm bg-[#0b0508] border border-white/15 text-xs font-mono text-slate-300 leading-relaxed">
         Tu fuerza personalizada todavía no tiene dirigentes reclutados para delegar la cabeza de lista. Encabezá la boleta o cerrá un pase en la pestaña Apoyos.
       </div>
     );
@@ -332,7 +332,7 @@ function CandidaturaBodyPanel({
         selectedId={selectedDelegateId}
         onSelect={onSelectDelegate}
       />
-      <div className="p-3 rounded-sm bg-amber-950/30 border border-[#8a6d33]/70 text-xs font-mono text-amber-200/90 leading-relaxed">
+      <div className="p-3 rounded-sm bg-amber-950/30 border border-[#EB3F7D]/55/70 text-xs font-mono text-[#EFE9DA]/90 leading-relaxed">
         Si tu delegado gana las generales, conducís el espacio desde las sombras pero con riesgo de rebelión de palacio.
       </div>
       <DelegateAssessmentPill assessment={assessment} />
@@ -376,8 +376,8 @@ function CandidaturaSection({ state, onConfirm }: CandidaturaSectionProps) {
 
   return (
     <section className="hoi-panel rounded-sm p-5 space-y-4">
-      <div className="flex items-center justify-between border-b border-[#263142] pb-2.5">
-        <h2 className="text-sm font-serif font-bold uppercase tracking-wider text-amber-100">
+      <div className="flex items-center justify-between border-b border-white/15 pb-2.5">
+        <h2 className="text-sm font-serif font-bold uppercase tracking-wider text-[#F5EFE6]">
           1 · Definición de Candidatura
         </h2>
         <span className="text-[11px] font-mono text-slate-400">Elegí quién encabeza la boleta</span>
@@ -421,20 +421,20 @@ function VicepresidenciaSection({ state, onOpenModal }: VicepresidenciaSectionPr
 
   return (
     <section className="hoi-panel rounded-sm p-5 space-y-3.5">
-      <div className="flex items-center justify-between border-b border-[#263142] pb-2.5">
-        <h2 className="text-sm font-serif font-bold uppercase tracking-wider text-amber-100">
+      <div className="flex items-center justify-between border-b border-white/15 pb-2.5">
+        <h2 className="text-sm font-serif font-bold uppercase tracking-wider text-[#F5EFE6]">
           2 · Vicepresidencia de la Fórmula
         </h2>
         <span className="text-[11px] font-mono text-slate-400">Compañero de binomio y Presidencia del Senado</span>
       </div>
 
-      <div className="p-4 rounded-sm bg-[#090d14] border border-[#263142] flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-4 rounded-sm bg-[#0b0508] border border-white/15 flex flex-col md:flex-row md:items-center justify-between gap-4">
         {viceObj ? (
           <div>
-            <div className="text-[10px] font-mono uppercase tracking-wider text-amber-400">
+            <div className="text-[10px] font-mono uppercase tracking-wider text-[#EB3F7D]">
               Vicepresidente proclamado:
             </div>
-            <div className="text-base font-serif font-bold text-amber-100 flex items-center gap-2 mt-0.5">
+            <div className="text-base font-serif font-bold text-[#F5EFE6] flex items-center gap-2 mt-0.5">
               <span>{viceObj.name}</span>
               <span className="text-xs font-mono text-sky-300">({viceObj.partySigla})</span>
             </div>
@@ -473,7 +473,7 @@ function CoalitionPartnerActionSlot({
 }) {
   if (isInCoalition) {
     return (
-      <div className="space-y-2 pt-2 border-t border-[#263142]">
+      <div className="space-y-2 pt-2 border-t border-white/15">
         <div className="text-center text-[11px] font-mono font-bold text-emerald-300 bg-emerald-950/60 border border-emerald-600/60 py-1.5 rounded-sm uppercase">
           ✓ SOCIO EN TU COALICIÓN
         </div>
@@ -490,11 +490,11 @@ function CoalitionPartnerActionSlot({
 
   if (isRejected) {
     return (
-      <div className="pt-2 border-t border-[#263142]">
+      <div className="pt-2 border-t border-white/15">
         <button
           type="button"
           disabled
-          className="w-full py-2 rounded-sm text-xs font-mono font-bold bg-[#090d14] border border-rose-900/50 text-rose-400/80 cursor-not-allowed uppercase tracking-wider"
+          className="w-full py-2 rounded-sm text-xs font-mono font-bold bg-[#0b0508] border border-rose-900/50 text-rose-400/80 cursor-not-allowed uppercase tracking-wider"
         >
           ✕ Rechazó la Alianza
         </button>
@@ -504,11 +504,11 @@ function CoalitionPartnerActionSlot({
 
   if (isMaxReached) {
     return (
-      <div className="pt-2 border-t border-[#263142]">
+      <div className="pt-2 border-t border-white/15">
         <button
           type="button"
           disabled
-          className="w-full py-2 rounded-sm text-xs font-mono font-bold bg-[#090d14] border border-[#263142] text-slate-500 cursor-not-allowed uppercase tracking-wider"
+          className="w-full py-2 rounded-sm text-xs font-mono font-bold bg-[#0b0508] border border-white/15 text-slate-500 cursor-not-allowed uppercase tracking-wider"
         >
           Cupo máximo (2 socios)
         </button>
@@ -517,7 +517,7 @@ function CoalitionPartnerActionSlot({
   }
 
   return (
-    <div className="pt-2 border-t border-[#263142]">
+    <div className="pt-2 border-t border-white/15">
       <button
         type="button"
         onClick={onPropose}
@@ -531,8 +531,8 @@ function CoalitionPartnerActionSlot({
 
 function CoalitionLeadersList({ leaders }: { leaders: CoalitionPartnerLeader[] }) {
   return (
-    <div className="p-2.5 rounded-sm bg-[#090d14] border border-[#1e293b] space-y-1.5 my-2.5">
-      <div className="text-[10px] font-mono font-bold text-amber-400 uppercase tracking-wider">
+    <div className="p-2.5 rounded-sm bg-[#0b0508] border border-white/10 space-y-1.5 my-2.5">
+      <div className="text-[10px] font-mono font-bold text-[#EB3F7D] uppercase tracking-wider">
         Principales referentes:
       </div>
       <div className="space-y-1">
@@ -569,18 +569,18 @@ function CoalitionCard({
   return (
     <div
       className={`hoi-panel rounded-sm p-4 flex flex-col justify-between space-y-3 transition ${
-        isInCoalition ? 'border-emerald-500/60 bg-[#0d1917]' : 'border-[#263142] hover:border-[#8a6d33]'
+        isInCoalition ? 'border-emerald-500/60 bg-[#0d1917]' : 'border-white/15 hover:border-[#EB3F7D]/55'
       }`}
     >
       <div>
-        <div className="flex justify-between items-center border-b border-[#1e293b] pb-2 mb-2 gap-2">
+        <div className="flex justify-between items-center border-b border-white/10 pb-2 mb-2 gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <OfficialPartyLogo partyIdOrSigla={partner.sigla} sizePx={28} fallbackColor={partner.color} />
-            <span className="font-serif font-bold text-amber-100 text-sm uppercase tracking-wide truncate">
+            <span className="font-serif font-bold text-[#F5EFE6] text-sm uppercase tracking-wide truncate">
               {partner.name}
             </span>
           </div>
-          <span className="px-2 py-0.5 rounded-sm bg-[#090d14] border border-[#263142] text-[10px] font-mono font-bold text-sky-300 shrink-0">
+          <span className="px-2 py-0.5 rounded-sm bg-[#0b0508] border border-white/15 text-[10px] font-mono font-bold text-sky-300 shrink-0">
             {affinityPct}% afinidad
           </span>
         </div>
@@ -724,14 +724,14 @@ export function CampaignCoalicionesView({ state, onUpdateState }: CampaignCoalic
     <div className="space-y-6">
       <header className="hoi-panel hoi-header-steel rounded-sm p-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-400">
+          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#EB3F7D]">
             POLÍTICO · INGENIERÍA DE FRENTES Y FÓRMULA
           </div>
-          <h1 className="text-2xl md:text-3xl font-serif font-bold text-amber-100 mt-0.5 uppercase tracking-wide">
+          <h1 className="text-2xl md:text-3xl font-serif font-bold text-[#F5EFE6] mt-0.5 uppercase tracking-wide">
             Candidatura y coaliciones
           </h1>
         </div>
-        <div className="px-3 py-1.5 rounded-sm bg-[#090d14] border border-[#8a6d33]/80 text-xs font-mono text-amber-200">
+        <div className="px-3 py-1.5 rounded-sm bg-[#0b0508] border border-[#EB3F7D]/55/80 text-xs font-mono text-[#EFE9DA]">
           Socios activos: <strong>{coalitionParties.length} / 2</strong>
         </div>
       </header>
@@ -768,11 +768,11 @@ export function CampaignCoalicionesView({ state, onUpdateState }: CampaignCoalic
 
       <section className="space-y-4">
         <div className="hoi-panel rounded-sm p-5 space-y-2.5">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#263142] pb-2.5">
-            <h2 className="text-sm font-serif font-bold uppercase tracking-wider text-amber-100">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 pb-2.5">
+            <h2 className="text-sm font-serif font-bold uppercase tracking-wider text-[#F5EFE6]">
               3 · Mesa de Coaliciones Interpartidarias
             </h2>
-            <span className="text-[10px] font-mono font-bold text-amber-300 bg-[#090d14] border border-[#8a6d33]/60 px-2.5 py-0.5 rounded-sm uppercase">
+            <span className="text-[10px] font-mono font-bold text-[#f472b6] bg-[#0b0508] border border-[#EB3F7D]/55/60 px-2.5 py-0.5 rounded-sm uppercase">
               Tope legal: 2 fuerzas aliadas
             </span>
           </div>

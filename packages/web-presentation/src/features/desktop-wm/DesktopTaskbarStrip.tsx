@@ -17,12 +17,12 @@ interface DesktopTaskbarStripProps<TSection extends string> {
 
 function resolveTaskPillStyle(isActive: boolean, minimized: boolean): string {
   if (isActive && !minimized) {
-    return 'bg-[#1a2940]/90 text-amber-200 border-amber-400/60 shadow-[0_0_12px_rgba(201,162,77,0.12)]';
+    return 'bg-[#EB3F7D]/20 text-[#F5EFE6] border-[#EB3F7D]';
   }
   if (minimized) {
-    return 'bg-[#080b11]/80 text-slate-400 border-white/10 italic hover:text-slate-200';
+    return 'bg-[#090407]/85 text-slate-400 border-white/10 italic hover:text-slate-200';
   }
-  return 'bg-[#0e1522]/85 text-slate-200 border-[#2b384d]/80 hover:border-slate-400';
+  return 'bg-[#120a0e]/90 text-slate-200 border-white/15 hover:border-[#EB3F7D]/60';
 }
 
 export function DesktopTaskbarStrip<TSection extends string>({
@@ -35,11 +35,11 @@ export function DesktopTaskbarStrip<TSection extends string>({
   onResetLayout
 }: DesktopTaskbarStripProps<TSection>) {
   return (
-    <div className="bg-[#070b11]/95 border-t border-[#202a3b] px-3 py-1 z-30 shrink-0">
+    <div className="bg-[#090407]/95 border-t border-white/10 px-3 py-1 z-30 shrink-0">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 overflow-x-auto min-w-0 py-0.5">
-          <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-slate-500 mr-1 shrink-0">
-            <AppWindow className="w-3 h-3 text-amber-400/80" />
+          <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-slate-400 mr-1 shrink-0">
+            <AppWindow className="w-3 h-3 text-[#EB3F7D]" />
             Escritorio
           </span>
 
@@ -82,7 +82,7 @@ export function DesktopTaskbarStrip<TSection extends string>({
             type="button"
             onClick={onResetLayout}
             title="Restaurar posición y tamaño inicial de ventanas"
-            className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#0c1119] hover:bg-[#172233] border border-[#263142] text-[10px] font-mono text-slate-300 transition"
+            className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#11080d] hover:bg-[#1d0f17] border border-white/15 text-[10px] font-mono text-slate-300 transition"
           >
             <RotateCcw className="w-3 h-3" />
             <span>Reordenar</span>
@@ -93,7 +93,7 @@ export function DesktopTaskbarStrip<TSection extends string>({
             onClick={onToggleDesktopView}
             className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-[#121d2d] hover:bg-[#1c2b42] border border-[#3a4f70] text-[10px] font-mono font-bold text-sky-200 transition"
           >
-            <MapIcon className="w-3 h-3 text-amber-300" />
+            <MapIcon className="w-3 h-3 text-[#f472b6]" />
             <span>{hasVisibleWindows ? 'Minimizar Todo' : 'Mostrar Ventanas'}</span>
           </button>
         </div>

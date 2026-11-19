@@ -15,8 +15,8 @@ interface DemographicColumnProps {
 
 function DemographicColumn({ title, items }: DemographicColumnProps) {
   return (
-    <div className="rounded-sm bg-[#090d14] border border-[#263142] p-4 space-y-3.5">
-      <div className="text-xs font-serif font-bold uppercase tracking-wider text-amber-100 border-b border-[#1e293b] pb-2">
+    <div className="rounded-sm bg-[#0b0508] border border-white/15 p-4 space-y-3.5">
+      <div className="text-xs font-serif font-bold uppercase tracking-wider text-[#F5EFE6] border-b border-white/10 pb-2">
         {title}
       </div>
       <div className="space-y-3">
@@ -30,9 +30,9 @@ function DemographicColumn({ title, items }: DemographicColumnProps) {
                 />
                 <span>{item.name}</span>
               </span>
-              <span className="font-mono font-bold text-amber-300">{item.approvalPct.toFixed(1)}%</span>
+              <span className="font-mono font-bold text-[#f472b6]">{item.approvalPct.toFixed(1)}%</span>
             </div>
-            <div className="w-full h-1.5 rounded-sm bg-[#141c28] border border-[#263142] overflow-hidden">
+            <div className="w-full h-1.5 rounded-sm bg-[#141c28] border border-white/15 overflow-hidden">
               <div
                 style={{ width: `${item.approvalPct}%`, backgroundColor: item.dotColor }}
                 className="h-full"
@@ -63,26 +63,26 @@ export function CampaignImageAndMapView({ state }: CampaignImageAndMapViewProps)
     <div className="space-y-6">
       <header className="hoi-panel hoi-header-steel rounded-sm p-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-400">
+          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#EB3F7D]">
             SITUACIÓN · TELEMETRÍA Y CARTOGRAFÍA ELECTORAL
           </div>
-          <h1 className="text-2xl md:text-3xl font-serif font-bold text-amber-100 mt-0.5 uppercase tracking-wide">
+          <h1 className="text-2xl md:text-3xl font-serif font-bold text-[#F5EFE6] mt-0.5 uppercase tracking-wide">
             Imagen y mapa
           </h1>
         </div>
         <div className="flex items-center gap-2 text-xs font-mono">
-          <span className="px-3 py-1.5 rounded-sm bg-[#090d14] border border-[#263142] text-slate-300">
+          <span className="px-3 py-1.5 rounded-sm bg-[#0b0508] border border-white/15 text-slate-300">
             positiva: <strong className="text-emerald-400">{state.image.imagenPositiva.toFixed(1)}%</strong>
           </span>
-          <span className="px-3 py-1.5 rounded-sm bg-[#090d14] border border-[#8a6d33]/70 text-amber-200">
+          <span className="px-3 py-1.5 rounded-sm bg-[#0b0508] border border-[#EB3F7D]/55/70 text-[#EFE9DA]">
             interna: <strong>{state.votingIntention.tuInterna.toFixed(1)}%</strong>
           </span>
         </div>
       </header>
 
       <section className="hoi-panel rounded-sm p-5 space-y-4">
-        <div className="flex items-center justify-between border-b border-[#263142] pb-2.5">
-          <h2 className="text-sm font-serif font-bold uppercase tracking-wider text-amber-100">
+        <div className="flex items-center justify-between border-b border-white/15 pb-2.5">
+          <h2 className="text-sm font-serif font-bold uppercase tracking-wider text-[#F5EFE6]">
             Imagen positiva según el segmento demográfico
           </h2>
           <span className="text-[11px] font-mono text-slate-400">
@@ -102,25 +102,25 @@ export function CampaignImageAndMapView({ state }: CampaignImageAndMapViewProps)
       </section>
 
       <section className="hoi-panel rounded-sm p-5 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#263142] pb-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/15 pb-3">
           <div>
-            <div className="text-[10px] font-mono uppercase tracking-widest text-amber-400">
+            <div className="text-[10px] font-mono uppercase tracking-widest text-[#EB3F7D]">
               DESPLIEGUE TERRITORIAL IGN
             </div>
-            <h2 className="text-base font-serif font-bold uppercase tracking-wider text-amber-100">
+            <h2 className="text-base font-serif font-bold uppercase tracking-wider text-[#F5EFE6]">
               Mapa de intención de voto en la interna
             </h2>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="inline-flex p-1 rounded-sm bg-[#090d14] border border-[#263142]">
+            <div className="inline-flex p-1 rounded-sm bg-[#0b0508] border border-white/15">
               <button
                 type="button"
                 onClick={() => setMapDivision('PROVINCIA')}
                 className={`px-3 py-1.5 rounded-sm text-xs font-mono font-bold uppercase tracking-wider transition ${
                   mapDivision === 'PROVINCIA'
-                    ? 'bg-[#b89342] text-[#090d14]'
-                    : 'text-slate-300 hover:bg-[#151e2c]'
+                    ? 'bg-[#EB3F7D] text-[#090407]'
+                    : 'text-slate-300 hover:bg-[#1c0e16]'
                 }`}
               >
                 Por provincia
@@ -130,8 +130,8 @@ export function CampaignImageAndMapView({ state }: CampaignImageAndMapViewProps)
                 onClick={() => setMapDivision('DEPARTAMENTO')}
                 className={`px-3 py-1.5 rounded-sm text-xs font-mono font-bold uppercase tracking-wider transition ${
                   mapDivision === 'DEPARTAMENTO'
-                    ? 'bg-[#b89342] text-[#090d14]'
-                    : 'text-slate-300 hover:bg-[#151e2c]'
+                    ? 'bg-[#EB3F7D] text-[#090407]'
+                    : 'text-slate-300 hover:bg-[#1c0e16]'
                 }`}
               >
                 Por departamento
@@ -149,13 +149,13 @@ export function CampaignImageAndMapView({ state }: CampaignImageAndMapViewProps)
           onSelectProvince={setSelectedProvinceId}
         />
 
-        <div className="p-3.5 rounded-sm bg-[#090d14] border border-[#263142] flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+        <div className="p-3.5 rounded-sm bg-[#0b0508] border border-white/15 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
           <div>
-            Distrito seleccionado: <strong className="text-amber-100">{selectedProv.provinceName}</strong> · Visitas acumuladas:{' '}
+            Distrito seleccionado: <strong className="text-[#F5EFE6]">{selectedProv.provinceName}</strong> · Visitas acumuladas:{' '}
             <strong className="text-sky-400">{selectedProv.visitsCount}</strong>
           </div>
           <div className="text-slate-400">
-            Afinidad ideológica: <strong className="text-amber-300">{selectedProv.ideologicalAffinity}</strong> · Multiplicador territorial:{' '}
+            Afinidad ideológica: <strong className="text-[#f472b6]">{selectedProv.ideologicalAffinity}</strong> · Multiplicador territorial:{' '}
             <strong className="text-emerald-400">×{selectedProv.affinityMultiplier}</strong>
           </div>
         </div>

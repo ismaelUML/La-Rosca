@@ -112,7 +112,7 @@ function SwatchRow({
               title={hex}
               style={{ backgroundColor: hex }}
               className={`w-5 h-5 rounded-sm border transition ${
-                isSelected ? 'border-amber-300 ring-2 ring-[#b89342] scale-110' : 'border-[#334155]'
+                isSelected ? 'border-[#f472b6] ring-2 ring-[#EB3F7D] scale-110' : 'border-white/20'
               }`}
             />
           );
@@ -136,7 +136,7 @@ function EmblemChoiceGrid<T extends string>({
   onSelect: (value: T) => void;
 }) {
   return (
-    <div className="p-2.5 rounded-sm bg-[#0b1018] border border-[#223044]">
+    <div className="p-2.5 rounded-sm bg-[#0e070b] border border-[#223044]">
       <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-2">{title}</div>
       <div className={`grid ${colsClass} gap-1.5`}>
         {options.map((item) => {
@@ -148,8 +148,8 @@ function EmblemChoiceGrid<T extends string>({
               onClick={() => onSelect(item.id)}
               className={`px-2 py-1.5 rounded-sm text-[11px] font-medium transition border ${
                 active
-                  ? 'bg-[#1d3250] text-amber-200 border-[#b89342] font-semibold'
-                  : 'bg-[#101724] text-slate-300 border-[#263142] hover:border-slate-500'
+                  ? 'bg-[#EB3F7D]/20 text-[#EFE9DA] border-[#EB3F7D] font-semibold'
+                  : 'bg-[#101724] text-slate-300 border-white/15 hover:border-slate-500'
               }`}
             >
               {item.label}
@@ -177,7 +177,7 @@ function EmblemQuickActions({
       <button
         type="button"
         onClick={onRandomize}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-[#162133] hover:bg-[#1e2c42] text-amber-200 text-xs font-semibold border border-[#32445d] transition"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-[#1b0e15] hover:bg-[#1e2c42] text-[#EFE9DA] text-xs font-semibold border border-white/20 transition"
       >
         <Dices className="w-3.5 h-3.5" />
         Aleatorio
@@ -185,7 +185,7 @@ function EmblemQuickActions({
       <button
         type="button"
         onClick={onOpenUpload}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-[#162133] hover:bg-[#1e2c42] text-slate-200 text-xs font-semibold border border-[#32445d] transition"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-[#1b0e15] hover:bg-[#1e2c42] text-slate-200 text-xs font-semibold border border-white/20 transition"
       >
         <Upload className="w-3.5 h-3.5" />
         Subir imagen como logo
@@ -243,16 +243,16 @@ export function PartyDesignerStudio({ emblem, sigla, onChange }: PartyDesignerSt
   };
 
   return (
-    <div className="rounded-sm bg-[#0a0f17] border border-[#263142] p-3">
+    <div className="rounded-sm bg-[#0a0f17] border border-white/15 p-3">
       <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-[#1f2938]">
-        <div className="inline-flex items-center gap-2 text-[11px] font-mono font-bold uppercase tracking-wider text-amber-300">
+        <div className="inline-flex items-center gap-2 text-[11px] font-mono font-bold uppercase tracking-wider text-[#f472b6]">
           <Shield className="w-3.5 h-3.5" />
           Escudo e Identidad Partidaria
         </div>
         <button
           type="button"
           onClick={() => setExpanded((prev) => !prev)}
-          className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-amber-200 px-2.5 py-1 rounded-sm bg-[#121926] border border-[#2a374b]"
+          className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-[#EFE9DA] px-2.5 py-1 rounded-sm bg-[#170c12] border border-[#2a374b]"
         >
           {expanded ? 'Contraer editor' : 'Personalizar escudo'}
           {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -260,7 +260,7 @@ export function PartyDesignerStudio({ emblem, sigla, onChange }: PartyDesignerSt
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 pt-3">
-        <div className="p-2 rounded-sm bg-[#070a10] border border-[#263142] shrink-0 self-start">
+        <div className="p-2 rounded-sm bg-[#090407] border border-white/15 shrink-0 self-start">
           <PartyEmblemSvg config={emblem} size={76} />
         </div>
         <div className="flex-1 space-y-2">
@@ -300,7 +300,7 @@ export function PartyDesignerStudio({ emblem, sigla, onChange }: PartyDesignerSt
             colsClass="grid-cols-3 sm:grid-cols-6"
             onSelect={(pattern) => onChange({ ...emblem, pattern })}
           />
-          <div className="p-2.5 rounded-sm bg-[#0b1018] border border-[#223044] grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-2.5 rounded-sm bg-[#0e070b] border border-[#223044] grid grid-cols-1 md:grid-cols-3 gap-4">
             <SwatchRow label="Color primario" selected={emblem.primaryColor} onSelect={(primaryColor) => onChange({ ...emblem, primaryColor })} />
             <SwatchRow label="Color secundario" selected={emblem.secondaryColor} onSelect={(secondaryColor) => onChange({ ...emblem, secondaryColor })} />
             <SwatchRow label="Tercer color" selected={emblem.thirdColor} onSelect={(thirdColor) => onChange({ ...emblem, thirdColor })} />
@@ -312,7 +312,7 @@ export function PartyDesignerStudio({ emblem, sigla, onChange }: PartyDesignerSt
             colsClass="grid-cols-4 sm:grid-cols-8"
             onSelect={(symbol) => onChange({ ...emblem, symbol })}
           />
-          <div className="p-2.5 rounded-sm bg-[#0b1018] border border-[#223044] grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-2.5 rounded-sm bg-[#0e070b] border border-[#223044] grid grid-cols-1 md:grid-cols-2 gap-4">
             <SwatchRow label="Color del símbolo" selected={emblem.symbolColor} onSelect={(symbolColor) => onChange({ ...emblem, symbolColor })} />
             <EmblemChoiceGrid
               title="Fondo / disco del símbolo"

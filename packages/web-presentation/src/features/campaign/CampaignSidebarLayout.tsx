@@ -1,38 +1,34 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
+  CampaignExecutePayload,
   CampaignSimulationState,
   GameSetupConfiguration,
   ProvinceCampaignInfo,
   ProvinceSummary
 } from '@argentina-sim/domain';
-import {
-  Compass,
-  FastForward,
-  FileText,
-  Flag,
-  Globe,
-  Landmark,
-  LogOut,
-  Map as MapIcon,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Play,
-  Plus,
-  RefreshCw,
-  Save,
-  Volume2,
-  VolumeX
-} from 'lucide-react';
-import { PartyEmblemSvg } from '../party-setup/PartyEmblemSvg.js';
-import { OfficialInstitutionLogo } from '../party-setup/OfficialLogoBadge.js';
-import { Argentina3DMapCanvas } from '../map-3d/Argentina3DMapCanvas.js';
-import { LiveNewsAndMarketTicker } from '../game-shell/LiveNewsAndMarketTicker.js';
-import { isSoundEnabled, playUiSound, setSoundEnabled } from '../../lib/gameFeedback.js';
+import { CAMPAIGN_ACTIONS_CATALOG } from '@argentina-sim/infrastructure';
+import { RefreshCw } from 'lucide-react';
+import { playUiSound } from '../../lib/gameFeedback.js';
+
+const Argentina3DMapCanvas = lazy(() =>
+  import('../map-3d/Argentina3DMapCanvas.js').then((m) => ({ default: m.Argentina3DMapCanvas }))
+);
+import { formatArNumber } from '../../lib/formatters.js';
 import { DesktopTaskbarStrip } from '../desktop-wm/DesktopTaskbarStrip.js';
 import { DesktopWindowsLayer } from '../desktop-wm/DesktopWindowsLayer.js';
 import { useDesktopWindowManager } from '../desktop-wm/useDesktopWindowManager.js';
+import {
+  RoscaNumberedNav,
+  RoscaTopBar,
+  type HudKpiMetric,
+  type NumberedNavGroup
+} from '../desktop-wm/RoscaMockupHud.js';
+import { BottomActionCardHand } from '../desktop-wm/BottomActionCardHand.js';
+import { buildCampaignHandCards } from '../desktop-wm/buildBottomHandCards.js';
+import { useGameHotkeys } from '../desktop-wm/useGameHotkeys.js';
 
-// Shell de campana electoral 2027 sobre el mismo mapa 3D interactivo de Argentina.
+// Shell de campaña electoral 2027 en estética La Rosca (Obsidiana + Rosado Casa Rosada + Papel Crema)
+// con dock numerado 01..05, mapa 3D protagonista, mano de 3 cartas y gestor multi-ventana.
 
 export type CampaignNavSection =
   | 'RESUMEN'
@@ -63,55 +59,50 @@ interface CampaignSidebarLayoutProps {
   onRetrySave?: () => void;
   onCloseSaveBanner: () => void;
   onExitToMenu: () => void;
+  onExecuteAction?: (payload: CampaignExecutePayload) => void;
   renderSection: (section: CampaignNavSection) => React.ReactNode;
   children?: React.ReactNode;
 }
 
-const GROUP_ICONS: Record<string, React.ReactNode> = {
-  SITUACIÓN: <Compass className="w-3.5 h-3.5" />,
-  ESTRATEGIA: <Flag className="w-3.5 h-3.5" />,
-  POLÍTICO: <Landmark className="w-3.5 h-3.5" />,
-  PAÍS: <Globe className="w-3.5 h-3.5" />,
-  DIARIO: <FileText className="w-3.5 h-3.5" />
-};
-
-const CAMPAIGN_NAV_GROUPS = [
+const CAMPAIGN_NAV_GROUPS: NumberedNavGroup<CampaignNavSection>[] = [
   {
     title: 'SITUACIÓN',
+    subtitle: 'Tablero, imagen y telemetría',
     items: [
-      { id: 'RESUMEN' as const, label: 'Resumen' },
-      { id: 'IMAGEN_Y_MAPA' as const, label: 'Imagen y mapa' }
+      { id: 'RESUMEN', label: 'Resumen' },
+      { id: 'IMAGEN_Y_MAPA', label: 'Imagen y mapa' }
     ]
   },
   {
     title: 'ESTRATEGIA',
+    subtitle: 'Operaciones, actos y apoyos',
     items: [
-      { id: 'ACCIONES_CAMPAÑA' as const, label: 'Acciones' },
-      { id: 'APOYOS' as const, label: 'Apoyos' }
+      { id: 'ACCIONES_CAMPAÑA', label: 'Acciones de campaña' },
+      { id: 'APOYOS', label: 'Apoyos y dirigentes' }
     ]
   },
   {
     title: 'POLÍTICO',
+    subtitle: 'Alianzas, fórmula y provincias',
     items: [
-      { id: 'CANDIDATURA_COALICIONES' as const, label: 'Candidatura y coaliciones' },
-      { id: 'PARTIDO_PROVINCIAS' as const, label: 'Partido en las provincias' },
-      { id: 'APOYO_PROVINCIAS' as const, label: 'Apoyo en Provincias' },
-      { id: 'GOBERNANTES' as const, label: 'Gobernantes' }
+      { id: 'CANDIDATURA_COALICIONES', label: 'Candidatura y coaliciones' },
+      { id: 'PARTIDO_PROVINCIAS', label: 'Partido en las provincias' },
+      { id: 'APOYO_PROVINCIAS', label: 'Apoyo en Provincias' },
+      { id: 'GOBERNANTES', label: 'Gobernantes' }
     ]
   },
   {
     title: 'PAÍS',
+    subtitle: 'Demografía y matriz productiva',
     items: [
-      { id: 'POBLACION' as const, label: 'Población y Demografía' },
-      { id: 'INMIGRACION' as const, label: 'Inmigración' },
-      { id: 'EMIGRACION' as const, label: 'Emigración' },
-      { id: 'TEJIDO_SOCIAL' as const, label: 'Salud y Educación' },
-      { id: 'MATRIZ_PRODUCTIVA' as const, label: 'Matriz Productiva' }
+      { id: 'POBLACION', label: 'Sociedad y Demografía' },
+      { id: 'MATRIZ_PRODUCTIVA', label: 'Matriz Productiva' }
     ]
   },
   {
     title: 'DIARIO',
-    items: [{ id: 'REGISTRO_DIARIO' as const, label: 'Registro' }]
+    subtitle: 'Zócalo TV, mercados y registro',
+    items: [{ id: 'REGISTRO_DIARIO', label: 'Diario y Registro' }]
   }
 ];
 
@@ -121,11 +112,15 @@ const AFFINITY_TO_LOYALTY: Record<ProvinceCampaignInfo['ideologicalAffinity'], n
   HOSTIL: 25
 };
 
+function resolveCampaignRegion(provinceId: string): ProvinceSummary['region'] {
+  return provinceId === 'CABA' ? 'AMBA' : 'PAMPEANA';
+}
+
 function mapCampaignProvincesTo3D(provinces: ProvinceCampaignInfo[]): ProvinceSummary[] {
   return provinces.map((p) => ({
     id: p.provinceId,
     name: p.provinceName,
-    region: 'PAMPEANA',
+    region: resolveCampaignRegion(p.provinceId),
     nationalDeputiesCount: Math.max(3, Math.round(p.playerVotePct)),
     reelectionAllowed: true,
     coparticipationDependencyPct: Math.min(100, p.visitsCount * 12),
@@ -147,253 +142,29 @@ function resolveCampaignSectionTitle(sec: CampaignNavSection): string {
 }
 
 function findActiveCampaignGroup(activeSection: CampaignNavSection) {
-  const found = CAMPAIGN_NAV_GROUPS.find((g) => g.items.some((i) => i.id === activeSection));
-  return found ?? CAMPAIGN_NAV_GROUPS[0]!;
-}
-
-function CampaignSoundButton() {
-  const [enabled, setEnabled] = useState(() => isSoundEnabled());
-  const toggle = () => {
-    const next = !enabled;
-    setSoundEnabled(next);
-    setEnabled(next);
-    if (next) playUiSound('tab');
-  };
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      title={enabled ? 'Silenciar efectos sutiles' : 'Activar efectos sutiles'}
-      className="inline-flex items-center justify-center p-1.5 rounded-sm bg-[#0b1018] hover:bg-[#172233] border border-[#334155] text-slate-300"
-    >
-      {enabled ? <Volume2 className="w-3.5 h-3.5 text-amber-300" /> : <VolumeX className="w-3.5 h-3.5 text-slate-500" />}
-    </button>
+    CAMPAIGN_NAV_GROUPS.find((g) => g.items.some((i) => i.id === activeSection)) ??
+    CAMPAIGN_NAV_GROUPS[0]!
   );
 }
 
-function CampaignTopBar({
-  setup,
-  state,
-  onAdvanceMonth,
-  onSkipToGovernment,
-  onExportSaveCode,
-  onExitToMenu
-}: Omit<
-  CampaignSidebarLayoutProps,
-  'activeSection' | 'portableSaveBanner' | 'saveError' | 'onSelectSection' | 'onRetrySave' | 'onCloseSaveBanner' | 'renderSection' | 'children'
->) {
-  return (
-    <header className="hoi-header-steel px-4 py-2 z-30 shrink-0">
-      <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2.5">
-        <div className="flex items-center gap-2.5">
-          <OfficialInstitutionLogo institution="ESCUDO_NACIONAL" heightPx={24} />
-          <div className="p-1 rounded-sm bg-[#090d14] border border-[#c9a24d]/70">
-            <PartyEmblemSvg config={setup.party.emblem} size={24} />
-          </div>
-          <div className="leading-tight">
-            <div className="text-xs font-serif font-black uppercase tracking-wider text-amber-100">
-              LA ROSCA · {setup.party.sigla} · {state.candidateName}
-            </div>
-            <div className="text-[10px] font-mono text-slate-300">
-              {state.stage.formattedDate} · {state.stage.stageLabel}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          <div
-            key={state.stage.formattedDate}
-            className="px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#283447] text-xs font-mono rosca-turn-flash"
-          >
-            <span className="text-slate-400 mr-1">CAJA:</span>
-            <strong className="text-amber-300">${state.budgetArgentums.toFixed(1)}M</strong>
-          </div>
-          <button
-            type="button"
-            onClick={onSkipToGovernment}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-sm bg-[#162133] hover:bg-[#1f2e47] border border-[#7d6230]/80 text-[11px] font-mono font-bold text-amber-200"
-          >
-            <FastForward className="w-3.5 h-3.5" />
-            <span>Ir a Dic 2027</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              playUiSound('turn');
-              onAdvanceMonth();
-            }}
-            className="hoi-btn-gold inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-sm font-extrabold text-xs uppercase tracking-wider transition active:scale-[0.97]"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            <span>Avanzar Mes</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              playUiSound('tab');
-              onExportSaveCode();
-            }}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-sm bg-[#0b1018] hover:bg-[#172233] border border-[#334155] text-xs font-semibold text-slate-200"
-          >
-            <Save className="w-3.5 h-3.5" />
-            <span>Guardar</span>
-          </button>
-          <CampaignSoundButton />
-          <button
-            type="button"
-            onClick={onExitToMenu}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-sm bg-[#2b1015] hover:bg-[#41171f] border border-rose-800/60 text-xs font-semibold text-rose-200"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Salir</span>
-          </button>
-        </div>
-      </div>
-    </header>
-  );
+function buildCampaignKpis(state: CampaignSimulationState): [HudKpiMetric, HudKpiMetric, HudKpiMetric] {
+  return [
+    { label: 'IMAGEN', value: `${formatArNumber(state.image.imagenPositiva, 1)} %` },
+    { label: 'INTENCIÓN DE VOTO', value: `${formatArNumber(state.votingIntention.intencionVotoGeneral, 1)} %` },
+    { label: 'CAJA', value: `US$ ${formatArNumber(state.budgetArgentums, 0)} M` }
+  ];
 }
 
-function CampaignDockNav({
-  activeSection,
-  objectiveTitle,
-  panelVisible,
-  onSelectSection,
-  onTogglePanel
-}: {
-  activeSection: CampaignNavSection;
-  objectiveTitle: string;
-  panelVisible: boolean;
-  onSelectSection: (sec: CampaignNavSection, openParallel?: boolean) => void;
-  onTogglePanel: () => void;
-}) {
-  const activeGroup = findActiveCampaignGroup(activeSection);
-  const [browsedGroupTitle, setBrowsedGroupTitle] = useState(activeGroup.title);
-
-  useEffect(() => {
-    setBrowsedGroupTitle(findActiveCampaignGroup(activeSection).title);
-  }, [activeSection]);
-
-  const visibleGroup =
-    CAMPAIGN_NAV_GROUPS.find((g) => g.title === browsedGroupTitle) ?? activeGroup;
-
+function PlaysLeftCounterBox({ count }: { count: number }) {
   return (
-    <nav className="bg-[#0b1018]/95 backdrop-blur-md border-b border-[#283447] z-20 shrink-0">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-b border-[#1d2738]">
-          <div className="flex flex-wrap gap-1">
-            {CAMPAIGN_NAV_GROUPS.map((group) => {
-              const isGroupActive = group.title === visibleGroup.title;
-              const cls = isGroupActive
-                ? 'bg-[#17253b] text-amber-100 border-t-2 border-x border-[#c9a24d] border-x-[#2e415e]'
-                : 'bg-[#0e141f] text-slate-400 hover:text-slate-200 border border-[#1f293b]';
-              return (
-                <button
-                  key={group.title}
-                  type="button"
-                  onClick={() => {
-                    playUiSound('tab');
-                    setBrowsedGroupTitle(group.title);
-                  }}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-t-sm text-[11px] font-mono font-bold uppercase tracking-wider transition ${cls}`}
-                >
-                  {GROUP_ICONS[group.title]}
-                  <span>{group.title}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex items-center gap-2 pb-1">
-            <div className="hidden lg:block text-[11px] font-mono text-amber-300">
-              OBJETIVO: <span className="text-slate-100">{objectiveTitle}</span>
-            </div>
-            <button
-              type="button"
-              onClick={onTogglePanel}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-[#101826] hover:bg-[#1a273d] border border-[#324663] text-[11px] font-mono font-bold text-sky-200"
-            >
-              {panelVisible ? (
-                <PanelLeftClose className="w-3.5 h-3.5" />
-              ) : (
-                <PanelLeftOpen className="w-3.5 h-3.5" />
-              )}
-              <MapIcon className="w-3.5 h-3.5 text-amber-300" />
-              <span>{panelVisible ? 'Ver Mapa 3D' : 'Mostrar Ventanas'}</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-1.5 py-2">
-          {visibleGroup.items.map((item) => {
-            const isSelected = activeSection === item.id;
-            const itemCls = isSelected
-              ? 'bg-[#1d3250] text-amber-200 border-[#c9a24d]'
-              : 'bg-[#101622] text-slate-300 hover:bg-[#162032] border-[#283447]';
-            return (
-              <div key={item.id} className={`inline-flex items-center rounded-sm border transition ${itemCls}`}>
-                <button
-                  type="button"
-                  onClick={(ev) => onSelectSection(item.id, ev.shiftKey)}
-                  className="px-2.5 py-1 text-xs font-semibold"
-                >
-                  {item.label}
-                </button>
-                <button
-                  type="button"
-                  title={`Abrir "${item.label}" en ventana paralela`}
-                  onClick={() => onSelectSection(item.id, true)}
-                  className="pr-1.5 pl-0.5 py-1 text-slate-400 hover:text-amber-300"
-                >
-                  <Plus className="w-3 h-3" />
-                </button>
-              </div>
-            );
-          })}
-        </div>
+    <div className="pointer-events-auto inline-flex items-center gap-3 px-3 py-2 bg-[#0d060a]/92 border border-[#EFE9DA]/65">
+      <span className="font-display text-3xl leading-none text-[#EB3F7D]">{count}</span>
+      <div className="text-[10px] font-mono font-bold uppercase tracking-wider leading-tight text-[#F5EFE6]">
+        <div>JUGADAS</div>
+        <div>ESTE MES</div>
       </div>
-    </nav>
-  );
-}
-
-function CampaignProvinceCard({
-  province,
-  onClose
-}: {
-  province: ProvinceCampaignInfo;
-  onClose: () => void;
-}) {
-  return (
-    <aside className="fixed bottom-4 left-4 w-72 rounded-sm bg-[#0c1119]/95 border border-[#c9a24d]/70 p-3.5 shadow-2xl z-30">
-      <div className="flex items-start justify-between gap-2 pb-2 mb-2 border-b border-[#253042]">
-        <div>
-          <div className="text-[10px] font-mono uppercase tracking-wider text-amber-300">
-            Distrito Electoral 2027
-          </div>
-          <h4 className="text-sm font-serif font-bold text-slate-100">{province.provinceName}</h4>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="text-xs font-mono text-slate-400 hover:text-white"
-        >
-          Cerrar
-        </button>
-      </div>
-      <div className="grid grid-cols-2 gap-1.5 text-[11px] font-mono">
-        <div className="p-1.5 rounded-sm bg-[#090d14] border border-[#222c3c]">
-          <span className="text-slate-400 block text-[9px]">TU VOTO</span>
-          <strong className="text-emerald-300">{province.playerVotePct.toFixed(1)}%</strong>
-        </div>
-        <div className="p-1.5 rounded-sm bg-[#090d14] border border-[#222c3c]">
-          <span className="text-slate-400 block text-[9px]">AFINIDAD</span>
-          <strong className="text-amber-300">{province.ideologicalAffinity}</strong>
-        </div>
-        <div className="col-span-2 p-1.5 rounded-sm bg-[#090d14] border border-[#222c3c]">
-          <span className="text-slate-400 block text-[9px]">PUNTERO PROVINCIAL</span>
-          <strong className="text-slate-200">{province.leadingCandidateName}</strong>
-        </div>
-      </div>
-    </aside>
+    </div>
   );
 }
 
@@ -411,13 +182,13 @@ function PortableSaveBanner({
   return (
     <>
       {saveError ? (
-        <div className="mb-4 p-3 rounded-sm bg-rose-950/70 border border-rose-700/70 flex items-center justify-between gap-3 rosca-toast-pop">
+        <div className="mb-3 p-3 rounded bg-rose-950/80 border border-rose-700/70 flex items-center justify-between gap-3 rosca-toast-pop">
           <div className="text-xs text-rose-200">{saveError}</div>
           {onRetrySave ? (
             <button
               type="button"
               onClick={onRetrySave}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm bg-rose-800 hover:bg-rose-700 text-xs font-bold text-white shrink-0"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-rose-800 hover:bg-rose-700 text-xs font-bold text-white shrink-0"
             >
               <RefreshCw className="w-3 h-3" />
               <span>Reintentar</span>
@@ -425,15 +196,16 @@ function PortableSaveBanner({
           ) : null}
         </div>
       ) : null}
+
       {code ? (
-        <div className="mb-4 p-3 rounded-sm bg-[#0f291e] border border-emerald-700/70 flex items-center justify-between gap-4 rosca-toast-pop">
-          <div className="text-xs text-emerald-200 truncate font-mono">
-            Código portable listo para copiar: <code className="text-emerald-300">{code}</code>
+        <div className="mb-3 p-3 rounded bg-[#140c11] border border-[#EB3F7D]/60 flex items-center justify-between gap-4 rosca-toast-pop">
+          <div className="text-xs text-[#EFE9DA] truncate font-mono">
+            Código portable listo: <code className="text-[#EB3F7D]">{code}</code>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-xs font-bold uppercase text-emerald-300 hover:text-white shrink-0"
+            className="text-xs font-bold uppercase text-[#EB3F7D] hover:text-white shrink-0"
           >
             Cerrar
           </button>
@@ -444,7 +216,6 @@ function PortableSaveBanner({
 }
 
 export function CampaignSidebarLayout({
-  setup,
   state,
   activeSection,
   portableSaveBanner,
@@ -456,13 +227,21 @@ export function CampaignSidebarLayout({
   onRetrySave,
   onCloseSaveBanner,
   onExitToMenu,
+  onExecuteAction,
   renderSection,
   children
 }: CampaignSidebarLayoutProps) {
-  const [selectedProvId, setSelectedProvId] = useState<string | null>(null);
+  const [selectedProvId, setSelectedProvId] = useState<string | null>('CABA');
   const titleResolver = useCallback((sec: CampaignNavSection) => resolveCampaignSectionTitle(sec), []);
   const wm = useDesktopWindowManager('campaign', activeSection, titleResolver, onSelectSection);
   const prevSectionRef = useRef(activeSection);
+
+  const [browsedGroupTitle, setBrowsedGroupTitle] = useState(() => findActiveCampaignGroup(activeSection).title);
+  const [subDrawerOpen, setSubDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    setBrowsedGroupTitle(findActiveCampaignGroup(activeSection).title);
+  }, [activeSection]);
 
   useEffect(() => {
     if (prevSectionRef.current !== activeSection) {
@@ -471,52 +250,85 @@ export function CampaignSidebarLayout({
     }
   }, [activeSection, wm.openSectionWindow]);
 
-  const mapProvinces = useMemo(
-    () => mapCampaignProvincesTo3D(state.provinces),
-    [state.provinces]
-  );
-
-  const selectedProvince = selectedProvId
-    ? state.provinces.find((p) => p.provinceId === selectedProvId) ?? null
-    : null;
+  const mapProvinces = useMemo(() => mapCampaignProvincesTo3D(state.provinces), [state.provinces]);
 
   const selectSectionWithFx = (sec: CampaignNavSection, openParallel = false) => {
     playUiSound('tab');
     prevSectionRef.current = sec;
+    setSubDrawerOpen(false);
     wm.openSectionWindow(sec, openParallel);
   };
 
-  return (
-    <div className="h-screen overflow-hidden bg-[#070a10] text-slate-100 flex flex-col">
-      <CampaignTopBar
-        setup={setup}
-        state={state}
-        onAdvanceMonth={onAdvanceMonth}
-        onSkipToGovernment={onSkipToGovernment}
-        onExportSaveCode={onExportSaveCode}
-        onExitToMenu={onExitToMenu}
-      />
+  useGameHotkeys({
+    disabled: false,
+    groupCount: CAMPAIGN_NAV_GROUPS.length,
+    onToggleDesktop: wm.toggleShowDesktop,
+    onCloseTopWindow: () => {
+      if (subDrawerOpen) setSubDrawerOpen(false);
+      else if (wm.focusedWindowId) wm.closeWindow(wm.focusedWindowId);
+    },
+    onOpenGroupIndex: (idx) => {
+      const grp = CAMPAIGN_NAV_GROUPS[idx];
+      if (!grp) return;
+      setBrowsedGroupTitle(grp.title);
+      setSubDrawerOpen(true);
+    },
+    onAdvanceTurn: onAdvanceMonth
+  });
 
-      <CampaignDockNav
-        activeSection={activeSection}
-        objectiveTitle={state.stage.objectiveTitle}
-        panelVisible={wm.hasVisibleWindows}
-        onSelectSection={selectSectionWithFx}
-        onTogglePanel={() => {
-          playUiSound('tab');
-          wm.toggleShowDesktop();
-        }}
+  const handCards = useMemo(() => {
+    if (!onExecuteAction) return [];
+    return buildCampaignHandCards(state, selectedProvId ?? state.targetProvinceId, onExecuteAction);
+  }, [state, selectedProvId, onExecuteAction]);
+
+  return (
+    <div className="h-screen overflow-hidden bg-[#090407] text-[#F5EFE6] flex flex-col">
+      <RoscaTopBar
+        dateAndModeLabel={`${state.stage.formattedDate} · ${state.stage.stageLabel}`}
+        kpis={buildCampaignKpis(state)}
+        objectiveText={state.stage.objectiveTitle}
+        advanceLabel="AVANZAR MES →"
+        hasVisibleWindows={wm.hasVisibleWindows}
+        onAdvanceTurn={onAdvanceMonth}
+        onExportSaveCode={onExportSaveCode}
+        onToggleDesktop={wm.toggleShowDesktop}
+        onResetLayout={wm.resetDesktopLayout}
+        onExitToMenu={onExitToMenu}
+        onSkipToGovernment={onSkipToGovernment}
       />
 
       <div ref={wm.workspaceRef} className="relative flex-1 overflow-hidden">
         <div className={wm.isDraggingWindow ? 'absolute inset-0 z-0 pointer-events-none' : 'absolute inset-0 z-0'}>
-          <Argentina3DMapCanvas
-            provinces={mapProvinces}
-            selectedProvinceId={selectedProvId}
-            panelOpen={wm.hasVisibleWindows}
-            onSelectProvince={(id) => setSelectedProvId(id || null)}
-          />
+          <Suspense fallback={<div className="w-full h-full bg-[#090407]" />}>
+            <Argentina3DMapCanvas
+              provinces={mapProvinces}
+              selectedProvinceId={selectedProvId}
+              panelOpen={wm.hasVisibleWindows}
+              bottomLeftSlot={<PlaysLeftCounterBox count={state.actionsRemainingThisMonth} />}
+              onSelectProvince={(id) => setSelectedProvId(id || null)}
+            />
+          </Suspense>
         </div>
+
+        <RoscaNumberedNav
+          groups={CAMPAIGN_NAV_GROUPS}
+          browsedGroupTitle={browsedGroupTitle}
+          activeSection={activeSection}
+          subDrawerOpen={subDrawerOpen}
+          onSelectGroup={(title) => {
+            setBrowsedGroupTitle(title);
+            setSubDrawerOpen(true);
+          }}
+          onSelectSection={selectSectionWithFx}
+          onCloseSubDrawer={() => setSubDrawerOpen(false)}
+        />
+
+        <BottomActionCardHand
+          cards={handCards}
+          totalCatalogCount={CAMPAIGN_ACTIONS_CATALOG.length}
+          catalogNoun="cartas"
+          onViewAll={() => selectSectionWithFx('ACCIONES_CAMPAÑA', false)}
+        />
 
         <DesktopWindowsLayer
           visibleWindows={wm.visibleWindows}
@@ -541,13 +353,6 @@ export function CampaignSidebarLayout({
           renderSection={renderSection}
         />
 
-        {selectedProvince ? (
-          <CampaignProvinceCard
-            province={selectedProvince}
-            onClose={() => setSelectedProvId(null)}
-          />
-        ) : null}
-
         {children}
       </div>
 
@@ -560,8 +365,6 @@ export function CampaignSidebarLayout({
         onToggleDesktopView={wm.toggleShowDesktop}
         onResetLayout={wm.resetDesktopLayout}
       />
-
-      <LiveNewsAndMarketTicker campaignState={state} />
     </div>
   );
 }

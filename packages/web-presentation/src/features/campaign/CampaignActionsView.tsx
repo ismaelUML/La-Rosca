@@ -62,7 +62,7 @@ function ActionMediaStrip({ actionId }: { actionId: string }) {
   const outlets = ACTION_MEDIA_STRIPS[actionId];
   if (!outlets) return null;
   return (
-    <div className="flex flex-wrap items-center gap-1.5 mt-2.5 bg-[#090d14]/80 border border-[#1e293b] px-2 py-1.5 rounded-sm">
+    <div className="flex flex-wrap items-center gap-1.5 mt-2.5 bg-[#0b0508]/80 border border-white/10 px-2 py-1.5 rounded-sm">
       <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400 mr-0.5">
         Pauta / Medios:
       </span>
@@ -145,7 +145,7 @@ function ActionPillsList({ effects, multiplier }: ActionPillsListProps) {
             key={eff.label}
             className={`px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold ${
               eff.isWarning
-                ? 'bg-amber-950/60 text-amber-300 border border-amber-700/60'
+                ? 'bg-amber-950/60 text-[#f472b6] border border-amber-700/60'
                 : 'bg-emerald-950/60 text-emerald-300 border border-emerald-700/60'
             }`}
           >
@@ -173,15 +173,15 @@ function ActionProvinceSelector({
 
   if (isGovernor && state.localZones) {
     return (
-      <div className="space-y-1.5 my-2 pt-2.5 border-t border-[#263142]">
-        <label htmlFor={controlId} className="block text-[10px] font-mono uppercase tracking-wider text-amber-300">
+      <div className="space-y-1.5 my-2 pt-2.5 border-t border-white/15">
+        <label htmlFor={controlId} className="block text-[10px] font-mono uppercase tracking-wider text-[#f472b6]">
           Sección / Zona de Recorrida
         </label>
         <select
           id={controlId}
           value={selectedProvinceId}
           onChange={(e) => onProvinceChange(e.target.value)}
-          className="w-full bg-[#090d14] border border-[#263142] rounded-sm px-3 py-1.5 text-xs font-mono text-amber-100"
+          className="w-full bg-[#0b0508] border border-white/15 rounded-sm px-3 py-1.5 text-xs font-mono text-[#F5EFE6]"
         >
           {state.localZones.map((z) => (
             <option key={z.id} value={z.id}>
@@ -200,15 +200,15 @@ function ActionProvinceSelector({
     state.provinces.find((p) => p.provinceId === selectedProvinceId) ?? state.provinces[0]!;
 
   return (
-    <div className="space-y-1.5 my-2 pt-2.5 border-t border-[#263142]">
-      <label htmlFor={controlId} className="block text-[10px] font-mono uppercase tracking-wider text-amber-300">
+    <div className="space-y-1.5 my-2 pt-2.5 border-t border-white/15">
+      <label htmlFor={controlId} className="block text-[10px] font-mono uppercase tracking-wider text-[#f472b6]">
         Jurisdicción Destino
       </label>
       <select
         id={controlId}
         value={selectedProvinceId}
         onChange={(e) => onProvinceChange(e.target.value)}
-        className="w-full bg-[#090d14] border border-[#263142] rounded-sm px-3 py-1.5 text-xs font-mono text-amber-100"
+        className="w-full bg-[#0b0508] border border-white/15 rounded-sm px-3 py-1.5 text-xs font-mono text-[#F5EFE6]"
       >
         {state.provinces.map((p) => (
           <option key={p.provinceId} value={p.provinceId}>
@@ -216,8 +216,8 @@ function ActionProvinceSelector({
           </option>
         ))}
       </select>
-      <div className="text-[11px] font-mono text-sky-200 bg-[#090d14] border border-[#263142] p-2 rounded-sm mt-1.5 leading-relaxed">
-        Afinidad: <strong className="text-amber-300">{selectedProv.ideologicalAffinity}</strong> · Multiplicador: <strong className="text-emerald-400">×{selectedProv.affinityMultiplier.toFixed(2).replace('.', ',')}</strong>
+      <div className="text-[11px] font-mono text-sky-200 bg-[#0b0508] border border-white/15 p-2 rounded-sm mt-1.5 leading-relaxed">
+        Afinidad: <strong className="text-[#f472b6]">{selectedProv.ideologicalAffinity}</strong> · Multiplicador: <strong className="text-emerald-400">×{selectedProv.affinityMultiplier.toFixed(2).replace('.', ',')}</strong>
       </div>
     </div>
   );
@@ -251,11 +251,11 @@ function ActionCardFooter({
 }) {
   const btnCls = allowed
     ? 'hoi-btn-gold shadow'
-    : 'bg-[#090d14] text-slate-500 border border-[#1e293b] cursor-not-allowed';
-  const label = allowed ? `Ejecutar Operación (-$${cost.toFixed(1)}M)` : reason;
+    : 'bg-[#0b0508] text-slate-500 border border-white/10 cursor-not-allowed';
+  const label = allowed ? `Ejecutar Operación (-US$ ${cost.toFixed(1).replace('.', ',')} M)` : reason;
 
   return (
-    <div className="pt-3 border-t border-[#263142] mt-2">
+    <div className="pt-3 border-t border-white/15 mt-2">
       <button
         type="button"
         disabled={!allowed}
@@ -280,9 +280,9 @@ function ActionCardHeader({
   cost: number;
 }) {
   return (
-    <div className="flex items-start justify-between gap-2 border-b border-[#1e293b] pb-2.5">
+    <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2.5">
       <div>
-        <div className="text-sm font-serif font-bold uppercase tracking-wide text-amber-100">
+        <div className="text-sm font-serif font-bold uppercase tracking-wide text-[#F5EFE6]">
           {title}
         </div>
         {usageCount > 0 ? (
@@ -291,8 +291,8 @@ function ActionCardHeader({
           </div>
         ) : null}
       </div>
-      <span className="px-2 py-0.5 rounded-sm bg-amber-950/30 border border-[#8a6d33]/80 text-xs font-mono font-bold text-amber-300 shrink-0">
-        -${cost.toFixed(1)}M
+      <span className="px-2 py-0.5 rounded-sm bg-[#1f0d16] border border-[#EB3F7D]/60 text-xs font-mono font-bold text-[#EB3F7D] shrink-0">
+        -US$ {cost.toFixed(1).replace('.', ',')} M
       </span>
     </div>
   );
@@ -308,7 +308,7 @@ function ActionCardItem({
   const check = canExecuteCampaignAction(state, action);
   const mult = resolveActionDisplayMultiplier(action.id, state, selectedProvinceId);
   const usageCount = state.actionUsageCount?.[action.id] ?? 0;
-  const borderCls = check.allowed ? 'border-[#263142] hover:border-[#8a6d33]' : 'border-[#1d2533] opacity-80';
+  const borderCls = check.allowed ? 'border-white/15 hover:border-[#EB3F7D]/55' : 'border-[#1d2533] opacity-80';
 
   const handleActionClick = () => {
     onExecute(buildActionPayload(action.id, selectedProvinceId));
@@ -323,7 +323,7 @@ function ActionCardItem({
         <ActionPillsList effects={action.effects} multiplier={mult} />
 
         {action.requirementText ? (
-          <div className="text-[11px] font-mono text-slate-400 bg-[#090d14] border border-[#1e293b] px-2.5 py-1.5 rounded-sm mb-2">
+          <div className="text-[11px] font-mono text-slate-400 bg-[#0b0508] border border-white/10 px-2.5 py-1.5 rounded-sm mb-2">
             {action.requirementText}
           </div>
         ) : null}
@@ -385,8 +385,8 @@ function ActionCategoryFilterBar({
         {ACTION_CATEGORY_TABS.map((tab) => {
           const active = categoryFilter === tab.id;
           const cls = active
-            ? 'bg-[#b89342] text-[#090d14] border-[#d4b26a]'
-            : 'bg-[#090d14] text-slate-300 border-[#263142] hover:border-slate-500';
+            ? 'bg-[#EB3F7D] text-[#090407] border-[#EB3F7D]'
+            : 'bg-[#0b0508] text-slate-300 border-white/15 hover:border-slate-500';
           return (
             <button
               key={tab.id}
@@ -406,9 +406,9 @@ function ActionCategoryFilterBar({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Buscar operación..."
-          className="bg-[#090d14] border border-[#263142] focus:border-[#b89342] rounded-sm px-3 py-1 text-xs font-mono text-slate-200 focus:outline-none w-48"
+          className="bg-[#0b0508] border border-white/15 focus:border-[#EB3F7D] rounded-sm px-3 py-1 text-xs font-mono text-slate-200 focus:outline-none w-48"
         />
-        <span className="text-[11px] font-mono text-amber-300 shrink-0">
+        <span className="text-[11px] font-mono text-[#f472b6] shrink-0">
           {totalFiltered}/{CAMPAIGN_ACTIONS_CATALOG.length}
         </span>
       </div>
@@ -434,20 +434,20 @@ export function CampaignActionsView({
     <div className="space-y-4">
       <header className="hoi-panel hoi-header-steel rounded-sm p-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-400">
+          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#EB3F7D]">
             ESTRATEGIA · {CAMPAIGN_ACTIONS_CATALOG.length} OPERACIONES DE CAMPAÑA
           </div>
-          <h1 className="text-2xl md:text-3xl font-serif font-bold text-amber-100 mt-0.5 uppercase tracking-wide">
+          <h1 className="text-2xl md:text-3xl font-serif font-bold text-[#F5EFE6] mt-0.5 uppercase tracking-wide">
             Acciones de campaña
           </h1>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <div className="px-3 py-1.5 rounded-sm bg-[#090d14] border border-[#263142] text-xs font-mono text-slate-300">
+          <div className="px-3 py-1.5 rounded-sm bg-[#0b0508] border border-white/15 text-xs font-mono text-slate-300">
             ACCIONES MES: <strong className="text-sky-400">{state.actionsRemainingThisMonth}/{state.actionsTotalThisMonth}</strong>
           </div>
-          <div className="px-3 py-1.5 rounded-sm bg-[#090d14] border border-[#8a6d33]/80 text-xs font-mono text-slate-300">
-            CAJA: <strong className="text-amber-300">${state.budgetArgentums.toFixed(1)}M</strong>
+          <div className="px-3 py-1.5 rounded-sm bg-[#0b0508] border border-[#EB3F7D]/60 text-xs font-mono text-slate-300">
+            CAJA: <strong className="text-[#EB3F7D]">US$ {state.budgetArgentums.toFixed(1).replace('.', ',')} M</strong>
           </div>
           <button
             type="button"

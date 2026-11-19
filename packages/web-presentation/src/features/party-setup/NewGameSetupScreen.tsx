@@ -19,6 +19,7 @@ import type {
   RealPoliticianPreset
 } from '@argentina-sim/domain';
 import { deriveIdeologicalAllies } from '@argentina-sim/domain';
+import { RoscaLogoMark } from '../../components/ui/RoscaLogoMark.js';
 import {
   POLITICAL_PARTIES_2027,
   REAL_POLITICIANS_2027
@@ -106,8 +107,8 @@ function ModeTogglePair({
         onClick={onSelectLeft}
         className={`py-2 px-3 rounded-sm text-xs font-bold uppercase tracking-wider border transition ${
           isLeftActive
-            ? 'bg-[#1d3250] text-amber-200 border-[#b89342]'
-            : 'bg-[#0b1018] text-slate-300 border-[#263142] hover:border-slate-500'
+            ? 'bg-[#EB3F7D]/20 text-[#EFE9DA] border-[#EB3F7D]'
+            : 'bg-[#0e070b] text-slate-300 border-white/15 hover:border-slate-500'
         }`}
       >
         {leftLabel}
@@ -117,8 +118,8 @@ function ModeTogglePair({
         onClick={onSelectRight}
         className={`py-2 px-3 rounded-sm text-xs font-bold uppercase tracking-wider border transition ${
           !isLeftActive
-            ? 'bg-[#1d3250] text-amber-200 border-[#b89342]'
-            : 'bg-[#0b1018] text-slate-300 border-[#263142] hover:border-slate-500'
+            ? 'bg-[#EB3F7D]/20 text-[#EFE9DA] border-[#EB3F7D]'
+            : 'bg-[#0e070b] text-slate-300 border-white/15 hover:border-slate-500'
         }`}
       >
         {rightLabel}
@@ -170,13 +171,13 @@ function RealPoliticiansSelector({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Filtrar entre 158 referentes por nombre, cargo o fuerza..."
-            className="w-full bg-[#080c13] border border-[#263142] rounded-sm pl-8 pr-3 py-2 text-xs text-white focus:border-[#b89342] focus:outline-none"
+            className="w-full bg-[#0a0508] border border-white/15 rounded-sm pl-8 pr-3 py-2 text-xs text-white focus:border-[#EB3F7D] focus:outline-none"
           />
         </div>
         <select
           value={partyFilter}
           onChange={(e) => setPartyFilter(e.target.value)}
-          className="bg-[#080c13] border border-[#263142] rounded-sm px-2.5 py-2 text-xs font-mono text-slate-200 focus:border-[#b89342] focus:outline-none"
+          className="bg-[#0a0508] border border-white/15 rounded-sm px-2.5 py-2 text-xs font-mono text-slate-200 focus:border-[#EB3F7D] focus:outline-none"
         >
           <option value="ALL">Todas las fuerzas ({REAL_POLITICIANS_2027.length})</option>
           {partySiglas.map((sigla) => (
@@ -197,8 +198,8 @@ function RealPoliticiansSelector({
               onClick={() => onSelect(p)}
               className={`text-left p-2.5 rounded-sm border transition ${
                 active
-                  ? 'bg-[#17253b] border-[#b89342] shadow-[inset_0_0_0_1px_rgba(184,147,66,0.35)]'
-                  : 'bg-[#0b1018] border-[#263142] hover:border-slate-500'
+                  ? 'bg-[#17253b] border-[#EB3F7D] shadow-[inset_0_0_0_1px_rgba(184,147,66,0.35)]'
+                  : 'bg-[#0e070b] border-white/15 hover:border-slate-500'
               }`}
             >
               <div className="flex items-start justify-between gap-2">
@@ -209,7 +210,7 @@ function RealPoliticiansSelector({
                     <div className="text-[11px] text-slate-400 truncate">{p.roleDescription}</div>
                   </div>
                 </div>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-sm bg-[#080c13] border border-[#2b394d] text-amber-300 shrink-0">
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-sm bg-[#0a0508] border border-[#2b394d] text-[#f472b6] shrink-0">
                   {p.partySigla}
                 </span>
               </div>
@@ -233,13 +234,13 @@ function IdeologicalSpectrumBar({
   onChangePosition: (eco: number, cul: number) => void;
 }) {
   return (
-    <div className="p-3 rounded-sm bg-[#090d14] border border-[#223044] space-y-3">
+    <div className="p-3 rounded-sm bg-[#0b0508] border border-[#223044] space-y-3">
       <div className="flex items-center justify-between">
         <div className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-slate-300">
-          <Compass className="w-3.5 h-3.5 text-amber-400" />
+          <Compass className="w-3.5 h-3.5 text-[#EB3F7D]" />
           Espectro Ideológico del Espacio
         </div>
-        <span className="text-[11px] font-mono text-amber-300">
+        <span className="text-[11px] font-mono text-[#f472b6]">
           Eco {party.economicPosition}/100 · Cul {party.culturalPosition}/100
         </span>
       </div>
@@ -274,7 +275,7 @@ function IdeologicalSpectrumBar({
             max={100}
             value={party.economicPosition}
             onChange={(e) => onChangePosition(Number(e.target.value), party.culturalPosition)}
-            className="w-full accent-[#b89342]"
+            className="w-full accent-[#EB3F7D]"
           />
         </div>
         <div>
@@ -287,7 +288,7 @@ function IdeologicalSpectrumBar({
             max={100}
             value={party.culturalPosition}
             onChange={(e) => onChangePosition(party.economicPosition, Number(e.target.value))}
-            className="w-full accent-[#b89342]"
+            className="w-full accent-[#EB3F7D]"
           />
         </div>
       </div>
@@ -327,8 +328,8 @@ function CustomPartyCreatorPanel({
                 }
                 className={`px-2.5 py-1 rounded-sm text-[11px] font-semibold border transition ${
                   active
-                    ? 'bg-[#1d3250] border-[#b89342] text-amber-200'
-                    : 'bg-[#0b1018] border-[#263142] text-slate-300 hover:border-slate-500'
+                    ? 'bg-[#EB3F7D]/20 border-[#EB3F7D] text-[#EFE9DA]'
+                    : 'bg-[#0e070b] border-white/15 text-slate-300 hover:border-slate-500'
                 }`}
               >
                 {opt.id}
@@ -356,7 +357,7 @@ function CustomPartyCreatorPanel({
             value={party.name}
             onChange={(e) => onChangeParty({ ...party, name: e.target.value })}
             placeholder="Ej: Frente Federal de Desarrollo"
-            className="w-full bg-[#080c13] border border-[#263142] rounded-sm px-3 py-2 text-xs text-white focus:border-[#b89342] focus:outline-none"
+            className="w-full bg-[#0a0508] border border-white/15 rounded-sm px-3 py-2 text-xs text-white focus:border-[#EB3F7D] focus:outline-none"
           />
         </div>
         <div>
@@ -370,7 +371,7 @@ function CustomPartyCreatorPanel({
             value={party.sigla}
             onChange={(e) => onChangeParty({ ...party, sigla: e.target.value.toUpperCase() })}
             placeholder="FFD"
-            className="w-full bg-[#080c13] border border-[#263142] rounded-sm px-3 py-2 text-xs font-mono font-bold text-amber-300 uppercase focus:border-[#b89342] focus:outline-none"
+            className="w-full bg-[#0a0508] border border-white/15 rounded-sm px-3 py-2 text-xs font-mono font-bold text-[#f472b6] uppercase focus:border-[#EB3F7D] focus:outline-none"
           />
         </div>
       </div>
@@ -386,7 +387,7 @@ function CustomPartyCreatorPanel({
             value={party.socialBase}
             onChange={(e) => onChangeParty({ ...party, socialBase: e.target.value })}
             placeholder="Ej: PyMEs exportadoras, clase media y agroindustria"
-            className="w-full bg-[#080c13] border border-[#263142] rounded-sm px-3 py-2 text-xs text-slate-200 focus:border-[#b89342] focus:outline-none"
+            className="w-full bg-[#0a0508] border border-white/15 rounded-sm px-3 py-2 text-xs text-slate-200 focus:border-[#EB3F7D] focus:outline-none"
           />
         </div>
         <div>
@@ -399,12 +400,12 @@ function CustomPartyCreatorPanel({
             value={party.description}
             onChange={(e) => onChangeParty({ ...party, description: e.target.value })}
             placeholder="Programa económico e institucional"
-            className="w-full bg-[#080c13] border border-[#263142] rounded-sm px-3 py-2 text-xs text-slate-200 focus:border-[#b89342] focus:outline-none"
+            className="w-full bg-[#0a0508] border border-white/15 rounded-sm px-3 py-2 text-xs text-slate-200 focus:border-[#EB3F7D] focus:outline-none"
           />
         </div>
       </div>
 
-      <div className="p-2.5 rounded-sm bg-[#090d14] border border-[#223044] flex flex-wrap items-center justify-between gap-2 text-xs">
+      <div className="p-2.5 rounded-sm bg-[#0b0508] border border-[#223044] flex flex-wrap items-center justify-between gap-2 text-xs">
         <span className="text-slate-400">
           Afinidad automática en el Congreso según tu posición ideológica:
         </span>
@@ -413,7 +414,7 @@ function CustomPartyCreatorPanel({
             naturalAllies.map((ally) => (
               <span
                 key={ally}
-                className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-sm bg-[#162133] border border-[#32445d] text-amber-200"
+                className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-sm bg-[#1b0e15] border border-white/20 text-[#EFE9DA]"
               >
                 {ally}
               </span>
@@ -451,19 +452,19 @@ function ExistingPartiesGrid({
             onClick={() => onSelectParty(party)}
             className={`text-left p-3 rounded-sm border transition flex items-start gap-3 ${
               active
-                ? 'bg-[#17253b] border-[#b89342] shadow-[inset_0_0_0_1px_rgba(184,147,66,0.35)]'
-                : 'bg-[#0b1018] border-[#263142] hover:border-slate-500'
+                ? 'bg-[#17253b] border-[#EB3F7D] shadow-[inset_0_0_0_1px_rgba(184,147,66,0.35)]'
+                : 'bg-[#0e070b] border-white/15 hover:border-slate-500'
             }`}
           >
             <PartyEmblemSvg config={party.emblem} size={46} />
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-bold text-white truncate">{party.name}</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-sm bg-[#080c13] border border-[#2b394d] text-amber-300 shrink-0">
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-sm bg-[#0a0508] border border-[#2b394d] text-[#f472b6] shrink-0">
                   {party.sigla}
                 </span>
               </div>
-              <div className="text-[11px] text-amber-200/90 mt-0.5">{party.ideology}</div>
+              <div className="text-[11px] text-[#EFE9DA]/90 mt-0.5">{party.ideology}</div>
               <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-snug">{party.description}</p>
             </div>
           </button>
@@ -479,14 +480,14 @@ function ProvinceStatsStrip({ province }: { province: ProvinceSummary }) {
   const reelectionLabel = province.reelectionAllowed ? 'Habilitada' : 'Limitada';
 
   return (
-    <div className="lg:col-span-7 p-2.5 rounded-sm bg-[#090d14] border border-[#223044] grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+    <div className="lg:col-span-7 p-2.5 rounded-sm bg-[#0b0508] border border-[#223044] grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
       <div>
         <div className="text-[10px] font-mono text-slate-500">BANCAS DIP. NAC.</div>
         <div className="font-mono font-bold text-slate-100">{province.nationalDeputiesCount} escaños</div>
       </div>
       <div>
         <div className="text-[10px] font-mono text-slate-500">DEP. COPARTIC.</div>
-        <div className="font-mono font-bold text-amber-300">{province.coparticipationDependencyPct}%</div>
+        <div className="font-mono font-bold text-[#f472b6]">{province.coparticipationDependencyPct}%</div>
       </div>
       <div>
         <div className="text-[10px] font-mono text-slate-500">BALANCE FISCAL</div>
@@ -523,8 +524,8 @@ function CargoSelectorSection({
 
   return (
     <section className="hoi-panel rounded-sm p-4 space-y-3">
-      <div className="flex items-center gap-2 pb-2 border-b border-[#243042]">
-        <MapPin className="w-4 h-4 text-amber-400" />
+      <div className="flex items-center gap-2 pb-2 border-b border-white/10">
+        <MapPin className="w-4 h-4 text-[#EB3F7D]" />
         <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200">
           02 · Cargo Institucional y Base Territorial
         </h2>
@@ -540,8 +541,8 @@ function CargoSelectorSection({
               onClick={() => onChangeRole(item.id)}
               className={`text-left p-2.5 rounded-sm border transition ${
                 active
-                  ? 'bg-[#17253b] border-[#b89342]'
-                  : 'bg-[#0b1018] border-[#263142] hover:border-slate-500'
+                  ? 'bg-[#17253b] border-[#EB3F7D]'
+                  : 'bg-[#0e070b] border-white/15 hover:border-slate-500'
               }`}
             >
               <div className="text-xs font-bold text-white">{item.title}</div>
@@ -560,7 +561,7 @@ function CargoSelectorSection({
             id="setup-origin-province"
             value={provinceId}
             onChange={(e) => onChangeProvince(e.target.value)}
-            className="w-full bg-[#080c13] border border-[#263142] rounded-sm px-3 py-2 text-xs text-white focus:border-[#b89342] focus:outline-none"
+            className="w-full bg-[#0a0508] border border-white/15 rounded-sm px-3 py-2 text-xs text-white focus:border-[#EB3F7D] focus:outline-none"
           >
             {provinces.map((p) => (
               <option key={p.id} value={p.id}>
@@ -611,7 +612,7 @@ function CharacterIdentityContent({
           value={characterName}
           onChange={(e) => onChangeName(e.target.value)}
           placeholder="Ej: Martín Palermo / Elena Roca"
-          className="w-full bg-[#080c13] border border-[#263142] rounded-sm px-3 py-2 text-xs text-white focus:border-[#b89342] focus:outline-none"
+          className="w-full bg-[#0a0508] border border-white/15 rounded-sm px-3 py-2 text-xs text-white focus:border-[#EB3F7D] focus:outline-none"
         />
       </div>
     );
@@ -695,29 +696,30 @@ export function NewGameSetupScreen({
   };
 
   return (
-    <div className="min-h-screen bg-[#070a0f] text-slate-100 py-5 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen rosca-obsidian-stage text-[#F5EFE6] py-5 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-5">
-        <header className="hoi-panel rounded-sm overflow-hidden">
-          <div className="hoi-header-steel px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+        <header className="hoi-panel rounded-lg overflow-hidden border border-[#EB3F7D]/45">
+          <div className="hoi-header-steel px-4 py-3 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={onBackToLanding}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-[#0c121c] hover:bg-[#162133] border border-[#32445d] text-xs font-semibold text-slate-200 transition"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-[#0b0508] hover:bg-[#1b0e15] border border-white/20 text-xs font-semibold text-slate-200 transition"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
+                <ArrowLeft className="w-3.5 h-3.5 text-[#EB3F7D]" />
                 Volver al menú
               </button>
+              <RoscaLogoMark size={24} />
               <div>
-                <div className="text-[10px] font-mono uppercase tracking-[0.22em] text-amber-300">
+                <div className="text-[10px] font-mono uppercase tracking-[0.22em] text-[#EB3F7D]">
                   Sala de Situación // Briefing Inicial 2027
                 </div>
-                <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-white">
+                <h1 className="font-display text-xl sm:text-2xl uppercase tracking-wide text-[#F5EFE6] leading-none mt-0.5">
                   Configuración de Nueva Partida
                 </h1>
               </div>
             </div>
-            <span className="text-[11px] font-mono px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#2a384c] text-amber-200">
+            <span className="text-[11px] font-mono px-2.5 py-1 rounded bg-[#0b0508] border border-white/15 text-[#EFE9DA]">
               Todas las opciones modifican la simulación
             </span>
           </div>
@@ -726,8 +728,8 @@ export function NewGameSetupScreen({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           <div className="lg:col-span-8 space-y-4">
             <section className="hoi-panel rounded-sm p-4 space-y-3">
-              <div className="flex items-center gap-2 pb-2 border-b border-[#243042]">
-                <UserCheck className="w-4 h-4 text-amber-400" />
+              <div className="flex items-center gap-2 pb-2 border-b border-white/10">
+                <UserCheck className="w-4 h-4 text-[#EB3F7D]" />
                 <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200">
                   01 · Identidad del Líder y Perfil de Conducción
                 </h2>
@@ -767,8 +769,8 @@ export function NewGameSetupScreen({
             />
 
             <section className="hoi-panel rounded-sm p-4 space-y-3">
-              <div className="flex items-center gap-2 pb-2 border-b border-[#243042]">
-                <Users className="w-4 h-4 text-amber-400" />
+              <div className="flex items-center gap-2 pb-2 border-b border-white/10">
+                <Users className="w-4 h-4 text-[#EB3F7D]" />
                 <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200">
                   03 · Fuerza Política, Boleta y Escudo
                 </h2>

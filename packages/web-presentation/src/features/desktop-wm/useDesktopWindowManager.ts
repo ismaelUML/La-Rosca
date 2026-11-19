@@ -34,9 +34,9 @@ function buildInitialWindowList<T extends string>(
       id: `WIN_${defaultSection}`,
       section: defaultSection,
       title: resolveTitle(defaultSection),
-      rect: { x: 16, y: 12, width: 760, height: 540 },
+      rect: { x: 268, y: 16, width: 760, height: 540 },
       zIndex: 11,
-      minimized: false,
+      minimized: true,
       maximized: false,
       pinned: false,
       snap: 'NONE'

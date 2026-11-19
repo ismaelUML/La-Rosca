@@ -25,15 +25,15 @@ export interface ProvinceMeshMeta {
   centerZ: number;
 }
 
-const COLOR_GOOD = 0x10b981;
-const COLOR_NEUTRAL = 0xd97706;
-const COLOR_BAD = 0xe11d48;
-const COLOR_FALLBACK = 0x3b4c66;
+const COLOR_GOOD = 0xeb3f7d;
+const COLOR_NEUTRAL = 0xefe9da;
+const COLOR_BAD = 0x5a3444;
+const COLOR_FALLBACK = 0x3a2630;
 
 const BLOC_COLORS: Record<string, number> = {
-  DERECHA: 0x2563eb,
-  CENTRO: 0x14b8a6,
-  IZQUIERDA: 0xe11d48
+  DERECHA: 0x3b82f6,
+  CENTRO: 0xefe9da,
+  IZQUIERDA: 0xeb3f7d
 };
 
 function buildMapProjection() {
@@ -229,8 +229,8 @@ function createExtrudedProvinceMesh(
   const center = computeMeshHorizontalCenter(geometry);
   const material = new THREE.MeshStandardMaterial({
     color,
-    roughness: 0.38,
-    metalness: 0.24
+    roughness: 0.56,
+    metalness: 0.08
   });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.castShadow = true;

@@ -266,10 +266,10 @@ function DistrictPopupCard({
   onClose: () => void;
 }) {
   return (
-    <div className="absolute bottom-3 left-3 z-30 w-72 rounded-sm bg-[#090d14]/95 border border-[#8a6d33] p-3.5 shadow-2xl text-xs">
-      <div className="flex items-start justify-between gap-2 border-b border-[#263142] pb-2">
+    <div className="absolute bottom-3 left-3 z-30 w-72 rounded-sm bg-[#0b0508]/95 border border-[#EB3F7D]/55 p-3.5 shadow-2xl text-xs">
+      <div className="flex items-start justify-between gap-2 border-b border-white/15 pb-2">
         <div>
-          <div className="font-serif font-bold text-amber-100 text-sm uppercase tracking-wide">{data.title}</div>
+          <div className="font-serif font-bold text-[#F5EFE6] text-sm uppercase tracking-wide">{data.title}</div>
           <div className="text-[10px] font-mono text-slate-400 mt-0.5">
             {data.subTitle ? `${data.subTitle} · ` : ''}Padrón: {data.electorateText} · Indecisos {data.indecisosPct}%
           </div>
@@ -277,7 +277,7 @@ function DistrictPopupCard({
         <button
           type="button"
           onClick={onClose}
-          className="text-slate-400 hover:text-amber-200 px-1.5 py-0.5 rounded-sm border border-[#263142] text-[10px] font-mono"
+          className="text-slate-400 hover:text-[#EFE9DA] px-1.5 py-0.5 rounded-sm border border-white/15 text-[10px] font-mono"
         >
           ✕
         </button>
@@ -292,13 +292,13 @@ function DistrictPopupCard({
                   style={{ backgroundColor: c.color }}
                   className="w-2 h-2 rounded-sm inline-block shrink-0"
                 />
-                <span className={`truncate max-w-[155px] ${idx === 0 ? 'font-bold text-amber-100' : ''}`}>
+                <span className={`truncate max-w-[155px] ${idx === 0 ? 'font-bold text-[#F5EFE6]' : ''}`}>
                   {c.name}
                 </span>
               </span>
-              <span className="font-mono font-bold text-amber-300">{c.pct.toFixed(1)}%</span>
+              <span className="font-mono font-bold text-[#f472b6]">{c.pct.toFixed(1)}%</span>
             </div>
-            <div className="w-full h-1.5 rounded-sm bg-[#141c28] border border-[#263142] overflow-hidden">
+            <div className="w-full h-1.5 rounded-sm bg-[#141c28] border border-white/15 overflow-hidden">
               <div
                 style={{ width: `${c.pct}%`, backgroundColor: c.color }}
                 className="h-full transition-all duration-300"
@@ -308,7 +308,7 @@ function DistrictPopupCard({
         ))}
       </div>
 
-      <div className="mt-2.5 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] font-mono text-slate-400">
+      <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-slate-400">
         <span>SONDEO TERRITORIAL</span>
         <span className="text-emerald-400">Líder: {data.candidates[0]?.name ?? '-'}</span>
       </div>
@@ -344,16 +344,16 @@ function ConurbanoZoomPanel({
   const [hoveredPartido, setHoveredPartido] = useState<string | null>(null);
 
   return (
-    <div className="w-full md:w-[270px] rounded-sm bg-[#090d14] border border-[#263142] p-3 space-y-2 select-none">
-      <div className="flex justify-between items-center border-b border-[#1e293b] pb-1.5">
-        <span className="text-[11px] font-serif font-bold uppercase tracking-wider text-amber-200">
+    <div className="w-full md:w-[270px] rounded-sm bg-[#0b0508] border border-white/15 p-3 space-y-2 select-none">
+      <div className="flex justify-between items-center border-b border-white/10 pb-1.5">
+        <span className="text-[11px] font-serif font-bold uppercase tracking-wider text-[#EFE9DA]">
           Lente AMBA · 24 Partidos
         </span>
         <span className="text-[10px] font-mono text-sky-400">
           {hoveredPartido ?? '1ra y 3ra Sección'}
         </span>
       </div>
-      <div className="h-[260px] w-full relative bg-[#070a10] rounded-sm border border-[#1a2434] p-1">
+      <div className="h-[260px] w-full relative bg-[#090407] rounded-sm border border-[#1a2434] p-1">
         <svg
           viewBox="70 -10 210 270"
           className="w-full h-full filter drop-shadow-xl"
@@ -392,7 +392,7 @@ function ConurbanoZoomPanel({
       </div>
       <div className="text-[10px] font-mono text-slate-400 flex items-center justify-between">
         <span>Click en cada municipio para sondeo</span>
-        <span className="text-amber-300">Padrón: 9,4M</span>
+        <span className="text-[#f472b6]">Padrón: 9,4M</span>
       </div>
     </div>
   );
@@ -435,9 +435,9 @@ function ArgentinaSideProvinceList({
   const title = mode === 'PROVINCIA' ? '24 Jurisdicciones Federales' : '527 Departamentos IGN';
 
   return (
-    <div className="w-full lg:w-80 rounded-sm bg-[#090d14] border border-[#263142] p-3 space-y-2.5 text-xs">
-      <div className="flex justify-between items-center border-b border-[#1e293b] pb-2">
-        <span className="text-[11px] font-serif font-bold text-amber-100 uppercase tracking-wider">
+    <div className="w-full lg:w-80 rounded-sm bg-[#0b0508] border border-white/15 p-3 space-y-2.5 text-xs">
+      <div className="flex justify-between items-center border-b border-white/10 pb-2">
+        <span className="text-[11px] font-serif font-bold text-[#F5EFE6] uppercase tracking-wider">
           {title}
         </span>
         <span className="text-[10px] font-mono text-emerald-400">IGN Vectorial</span>
@@ -455,8 +455,8 @@ function ArgentinaSideProvinceList({
             p.leadingPartyColor
           );
           const bgClass = isSelected
-            ? 'bg-[#172234] border-[#c9a24d] text-amber-100 font-bold'
-            : 'bg-[#0c1119] border-[#1e293b] text-slate-300 hover:border-[#344661]';
+            ? 'bg-[#172234] border-[#EB3F7D] text-[#F5EFE6] font-bold'
+            : 'bg-[#11080d] border-white/10 text-slate-300 hover:border-white/20';
 
           return (
             <button
@@ -515,7 +515,7 @@ function ArgentinaMainSvgCard({
   onClosePopup
 }: ArgentinaMainSvgCardProps) {
   return (
-    <div className="w-full md:w-[360px] h-[470px] relative select-none rounded-sm bg-[#070a10] border border-[#263142] p-2">
+    <div className="w-full md:w-[360px] h-[470px] relative select-none rounded-sm bg-[#090407] border border-white/15 p-2">
       <svg
         viewBox="50 50 330 660"
         className="w-full h-full filter drop-shadow-2xl"
@@ -565,8 +565,8 @@ function ArgentinaMainSvgCard({
         }}
         className={`absolute top-48 right-3 px-2 py-1 rounded-sm border text-[10px] font-mono font-bold transition shadow-lg ${
           selectedProvinceId === 'CABA'
-            ? 'bg-[#b89342] text-[#090d14] border-amber-200'
-            : 'bg-[#090d14]/95 text-amber-200 border-[#8a6d33] hover:bg-[#162234]'
+            ? 'bg-[#EB3F7D] text-[#090407] border-[#EFE9DA]'
+            : 'bg-[#0b0508]/95 text-[#EFE9DA] border-[#EB3F7D]/55 hover:bg-[#1c0e16]'
         }`}
       >
         ● CABA
@@ -593,7 +593,7 @@ function resolveActiveFeatures(
 function HoveredDistrictBadge({ info }: { info: string | null }) {
   if (!info) return null;
   return (
-    <div className="absolute top-3 left-3 z-20 px-3 py-1 rounded-sm bg-[#090d14]/95 border border-[#8a6d33] text-[11px] font-mono font-bold text-amber-200 shadow-xl pointer-events-none">
+    <div className="absolute top-3 left-3 z-20 px-3 py-1 rounded-sm bg-[#0b0508]/95 border border-[#EB3F7D]/55 text-[11px] font-mono font-bold text-[#EFE9DA] shadow-xl pointer-events-none">
       ⌖ {info}
     </div>
   );
@@ -606,7 +606,7 @@ function CandidateMapLegend({
 }) {
   if (!candidates || candidates.length === 0) return null;
   return (
-    <div className="w-full flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-sm bg-[#090d14] border border-[#263142] text-[11px] font-mono">
+    <div className="w-full flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-sm bg-[#0b0508] border border-white/15 text-[11px] font-mono">
       <span className="text-slate-400 uppercase tracking-wider">Puntero por distrito:</span>
       <div className="flex flex-wrap items-center gap-3">
         {candidates.map((c) => (
@@ -668,7 +668,7 @@ export function ArgentinaRealVectorMap({
   const showConurbano = conurbanoFeatures.length > 0;
 
   return (
-    <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4 relative space-y-3">
+    <div className="rounded-sm bg-[#11080d] border border-white/15 p-4 relative space-y-3">
       <HoveredDistrictBadge info={hoveredInfo} />
       <CandidateMapLegend candidates={internalCandidates} />
 

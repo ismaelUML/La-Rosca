@@ -180,7 +180,7 @@ function DecisionCardButton({
       <button
         type="button"
         onClick={() => onChoose(option.id)}
-        className="w-full py-2.5 px-3 rounded-sm bg-[#1b2029] hover:bg-[#27303f] text-[#f3ead5] border border-[#6e5a2f] hover:border-[#b89342] text-xs font-bold tracking-wide transition shadow-sm cursor-pointer"
+        className="w-full py-2.5 px-3 rounded-sm bg-[#1b2029] hover:bg-[#27303f] text-[#f3ead5] border border-[#6e5a2f] hover:border-[#EB3F7D] text-xs font-bold tracking-wide transition shadow-sm cursor-pointer"
       >
         {ctaLabel}
       </button>

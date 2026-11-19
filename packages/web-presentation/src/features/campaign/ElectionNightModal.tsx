@@ -54,9 +54,9 @@ function resolveElectionProceedButtonLabel(
 
 function ElectionResultsTable({ results }: { results: CandidateVoteResult[] }) {
   return (
-    <div className="rounded-sm bg-[#0c1119] border border-[#263142] overflow-hidden">
+    <div className="rounded-sm bg-[#11080d] border border-white/15 overflow-hidden">
       <table className="w-full text-left text-xs">
-        <thead className="bg-[#080a10] border-b border-[#263142] text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400">
+        <thead className="bg-[#080a10] border-b border-white/15 text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400">
           <tr>
             <th className="py-3 px-4">FUERZA / LISTA</th>
             <th className="py-3 px-4">CANDIDATO</th>
@@ -68,7 +68,7 @@ function ElectionResultsTable({ results }: { results: CandidateVoteResult[] }) {
           {results.map((r) => (
             <tr
               key={r.fuerza}
-              className={`border-b border-[#1c2432] ${
+              className={`border-b border-white/10 ${
                 r.isPlayer ? 'bg-[#1a1812] font-bold border-l-2 border-l-[#c5a059]' : ''
               }`}
             >
@@ -80,7 +80,7 @@ function ElectionResultsTable({ results }: { results: CandidateVoteResult[] }) {
               <td className="py-3 px-4 text-right font-mono text-white">
                 {r.votos.toLocaleString('es-AR')}
               </td>
-              <td className="py-3 px-4 text-right font-mono font-extrabold text-amber-200">
+              <td className="py-3 px-4 text-right font-mono font-extrabold text-[#EFE9DA]">
                 {r.pct.toFixed(1).replace('.', ',')}
               </td>
             </tr>
@@ -93,7 +93,7 @@ function ElectionResultsTable({ results }: { results: CandidateVoteResult[] }) {
 
 function ElectionStatsGrid({ escrutinio }: { escrutinio: EscrutinioData }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 rounded-sm bg-[#0c1119] border border-[#263142] text-xs">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 rounded-sm bg-[#11080d] border border-white/15 text-xs">
       <div>
         <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
           Participación
@@ -149,7 +149,7 @@ function DefeatModalFooter({
 }) {
   const isInternaLoss = stageType === 'INTERNA' && Boolean(onBreakPartySplit);
   return (
-    <div className="p-4 md:p-6 bg-[#080a10] border-t border-[#263142] flex flex-wrap items-center justify-between gap-3">
+    <div className="p-4 md:p-6 bg-[#080a10] border-t border-white/15 flex flex-wrap items-center justify-between gap-3">
       <div className="text-xs font-mono font-bold text-rose-300 bg-rose-950/60 border border-rose-800 px-3 py-1.5 rounded-sm">
         {stageType === 'INTERNA'
           ? 'Derrota en la Interna · Perdiste el sello oficial del partido'
@@ -160,7 +160,7 @@ function DefeatModalFooter({
           <button
             type="button"
             onClick={onBreakPartySplit}
-            className="px-4 py-2.5 rounded-sm text-xs font-mono font-bold uppercase tracking-wider bg-amber-950/70 hover:bg-amber-900/80 text-amber-200 border border-[#8a6d33] transition"
+            className="px-4 py-2.5 rounded-sm text-xs font-mono font-bold uppercase tracking-wider bg-amber-950/70 hover:bg-amber-900/80 text-[#EFE9DA] border border-[#EB3F7D]/55 transition"
           >
             Romper e ir con Boleta Corta (-15 Apoyo)
           </button>
@@ -169,7 +169,7 @@ function DefeatModalFooter({
           <button
             type="button"
             onClick={onNewGameSetup}
-            className="px-4 py-2.5 rounded-sm text-xs font-mono font-bold uppercase tracking-wider bg-[#121926] hover:bg-[#1a2334] text-slate-200 border border-[#2c384b] transition"
+            className="px-4 py-2.5 rounded-sm text-xs font-mono font-bold uppercase tracking-wider bg-[#170c12] hover:bg-[#1a2334] text-slate-200 border border-white/15 transition"
           >
             Configurar nueva partida
           </button>
@@ -218,7 +218,7 @@ function ElectionModalFooter({
   const proceedBtnLabel = resolveElectionProceedButtonLabel(stageType, escrutinio, role);
 
   return (
-    <div className="p-4 md:p-6 bg-[#080a10] border-t border-[#263142] flex items-center justify-between">
+    <div className="p-4 md:p-6 bg-[#080a10] border-t border-white/15 flex items-center justify-between">
       {isBalotajeWin ? (
         <div className="text-xs font-mono font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-3 py-1.5 rounded-sm">
           Logro desbloqueado: Ganaste el balotaje
@@ -232,7 +232,7 @@ function ElectionModalFooter({
       <button
         type="button"
         onClick={onProceed}
-        className="px-6 py-3 rounded-sm text-xs md:text-sm font-mono font-extrabold uppercase tracking-wider bg-gradient-to-b from-[#d8b76c] to-[#9b7a38] hover:from-[#e6c87d] hover:to-[#b08c42] text-slate-950 border border-[#f3d893]/40 transition shadow-lg"
+        className="px-6 py-3 rounded-sm text-xs md:text-sm font-mono font-extrabold uppercase tracking-wider bg-[#EB3F7D] hover:bg-[#f45b93] text-slate-950 border border-[#f472b6]/60 transition shadow-lg"
       >
         {proceedBtnLabel}
       </button>
@@ -250,10 +250,10 @@ function OfficialResultsMapSection({
   const [mapMode, setMapMode] = useState<'PROVINCIA' | 'DEPARTAMENTO'>('PROVINCIA');
 
   return (
-    <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4 space-y-3">
+    <div className="rounded-sm bg-[#11080d] border border-white/15 p-4 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <span className="text-xs font-serif font-bold uppercase tracking-wider text-amber-100">
+          <span className="text-xs font-serif font-bold uppercase tracking-wider text-[#F5EFE6]">
             Mapa de resultados oficial
           </span>
           <p className="text-xs text-slate-400 mt-0.5">
@@ -267,7 +267,7 @@ function OfficialResultsMapSection({
             className={`px-3 py-1.5 rounded-sm text-xs font-mono font-bold uppercase tracking-wider transition ${
               mapMode === 'PROVINCIA'
                 ? 'bg-[#d4b26a] text-slate-950 shadow'
-                : 'bg-[#121926] text-slate-300 border border-[#263142] hover:bg-[#192334]'
+                : 'bg-[#170c12] text-slate-300 border border-white/15 hover:bg-[#192334]'
             }`}
           >
             Por provincia
@@ -278,7 +278,7 @@ function OfficialResultsMapSection({
             className={`px-3 py-1.5 rounded-sm text-xs font-mono font-bold uppercase tracking-wider transition ${
               mapMode === 'DEPARTAMENTO'
                 ? 'bg-[#d4b26a] text-slate-950 shadow'
-                : 'bg-[#121926] text-slate-300 border border-[#263142] hover:bg-[#192334]'
+                : 'bg-[#170c12] text-slate-300 border border-white/15 hover:bg-[#192334]'
             }`}
           >
             Por departamento
@@ -332,16 +332,16 @@ function LiveTelegramProgressStrip({
 }) {
   const isComplete = countedPct >= 99.4;
   return (
-    <div className="p-3.5 rounded-sm bg-[#0c1119] border border-[#8a6d33] space-y-2">
+    <div className="p-3.5 rounded-sm bg-[#11080d] border border-[#EB3F7D]/55 space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
-        <span className="text-amber-300 font-bold uppercase">
+        <span className="text-[#f472b6] font-bold uppercase">
           CORREO ARGENTINO / DINE · MESAS ESCRUTADAS: {countedPct.toFixed(1).replace('.', ',')}%
         </span>
         {!isComplete ? (
           <button
             type="button"
             onClick={onSkipToFinal}
-            className="px-2.5 py-1 rounded-sm bg-[#162233] hover:bg-[#1f2e47] border border-[#b89342] text-[10px] font-bold uppercase text-amber-200"
+            className="px-2.5 py-1 rounded-sm bg-[#1c0e16] hover:bg-[#1f2e47] border border-[#EB3F7D] text-[10px] font-bold uppercase text-[#EFE9DA]"
           >
             Saltear a Cómputo Final (99,4%) ▶
           </button>
@@ -350,10 +350,10 @@ function LiveTelegramProgressStrip({
         )}
       </div>
 
-      <div className="w-full h-2.5 rounded-sm bg-[#070a10] border border-[#263142] overflow-hidden">
+      <div className="w-full h-2.5 rounded-sm bg-[#090407] border border-white/15 overflow-hidden">
         <div
           style={{ width: `${Math.min(100, countedPct)}%` }}
-          className="h-full bg-gradient-to-r from-[#b89342] to-emerald-500 transition-all duration-150"
+          className="h-full bg-gradient-to-r from-[#EB3F7D] to-emerald-500 transition-all duration-150"
         />
       </div>
 
@@ -401,16 +401,16 @@ export function ElectionNightModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-[#090d14] border-2 border-[#8a6d33]/80 rounded-sm w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-        <div className="p-6 md:p-8 bg-gradient-to-r from-[#131924] via-[#101620] to-[#171410] border-b border-[#263142] space-y-2">
+      <div className="bg-[#0b0508] border-2 border-[#EB3F7D]/55/80 rounded-sm w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="p-6 md:p-8 bg-gradient-to-r from-[#131924] via-[#101620] to-[#171410] border-b border-white/15 space-y-2">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5">
               <OfficialInstitutionLogo institution="ESCUDO_NACIONAL" heightPx={32} />
-              <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#d4b26a]">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#EB3F7D]">
                 {stageHeader}
               </span>
             </div>
-            <span className="px-2 py-0.5 rounded-sm bg-[#0b0f17] border border-[#2c384b] text-[10px] font-mono text-slate-400 shrink-0">
+            <span className="px-2 py-0.5 rounded-sm bg-[#0b0f17] border border-white/15 text-[10px] font-mono text-slate-400 shrink-0">
               CÁMARA NACIONAL ELECTORAL
             </span>
           </div>
@@ -433,7 +433,7 @@ export function ElectionNightModal({
                   <span>{r.fuerza}</span>
                   <span>{r.pct.toFixed(1).replace('.', ',')} %</span>
                 </div>
-                <div className="w-full h-2 rounded-sm bg-[#0c1119] border border-[#1d2636] overflow-hidden">
+                <div className="w-full h-2 rounded-sm bg-[#11080d] border border-[#1d2636] overflow-hidden">
                   <div
                     style={{ width: `${r.pct}%`, backgroundColor: r.color }}
                     className="h-full transition-all duration-500"

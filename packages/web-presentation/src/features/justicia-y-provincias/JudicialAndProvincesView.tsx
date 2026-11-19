@@ -45,11 +45,11 @@ function buildProvincesAlert(state: SimulationState): string {
 function SupremeCourtList({ state }: { state: SimulationState }) {
   const { judicial } = state;
   return (
-    <div className="space-y-1.5 rounded-sm bg-[#090d14] p-3 border border-[#263142]">
+    <div className="space-y-1.5 rounded-sm bg-[#0b0508] p-3 border border-white/15">
       <div className="flex items-center justify-between text-xs mb-1 gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <OfficialInstitutionLogo institution="CSJN" heightPx={28} />
-          <span className="font-mono font-bold uppercase tracking-wider text-amber-300 truncate">
+          <span className="font-mono font-bold uppercase tracking-wider text-[#f472b6] truncate">
             Corte Suprema (5 Jueces · mayoría de 3)
           </span>
         </div>
@@ -94,7 +94,7 @@ function JudicialTabContent({ state, onDispatch }: JudicialAndProvincesViewProps
           <ActionStripCard
             key={c.id}
             icon="PY"
-            iconTileClass="bg-[#231b10] text-amber-300"
+            iconTileClass="bg-[#231b10] text-[#f472b6]"
             urgentLabel={c.stage}
             urgentClass="bg-amber-600 text-white"
             title={c.title}
@@ -121,8 +121,8 @@ function JudicialTabContent({ state, onDispatch }: JudicialAndProvincesViewProps
         ))}
       </div>
 
-      <div className="rounded-sm border border-[#263142] bg-[#0b1018] px-3.5 py-2.5 text-xs">
-        <span className="font-mono font-bold uppercase text-amber-400 mr-1.5">ESTADO:</span>
+      <div className="rounded-sm border border-white/15 bg-[#0e070b] px-3.5 py-2.5 text-xs">
+        <span className="font-mono font-bold uppercase text-[#EB3F7D] mr-1.5">ESTADO:</span>
         <span className="text-slate-300">{buildJudicialAlert(state)}</span>
       </div>
     </div>
@@ -143,7 +143,7 @@ function resolveProvinceLoyaltyStyle(loyalty: number) {
   if (loyalty > 55) {
     return { iconTileClass: 'bg-emerald-950/80 text-emerald-300', variant: 'done' as const };
   }
-  return { iconTileClass: 'bg-amber-950/80 text-amber-300', variant: 'primary' as const };
+  return { iconTileClass: 'bg-amber-950/80 text-[#f472b6]', variant: 'primary' as const };
 }
 
 function ProvinceStripRow({
@@ -198,15 +198,15 @@ function ProvincesTabContent({ state, onDispatch }: JudicialAndProvincesViewProp
 
   return (
     <div className="space-y-3">
-      <div className="rounded-sm bg-[#090d14] p-3 border border-[#263142] space-y-1.5 text-xs">
+      <div className="rounded-sm bg-[#0b0508] p-3 border border-white/15 space-y-1.5 text-xs">
         <div className="flex items-center justify-between">
-          <span className="font-mono font-bold uppercase tracking-wider text-amber-300">Agenda Semanal en Medios y Streaming</span>
+          <span className="font-mono font-bold uppercase tracking-wider text-[#f472b6]">Agenda Semanal en Medios y Streaming</span>
           <CongressRoscaSummary state={state} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
           {publicOpinion.agendaSlots.map((topic, idx) => (
-            <div key={idx} className="rounded-sm bg-[#11161f] border border-[#263142] px-2.5 py-1.5 text-slate-300">
-              <span className="text-amber-400 font-mono mr-1">#{idx + 1}</span>
+            <div key={idx} className="rounded-sm bg-[#11161f] border border-white/15 px-2.5 py-1.5 text-slate-300">
+              <span className="text-[#EB3F7D] font-mono mr-1">#{idx + 1}</span>
               {topic}
             </div>
           ))}
@@ -221,21 +221,21 @@ function ProvincesTabContent({ state, onDispatch }: JudicialAndProvincesViewProp
           <button
             type="button"
             onClick={() => setFilter('all')}
-            className={`px-2.5 py-1 rounded-sm border ${filter === 'all' ? 'bg-[#b89342] border-[#c9a24d] text-[#100e09] font-bold' : 'bg-[#090d14] border-[#263142] text-slate-400'}`}
+            className={`px-2.5 py-1 rounded-sm border ${filter === 'all' ? 'bg-[#EB3F7D] border-[#EB3F7D] text-[#090407] font-bold' : 'bg-[#0b0508] border-white/15 text-slate-400'}`}
           >
             Todas ({provinces.length})
           </button>
           <button
             type="button"
             onClick={() => setFilter('critical')}
-            className={`px-2.5 py-1 rounded-sm border ${filter === 'critical' ? 'bg-rose-800 border-rose-600 text-white font-bold' : 'bg-[#090d14] border-[#263142] text-slate-400'}`}
+            className={`px-2.5 py-1 rounded-sm border ${filter === 'critical' ? 'bg-rose-800 border-rose-600 text-white font-bold' : 'bg-[#0b0508] border-white/15 text-slate-400'}`}
           >
             Críticas
           </button>
           <button
             type="button"
             onClick={() => setFilter('allied')}
-            className={`px-2.5 py-1 rounded-sm border ${filter === 'allied' ? 'bg-emerald-800 border-emerald-600 text-white font-bold' : 'bg-[#090d14] border-[#263142] text-slate-400'}`}
+            className={`px-2.5 py-1 rounded-sm border ${filter === 'allied' ? 'bg-emerald-800 border-emerald-600 text-white font-bold' : 'bg-[#0b0508] border-white/15 text-slate-400'}`}
           >
             Aliadas
           </button>
@@ -248,8 +248,8 @@ function ProvincesTabContent({ state, onDispatch }: JudicialAndProvincesViewProp
         ))}
       </div>
 
-      <div className="rounded-sm border border-[#263142] bg-[#0b1018] px-3.5 py-2.5 text-xs">
-        <span className="font-mono font-bold uppercase text-amber-400 mr-1.5">ESTADO:</span>
+      <div className="rounded-sm border border-white/15 bg-[#0e070b] px-3.5 py-2.5 text-xs">
+        <span className="font-mono font-bold uppercase text-[#EB3F7D] mr-1.5">ESTADO:</span>
         <span className="text-slate-300">{buildProvincesAlert(state)}</span>
       </div>
     </div>
@@ -261,7 +261,7 @@ export function JudicialAndProvincesView({ state, onDispatch }: JudicialAndProvi
   const [summitOpen, setSummitOpen] = useState(false);
   const tabClass = (tab: JudicialProvincesTab) =>
     activeTab === tab
-      ? 'bg-[#1a2b44] text-amber-100 border-b-2 border-amber-400'
+      ? 'bg-[#1a2b44] text-[#F5EFE6] border-b-2 border-amber-400'
       : 'text-slate-400 hover:text-slate-200 border-b-2 border-transparent';
 
   return (
@@ -296,7 +296,7 @@ export function JudicialAndProvincesView({ state, onDispatch }: JudicialAndProvi
           onClose={() => setSummitOpen(false)}
         />
 
-        <div className="grid grid-cols-2 rounded-sm bg-[#0b1018] border border-[#283447]">
+        <div className="grid grid-cols-2 rounded-sm bg-[#0e070b] border border-white/15">
           <button
             type="button"
             onClick={() => setActiveTab('judicial')}
