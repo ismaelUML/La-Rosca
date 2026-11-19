@@ -6,6 +6,7 @@ import {
   type PressQuestionRoundSpec
 } from '@argentina-sim/infrastructure';
 import { playUiSound } from '@/lib/gameFeedback';
+import { ViewportModalPortal } from '@/components/ui/ViewportModalPortal';
 import { getMahoganyWoodTexture } from '../map-3d/proceduralPbrTextures.js';
 import { loadGlbIntoAnchor } from '../map-3d/modelAssetLoader.js';
 import type { MediaOutletLogoId } from '../party-setup/officialLogosCatalog.js';
@@ -131,7 +132,7 @@ function PressPodium3DCanvas({ activeHeadline }: { activeHeadline: string }) {
   }, []);
 
   return (
-    <div className="relative rounded-sm overflow-hidden border border-[#8a6d33] bg-[#05080d]">
+    <div className="relative rounded-sm overflow-hidden border border-[#EB3F7D]/55 bg-[#05080d]">
       <div ref={containerRef} className="w-full h-[185px]" />
       <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-sm bg-rose-700 text-[10px] font-mono font-extrabold uppercase text-white flex items-center gap-1.5 shadow">
         <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
@@ -146,7 +147,7 @@ function PressPodium3DCanvas({ activeHeadline }: { activeHeadline: string }) {
         <span className="font-extrabold text-white uppercase tracking-wider truncate">
           {activeHeadline}
         </span>
-        <span className="text-[10px] text-amber-200 shrink-0 ml-2">TRANSMISIÓN OFICIAL</span>
+        <span className="text-[10px] text-[#EFE9DA] shrink-0 ml-2">TRANSMISIÓN OFICIAL</span>
       </div>
     </div>
   );
@@ -170,8 +171,8 @@ function ActivePressQuestionPanel({
 }) {
   return (
     <div className="space-y-3">
-      <div className="p-3.5 rounded-sm bg-[#090d14] border border-[#8a6d33]/80 space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono text-amber-300">
+      <div className="p-3.5 rounded-sm bg-[#0b0508] border border-[#EB3F7D]/55/80 space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono text-[#f472b6]">
           <span className="inline-flex items-center gap-1">
             <Mic className="w-3 h-3" />
             PREGUNTA {roundIdx + 1} DE {totalRounds} · {currentRound.journalist}
@@ -194,11 +195,11 @@ function ActivePressQuestionPanel({
             key={opt.tone}
             type="button"
             onClick={() => onSelectOption(opt)}
-            className="w-full p-3 rounded-sm bg-[#0c1119] hover:bg-[#152030] border border-[#263142] hover:border-[#b89342] text-left space-y-1 transition"
+            className="w-full p-3 rounded-sm bg-[#11080d] hover:bg-[#152030] border border-white/15 hover:border-[#EB3F7D] text-left space-y-1 transition"
           >
             <div className="flex items-center justify-between text-[11px] font-mono">
-              <span className="font-bold text-amber-200 uppercase flex items-center gap-1.5">
-                <Radio className="w-3 h-3 text-amber-400" />
+              <span className="font-bold text-[#EFE9DA] uppercase flex items-center gap-1.5">
+                <Radio className="w-3 h-3 text-[#EB3F7D]" />
                 {opt.toneLabel}
               </span>
               <span className="text-emerald-300">
@@ -242,7 +243,7 @@ function CadenaNacionalIntroPlate({
           <h4 className="text-xl sm:text-2xl font-serif font-black uppercase tracking-wide text-white">
             Presidencia de la Nación Argentina
           </h4>
-          <p className="text-xs font-mono text-amber-200">
+          <p className="text-xs font-mono text-[#EFE9DA]">
             Transmisión oficial obligatoria en todo el territorio · Vocero: {speakerName}
           </p>
         </div>
@@ -291,15 +292,15 @@ function PressPodiumLiveStage({
       <PressPodium3DCanvas activeHeadline={headline} />
 
       <div className="grid grid-cols-3 gap-2.5 font-mono text-xs text-center">
-        <div className="p-2 rounded-sm bg-[#0c1119] border border-[#263142]">
+        <div className="p-2 rounded-sm bg-[#11080d] border border-white/15">
           <span className="text-[10px] text-slate-400 block">IMAGEN PÚBLICA</span>
           <strong className="text-emerald-400 text-sm">{formatSignedPts(totals.image)}</strong>
         </div>
-        <div className="p-2 rounded-sm bg-[#0c1119] border border-[#263142]">
+        <div className="p-2 rounded-sm bg-[#11080d] border border-white/15">
           <span className="text-[10px] text-slate-400 block">VIRALIDAD EN REDES</span>
-          <strong className="text-amber-300 text-sm">{formatSignedPts(totals.viral)}</strong>
+          <strong className="text-[#f472b6] text-sm">{formatSignedPts(totals.viral)}</strong>
         </div>
-        <div className="p-2 rounded-sm bg-[#0c1119] border border-[#263142]">
+        <div className="p-2 rounded-sm bg-[#11080d] border border-white/15">
           <span className="text-[10px] text-slate-400 block">CALMA DE MERCADOS</span>
           <strong className="text-sky-300 text-sm">{formatSignedPts(totals.market)}</strong>
         </div>
@@ -313,7 +314,7 @@ function PressPodiumLiveStage({
           onSelectOption={onSelectOption}
         />
       ) : (
-        <div className="p-4 rounded-sm bg-[#090d14] border border-emerald-700/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="p-4 rounded-sm bg-[#0b0508] border border-emerald-700/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="space-y-1">
             <div className="text-xs font-mono font-bold text-emerald-300 uppercase flex items-center gap-1.5">
               <Sparkles className="w-4 h-4" />
@@ -401,17 +402,18 @@ export function PressAndDebateSimulatorModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm">
-      <div className="w-full max-w-3xl max-h-[92vh] overflow-y-auto hoi-panel rounded-sm p-4 sm:p-6 space-y-4 border border-[#8a6d33] shadow-2xl">
+    <ViewportModalPortal>
+      <div className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm overflow-y-auto">
+        <div className="w-full max-w-3xl max-h-[92vh] overflow-y-auto my-auto hoi-panel rounded-lg p-4 sm:p-6 space-y-4 border border-[#EB3F7D]/55 shadow-2xl">
         <div className="hoi-header-steel p-3.5 rounded-sm flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <OfficialInstitutionLogo institution="PRESIDENCIA" heightPx={32} />
             <div className="min-w-0">
-              <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300 flex items-center gap-1.5">
-                <Tv className="w-3.5 h-3.5 text-amber-400" />
+              <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#f472b6] flex items-center gap-1.5">
+                <Tv className="w-3.5 h-3.5 text-[#EB3F7D]" />
                 ATRIL OFICIAL · CADENA NACIONAL Y CONFERENCIA DE PRENSA EN VIVO
               </div>
-              <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5 truncate">
+              <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-wide text-[#F5EFE6] mt-0.5 truncate">
                 Vocería y Definiciones de {speakerName}
               </h3>
             </div>
@@ -438,7 +440,8 @@ export function PressAndDebateSimulatorModal({
             onClose={handleCloseConference}
           />
         )}
+        </div>
       </div>
-    </div>
+    </ViewportModalPortal>
   );
 }

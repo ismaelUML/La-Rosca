@@ -6,6 +6,7 @@ import type {
   CongressVoteOutcome
 } from '@argentina-sim/domain';
 import { playUiSound } from '@/lib/gameFeedback';
+import { ViewportModalPortal } from '@/components/ui/ViewportModalPortal';
 import {
   BillChaptersParticularVotePanel,
   Congress3DHemicycleCanvas
@@ -258,13 +259,13 @@ function LiveHemicycleSvg({
   const radius = isDip ? 3.5 : 4.8;
 
   return (
-    <div className="hoi-panel rounded-sm p-4 bg-[#070a10] border border-[#263142] flex flex-col items-center justify-between">
-      <div className="w-full flex items-center justify-between text-[11px] font-mono border-b border-[#1e293b] pb-2">
-        <span className="text-amber-200 font-bold uppercase">
+    <div className="hoi-panel rounded-sm p-4 bg-[#090407] border border-white/15 flex flex-col items-center justify-between">
+      <div className="w-full flex items-center justify-between text-[11px] font-mono border-b border-white/10 pb-2">
+        <span className="text-[#EFE9DA] font-bold uppercase">
           {isDip ? 'Recinto H. Cámara de Diputados' : 'Recinto H. Senado de la Nación'}
         </span>
         <span className="text-slate-400">
-          Mayoría: <strong className="text-amber-300">{detail.majorityNeeded} votos</strong>
+          Mayoría: <strong className="text-[#f472b6]">{detail.majorityNeeded} votos</strong>
         </span>
       </div>
 
@@ -290,7 +291,7 @@ function LiveHemicycleSvg({
         </text>
       </svg>
 
-      <div className="w-full flex flex-wrap items-center justify-center gap-4 pt-2 border-t border-[#1e293b] text-[10px] font-mono">
+      <div className="w-full flex flex-wrap items-center justify-center gap-4 pt-2 border-t border-white/10 text-[10px] font-mono">
         <span className="inline-flex items-center gap-1.5 text-emerald-300">
           <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block" />
           AFIRMATIVO
@@ -299,7 +300,7 @@ function LiveHemicycleSvg({
           <span className="w-2.5 h-2.5 rounded-sm bg-rose-500 inline-block" />
           NEGATIVO
         </span>
-        <span className="inline-flex items-center gap-1.5 text-amber-300">
+        <span className="inline-flex items-center gap-1.5 text-[#f472b6]">
           <span className="w-2.5 h-2.5 rounded-sm bg-amber-500 inline-block" />
           ABSTENCIÓN
         </span>
@@ -316,7 +317,7 @@ function resolveChamberScoreboardBadge(isDone: boolean, passed: boolean): { text
   if (!isDone) {
     return {
       text: 'VOTACIÓN NOMINAL EN CURSO...',
-      cls: 'text-amber-300 border-[#8a6d33] bg-amber-950/30'
+      cls: 'text-[#f472b6] border-[#EB3F7D]/55 bg-amber-950/30'
     };
   }
   if (passed) {
@@ -355,8 +356,8 @@ function LiveDigitalScoreboard({
   const hasQuorum = livePresent >= detail.quorumNeeded;
 
   return (
-    <div className="hoi-panel rounded-sm p-4 bg-[#070a10] border border-[#263142] flex flex-col justify-between space-y-3">
-      <div className="flex items-center justify-between border-b border-[#1e293b] pb-2">
+    <div className="hoi-panel rounded-sm p-4 bg-[#090407] border border-white/15 flex flex-col justify-between space-y-3">
+      <div className="flex items-center justify-between border-b border-white/10 pb-2">
         <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-300">
           Tablero Electrónico del Recinto
         </span>
@@ -375,10 +376,10 @@ function LiveDigitalScoreboard({
           <div className="text-2xl font-extrabold text-rose-400 mt-0.5">{liveNo}</div>
         </div>
         <div className="p-2.5 rounded-sm bg-amber-950/30 border border-amber-800/70">
-          <div className="text-[10px] text-amber-300 uppercase">Abstenciones</div>
-          <div className="text-2xl font-extrabold text-amber-300 mt-0.5">{liveAbst}</div>
+          <div className="text-[10px] text-[#f472b6] uppercase">Abstenciones</div>
+          <div className="text-2xl font-extrabold text-[#f472b6] mt-0.5">{liveAbst}</div>
         </div>
-        <div className="p-2.5 rounded-sm bg-[#0c1119] border border-[#263142]">
+        <div className="p-2.5 rounded-sm bg-[#11080d] border border-white/15">
           <div className="text-[10px] text-slate-400 uppercase">Presentes</div>
           <div className="text-2xl font-extrabold text-white mt-0.5">{livePresent}</div>
         </div>
@@ -387,11 +388,11 @@ function LiveDigitalScoreboard({
       <div className="space-y-1.5">
         <div className="flex justify-between text-[10px] font-mono text-slate-400">
           <span>Progreso hacia mayoría reglamentaria ({detail.majorityNeeded} bancas)</span>
-          <span className="text-amber-200">
+          <span className="text-[#EFE9DA]">
             {liveYes} / {detail.majorityNeeded} necesarios
           </span>
         </div>
-        <div className="w-full h-4 rounded-sm bg-[#090d14] border border-[#263142] relative overflow-hidden flex">
+        <div className="w-full h-4 rounded-sm bg-[#0b0508] border border-white/15 relative overflow-hidden flex">
           <div style={{ width: `${yesPct}%` }} className="h-full bg-emerald-500 transition-all duration-150" />
           <div style={{ width: `${abstPct}%` }} className="h-full bg-amber-500 transition-all duration-150" />
           <div style={{ width: `${noPct}%` }} className="h-full bg-rose-500 transition-all duration-150" />
@@ -403,9 +404,9 @@ function LiveDigitalScoreboard({
         </div>
       </div>
 
-      <div className="text-[11px] font-mono text-slate-400 bg-[#0c1119] border border-[#1e293b] px-3 py-2 rounded-sm flex items-center justify-between">
+      <div className="text-[11px] font-mono text-slate-400 bg-[#11080d] border border-white/10 px-3 py-2 rounded-sm flex items-center justify-between">
         <span>Quórum constitucional ({detail.quorumNeeded} bancas):</span>
-        <strong className={hasQuorum ? 'text-emerald-400' : 'text-amber-300'}>
+        <strong className={hasQuorum ? 'text-emerald-400' : 'text-[#f472b6]'}>
           {hasQuorum ? '✓ QUÓRUM HABILITADO' : `Faltan ${detail.quorumNeeded - livePresent} bancas`}
         </strong>
       </div>
@@ -423,16 +424,16 @@ function resolveBlocPostureLabel(yes: number, no: number, abst: number): { text:
   if (yes === 0) {
     return { text: 'BLOQUE EN CONTRA', cls: 'text-rose-400' };
   }
-  return { text: 'VOTO DIVIDIDO', cls: 'text-amber-300' };
+  return { text: 'VOTO DIVIDIDO', cls: 'text-[#f472b6]' };
 }
 
 function BlocLiveBreakdownTable({ tallies }: { tallies: BlocLiveTally[] }) {
   const activeTallies = tallies.filter((t) => t.totalSeats > 0);
 
   return (
-    <div className="hoi-panel rounded-sm p-4 bg-[#070a10] border border-[#263142] space-y-2.5">
-      <div className="flex items-center justify-between border-b border-[#1e293b] pb-2">
-        <span className="text-xs font-serif font-bold uppercase tracking-wider text-amber-100">
+    <div className="hoi-panel rounded-sm p-4 bg-[#090407] border border-white/15 space-y-2.5">
+      <div className="flex items-center justify-between border-b border-white/10 pb-2">
+        <span className="text-xs font-serif font-bold uppercase tracking-wider text-[#F5EFE6]">
           Votación por Espacio Político (Bloques Parlamentarios)
         </span>
         <span className="text-[10px] font-mono text-slate-400">
@@ -451,7 +452,7 @@ function BlocLiveBreakdownTable({ tallies }: { tallies: BlocLiveTally[] }) {
           return (
             <div
               key={t.bloc.id}
-              className="p-2.5 rounded-sm bg-[#0c1119] border border-[#1e293b] space-y-1.5 text-xs"
+              className="p-2.5 rounded-sm bg-[#11080d] border border-white/10 space-y-1.5 text-xs"
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
@@ -466,7 +467,7 @@ function BlocLiveBreakdownTable({ tallies }: { tallies: BlocLiveTally[] }) {
                 </span>
               </div>
 
-              <div className="w-full h-2 rounded-sm bg-[#070a10] border border-[#263142] overflow-hidden flex">
+              <div className="w-full h-2 rounded-sm bg-[#090407] border border-white/15 overflow-hidden flex">
                 <div style={{ width: `${yesPct}%` }} className="h-full bg-emerald-500 transition-all duration-150" />
                 <div style={{ width: `${abstPct}%` }} className="h-full bg-amber-500 transition-all duration-150" />
                 <div style={{ width: `${noPct}%` }} className="h-full bg-rose-500 transition-all duration-150" />
@@ -477,7 +478,7 @@ function BlocLiveBreakdownTable({ tallies }: { tallies: BlocLiveTally[] }) {
                 <div className="flex items-center gap-3">
                   <span className="text-emerald-400">A favor: <strong>{t.yes}</strong></span>
                   <span className="text-rose-400">En contra: <strong>{t.no}</strong></span>
-                  {t.abst > 0 ? <span className="text-amber-300">Abst: <strong>{t.abst}</strong></span> : null}
+                  {t.abst > 0 ? <span className="text-[#f472b6]">Abst: <strong>{t.abst}</strong></span> : null}
                 </div>
               </div>
             </div>
@@ -508,8 +509,8 @@ function ChamberTabBtn({
   onClick: () => void;
 }) {
   const cls = isSelected
-    ? 'bg-[#1d3250] text-amber-100 border-[#b89342]'
-    : 'bg-[#090d14] text-slate-400 border-[#263142] hover:text-white';
+    ? 'bg-[#EB3F7D]/20 text-[#F5EFE6] border-[#EB3F7D]'
+    : 'bg-[#0b0508] text-slate-400 border-white/15 hover:text-white';
   const suffix = isDone ? (passed ? ' ✓' : ' ✕') : '';
 
   return (
@@ -564,7 +565,7 @@ function ModalChamberSelectorBar({
           <button
             type="button"
             onClick={onSkipToEnd}
-            className="px-3 py-1.5 rounded-sm bg-[#162233] hover:bg-[#1f2e47] border border-[#8a6d33] text-xs font-mono font-bold text-amber-200 inline-flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-sm bg-[#1c0e16] hover:bg-[#1f2e47] border border-[#EB3F7D]/55 text-xs font-mono font-bold text-[#EFE9DA] inline-flex items-center gap-1.5"
           >
             <FastForward className="w-3.5 h-3.5" />
             Resultado inmediato
@@ -573,7 +574,7 @@ function ModalChamberSelectorBar({
           <button
             type="button"
             onClick={onReplay}
-            className="px-3 py-1.5 rounded-sm bg-[#090d14] hover:bg-[#131d2d] border border-[#263142] text-xs font-mono font-bold text-slate-300 inline-flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-sm bg-[#0b0508] hover:bg-[#131d2d] border border-white/15 text-xs font-mono font-bold text-slate-300 inline-flex items-center gap-1.5"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             Repetir votación
@@ -596,7 +597,7 @@ function FinalSessionFooterBanner({
     : 'bg-rose-950/80 text-rose-300 border-rose-700';
 
   return (
-    <div className="p-3.5 rounded-sm bg-[#090d14] border border-[#8a6d33] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="p-3.5 rounded-sm bg-[#0b0508] border border-[#EB3F7D]/55 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div className="flex items-center gap-2.5 text-xs">
         <span className={`px-2.5 py-1 rounded-sm font-mono font-extrabold uppercase border ${badgeCls}`}>
           {outcome.passed ? '✓ LEY SANCIONADA' : '✕ PROYECTO RECHAZADO'}
@@ -760,10 +761,10 @@ function ModalHeaderBar({
           <OfficialInstitutionLogo institution="SENADO" heightPx={32} />
         )}
         <div className="min-w-0">
-          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300 truncate">
+          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#f472b6] truncate">
             SESIÓN ESPECIAL · {activeChamber === 'DIPUTADOS' ? 'H. CÁMARA DE DIPUTADOS' : 'H. SENADO DE LA NACIÓN'}
           </div>
-          <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5 truncate">
+          <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-wide text-[#F5EFE6] mt-0.5 truncate">
             {billTitle}
           </h3>
         </div>
@@ -772,14 +773,14 @@ function ModalHeaderBar({
         <button
           type="button"
           onClick={onToggle3D}
-          className="px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#b89342] text-[10px] font-mono font-bold uppercase text-amber-200 hover:bg-[#172233]"
+          className="px-2.5 py-1 rounded-sm bg-[#0b0508] border border-[#EB3F7D] text-[10px] font-mono font-bold uppercase text-[#EFE9DA] hover:bg-[#1d0f17]"
         >
           {view3D ? 'Ver Plano 2D' : 'Ver Recinto 3D'}
         </button>
         <button
           type="button"
           onClick={onToggleChapters}
-          className="px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#2d3c52] text-[10px] font-mono font-bold uppercase text-sky-300 hover:bg-[#172233]"
+          className="px-2.5 py-1 rounded-sm bg-[#0b0508] border border-white/15 text-[10px] font-mono font-bold uppercase text-sky-300 hover:bg-[#1d0f17]"
         >
           {showChapters ? 'Ocultar Capítulos' : 'Votación en Particular (Capítulos)'}
         </button>
@@ -853,8 +854,9 @@ export function CongressRealtimeVoteModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm">
-      <div className="w-full max-w-4xl max-h-[92vh] overflow-y-auto hoi-panel rounded-sm p-4 sm:p-6 space-y-4 shadow-2xl border border-[#8a6d33]">
+    <ViewportModalPortal>
+      <div className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm overflow-y-auto">
+        <div className="w-full max-w-4xl max-h-[92vh] overflow-y-auto my-auto hoi-panel rounded-lg p-4 sm:p-6 space-y-4 shadow-2xl border border-[#EB3F7D]/55">
         <ModalHeaderBar
           billTitle={outcome.billTitle}
           activeChamber={roll.activeChamber}
@@ -909,7 +911,8 @@ export function CongressRealtimeVoteModal({
 
         <BlocLiveBreakdownTable tallies={blocTallies} />
         {roll.bothDone ? <FinalSessionFooterBanner outcome={outcome} onClose={onClose} /> : null}
+        </div>
       </div>
-    </div>
+    </ViewportModalPortal>
   );
 }

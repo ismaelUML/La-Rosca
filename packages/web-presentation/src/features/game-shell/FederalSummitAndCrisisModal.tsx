@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Handshake, Landmark, Scale, ShieldAlert, Users, X } from 'lucide-react';
 import type { PolicyAction, SimulationState } from '@argentina-sim/domain';
 import { playUiSound } from '@/lib/gameFeedback';
+import { ViewportModalPortal } from '@/components/ui/ViewportModalPortal';
 
 // Cumbre Federal de Gobernadores ("Pacto de Mayo / Rosca Federal")
 // y Comision de Juicio Politico / Lealtad del Vicepresidente.
@@ -86,11 +87,11 @@ function LeagueNegotiationCard({
   onSignPact: (league: GovernorLeagueSpec) => void;
 }) {
   return (
-    <div className="p-3.5 rounded-sm bg-[#0c1119] border border-[#263142] flex flex-col justify-between space-y-2.5">
+    <div className="p-3.5 rounded-sm bg-[#11080d] border border-white/15 flex flex-col justify-between space-y-2.5">
       <div className="space-y-1">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase text-amber-300">
+            <span className="text-[10px] font-mono font-bold uppercase text-[#f472b6]">
               {league.senatorsControlled} Senadores · {league.deputiesControlled} Diputados
             </span>
             <h4 className="text-sm font-serif font-bold text-slate-100">{league.name}</h4>
@@ -102,12 +103,12 @@ function LeagueNegotiationCard({
           ) : null}
         </div>
         <p className="text-[11px] font-mono text-slate-400">{league.provincesLabel}</p>
-        <div className="p-2 rounded-sm bg-[#070a10] border border-[#1e293b] text-xs text-amber-100">
+        <div className="p-2 rounded-sm bg-[#090407] border border-white/10 text-xs text-[#F5EFE6]">
           Reclamo: <strong>{league.demandTitle}</strong>
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-2 border-t border-[#1e293b] text-[11px] font-mono">
+      <div className="flex items-center justify-between pt-2 border-t border-white/10 text-[11px] font-mono">
         <span className="text-slate-400">Costo: <strong className="text-rose-300">{league.fiscalCostLabel}</strong></span>
         <button
           type="button"
@@ -156,13 +157,13 @@ function ImpeachmentAndViceShieldPanel({
   const barPct = Math.min(100, (effectiveVotes / 257) * 100);
 
   return (
-    <div className="hoi-panel rounded-sm p-4 bg-[#070a10] border border-[#8a6d33] space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1e293b] pb-2">
+    <div className="hoi-panel rounded-sm p-4 bg-[#090407] border border-[#EB3F7D]/55 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-widest text-amber-300 block">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-[#f472b6] block">
             COMISIÓN DE JUICIO POLÍTICO Y SUCESIÓN CONSTITUCIONAL (ART. 53 CN)
           </span>
-          <h4 className="text-sm font-serif font-bold uppercase text-amber-100">
+          <h4 className="text-sm font-serif font-bold uppercase text-[#F5EFE6]">
             Termómetro de Destitución, Escudo de 1/3 y Lealtad del Vicepresidente
           </h4>
         </div>
@@ -172,15 +173,15 @@ function ImpeachmentAndViceShieldPanel({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 font-mono text-xs">
-        <div className="p-3 rounded-sm bg-[#0c1119] border border-[#1e293b]">
+        <div className="p-3 rounded-sm bg-[#11080d] border border-white/10">
           <span className="text-[10px] text-slate-400 block">VOTOS ACUSADORES EN DIPUTADOS</span>
-          <strong className="text-lg text-amber-300">{effectiveVotes} / 172 (2/3)</strong>
+          <strong className="text-lg text-[#f472b6]">{effectiveVotes} / 172 (2/3)</strong>
         </div>
-        <div className="p-3 rounded-sm bg-[#0c1119] border border-[#1e293b]">
+        <div className="p-3 rounded-sm bg-[#11080d] border border-white/10">
           <span className="text-[10px] text-slate-400 block">RELACIÓN CON VICEPRESIDENTE</span>
           <strong className="text-lg text-sky-300">{metrics.vpLoyalty}% Lealtad en Senado</strong>
         </div>
-        <div className="p-3 rounded-sm bg-[#0c1119] border border-[#1e293b]">
+        <div className="p-3 rounded-sm bg-[#11080d] border border-white/10">
           <span className="text-[10px] text-slate-400 block">LEALTAD MEDIA GOBERNADORES</span>
           <strong className="text-lg text-emerald-300">{metrics.avgLoyalty}% Federal</strong>
         </div>
@@ -189,9 +190,9 @@ function ImpeachmentAndViceShieldPanel({
       <div className="space-y-1">
         <div className="flex justify-between text-[10px] font-mono text-slate-400">
           <span>Umbral constitucional de Juicio Político: 172 Diputados (66,9% del recinto)</span>
-          <span className="text-amber-200">{effectiveVotes} bancas opositoras</span>
+          <span className="text-[#EFE9DA]">{effectiveVotes} bancas opositoras</span>
         </div>
-        <div className="w-full h-3.5 rounded-sm bg-[#090d14] border border-[#263142] relative overflow-hidden">
+        <div className="w-full h-3.5 rounded-sm bg-[#0b0508] border border-white/15 relative overflow-hidden">
           <div style={{ width: `${barPct}%` }} className={`h-full transition-all ${cfg.barCls}`} />
           <div
             style={{ left: '66.9%' }}
@@ -209,7 +210,7 @@ function ImpeachmentAndViceShieldPanel({
           type="button"
           disabled={shielded}
           onClick={onActivateShield}
-          className="px-3.5 py-1.5 rounded-sm bg-[#162233] hover:bg-[#1f2e47] border border-[#b89342] text-xs font-mono font-bold text-amber-200 disabled:opacity-50"
+          className="px-3.5 py-1.5 rounded-sm bg-[#1c0e16] hover:bg-[#1f2e47] border border-[#EB3F7D] text-xs font-mono font-bold text-[#EFE9DA] disabled:opacity-50"
         >
           {shielded ? '✓ Blindaje de Comisión Activado (-26 votos)' : 'Blindar Comisión de Juicio Político'}
         </button>
@@ -244,15 +245,16 @@ export function FederalSummitAndCrisisModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm">
-      <div className="w-full max-w-4xl max-h-[92vh] overflow-y-auto hoi-panel rounded-sm p-4 sm:p-6 space-y-4 border border-[#8a6d33] shadow-2xl">
+    <ViewportModalPortal>
+      <div className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm overflow-y-auto">
+        <div className="w-full max-w-4xl max-h-[92vh] overflow-y-auto my-auto hoi-panel rounded-lg p-4 sm:p-6 space-y-4 border border-[#EB3F7D]/55 shadow-2xl">
         <div className="hoi-header-steel p-3.5 rounded-sm flex items-start justify-between gap-3">
           <div>
-            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300 flex items-center gap-1.5">
-              <Landmark className="w-3.5 h-3.5 text-amber-400" />
+            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#f472b6] flex items-center gap-1.5">
+              <Landmark className="w-3.5 h-3.5 text-[#EB3F7D]" />
               CONSEJO FEDERAL DE GOBERNADORES Y SALA DE SITUACIÓN INSTITUCIONAL
             </div>
-            <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5">
+            <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-wide text-[#F5EFE6] mt-0.5">
               Cumbre del Pacto Federal y Blindaje contra Juicio Político
             </h3>
           </div>
@@ -283,7 +285,7 @@ export function FederalSummitAndCrisisModal({
 
         <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
           <span className="inline-flex items-center gap-1.5">
-            <Handshake className="w-3.5 h-3.5 text-amber-300" />
+            <Handshake className="w-3.5 h-3.5 text-[#f472b6]" />
             Los pactos con ligas regionales aseguran quórum en el Senado y desactivan rebeliones provinciales.
           </span>
           <span className="inline-flex items-center gap-1 text-sky-300">
@@ -291,7 +293,8 @@ export function FederalSummitAndCrisisModal({
             Control Constitucional Activo
           </span>
         </div>
+        </div>
       </div>
-    </div>
+    </ViewportModalPortal>
   );
 }

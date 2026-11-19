@@ -34,8 +34,8 @@ function ReformFilterButton({ label, isSelected, onClick }: ReformFilterButtonPr
       }}
       className={`px-3 py-1.5 rounded-sm text-xs font-mono font-bold transition border ${
         isSelected
-          ? 'bg-[#1d3250] text-amber-100 border-[#b89342]'
-          : 'bg-[#090d14] border-[#263142] text-slate-400 hover:text-slate-100'
+          ? 'bg-[#EB3F7D]/20 text-[#F5EFE6] border-[#EB3F7D]'
+          : 'bg-[#0b0508] border-white/15 text-slate-400 hover:text-slate-100'
       }`}
     >
       {label}
@@ -46,21 +46,21 @@ function ReformFilterButton({ label, isSelected, onClick }: ReformFilterButtonPr
 function ReformMajorityBadge({ majority }: { majority: 'ORDINARIA' | 'CONSTITUCIONAL' }) {
   if (majority === 'CONSTITUCIONAL') {
     return (
-      <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-amber-950/70 border border-amber-700/70 text-amber-300 inline-block">
+      <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-amber-950/70 border border-amber-700/70 text-[#f472b6] inline-block">
         Constitucional (2/3: 172 Dip · 48 Sen)
       </span>
     );
   }
   return (
-    <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#132033] border border-[#334155] text-sky-200 inline-block">
+    <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#132033] border border-white/20 text-sky-200 inline-block">
       Ordinaria (Mayoría absoluta: 129 · 37)
     </span>
   );
 }
 
 function resolveCardBorder(active: boolean): string {
-  if (active) return 'bg-[#111928] border-[#b89342]/70';
-  return 'bg-[#0e131c] border-[#263142]';
+  if (active) return 'bg-[#111928] border-[#EB3F7D]/70';
+  return 'bg-[#130a0f] border-white/15';
 }
 
 function resolveCardBadge(active: boolean): { className: string; text: string } {
@@ -71,7 +71,7 @@ function resolveCardBadge(active: boolean): { className: string; text: string } 
     };
   }
   return {
-    className: 'bg-[#090d14] border border-[#263142] text-slate-400',
+    className: 'bg-[#0b0508] border border-white/15 text-slate-400',
     text: 'INACTIVA'
   };
 }
@@ -117,18 +117,18 @@ function ReformCard({ reform, onToggle }: ReformCardProps) {
         <p className="text-xs text-slate-300 leading-relaxed pt-1">{reform.description}</p>
 
         <div className="grid grid-cols-2 gap-2 pt-2 text-xs font-mono">
-          <div className="p-2 rounded-sm bg-[#090d14] border border-[#263142]">
+          <div className="p-2 rounded-sm bg-[#0b0508] border border-white/15">
             <div className="text-[10px] text-slate-400 uppercase">Apoyo social</div>
             <div className="font-bold text-white text-sm mt-0.5">{reform.publicSupportPct} %</div>
           </div>
-          <div className="p-2 rounded-sm bg-[#090d14] border border-[#263142]">
+          <div className="p-2 rounded-sm bg-[#0b0508] border border-white/15">
             <div className="text-[10px] text-slate-400 uppercase">Polémica</div>
-            <div className="font-bold text-amber-400 text-sm mt-0.5">{reform.polemicaPct} %</div>
+            <div className="font-bold text-[#EB3F7D] text-sm mt-0.5">{reform.polemicaPct} %</div>
           </div>
         </div>
       </div>
 
-      <div className="pt-3 border-t border-[#263142] flex items-center justify-between gap-2">
+      <div className="pt-3 border-t border-white/15 flex items-center justify-between gap-2">
         <span className="text-[11px] text-slate-400 truncate max-w-[160px]" title={exclusiveLabel}>
           {exclusiveLabel}
         </span>
@@ -239,17 +239,17 @@ export function ReformasInstitucionalesSection({
     <div className="space-y-5">
       <div className="hoi-panel hoi-header-steel p-4 rounded-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300">
+          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#f472b6]">
             Sistema Electoral y Constitución Nacional
           </div>
-          <h2 className="text-lg md:text-xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5">
+          <h2 className="text-lg md:text-xl font-serif font-extrabold uppercase tracking-wide text-[#F5EFE6] mt-0.5">
             Reformas Institucionales y Electorales
           </h2>
           <p className="text-xs text-slate-300 mt-1 max-w-2xl">
             Catálogo fijo de reglas constitucionales de sufragio, mandatos presidenciales, balotaje y representación parlamentaria con mayorías ordinarias y de dos tercios.
           </p>
         </div>
-        <div className="shrink-0 px-3.5 py-2 rounded-sm bg-[#090d14] border border-[#b89342]/60 font-mono text-xs font-extrabold text-amber-200 text-center">
+        <div className="shrink-0 px-3.5 py-2 rounded-sm bg-[#0b0508] border border-[#EB3F7D]/60 font-mono text-xs font-extrabold text-[#EFE9DA] text-center">
           {activeCount} de {reforms.length} vigentes
         </div>
       </div>
@@ -290,7 +290,7 @@ export function ReformasInstitucionalesSection({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={`Buscar (${filtered.length}/${reforms.length})...`}
-              className="pl-8 pr-3 py-1.5 w-52 rounded-sm bg-[#090d14] border border-[#263142] focus:border-[#b89342] focus:outline-none text-xs text-slate-200 placeholder:text-slate-500 font-mono"
+              className="pl-8 pr-3 py-1.5 w-52 rounded-sm bg-[#0b0508] border border-white/15 focus:border-[#EB3F7D] focus:outline-none text-xs text-slate-200 placeholder:text-slate-500 font-mono"
             />
           </label>
         </div>

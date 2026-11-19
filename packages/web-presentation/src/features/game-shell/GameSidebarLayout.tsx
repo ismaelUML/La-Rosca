@@ -1,36 +1,34 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import type { GameSetupConfiguration, SimulationState } from '@argentina-sim/domain';
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  BarChart3,
-  Globe,
-  Landmark,
-  LogOut,
-  Map as MapIcon,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Play,
-  Plus,
-  RefreshCw,
-  Save,
-  Scale,
-  Volume2,
-  VolumeX,
-  Wallet
-} from 'lucide-react';
-import { PartyEmblemSvg } from '../party-setup/PartyEmblemSvg.js';
-import { OfficialInstitutionLogo } from '../party-setup/OfficialLogoBadge.js';
-import type { InstitutionalLogoId } from '../party-setup/officialLogosCatalog.js';
-import { Argentina3DMapCanvas } from '../map-3d/Argentina3DMapCanvas.js';
-import { LiveNewsAndMarketTicker } from './LiveNewsAndMarketTicker.js';
-import { isSoundEnabled, playUiSound, setSoundEnabled } from '../../lib/gameFeedback.js';
-import { resolveRangeTone, SEMANTIC_TEXT_CLASS } from '../../lib/semanticColors.js';
+  getPoliticalCapital,
+  resolveFireOfTheMonth,
+  type GameSetupConfiguration,
+  type SectorMeasureCard,
+  type SimulationState
+} from '@argentina-sim/domain';
+import { RefreshCw } from 'lucide-react';
+import { playUiSound } from '../../lib/gameFeedback.js';
+
+const Argentina3DMapCanvas = lazy(() =>
+  import('../map-3d/Argentina3DMapCanvas.js').then((m) => ({ default: m.Argentina3DMapCanvas }))
+);
+import { formatArNumber, formatArSigned } from '../../lib/formatters.js';
 import { DesktopTaskbarStrip } from '../desktop-wm/DesktopTaskbarStrip.js';
 import { DesktopWindowsLayer } from '../desktop-wm/DesktopWindowsLayer.js';
 import { useDesktopWindowManager } from '../desktop-wm/useDesktopWindowManager.js';
+import {
+  RoscaNumberedNav,
+  RoscaTopBar,
+  type HudKpiMetric,
+  type NumberedNavGroup
+} from '../desktop-wm/RoscaMockupHud.js';
+import { BottomActionCardHand } from '../desktop-wm/BottomActionCardHand.js';
+import { buildGovernmentHandCards } from '../desktop-wm/buildBottomHandCards.js';
+import { ActionFeedbackToast, type FeedbackToastMessage } from '../desktop-wm/ActionFeedbackToast.js';
+import { useGameHotkeys } from '../desktop-wm/useGameHotkeys.js';
 
-// Shell estilo estrategia sobre mapa 3D vivo:
-// barra superior de telemetria macro, dock horizontal de Ministerios con iconos lucide
-// y el mapa 3D extruido de las 24 provincias corriendo de fondo en tiempo real.
+// Shell de Gobierno en estética La Rosca (Obsidiana + Rosado Casa Rosada + Papel Crema):
+// topbar con KPIs macro, dock lateral 01..05, mapa 3D, mano de 3 decisiones/decretos y multi-ventana.
 
 export type InGameSidebarSection =
   | 'DESPACHO_RESUMEN'
@@ -55,50 +53,38 @@ export type InGameSidebarSection =
   | 'PAIS_TEJIDO_SOCIAL'
   | 'PAIS_MATRIZ_PRODUCTIVA';
 
-const GROUP_ICONS: Record<string, React.ReactNode> = {
-  DESPACHO: <Landmark className="w-3.5 h-3.5" />,
-  ECONOMÍA: <BarChart3 className="w-3.5 h-3.5" />,
-  PRESUPUESTO: <Wallet className="w-3.5 h-3.5" />,
-  'POLÍTICA Y CONGRESO': <Scale className="w-3.5 h-3.5" />,
-  PAÍS: <Globe className="w-3.5 h-3.5" />
-};
-
-type SidebarGroupSpec = {
-  groupTitle: string;
-  items: Array<{ id: InGameSidebarSection; label: string }>;
-};
-
-const PAIS_SIDEBAR_GROUP: SidebarGroupSpec = {
-  groupTitle: 'PAÍS',
+const PAIS_SIDEBAR_GROUP: NumberedNavGroup<InGameSidebarSection> = {
+  title: 'PAÍS',
+  subtitle: 'Demografía y matriz productiva',
   items: [
-    { id: 'PAIS_POBLACION', label: 'Población y Demografía' },
-    { id: 'PAIS_INMIGRACION', label: 'Inmigración' },
-    { id: 'PAIS_EMIGRACION', label: 'Emigración' },
-    { id: 'PAIS_TEJIDO_SOCIAL', label: 'Salud, Educación y Sociedad' },
+    { id: 'PAIS_POBLACION', label: 'Sociedad y Demografía' },
     { id: 'PAIS_MATRIZ_PRODUCTIVA', label: 'Matriz Productiva y Energía' }
   ]
 };
 
-const PRESIDENT_SIDEBAR_GROUPS: SidebarGroupSpec[] = [
+const PRESIDENT_SIDEBAR_GROUPS: NumberedNavGroup<InGameSidebarSection>[] = [
   {
-    groupTitle: 'DESPACHO',
+    title: 'DESPACHO',
+    subtitle: 'Decretos, gabinete y diario',
     items: [
       { id: 'DESPACHO_RESUMEN', label: 'Despacho' },
       { id: 'GABINETE', label: 'Gabinete' },
-      { id: 'REGISTRO', label: 'Registro' }
+      { id: 'REGISTRO', label: 'Diario y Registro' }
     ]
   },
   {
-    groupTitle: 'ECONOMÍA',
+    title: 'ECONOMÍA',
+    subtitle: 'Dólar, inflación y reservas',
     items: [
       { id: 'INDICADORES', label: 'Indicadores' },
       { id: 'POLITICA_ECONOMICA', label: 'Política económica' },
-      { id: 'MEDIDAS', label: 'Medidas' },
+      { id: 'MEDIDAS', label: 'Medidas y Decretos' },
       { id: 'ENERGIA_Y_PARITARIAS', label: 'CAMMESA y Paritarias' }
     ]
   },
   {
-    groupTitle: 'PRESUPUESTO',
+    title: 'PRESUPUESTO',
+    subtitle: 'Gastos, ATN y deuda',
     items: [
       { id: 'FINANCIAMIENTO', label: 'Financiamiento' },
       { id: 'IMPUESTOS', label: 'Impuestos' },
@@ -107,7 +93,8 @@ const PRESIDENT_SIDEBAR_GROUPS: SidebarGroupSpec[] = [
     ]
   },
   {
-    groupTitle: 'POLÍTICA Y CONGRESO',
+    title: 'POLÍTICA Y CONGRESO',
+    subtitle: 'Leyes, bloques y votaciones',
     items: [
       { id: 'CAMARAS', label: 'Cámaras (Diputados y Senado)' },
       { id: 'APOYOS', label: 'Apoyos y Figuras' },
@@ -118,16 +105,18 @@ const PRESIDENT_SIDEBAR_GROUPS: SidebarGroupSpec[] = [
   PAIS_SIDEBAR_GROUP
 ];
 
-const GOVERNOR_SIDEBAR_GROUPS: SidebarGroupSpec[] = [
+const GOVERNOR_SIDEBAR_GROUPS: NumberedNavGroup<InGameSidebarSection>[] = [
   {
-    groupTitle: 'DESPACHO',
+    title: 'DESPACHO',
+    subtitle: 'Gobernación y Boletín Oficial',
     items: [
       { id: 'DESPACHO_RESUMEN', label: 'Gobernación Provincial' },
-      { id: 'REGISTRO', label: 'Boletín Oficial' }
+      { id: 'REGISTRO', label: 'Diario y Boletín Oficial' }
     ]
   },
   {
-    groupTitle: 'ECONOMÍA',
+    title: 'ECONOMÍA',
+    subtitle: 'Indicadores y medidas sectoriales',
     items: [
       { id: 'INDICADORES', label: 'Indicadores Macro y Prov.' },
       { id: 'MEDIDAS', label: 'Medidas Sectoriales' },
@@ -135,14 +124,17 @@ const GOVERNOR_SIDEBAR_GROUPS: SidebarGroupSpec[] = [
     ]
   },
   {
-    groupTitle: 'PRESUPUESTO',
+    title: 'PRESUPUESTO',
+    subtitle: 'Finanzas y tributos propios',
     items: [
+      { id: 'FINANCIAMIENTO', label: 'Coparticipación y Cuentas' },
       { id: 'IMPUESTOS_PROPIOS', label: 'Tributos Provinciales' },
       { id: 'RIGI', label: 'Adhesión RIGI Provincial' }
     ]
   },
   {
-    groupTitle: 'POLÍTICA Y CONGRESO',
+    title: 'POLÍTICA Y CONGRESO',
+    subtitle: 'Liga de gobernadores y cámaras',
     items: [
       { id: 'CONGRESO_Y_JUSTICIA', label: 'Liga de Gobernadores y CSJN' },
       { id: 'CAMARAS', label: 'Bancas en el Congreso' },
@@ -152,16 +144,18 @@ const GOVERNOR_SIDEBAR_GROUPS: SidebarGroupSpec[] = [
   PAIS_SIDEBAR_GROUP
 ];
 
-const LEGISLATOR_SIDEBAR_GROUPS: SidebarGroupSpec[] = [
+const LEGISLATOR_SIDEBAR_GROUPS: NumberedNavGroup<InGameSidebarSection>[] = [
   {
-    groupTitle: 'DESPACHO',
+    title: 'DESPACHO',
+    subtitle: 'Banca y Diario de Sesiones',
     items: [
       { id: 'DESPACHO_RESUMEN', label: 'Despacho Parlamentario' },
-      { id: 'REGISTRO', label: 'Diario de Sesiones' }
+      { id: 'REGISTRO', label: 'Diario y Sesiones' }
     ]
   },
   {
-    groupTitle: 'POLÍTICA Y CONGRESO',
+    title: 'POLÍTICA Y CONGRESO',
+    subtitle: 'Leyes, bloques y alianzas',
     items: [
       { id: 'CAMARAS', label: 'Hemiciclo y Proyectos de Ley' },
       { id: 'CONGRESO_Y_JUSTICIA', label: 'Comodoro Py, CSJN y Provincias' },
@@ -170,7 +164,8 @@ const LEGISLATOR_SIDEBAR_GROUPS: SidebarGroupSpec[] = [
     ]
   },
   {
-    groupTitle: 'PRESUPUESTO',
+    title: 'PRESUPUESTO',
+    subtitle: 'Iniciativas y monitor OPC',
     items: [
       { id: 'IMPUESTOS_PROPIOS', label: 'Iniciativas Tributarias' },
       { id: 'INDICADORES', label: 'Monitor Macro OPC' }
@@ -179,7 +174,10 @@ const LEGISLATOR_SIDEBAR_GROUPS: SidebarGroupSpec[] = [
   PAIS_SIDEBAR_GROUP
 ];
 
-const SIDEBAR_GROUPS_BY_ROLE: Record<GameSetupConfiguration['role'], SidebarGroupSpec[]> = {
+const SIDEBAR_GROUPS_BY_ROLE: Record<
+  GameSetupConfiguration['role'],
+  NumberedNavGroup<InGameSidebarSection>[]
+> = {
   PRESIDENTE: PRESIDENT_SIDEBAR_GROUPS,
   GOBERNADOR: GOVERNOR_SIDEBAR_GROUPS,
   DIPUTADO: LEGISLATOR_SIDEBAR_GROUPS,
@@ -187,10 +185,10 @@ const SIDEBAR_GROUPS_BY_ROLE: Record<GameSetupConfiguration['role'], SidebarGrou
 };
 
 const ROLE_LABELS: Record<GameSetupConfiguration['role'], string> = {
-  PRESIDENTE: 'Presidente',
-  GOBERNADOR: 'Gobernador',
-  DIPUTADO: 'Diputado Nac.',
-  SENADOR: 'Senador Nac.'
+  PRESIDENTE: 'GOBIERNO NACIONAL',
+  GOBERNADOR: 'GOBERNACIÓN',
+  DIPUTADO: 'DIPUTADOS',
+  SENADOR: 'SENADO'
 };
 
 function formatGameDate(turnMonth: number): string {
@@ -200,270 +198,11 @@ function formatGameDate(turnMonth: number): string {
   return `${months[idx]} ${year} · T${turnMonth}`;
 }
 
-function findActiveGroup(groups: SidebarGroupSpec[], activeSection: InGameSidebarSection) {
-  const found = groups.find((g) => g.items.some((i) => i.id === activeSection));
-  return found ?? groups[0]!;
-}
-
-function formatSignedDelta(delta: number, decimals: number, suffix: string): string {
-  const arrow = delta > 0 ? '▲' : '▼';
-  const sign = delta > 0 ? '+' : '';
-  return `${arrow}${sign}${delta.toFixed(decimals)}${suffix}`;
-}
-
-function buildDeltaBadge(
-  current: number,
-  previous: number | undefined,
-  decimals: number,
-  suffix: string,
-  invertGood: boolean
-): { text: string; colorClass: string } | null {
-  if (previous === undefined) return null;
-  const delta = Number((current - previous).toFixed(decimals));
-  if (Math.abs(delta) < 0.05) return null;
-  const isGood = invertGood ? delta < 0 : delta > 0;
-  return {
-    text: formatSignedDelta(delta, decimals, suffix),
-    colorClass: isGood ? 'text-emerald-400' : 'text-rose-400'
-  };
-}
-
-function TelemetryBox({
-  label,
-  value,
-  toneClass,
-  deltaBadge,
-  tooltip
-}: {
-  label: string;
-  value: string;
-  toneClass: string;
-  deltaBadge?: { text: string; colorClass: string } | null;
-  tooltip?: string;
-}) {
-  return (
-    <div
-      title={tooltip}
-      className="px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#283447] flex flex-col leading-tight"
-    >
-      <div className="flex items-center justify-between gap-1.5">
-        <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400">{label}</span>
-        {deltaBadge ? (
-          <span className={`text-[9px] font-mono font-bold ${deltaBadge.colorClass}`}>
-            {deltaBadge.text}
-          </span>
-        ) : null}
-      </div>
-      <span className={`text-xs font-mono font-bold ${toneClass}`}>{value}</span>
-    </div>
-  );
-}
-
-function SoundToggleButton() {
-  const [enabled, setEnabled] = useState(() => isSoundEnabled());
-  const toggle = () => {
-    const next = !enabled;
-    setSoundEnabled(next);
-    setEnabled(next);
-    if (next) playUiSound('tab');
-  };
-  return (
-    <button
-      type="button"
-      onClick={toggle}
-      title={enabled ? 'Silenciar efectos sutiles' : 'Activar efectos sutiles'}
-      className="inline-flex items-center justify-center p-1.5 rounded-sm bg-[#0b1018] hover:bg-[#172233] border border-[#334155] text-slate-300"
-    >
-      {enabled ? <Volume2 className="w-3.5 h-3.5 text-amber-300" /> : <VolumeX className="w-3.5 h-3.5 text-slate-500" />}
-    </button>
-  );
-}
-
-function TopTelemetryBar({
-  setup,
-  state,
-  onAdvanceTurn,
-  onExportSaveCode,
-  onExitToMenu
-}: {
-  setup: GameSetupConfiguration;
-  state: SimulationState;
-  onAdvanceTurn: () => void;
-  onExportSaveCode: () => void;
-  onExitToMenu: () => void;
-}) {
-  const netUsd = state.centralBank.netLiquidReservesBillionUsd;
-  const brechaTone = resolveRangeTone(state.centralBank.exchangeBrechaPct, 15, 40, true);
-  const reservesToneClass = SEMANTIC_TEXT_CLASS[resolveRangeTone(netUsd, 6, 0)];
-  const ipcTone = resolveRangeTone(state.inflation.realMonthlyIpcPct, 3, 6, true);
-  const riskTone = resolveRangeTone(state.countryRiskEmbiPb, 700, 1200, true);
-  const imageTone = resolveRangeTone(state.publicOpinion.presidentialPersonalImagePct, 50, 35);
-
-  const prev = state.previousTurnMetrics;
-  const lagNote =
-    state.laggedMacroShocks && state.laggedMacroShocks.length > 0
-      ? `Rezagos activos: ${state.laggedMacroShocks.map((s) => s.sourceLabel).join(', ')}`
-      : `Crawling peg ${state.centralBank.crawlingPegMonthlyPct}%/m · Resultado primario ${state.treasury.primaryResultPctGdp}% PBI`;
-
-  return (
-    <header className="hoi-header-steel px-4 py-2 z-30 shrink-0">
-      <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2.5">
-        <div className="flex items-center gap-2.5">
-          <OfficialInstitutionLogo
-            institution={
-              ({
-                PRESIDENTE: 'PRESIDENCIA',
-                GOBERNADOR: 'ESCUDO_NACIONAL',
-                DIPUTADO: 'DIPUTADOS',
-                SENADOR: 'SENADO'
-              } as Record<GameSetupConfiguration['role'], InstitutionalLogoId>)[setup.role]
-            }
-            heightPx={26}
-          />
-          <div className="p-1 rounded-sm bg-[#090d14] border border-[#8a6d33]">
-            <PartyEmblemSvg config={setup.party.emblem} size={24} />
-          </div>
-          <div className="leading-tight">
-            <div className="text-xs font-serif font-black uppercase tracking-wider text-amber-100">
-              LA ROSCA · {setup.party.sigla}
-            </div>
-            <div className="text-[10px] font-mono text-slate-300">
-              {ROLE_LABELS[setup.role]} · {formatGameDate(state.turnMonth)}
-            </div>
-          </div>
-        </div>
-
-        <div key={state.turnMonth} className="flex flex-wrap items-center gap-1.5 rosca-turn-flash rounded-sm">
-          <TelemetryBox
-            label="Dólar CCL"
-            value={`$${state.centralBank.cclDollarArs} (${state.centralBank.exchangeBrechaPct.toFixed(0)}%)`}
-            toneClass={SEMANTIC_TEXT_CLASS[brechaTone]}
-            deltaBadge={buildDeltaBadge(state.centralBank.cclDollarArs, prev?.cclDollarArs, 0, '', true)}
-            tooltip={lagNote}
-          />
-          <TelemetryBox
-            label="Res. Netas"
-            value={`${netUsd.toFixed(1)}B USD`}
-            toneClass={reservesToneClass}
-            deltaBadge={buildDeltaBadge(netUsd, prev?.netReservesBillionUsd, 1, 'B', false)}
-            tooltip={lagNote}
-          />
-          <TelemetryBox
-            label="Inflación"
-            value={`${state.inflation.realMonthlyIpcPct.toFixed(1)}%/m`}
-            toneClass={SEMANTIC_TEXT_CLASS[ipcTone]}
-            deltaBadge={buildDeltaBadge(state.inflation.realMonthlyIpcPct, prev?.realMonthlyIpcPct, 1, '%', true)}
-            tooltip={lagNote}
-          />
-          <TelemetryBox
-            label="Riesgo País"
-            value={`${state.countryRiskEmbiPb} pb`}
-            toneClass={SEMANTIC_TEXT_CLASS[riskTone]}
-            deltaBadge={buildDeltaBadge(state.countryRiskEmbiPb, prev?.countryRiskEmbiPb, 0, '', true)}
-            tooltip={lagNote}
-          />
-          <TelemetryBox
-            label="Imagen"
-            value={`${state.publicOpinion.presidentialPersonalImagePct.toFixed(0)}%`}
-            toneClass={SEMANTIC_TEXT_CLASS[imageTone]}
-            deltaBadge={buildDeltaBadge(
-              state.publicOpinion.presidentialPersonalImagePct,
-              prev?.presidentialImagePct,
-              0,
-              '%',
-              false
-            )}
-            tooltip={lagNote}
-          />
-        </div>
-
-        <div className="flex items-center gap-1.5 shrink-0">
-          <button
-            type="button"
-            onClick={() => {
-              playUiSound('turn');
-              onAdvanceTurn();
-            }}
-            className="hoi-btn-gold inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-sm font-extrabold text-xs uppercase tracking-wider transition active:scale-[0.97]"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            <span>Avanzar Mes</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              playUiSound('tab');
-              onExportSaveCode();
-            }}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-sm bg-[#0b1018] hover:bg-[#172233] border border-[#334155] text-xs font-semibold text-slate-200"
-          >
-            <Save className="w-3.5 h-3.5" />
-            <span>Guardar</span>
-          </button>
-          <SoundToggleButton />
-          <button
-            type="button"
-            onClick={onExitToMenu}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-sm bg-[#2b1015] hover:bg-[#41171f] border border-rose-800/60 text-xs font-semibold text-rose-200"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Salir</span>
-          </button>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function DockGroupTabs({
-  groups,
-  activeGroupTitle,
-  panelVisible,
-  onSelectGroup,
-  onTogglePanel
-}: {
-  groups: SidebarGroupSpec[];
-  activeGroupTitle: string;
-  panelVisible: boolean;
-  onSelectGroup: (groupTitle: string) => void;
-  onTogglePanel: () => void;
-}) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-b border-[#1d2738]">
-      <div className="flex flex-wrap gap-1">
-        {groups.map((group) => {
-          const isGroupActive = group.groupTitle === activeGroupTitle;
-          const cls = isGroupActive
-            ? 'bg-[#17253b] text-amber-100 border-t-2 border-x border-[#b89342] border-x-[#2e415e]'
-            : 'bg-[#0e141f] text-slate-400 hover:text-slate-200 border border-[#1f293b]';
-          return (
-            <button
-              key={group.groupTitle}
-              type="button"
-              onClick={() => {
-                playUiSound('tab');
-                onSelectGroup(group.groupTitle);
-              }}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-t-sm text-[11px] font-mono font-bold uppercase tracking-wider transition ${cls}`}
-            >
-              {GROUP_ICONS[group.groupTitle]}
-              <span>{group.groupTitle}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      <button
-        type="button"
-        onClick={onTogglePanel}
-        className="mb-1 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-[#162233] hover:bg-[#1f3047] border border-[#8a6d33] text-[10px] font-mono font-bold uppercase tracking-wider text-amber-200"
-      >
-        {panelVisible ? <PanelLeftClose className="w-3.5 h-3.5" /> : <PanelLeftOpen className="w-3.5 h-3.5" />}
-        <MapIcon className="w-3.5 h-3.5" />
-        <span>{panelVisible ? 'Ver Mapa 3D' : 'Mostrar Ventanas'}</span>
-      </button>
-    </div>
-  );
+function findActiveGroup(
+  groups: NumberedNavGroup<InGameSidebarSection>[],
+  activeSection: InGameSidebarSection
+) {
+  return groups.find((g) => g.items.some((i) => i.id === activeSection)) ?? groups[0]!;
 }
 
 const DESPACHO_LABEL_BY_ROLE: Record<GameSetupConfiguration['role'], string> = {
@@ -473,89 +212,67 @@ const DESPACHO_LABEL_BY_ROLE: Record<GameSetupConfiguration['role'], string> = {
   SENADOR: 'Banca en el Senado'
 };
 
-function resolveSidebarItemLabel(
-  item: { id: InGameSidebarSection; label: string },
-  role: GameSetupConfiguration['role']
-): string {
-  if (item.id === 'DESPACHO_RESUMEN') {
-    return DESPACHO_LABEL_BY_ROLE[role];
-  }
-  return item.label;
-}
-
 function resolveGovSectionTitle(role: GameSetupConfiguration['role'], sec: InGameSidebarSection): string {
   const groups = SIDEBAR_GROUPS_BY_ROLE[role];
   for (const grp of groups) {
     const hit = grp.items.find((i) => i.id === sec);
-    if (hit) return `${grp.groupTitle} · ${resolveSidebarItemLabel(hit, role)}`;
+    if (hit) {
+      const label = hit.id === 'DESPACHO_RESUMEN' ? DESPACHO_LABEL_BY_ROLE[role] : hit.label;
+      return `${grp.title} · ${label}`;
+    }
   }
   return sec;
 }
 
-function CommandDockNav({
-  role,
-  activeSection,
-  panelVisible,
-  onSelectSection,
-  onTogglePanel
-}: {
-  role: GameSetupConfiguration['role'];
-  activeSection: InGameSidebarSection;
-  panelVisible: boolean;
-  onSelectSection: (sec: InGameSidebarSection, openParallel?: boolean) => void;
-  onTogglePanel: () => void;
-}) {
-  const groups = SIDEBAR_GROUPS_BY_ROLE[role];
-  const activeGroup = findActiveGroup(groups, activeSection);
-  const [browsedGroupTitle, setBrowsedGroupTitle] = useState(activeGroup.groupTitle);
+function buildDeltaMeta(
+  delta: number | undefined,
+  suffix: string,
+  invertGood = false
+): Pick<HudKpiMetric, 'deltaText' | 'deltaTone'> {
+  if (delta === undefined || Math.abs(delta) < 0.05) return {};
+  const isGood = invertGood ? delta < 0 : delta > 0;
+  return {
+    deltaText: `${formatArSigned(delta, 1)}${suffix}`,
+    deltaTone: isGood ? 'positive' : 'negative'
+  };
+}
 
-  useEffect(() => {
-    setBrowsedGroupTitle(findActiveGroup(groups, activeSection).groupTitle);
-  }, [groups, activeSection]);
+function buildGovernmentKpis(state: SimulationState): [HudKpiMetric, HudKpiMetric, HudKpiMetric] {
+  const prev = state.previousTurnMetrics;
+  const appDelta = prev ? state.publicOpinion.presidentialPersonalImagePct - prev.presidentialImagePct : undefined;
+  const ipcDelta = prev ? state.inflation.realMonthlyIpcPct - prev.realMonthlyIpcPct : undefined;
+  const resDelta = prev
+    ? state.centralBank.netLiquidReservesBillionUsd - prev.netReservesBillionUsd
+    : undefined;
 
-  const visibleGroup = groups.find((g) => g.groupTitle === browsedGroupTitle) ?? activeGroup;
+  return [
+    {
+      label: 'APROBACIÓN GESTIÓN',
+      value: `${formatArNumber(state.publicOpinion.managementApprovalPct, 1)} %`,
+      ...buildDeltaMeta(appDelta, ' pp')
+    },
+    {
+      label: 'INFLACIÓN MENSUAL',
+      value: `${formatArNumber(state.inflation.realMonthlyIpcPct, 1)} %`,
+      ...buildDeltaMeta(ipcDelta, ' pp', true)
+    },
+    {
+      label: 'RESERVAS NETAS',
+      value: `US$ ${formatArNumber(state.centralBank.netLiquidReservesBillionUsd, 1)} B`,
+      ...buildDeltaMeta(resDelta, ' B')
+    }
+  ];
+}
 
+function PoliticalCapitalBox({ remaining, activeCount }: { remaining: number; activeCount: number }) {
   return (
-    <nav className="bg-[#0b1018] border-b border-[#263142] z-20 shrink-0">
-      <div className="max-w-7xl mx-auto px-4">
-        <DockGroupTabs
-          groups={groups}
-          activeGroupTitle={visibleGroup.groupTitle}
-          panelVisible={panelVisible}
-          onSelectGroup={setBrowsedGroupTitle}
-          onTogglePanel={onTogglePanel}
-        />
-
-        <div className="flex flex-wrap items-center gap-1.5 py-2">
-          {visibleGroup.items.map((item) => {
-            const isSelected = activeSection === item.id;
-            const itemCls = isSelected
-              ? 'bg-[#1d3250] text-amber-200 border-[#b89342]'
-              : 'bg-[#101622] text-slate-300 hover:bg-[#162032] border-[#263142]';
-            const label = resolveSidebarItemLabel(item, role);
-            return (
-              <div key={item.id} className={`inline-flex items-center rounded-sm border transition ${itemCls}`}>
-                <button
-                  type="button"
-                  onClick={(ev) => onSelectSection(item.id, ev.shiftKey)}
-                  className="px-2.5 py-1 text-xs font-semibold"
-                >
-                  {label}
-                </button>
-                <button
-                  type="button"
-                  title={`Abrir "${label}" en ventana paralela`}
-                  onClick={() => onSelectSection(item.id, true)}
-                  className="pr-1.5 pl-0.5 py-1 text-slate-400 hover:text-amber-300"
-                >
-                  <Plus className="w-3 h-3" />
-                </button>
-              </div>
-            );
-          })}
-        </div>
+    <div className="pointer-events-auto inline-flex items-center gap-3 px-3 py-2 bg-[#0d060a]/92 border border-[#EFE9DA]/65">
+      <span className="font-display text-3xl leading-none text-[#EB3F7D]">{remaining}</span>
+      <div className="text-[10px] font-mono font-bold uppercase tracking-wider leading-tight text-[#F5EFE6]">
+        <div>DECISIONES</div>
+        <div className="text-slate-400">{activeCount} VIGENTES</div>
       </div>
-    </nav>
+    </div>
   );
 }
 
@@ -565,6 +282,7 @@ interface GameSidebarLayoutProps {
   activeSection: InGameSidebarSection;
   portableSaveBanner: string | null;
   saveError?: string | null;
+  measures?: SectorMeasureCard[];
   onSelectSection: (sec: InGameSidebarSection) => void;
   onAdvanceTurn: () => void;
   onExportSaveCode: () => void;
@@ -572,6 +290,9 @@ interface GameSidebarLayoutProps {
   onCloseSaveBanner: () => void;
   onExitToMenu: () => void;
   onSendAtn?: (provinceId: string) => void;
+  onPromiseWorks?: (provinceId: string) => void;
+  onCallGovernor?: (provinceId: string) => void;
+  onToggleMeasure?: (measureId: string) => void;
   renderSection: (section: InGameSidebarSection) => React.ReactNode;
   children?: React.ReactNode;
 }
@@ -590,13 +311,13 @@ function SaveStatusBanners({
   return (
     <>
       {saveError ? (
-        <div className="mb-4 p-3 rounded-sm bg-rose-950/70 border border-rose-700/70 flex items-center justify-between gap-3 rosca-toast-pop">
+        <div className="mb-3 p-3 rounded bg-rose-950/80 border border-rose-700/70 flex items-center justify-between gap-3 rosca-toast-pop">
           <div className="text-xs text-rose-200">{saveError}</div>
           {onRetrySave ? (
             <button
               type="button"
               onClick={onRetrySave}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm bg-rose-800 hover:bg-rose-700 text-xs font-bold text-white shrink-0"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-rose-800 hover:bg-rose-700 text-xs font-bold text-white shrink-0"
             >
               <RefreshCw className="w-3 h-3" />
               <span>Reintentar</span>
@@ -606,14 +327,14 @@ function SaveStatusBanners({
       ) : null}
 
       {portableSaveBanner ? (
-        <div className="mb-4 p-3 rounded-sm bg-[#0f291e] border border-emerald-700/70 flex items-center justify-between gap-4 rosca-toast-pop">
-          <div className="text-xs text-emerald-200 truncate font-mono">
-            Código portable listo para copiar: <code className="text-emerald-300">{portableSaveBanner}</code>
+        <div className="mb-3 p-3 rounded bg-[#140c11] border border-[#EB3F7D]/60 flex items-center justify-between gap-4 rosca-toast-pop">
+          <div className="text-xs text-[#EFE9DA] truncate font-mono">
+            Código portable listo: <code className="text-[#EB3F7D]">{portableSaveBanner}</code>
           </div>
           <button
             type="button"
             onClick={onCloseSaveBanner}
-            className="text-xs font-bold uppercase text-emerald-300 hover:text-white shrink-0"
+            className="text-xs font-bold uppercase text-[#EB3F7D] hover:text-white shrink-0"
           >
             Cerrar
           </button>
@@ -623,12 +344,36 @@ function SaveStatusBanners({
   );
 }
 
+function wrapProvinceToastAction(
+  handler: ((provinceId: string) => void) | undefined,
+  pushToast: (tag: string, text: string) => void,
+  tag: string,
+  formatText: (provId: string) => string
+): ((provinceId: string) => void) | undefined {
+  if (!handler) return undefined;
+  return (provId: string) => {
+    handler(provId);
+    pushToast(tag, formatText(provId));
+  };
+}
+
+function hasBlockingGovOverlay(state: SimulationState): boolean {
+  const midtermPending = Boolean(state.midterm2029Result && !state.midterm2029Result.dismissed);
+  return Boolean(
+    midtermPending ||
+      state.pendingDebtMilestone ||
+      state.pendingOppositionBill ||
+      state.government?.pendingEventId
+  );
+}
+
 export function GameSidebarLayout({
   setup,
   state,
   activeSection,
   portableSaveBanner,
   saveError,
+  measures = [],
   onSelectSection,
   onAdvanceTurn,
   onExportSaveCode,
@@ -636,16 +381,37 @@ export function GameSidebarLayout({
   onCloseSaveBanner,
   onExitToMenu,
   onSendAtn,
+  onPromiseWorks,
+  onCallGovernor,
+  onToggleMeasure,
   renderSection,
   children
 }: GameSidebarLayoutProps) {
-  const [selectedProvId, setSelectedProvId] = useState<string | null>(state.selectedProvinceId);
+  const [selectedProvId, setSelectedProvId] = useState<string | null>(state.selectedProvinceId || 'CABA');
+  const [handRotation, setHandRotation] = useState(0);
+  const [toast, setToast] = useState<FeedbackToastMessage | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
+
+  const pushToast = useCallback((tag: string, text: string) => {
+    setToast({ id: Date.now(), tag, text });
+    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = window.setTimeout(() => setToast(null), 2600);
+  }, []);
+
   const titleResolver = useCallback(
     (sec: InGameSidebarSection) => resolveGovSectionTitle(setup.role, sec),
     [setup.role]
   );
   const wm = useDesktopWindowManager('government', activeSection, titleResolver, onSelectSection);
   const prevSectionRef = useRef(activeSection);
+
+  const groups = SIDEBAR_GROUPS_BY_ROLE[setup.role];
+  const [browsedGroupTitle, setBrowsedGroupTitle] = useState(() => findActiveGroup(groups, activeSection).title);
+  const [subDrawerOpen, setSubDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    setBrowsedGroupTitle(findActiveGroup(groups, activeSection).title);
+  }, [groups, activeSection]);
 
   useEffect(() => {
     if (prevSectionRef.current !== activeSection) {
@@ -657,40 +423,126 @@ export function GameSidebarLayout({
   const selectSectionWithFx = (sec: InGameSidebarSection, openParallel = false) => {
     playUiSound('tab');
     prevSectionRef.current = sec;
+    setSubDrawerOpen(false);
     wm.openSectionWindow(sec, openParallel);
   };
 
+  useGameHotkeys({
+    disabled: hasBlockingGovOverlay(state),
+    groupCount: groups.length,
+    onToggleDesktop: wm.toggleShowDesktop,
+    onCloseTopWindow: () => {
+      if (subDrawerOpen) setSubDrawerOpen(false);
+      else if (wm.focusedWindowId) wm.closeWindow(wm.focusedWindowId);
+    },
+    onOpenGroupIndex: (idx) => {
+      const grp = groups[idx];
+      if (!grp) return;
+      setBrowsedGroupTitle(grp.title);
+      setSubDrawerOpen(true);
+    },
+    onAdvanceTurn
+  });
+
+  const politicalCapital = getPoliticalCapital(state);
+
+  const handleDecreeFromHand = useCallback(
+    (id: string) => {
+      if (!onToggleMeasure) return;
+      const target = measures.find((m) => m.id === id);
+      onToggleMeasure(id);
+      if (target) {
+        pushToast('BOLETÍN OFICIAL', target.active ? `Derogada: ${target.title}` : `Decreto firmado: ${target.title}`);
+      }
+    },
+    [measures, onToggleMeasure, pushToast]
+  );
+
+  const handCards = useMemo(() => {
+    if (!onToggleMeasure || measures.length === 0) return [];
+    return buildGovernmentHandCards(measures, handleDecreeFromHand, politicalCapital.remaining, state, handRotation);
+  }, [measures, onToggleMeasure, handleDecreeFromHand, politicalCapital.remaining, state, handRotation]);
+
+  const activeDecreesCount = measures.filter((m) => m.active).length;
+
+  const handleAtnWithToast = wrapProvinceToastAction(
+    onSendAtn,
+    pushToast,
+    'TESORO NACIONAL',
+    (provId) => `ATN girado a ${provId} (+lealtad provincial)`
+  );
+  const handleWorksWithToast = wrapProvinceToastAction(
+    onPromiseWorks,
+    pushToast,
+    'OBRA FEDERAL',
+    (provId) => `Obra comprometida en ${provId} (+5 lealtad · impacto 2 m.)`
+  );
+  const handleCallWithToast = wrapProvinceToastAction(
+    onCallGovernor,
+    pushToast,
+    'TELÉFONO ROJO',
+    (provId) => `Llamado a ${provId}: +6 relación bloques federales (-1 dec.)`
+  );
+
   return (
-    <div className="h-screen overflow-hidden text-slate-100 flex flex-col">
-      <TopTelemetryBar
-        setup={setup}
-        state={state}
+    <div className="h-screen overflow-hidden bg-[#090407] text-[#F5EFE6] flex flex-col">
+      <RoscaTopBar
+        dateAndModeLabel={`${formatGameDate(state.turnMonth)} · ${ROLE_LABELS[setup.role]}`}
+        kpis={buildGovernmentKpis(state)}
+        objectiveText={resolveFireOfTheMonth(state)}
+        advanceLabel="AVANZAR MES →"
+        hasVisibleWindows={wm.hasVisibleWindows}
         onAdvanceTurn={onAdvanceTurn}
         onExportSaveCode={onExportSaveCode}
+        onToggleDesktop={wm.toggleShowDesktop}
+        onResetLayout={wm.resetDesktopLayout}
         onExitToMenu={onExitToMenu}
-      />
-
-      <CommandDockNav
-        role={setup.role}
-        activeSection={activeSection}
-        panelVisible={wm.hasVisibleWindows}
-        onSelectSection={selectSectionWithFx}
-        onTogglePanel={() => {
-          playUiSound('tab');
-          wm.toggleShowDesktop();
-        }}
       />
 
       <div ref={wm.workspaceRef} className="relative flex-1 overflow-hidden">
         <div className={wm.isDraggingWindow ? 'absolute inset-0 z-0 pointer-events-none' : 'absolute inset-0 z-0'}>
-          <Argentina3DMapCanvas
-            provinces={state.provinces}
-            selectedProvinceId={selectedProvId}
-            panelOpen={wm.hasVisibleWindows}
-            onSelectProvince={(id) => setSelectedProvId(id || null)}
-            onSendAtn={onSendAtn}
-          />
+          <Suspense fallback={<div className="w-full h-full bg-[#090407]" />}>
+            <Argentina3DMapCanvas
+              provinces={state.provinces}
+              selectedProvinceId={selectedProvId}
+              panelOpen={wm.hasVisibleWindows}
+              capitalRemaining={politicalCapital.remaining}
+              bottomLeftSlot={
+                <PoliticalCapitalBox
+                  remaining={politicalCapital.remaining}
+                  activeCount={activeDecreesCount}
+                />
+              }
+              onSelectProvince={(id) => setSelectedProvId(id || null)}
+              onSendAtn={handleAtnWithToast}
+              onPromiseWorks={handleWorksWithToast}
+              onCallGovernor={handleCallWithToast}
+            />
+          </Suspense>
         </div>
+
+        <RoscaNumberedNav
+          groups={groups}
+          browsedGroupTitle={browsedGroupTitle}
+          activeSection={activeSection}
+          subDrawerOpen={subDrawerOpen}
+          onSelectGroup={(title) => {
+            setBrowsedGroupTitle(title);
+            setSubDrawerOpen(true);
+          }}
+          onSelectSection={selectSectionWithFx}
+          onCloseSubDrawer={() => setSubDrawerOpen(false)}
+        />
+
+        <BottomActionCardHand
+          cards={handCards}
+          totalCatalogCount={measures.length}
+          catalogNoun="decretos"
+          onRotateHand={() => setHandRotation((r) => r + 1)}
+          onViewAll={() => selectSectionWithFx('MEDIDAS', false)}
+        />
+
+        <ActionFeedbackToast toast={toast} />
 
         <DesktopWindowsLayer
           visibleWindows={wm.visibleWindows}
@@ -727,8 +579,6 @@ export function GameSidebarLayout({
         onToggleDesktopView={wm.toggleShowDesktop}
         onResetLayout={wm.resetDesktopLayout}
       />
-
-      <LiveNewsAndMarketTicker govState={state} />
     </div>
   );
 }

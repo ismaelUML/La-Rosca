@@ -24,7 +24,7 @@ const TAX_CATEGORIES: Array<{ id: 'TODOS' | TaxCategory; label: string }> = [
 ];
 
 const TAX_CATEGORY_COLOR_MAP: Record<TaxCategory, string> = {
-  COMERCIO_EXTERIOR: 'text-amber-400 bg-amber-950/60 border-amber-700/60',
+  COMERCIO_EXTERIOR: 'text-[#EB3F7D] bg-amber-950/60 border-amber-700/60',
   CONSUMO: 'text-orange-400 bg-orange-950/60 border-orange-700/60',
   RENTA: 'text-emerald-400 bg-emerald-950/60 border-emerald-700/60',
   TRABAJO: 'text-sky-400 bg-sky-950/60 border-sky-700/60',
@@ -57,8 +57,8 @@ function TaxCardHeader({ tax }: { tax: TaxItem }) {
         <span
           className={`px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold border ${
             isDecreto
-              ? 'bg-amber-950/70 border-amber-600/70 text-amber-300'
-              : 'bg-[#132033] border-[#334155] text-sky-200'
+              ? 'bg-amber-950/70 border-amber-600/70 text-[#f472b6]'
+              : 'bg-[#132033] border-white/20 text-sky-200'
           }`}
         >
           {isDecreto ? 'Por Decreto' : 'Por Ley'}
@@ -76,7 +76,7 @@ function TaxCardMetrics({ tax }: { tax: TaxItem }) {
   const usdText = `${tax.revenueMillionUsdMonthly ?? Math.round(tax.revenuePctGdp * 575)} M USD/mes`;
 
   return (
-    <div className="flex items-center justify-between text-xs py-1.5 px-3 rounded-sm bg-[#090d14] border border-[#263142]">
+    <div className="flex items-center justify-between text-xs py-1.5 px-3 rounded-sm bg-[#0b0508] border border-white/15">
       <span className="text-slate-400">Recaudación proyectada</span>
       <span className="font-mono font-bold text-emerald-400">
         {gdpText} <span className="text-slate-500 font-normal">({usdText})</span>
@@ -131,12 +131,12 @@ function TaxCard({
         <TaxSliderControl tax={tax} onRateChange={onRateChange} />
       </div>
 
-      <div className="pt-2 border-t border-[#263142]">
+      <div className="pt-2 border-t border-white/15">
         <span
           className={`inline-block text-[10px] font-mono font-bold px-2 py-1 rounded-sm w-full text-center ${
             isDecreto
-              ? 'bg-amber-950/30 border border-amber-800/60 text-amber-300'
-              : 'bg-[#132033] border border-[#334155] text-sky-200'
+              ? 'bg-amber-950/30 border border-amber-800/60 text-[#f472b6]'
+              : 'bg-[#132033] border border-white/20 text-sky-200'
           }`}
         >
           {isDecreto
@@ -169,7 +169,7 @@ export function TaxesManagementSection({ taxes, onDispatch }: TaxesManagementSec
         eyebrow="Presupuesto · Matriz Tributaria Nacional"
         title="Impuestos"
         description={`La recaudación fiscal total es de ${totalGdpPct.toFixed(2).replace('.', ',')} % del PIB (${(totalUsdMonthly / 1000).toFixed(2).replace('.', ',')} mil M USD/mes). ${decreeCount} tributos se fijan por decreto y ${lawCount} por ley del Congreso.`}
-        icon={<Scale className="w-4 h-4 text-amber-300" />}
+        icon={<Scale className="w-4 h-4 text-[#f472b6]" />}
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
@@ -187,7 +187,7 @@ export function TaxesManagementSection({ taxes, onDispatch }: TaxesManagementSec
         </div>
         <div className="hoi-panel p-3.5 rounded-sm">
           <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Por Decreto (Inmediatos)</div>
-          <div className="text-lg font-mono font-extrabold text-amber-400 mt-0.5">
+          <div className="text-lg font-mono font-extrabold text-[#EB3F7D] mt-0.5">
             {decreeCount} tributos
           </div>
         </div>
@@ -210,8 +210,8 @@ export function TaxesManagementSection({ taxes, onDispatch }: TaxesManagementSec
             }}
             className={`px-3 py-1.5 rounded-sm text-xs font-mono font-bold transition border ${
               selectedCat === cat.id
-                ? 'bg-[#1d3250] border-[#b89342] text-amber-100'
-                : 'bg-[#090d14] text-slate-400 border-[#263142] hover:text-slate-100'
+                ? 'bg-[#EB3F7D]/20 border-[#EB3F7D] text-[#F5EFE6]'
+                : 'bg-[#0b0508] text-slate-400 border-white/15 hover:text-slate-100'
             }`}
           >
             {cat.label}

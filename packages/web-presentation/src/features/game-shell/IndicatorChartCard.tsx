@@ -7,6 +7,7 @@ import {
   SEMANTIC_HEX,
   SEMANTIC_TEXT_CLASS
 } from '../../lib/semanticColors.js';
+import { formatArNumber } from '../../lib/formatters.js';
 
 // Tarjeta tactica de indicador macroeconomico y social (estilo acero y bronce):
 // Numero principal dominante, comparativa contra inicio de serie, variacion mensual y curva SVG.
@@ -54,7 +55,7 @@ function IndicatorCardFooter({ card, showDetail, onToggleDetail }: IndicatorCard
   const accumDelta = Number((card.currentValue - firstVal).toFixed(2));
 
   return (
-    <div className="pt-3 border-t border-[#263142] mt-2 space-y-2">
+    <div className="pt-3 border-t border-white/15 mt-2 space-y-2">
       {card.subtitle ? <p className="text-[11px] text-slate-300 leading-relaxed">{card.subtitle}</p> : null}
       <div className="flex items-center justify-between text-[11px] font-mono">
         <span className="text-slate-400">
@@ -63,7 +64,7 @@ function IndicatorCardFooter({ card, showDetail, onToggleDetail }: IndicatorCard
         <button
           type="button"
           onClick={onToggleDetail}
-          className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-300 hover:text-amber-100 transition"
+          className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#f472b6] hover:text-[#F5EFE6] transition"
         >
           {showDetail ? '▲ Ocultar serie' : '▼ Serie histórica'}
         </button>
@@ -74,10 +75,10 @@ function IndicatorCardFooter({ card, showDetail, onToggleDetail }: IndicatorCard
           {card.points.map((pt) => (
             <div
               key={pt.label}
-              className="px-2 py-1 rounded-sm bg-[#090d14] border border-[#1e293b] flex justify-between"
+              className="px-2 py-1 rounded-sm bg-[#0b0508] border border-white/10 flex justify-between"
             >
               <span className="text-slate-400">{pt.label}</span>
-              <span className="text-amber-100 font-bold">{pt.value}</span>
+              <span className="text-[#F5EFE6] font-bold">{pt.value}</span>
             </div>
           ))}
         </div>
@@ -103,19 +104,19 @@ export function IndicatorChartCard({ card }: IndicatorChartCardProps) {
   const accentHex = SEMANTIC_HEX[heroTone];
 
   return (
-    <div className="hoi-panel rounded-sm p-5 flex flex-col justify-between gap-3 hover:border-[#8a6d33] transition">
+    <div className="hoi-panel rounded-sm p-5 flex flex-col justify-between gap-3 hover:border-[#EB3F7D]/55 transition">
       <div>
-        <div className="flex items-start justify-between gap-3 border-b border-[#1e293b] pb-3">
+        <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
           <div className="space-y-1">
-            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300/90">
+            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#f472b6]/90">
               {card.category.replace('_', ' ')}
             </div>
-            <div className="text-sm font-serif font-bold uppercase tracking-wide text-amber-100">
+            <div className="text-sm font-serif font-bold uppercase tracking-wide text-[#F5EFE6]">
               {card.title}
             </div>
             <div className="flex items-baseline gap-2 pt-0.5">
               <span className={`text-3xl sm:text-4xl font-mono font-black tracking-tight tabular-nums ${SEMANTIC_TEXT_CLASS[heroTone]}`}>
-                {card.currentValue}
+                {formatArNumber(card.currentValue, 1)}
               </span>
               <span className="text-xs font-mono text-slate-400 font-semibold">{card.unit}</span>
             </div>
@@ -125,13 +126,15 @@ export function IndicatorChartCard({ card }: IndicatorChartCardProps) {
             <span className={`inline-block px-2 py-0.5 rounded-sm border text-xs font-mono font-bold ${SEMANTIC_BG_BADGE[deltaTone]}`}>
               {formatSignedDelta(card.monthlyVariation)} {card.variationUnit}
             </span>
-            <div className="text-[10px] font-mono text-slate-400 bg-[#090d14] border border-[#1e293b] px-2 py-0.5 rounded-sm">
-              mín {card.minValue} · máx {card.maxValue}
+            <div className="text-[10px] font-mono text-slate-400 bg-[#0b0508] border border-white/10 px-2 py-0.5 rounded-sm">
+              {card.minValue === card.maxValue
+                ? `Base inicial ${formatArNumber(card.currentValue, 1)}`
+                : `mín ${formatArNumber(card.minValue, 1)} · máx ${formatArNumber(card.maxValue, 1)}`}
             </div>
           </div>
         </div>
 
-        <div className="mt-3 pt-2 relative bg-[#070a10] border border-[#1a2434] rounded-sm px-2 pb-1">
+        <div className="mt-3 pt-2 relative bg-[#090407] border border-[#1a2434] rounded-sm px-2 pb-1">
           <svg viewBox="0 0 440 118" className="w-full h-24 overflow-visible">
             <line x1="20" y1="16" x2="420" y2="16" stroke="#1b2333" strokeDasharray="3 3" />
             <line x1="20" y1="54" x2="420" y2="54" stroke="#1b2333" strokeDasharray="3 3" />
@@ -161,7 +164,7 @@ export function IndicatorChartCard({ card }: IndicatorChartCardProps) {
           </svg>
 
           {hoveredPoint ? (
-            <div className="absolute top-2 right-2 px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#b89342] text-[11px] font-mono text-amber-100 shadow-lg">
+            <div className="absolute top-2 right-2 px-2.5 py-1 rounded-sm bg-[#0b0508] border border-[#EB3F7D] text-[11px] font-mono text-[#F5EFE6] shadow-lg">
               {hoveredPoint.label}:{' '}
               <strong style={{ color: accentHex }}>
                 {hoveredPoint.value} {card.unit}

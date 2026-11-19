@@ -257,22 +257,22 @@ export function Congress3DHemicycleCanvas({
   }, [revealedCount]);
 
   return (
-    <div className="hoi-panel rounded-sm p-3.5 bg-[#070a10] border border-[#263142] flex flex-col justify-between space-y-2">
-      <div className="flex items-center justify-between text-[11px] font-mono border-b border-[#1e293b] pb-1.5">
-        <span className="text-amber-200 font-bold uppercase flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+    <div className="hoi-panel rounded-sm p-3.5 bg-[#090407] border border-white/15 flex flex-col justify-between space-y-2">
+      <div className="flex items-center justify-between text-[11px] font-mono border-b border-white/10 pb-1.5">
+        <span className="text-[#EFE9DA] font-bold uppercase flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-[#EB3F7D]" />
           {chamberLabel} · Vista 3D Orbital
         </span>
         <button
           type="button"
           onClick={() => setAutoOrbit((v) => !v)}
-          className="px-2 py-0.5 rounded-sm bg-[#101826] border border-[#2d3c52] text-[10px] text-sky-300 hover:text-white"
+          className="px-2 py-0.5 rounded-sm bg-[#101826] border border-white/15 text-[10px] text-sky-300 hover:text-white"
         >
           {autoOrbit ? 'Pausar Cámara' : 'Paneo Orbital'}
         </button>
       </div>
 
-      <div ref={containerRef} className="w-full h-[215px] rounded-sm overflow-hidden border border-[#1e293b]" />
+      <div ref={containerRef} className="w-full h-[215px] rounded-sm overflow-hidden border border-white/10" />
 
       <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 pt-1">
         <span>Arrastrá con el mouse para orbitar el recinto en 3D</span>
@@ -343,7 +343,7 @@ function resolveChapterStatusBadge(
   if (decision === 'SUPRIMIR_ARTICULO') {
     return {
       label: 'RETIRADO POR EL EJECUTIVO',
-      cls: 'bg-amber-950/50 text-amber-300 border-amber-700/70'
+      cls: 'bg-amber-950/50 text-[#f472b6] border-amber-700/70'
     };
   }
   if (chapterYes >= majorityNeeded) {
@@ -380,18 +380,18 @@ export function BillChaptersParticularVotePanel({
   };
 
   return (
-    <div className="hoi-panel rounded-sm p-4 bg-[#070a10] border border-[#8a6d33] space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1e293b] pb-2.5">
+    <div className="hoi-panel rounded-sm p-4 bg-[#090407] border border-[#EB3F7D]/55 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2.5">
         <div>
-          <div className="text-[10px] font-mono uppercase tracking-widest text-amber-300">
+          <div className="text-[10px] font-mono uppercase tracking-widest text-[#f472b6]">
             TRATAMIENTO EN PARTICULAR · ARTÍCULO POR ARTÍCULO
           </div>
-          <h4 className="text-sm font-serif font-bold uppercase text-amber-100">
+          <h4 className="text-sm font-serif font-bold uppercase text-[#F5EFE6]">
             Desglose por Capítulos: {billTitle}
           </h4>
         </div>
-        <span className="px-2.5 py-1 rounded-sm bg-[#0c1119] border border-[#263142] text-[11px] font-mono text-slate-300">
-          Mayoría en particular requerida: <strong className="text-amber-300">{majorityNeeded} votos</strong>
+        <span className="px-2.5 py-1 rounded-sm bg-[#11080d] border border-white/15 text-[11px] font-mono text-slate-300">
+          Mayoría en particular requerida: <strong className="text-[#f472b6]">{majorityNeeded} votos</strong>
         </span>
       </div>
 
@@ -404,12 +404,12 @@ export function BillChaptersParticularVotePanel({
           return (
             <div
               key={cap.id}
-              className="p-3 rounded-sm bg-[#0c1119] border border-[#263142] space-y-2 flex flex-col justify-between"
+              className="p-3 rounded-sm bg-[#11080d] border border-white/15 space-y-2 flex flex-col justify-between"
             >
               <div className="space-y-1">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <span className="text-[10px] font-mono font-bold text-amber-300">{cap.articles}</span>
+                    <span className="text-[10px] font-mono font-bold text-[#f472b6]">{cap.articles}</span>
                     <h5 className="text-xs font-serif font-bold text-slate-100">{cap.title}</h5>
                   </div>
                   <span className={`px-2 py-0.5 rounded-sm border text-[9px] font-mono font-bold shrink-0 ${badge.cls}`}>
@@ -419,14 +419,14 @@ export function BillChaptersParticularVotePanel({
                 <p className="text-[11px] text-slate-400">{cap.description}</p>
               </div>
 
-              <div className="space-y-2 pt-1.5 border-t border-[#1e293b]">
+              <div className="space-y-2 pt-1.5 border-t border-white/10">
                 <div className="flex items-center justify-between text-[10px] font-mono">
                   <span className="text-slate-400 flex items-center gap-1">
-                    <ShieldAlert className="w-3 h-3 text-amber-400" />
+                    <ShieldAlert className="w-3 h-3 text-[#EB3F7D]" />
                     Disidencias dialoguistas: -{cap.rebelDissentSeats} bancas
                   </span>
                   <span className="text-slate-200 font-bold">
-                    Votos capítulo: <strong className="text-amber-300">{chapterYes}</strong> / {majorityNeeded}
+                    Votos capítulo: <strong className="text-[#f472b6]">{chapterYes}</strong> / {majorityNeeded}
                   </span>
                 </div>
 
@@ -436,8 +436,8 @@ export function BillChaptersParticularVotePanel({
                     onClick={() => handleSelectDecision(cap.id, 'ORIGINAL')}
                     className={`py-1 px-1.5 rounded-sm border font-bold transition ${
                       decision === 'ORIGINAL'
-                        ? 'bg-[#1d3250] text-amber-100 border-[#b89342]'
-                        : 'bg-[#090d14] text-slate-400 border-[#263142]'
+                        ? 'bg-[#EB3F7D]/20 text-[#F5EFE6] border-[#EB3F7D]'
+                        : 'bg-[#0b0508] text-slate-400 border-white/15'
                     }`}
                   >
                     Texto Puro
@@ -448,7 +448,7 @@ export function BillChaptersParticularVotePanel({
                     className={`py-1 px-1.5 rounded-sm border font-bold transition ${
                       decision === 'CONCESION_DIALOGUISTA'
                         ? 'bg-emerald-950/70 text-emerald-200 border-emerald-500'
-                        : 'bg-[#090d14] text-slate-400 border-[#263142]'
+                        : 'bg-[#0b0508] text-slate-400 border-white/15'
                     }`}
                   >
                     Ceder Texto (+4)
@@ -458,8 +458,8 @@ export function BillChaptersParticularVotePanel({
                     onClick={() => handleSelectDecision(cap.id, 'SUPRIMIR_ARTICULO')}
                     className={`py-1 px-1.5 rounded-sm border font-bold transition ${
                       decision === 'SUPRIMIR_ARTICULO'
-                        ? 'bg-amber-950/70 text-amber-200 border-amber-500'
-                        : 'bg-[#090d14] text-slate-400 border-[#263142]'
+                        ? 'bg-amber-950/70 text-[#EFE9DA] border-amber-500'
+                        : 'bg-[#0b0508] text-slate-400 border-white/15'
                     }`}
                   >
                     Retirar Cap.
@@ -473,7 +473,7 @@ export function BillChaptersParticularVotePanel({
 
       <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
         <span className="inline-flex items-center gap-1.5">
-          <FileCheck2 className="w-3.5 h-3.5 text-amber-300" />
+          <FileCheck2 className="w-3.5 h-3.5 text-[#f472b6]" />
           Si un capítulo cae por disidencias, podés ceder redacción con bloques dialoguistas para blindar el articulado.
         </span>
         <span className="inline-flex items-center gap-1 text-emerald-400">

@@ -32,9 +32,9 @@ function CabinetInaugurationBanner({ assignedCount }: { assignedCount: number })
   if (assignedCount >= 10) return null;
 
   return (
-    <div className="p-4 rounded-sm bg-[#162233] border border-[#8a6d33] flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <div className="p-4 rounded-sm bg-[#1c0e16] border border-[#EB3F7D]/55 flex flex-col md:flex-row md:items-center justify-between gap-3">
       <div className="space-y-1">
-        <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-400">
+        <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#EB3F7D]">
           NOMBRAMIENTO INICIAL DEL GABINETE NACIONAL
         </div>
         <p className="text-sm font-bold text-slate-100">
@@ -44,7 +44,7 @@ function CabinetInaugurationBanner({ assignedCount }: { assignedCount: number })
           Designá titulares para cada ministerio según competencia técnica, lealtad y cuotas de coalición.
         </p>
       </div>
-      <div className="shrink-0 px-3 py-1.5 rounded-sm bg-[#0b1018] border border-[#263142] text-xs font-mono font-bold text-amber-200 text-center">
+      <div className="shrink-0 px-3 py-1.5 rounded-sm bg-[#0e070b] border border-white/15 text-xs font-mono font-bold text-[#EFE9DA] text-center">
         {assignedCount} / 10 CUBIERTAS
       </div>
     </div>
@@ -54,7 +54,7 @@ function CabinetInaugurationBanner({ assignedCount }: { assignedCount: number })
 function MinisterBadge({ minister, isVacant }: { minister: CabinetMinister; isVacant: boolean }) {
   if (isVacant) {
     return (
-      <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#2d210b] text-amber-300 border border-amber-700/70 uppercase tracking-wider">
+      <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#2d210b] text-[#f472b6] border border-amber-700/70 uppercase tracking-wider">
         VACANTE
       </span>
     );
@@ -62,11 +62,11 @@ function MinisterBadge({ minister, isVacant }: { minister: CabinetMinister; isVa
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#17202e] text-slate-200 border border-[#334155]">
+      <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#17202e] text-slate-200 border border-white/20">
         {minister.partySigla} · {minister.affinityPct}%
       </span>
       {minister.isCoalitionQuota ? (
-        <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#2d210b] text-amber-300 border border-amber-700/60">
+        <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#2d210b] text-[#f472b6] border border-amber-700/60">
           CUOTA
         </span>
       ) : null}
@@ -101,7 +101,7 @@ function MinisterActionButtons({
       <button
         type="button"
         onClick={onReinforce}
-        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm bg-[#162233] hover:bg-[#1f3047] border border-[#2c3f59] text-[11px] font-semibold text-slate-200"
+        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm bg-[#1c0e16] hover:bg-[#1f3047] border border-[#2c3f59] text-[11px] font-semibold text-slate-200"
       >
         <Shield className="w-3 h-3 text-emerald-400" />
         <span>Respaldar</span>
@@ -121,13 +121,13 @@ function MinisterActionButtons({
 function MinisterPortrait({ minister, isVacant }: { minister: CabinetMinister; isVacant: boolean }) {
   if (isVacant) {
     return (
-      <div className="w-11 h-11 shrink-0 rounded-sm border bg-[#2d210b] border-[#8a6d33] text-amber-300 flex items-center justify-center font-mono">
+      <div className="w-11 h-11 shrink-0 rounded-sm border bg-[#2d210b] border-[#EB3F7D]/55 text-[#f472b6] flex items-center justify-center font-mono">
         <UserPlus className="w-4 h-4" />
       </div>
     );
   }
   return (
-    <div className="w-11 h-11 shrink-0 rounded-sm border bg-[#17253b] border-[#354b6e] text-amber-100 flex flex-col items-center justify-center font-mono">
+    <div className="w-11 h-11 shrink-0 rounded-sm border bg-[#17253b] border-[#354b6e] text-[#F5EFE6] flex flex-col items-center justify-center font-mono">
       <span className="text-xs font-extrabold leading-none">{extractInitials(minister.ministerName)}</span>
       <UserCheck className="w-3 h-3 mt-0.5 opacity-70" />
     </div>
@@ -144,9 +144,9 @@ function MinisterCard({
   onOpenReplace: () => void;
 }) {
   const isVacant = checkIsMinisterVacant(minister);
-  const borderCls = isVacant ? 'border-[#8a6d33]' : 'border-[#263142]';
-  const nameCls = isVacant ? 'text-amber-300' : 'text-slate-100';
-  const effectCls = isVacant ? 'text-amber-300' : 'text-emerald-300';
+  const borderCls = isVacant ? 'border-[#EB3F7D]/55' : 'border-white/15';
+  const nameCls = isVacant ? 'text-[#f472b6]' : 'text-slate-100';
+  const effectCls = isVacant ? 'text-[#f472b6]' : 'text-emerald-300';
 
   return (
     <div className={`rounded-sm bg-[#11161f] border p-4 flex flex-col justify-between gap-3.5 ${borderCls}`}>
@@ -167,17 +167,17 @@ function MinisterCard({
         </div>
 
         <div className="grid grid-cols-3 gap-2 mt-3.5 text-xs">
-          <div className="p-2 rounded-sm bg-[#0b1018] border border-[#222c3c]">
+          <div className="p-2 rounded-sm bg-[#0e070b] border border-[#222c3c]">
             <div className="text-[10px] font-mono uppercase text-slate-400">Idoneidad</div>
             <div className="font-mono font-bold text-slate-100 text-sm">{minister.competence}</div>
           </div>
-          <div className="p-2 rounded-sm bg-[#0b1018] border border-[#222c3c]">
+          <div className="p-2 rounded-sm bg-[#0e070b] border border-[#222c3c]">
             <div className="text-[10px] font-mono uppercase text-slate-400">Lealtad</div>
             <div className="font-mono font-bold text-emerald-400 text-sm">{minister.loyalty}</div>
           </div>
-          <div className="p-2 rounded-sm bg-[#0b1018] border border-[#222c3c]">
+          <div className="p-2 rounded-sm bg-[#0e070b] border border-[#222c3c]">
             <div className="text-[10px] font-mono uppercase text-slate-400">Desgaste</div>
-            <div className="font-mono font-bold text-amber-400 text-sm">{minister.risk}</div>
+            <div className="font-mono font-bold text-[#EB3F7D] text-sm">{minister.risk}</div>
           </div>
         </div>
 
@@ -186,8 +186,8 @@ function MinisterCard({
             <span className="text-slate-400 uppercase">Gestión de cartera</span>
             <span className="font-bold text-slate-100">{minister.performance}/100</span>
           </div>
-          <div className="w-full h-1.5 rounded-sm bg-[#0b1018] border border-[#222c3c] overflow-hidden">
-            <div style={{ width: `${minister.performance}%` }} className="h-full bg-[#b89342]" />
+          <div className="w-full h-1.5 rounded-sm bg-[#0e070b] border border-[#222c3c] overflow-hidden">
+            <div style={{ width: `${minister.performance}%` }} className="h-full bg-[#EB3F7D]" />
           </div>
         </div>
       </div>
@@ -232,8 +232,8 @@ export function CabinetView({
 
   return (
     <div className="space-y-4">
-      <div className="border-b border-[#263142] pb-3">
-        <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-400">
+      <div className="border-b border-white/15 pb-3">
+        <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#EB3F7D]">
           DESPACHO PRESIDENCIAL · 10 CARTERAS
         </div>
         <h1 className="text-2xl font-serif font-black text-slate-100 mt-0.5">Gabinete Nacional</h1>

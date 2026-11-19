@@ -26,11 +26,11 @@ const RIGHT_VARIANT_CLASSES: Record<StripActionVariant, string> = {
   done: 'bg-[#10261c] hover:bg-[#153326] text-emerald-300 border-[#22523c]',
   pending: 'bg-[#141b26] hover:bg-[#1b2533] text-slate-200 border-[#2a3648]',
   danger: 'bg-[#361318] hover:bg-[#471920] text-rose-200 border-[#6e242d]',
-  primary: 'bg-[#1a2d47] hover:bg-[#223a5c] text-amber-100 border-[#8a6d33]'
+  primary: 'bg-[#1a2d47] hover:bg-[#223a5c] text-[#F5EFE6] border-[#EB3F7D]/55'
 };
 
 function resolveBorderClass(urgentLabel?: string): string {
-  return urgentLabel ? 'border-[#b89342]' : 'border-[#263142]';
+  return urgentLabel ? 'border-[#EB3F7D]' : 'border-white/15';
 }
 
 function RightActionButton({ rightAction }: { rightAction?: StripRightAction }) {
@@ -56,7 +56,7 @@ export function ActionStripCard({
   icon,
   iconTileClass = 'bg-[#0e131b] text-slate-300',
   urgentLabel,
-  urgentClass = 'bg-[#b89342] text-[#100e09]',
+  urgentClass = 'bg-[#EB3F7D] text-[#090407]',
   title,
   subtitle,
   tradeoff,
@@ -67,7 +67,7 @@ export function ActionStripCard({
     <div
       className={`rounded-sm bg-[#0f141d] border overflow-hidden flex items-stretch transition-colors ${resolveBorderClass(urgentLabel)}`}
     >
-      <div className={`w-14 sm:w-16 shrink-0 flex items-center justify-center border-r border-[#263142] font-mono text-[11px] font-bold tracking-wider uppercase ${iconTileClass}`}>
+      <div className={`w-14 sm:w-16 shrink-0 flex items-center justify-center border-r border-white/15 font-mono text-[11px] font-bold tracking-wider uppercase ${iconTileClass}`}>
         <span>{icon}</span>
       </div>
 

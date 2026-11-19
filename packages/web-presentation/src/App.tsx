@@ -197,7 +197,9 @@ function CampaignActivePanel({
     EMIGRACION: <CampaignDemografiaPaisView key="EMIGRACION" initialTab="EMIGRACION" campaignState={state} />,
     TEJIDO_SOCIAL: <CampaignDemografiaPaisView key="TEJIDO_SOCIAL" initialTab="TEJIDO_SOCIAL" campaignState={state} />,
     MATRIZ_PRODUCTIVA: <CampaignDemografiaPaisView key="MATRIZ_PRODUCTIVA" initialTab="MATRIZ_PRODUCTIVA" campaignState={state} />,
-    REGISTRO_DIARIO: <RegistroHistoryView historyLog={state.historyLog} />
+    REGISTRO_DIARIO: (
+      <RegistroHistoryView historyLog={state.historyLog} campaignState={state} />
+    )
   };
 
   return <>{viewMap[section] ?? viewMap.RESUMEN}</>;
@@ -255,7 +257,7 @@ function ActiveSectionRenderer(props: ActiveSectionRendererProps) {
         playerCandidateName={props.campaignState.candidateName || props.setup.characterName}
       />
     ),
-    REGISTRO: <RegistroHistoryView historyLog={props.state.eventLog} />,
+    REGISTRO: <RegistroHistoryView historyLog={props.state.eventLog} govState={props.state} />,
     INDICADORES: (
       <IndicatorsDashboardView
         state={props.state}
@@ -275,6 +277,7 @@ function ActiveSectionRenderer(props: ActiveSectionRendererProps) {
     MEDIDAS: (
       <SectorMeasuresView
         measures={props.measures}
+        politicalCapital={props.state.politicalCapital}
         onToggleMeasure={props.onToggleMeasure}
       />
     ),
@@ -529,7 +532,7 @@ function applyInternaSplitPenalty(state: CampaignSimulationState): CampaignSimul
       apoyoPartidario: Math.max(10, state.attributes.apoyoPartidario - 15)
     },
     historyLog: [
-      `Mes ${state.stage.currentMonthIndex}: Rompiste el sello tras caer en la interna y competís con Boleta Corta (-15 Apoyo Partidario · -15 ¥).`,
+      `Mes ${state.stage.currentMonthIndex}: Rompiste el sello tras caer en la interna y competís con Boleta Corta (-15 Apoyo Partidario · -US$ 15 M).`,
       ...state.historyLog
     ]
   };
@@ -992,6 +995,7 @@ export function App() {
         onRetrySave={handleExportSaveCode}
         onCloseSaveBanner={() => setPortableSaveBanner(null)}
         onExitToMenu={() => setScreenMode('LANDING')}
+        onExecuteAction={handleExecuteCampaignAction}
         renderSection={(winSection) => (
           <CampaignActivePanel
             section={winSection}
@@ -1031,7 +1035,12 @@ export function App() {
 
   const handleAdvanceGovernmentTurn = () => {
     const gov = getGovernmentRuntime(state);
-    if (gov.pendingEventId !== null || gov.mandateStatus !== 'EN_CURSO') {
+    if (
+      gov.pendingEventId !== null ||
+      gov.mandateStatus !== 'EN_CURSO' ||
+      Boolean(state.pendingDebtMilestone) ||
+      Boolean(state.pendingOppositionBill)
+    ) {
       return;
     }
     setState((prev) => advanceGovernmentMonth(prev));
@@ -1050,7 +1059,11 @@ export function App() {
       onRetrySave={handleExportSaveCode}
       onCloseSaveBanner={() => setPortableSaveBanner(null)}
       onExitToMenu={() => setScreenMode('LANDING')}
+      measures={measures}
       onSendAtn={(provinceId) => dispatchAction({ type: 'SEND_ATN_TO_PROVINCE', provinceId, amountPctGdp: 0.08 })}
+      onPromiseWorks={(provinceId) => dispatchAction({ type: 'PROMISE_PROVINCIAL_WORKS', provinceId })}
+      onCallGovernor={(provinceId) => dispatchAction({ type: 'CALL_GOVERNOR_FOR_QUORUM', provinceId })}
+      onToggleMeasure={(measureId) => dispatchAction({ type: 'TOGGLE_MEASURE', measureId })}
       renderSection={(winSection) => (
         <ActiveSectionRenderer
           section={winSection}
@@ -1088,6 +1101,7 @@ export function App() {
         state={state}
         monthLabel={`Mes ${state.turnMonth}`}
         onChooseEventOption={handleChooseGovernmentEvent}
+        onDispatch={dispatchAction}
         onExitToMenu={() => setScreenMode('LANDING')}
       />
     </GameSidebarLayout>

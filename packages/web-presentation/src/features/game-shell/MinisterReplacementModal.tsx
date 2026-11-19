@@ -3,6 +3,7 @@ import type { CabinetMinister, RealPoliticianPreset } from '@argentina-sim/domai
 import { REAL_POLITICIANS_2027 } from '@argentina-sim/infrastructure';
 import { AlertTriangle, Award, Check, UserCheck, X } from 'lucide-react';
 import { playUiSound } from '../../lib/gameFeedback.js';
+import { ViewportModalPortal } from '../../components/ui/ViewportModalPortal.js';
 
 // Relevo de cartera: excluye al propio presidente/jugador y ordena primero
 // a los perfiles idoneos para el ministerio, acoplado a la estetica La Rosca.
@@ -154,20 +155,20 @@ function CandidateItem({
       }}
       className={`w-full p-3.5 rounded-sm border text-left transition flex flex-col justify-between gap-2 ${
         isSelected
-          ? 'bg-[#17253b] border-[#c9a24d] shadow-md'
-          : 'bg-[#0b1018] border-[#263142] hover:border-[#415370]'
+          ? 'bg-[#17253b] border-[#EB3F7D] shadow-md'
+          : 'bg-[#0e070b] border-white/15 hover:border-[#415370]'
       }`}
     >
       <div>
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#141b26] text-slate-200 border border-[#334155]">
+            <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#141b26] text-slate-200 border border-white/20">
               {pol.partySigla}
             </span>
             <span className="font-extrabold text-sm text-slate-100">{pol.name}</span>
           </div>
           {isQuota ? (
-            <span className="text-[10px] font-mono font-bold text-amber-300 bg-[#2d210b] px-2 py-0.5 rounded-sm border border-amber-700/60">
+            <span className="text-[10px] font-mono font-bold text-[#f472b6] bg-[#2d210b] px-2 py-0.5 rounded-sm border border-amber-700/60">
               CUOTA COALICIÓN
             </span>
           ) : (
@@ -186,7 +187,7 @@ function CandidateItem({
             <span>IDÓNEO (+12 comp.)</span>
           </span>
         ) : (
-          <span className="text-amber-400 font-mono font-bold text-[11px] inline-flex items-center gap-1">
+          <span className="text-[#EB3F7D] font-mono font-bold text-[11px] inline-flex items-center gap-1">
             <AlertTriangle className="w-3.5 h-3.5" />
             <span>Sin especialidad (-18 comp.)</span>
           </span>
@@ -239,15 +240,16 @@ export function MinisterReplacementModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 md:p-6 overflow-y-auto">
-      <div className="w-full max-w-2xl hoi-panel rounded-sm shadow-2xl overflow-hidden rosca-panel-enter">
+    <ViewportModalPortal>
+      <div className="fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 md:p-6 overflow-y-auto">
+        <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto my-auto hoi-panel rounded-lg shadow-2xl rosca-panel-enter">
         <div className="hoi-header-steel px-5 py-3.5 flex items-start justify-between gap-3">
           <div>
-            <div className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-widest text-amber-400">
+            <div className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-widest text-[#EB3F7D]">
               <UserCheck className="w-3.5 h-3.5" />
               <span>RELEVO DE CARTERA</span>
             </div>
-            <h3 className="text-lg font-serif font-black text-amber-50 mt-0.5">
+            <h3 className="text-lg font-serif font-black text-[#F5EFE6] mt-0.5">
               Designar Ministro de {ministry.ministryName}
             </h3>
             <p className="text-xs text-slate-300 mt-1">
@@ -258,7 +260,7 @@ export function MinisterReplacementModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-sm border border-transparent hover:border-[#334155]"
+            className="text-slate-400 hover:text-white p-1 rounded-sm border border-transparent hover:border-white/20"
           >
             <X className="w-4 h-4" />
           </button>
@@ -283,11 +285,11 @@ export function MinisterReplacementModal({
             ))}
           </div>
 
-          <div className="pt-3 border-t border-[#263142] flex items-center justify-end gap-2">
+          <div className="pt-3 border-t border-white/15 flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-sm bg-[#0b1018] border border-[#334155] text-xs font-semibold text-slate-300 hover:bg-[#172233] transition"
+              className="px-4 py-2 rounded-sm bg-[#0e070b] border border-white/20 text-xs font-semibold text-slate-300 hover:bg-[#1d0f17] transition"
             >
               Cancelar
             </button>
@@ -302,7 +304,8 @@ export function MinisterReplacementModal({
             </button>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </ViewportModalPortal>
   );
 }

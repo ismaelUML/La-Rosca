@@ -43,7 +43,7 @@ function RigiPendingCard({
   return (
     <div className="hoi-panel p-4 rounded-sm border-amber-800/60 flex flex-col justify-between space-y-3">
       <div className="space-y-1.5">
-        <span className="text-[10px] font-mono font-bold text-amber-300 uppercase tracking-wider bg-amber-950/70 border border-amber-700/60 px-2 py-0.5 rounded-sm inline-block">
+        <span className="text-[10px] font-mono font-bold text-[#f472b6] uppercase tracking-wider bg-amber-950/70 border border-amber-700/60 px-2 py-0.5 rounded-sm inline-block">
           {project.sectorName}
         </span>
         <h4 className="text-sm font-extrabold text-white mt-1">{project.name}</h4>
@@ -51,10 +51,10 @@ function RigiPendingCard({
           Inversión mínima: <strong className="text-emerald-400 font-mono font-bold">{project.minProjectMillionUsd} M USD</strong>
         </div>
         <div className="text-[11px] text-slate-400">
-          Estado: espera resolución (<strong className="text-amber-300">{remaining} meses</strong> para desistir).
+          Estado: espera resolución (<strong className="text-[#f472b6]">{remaining} meses</strong> para desistir).
         </div>
       </div>
-      <div className="flex gap-2 pt-2 border-t border-[#263142]">
+      <div className="flex gap-2 pt-2 border-t border-white/15">
         <button
           type="button"
           onClick={() => {
@@ -83,7 +83,7 @@ function RigiPendingCard({
 }
 
 const BRANCH_BADGE_MAP: Record<string, string> = {
-  'Minería': 'bg-amber-950/70 border-amber-600/70 text-amber-300',
+  'Minería': 'bg-amber-950/70 border-amber-600/70 text-[#f472b6]',
   'Energía': 'bg-yellow-950/70 border-yellow-600/70 text-yellow-300',
   'Infraestructura': 'bg-cyan-950/70 border-cyan-600/70 text-cyan-300',
   'Tecnología': 'bg-violet-950/70 border-violet-600/70 text-violet-300',
@@ -110,29 +110,29 @@ function RigiMetricsGrid({ sector }: { sector: RigisectorItem }) {
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs pt-1">
-      <div className="p-2 rounded-sm bg-[#090d14] border border-[#263142]">
+      <div className="p-2 rounded-sm bg-[#0b0508] border border-white/15">
         <div className="text-[10px] font-mono text-slate-400 uppercase">Proyecto mínimo</div>
         <div className="font-mono font-bold text-slate-200 mt-0.5">{sector.minProjectMillionUsd} M USD</div>
       </div>
-      <div className="p-2 rounded-sm bg-[#090d14] border border-[#263142]">
+      <div className="p-2 rounded-sm bg-[#0b0508] border border-white/15">
         <div className="text-[10px] font-mono text-slate-400 uppercase">Inversión a régimen</div>
         <div className="font-mono font-bold text-emerald-400 mt-0.5">{invLabel}</div>
       </div>
-      <div className="p-2 rounded-sm bg-[#090d14] border border-[#263142]">
+      <div className="p-2 rounded-sm bg-[#0b0508] border border-white/15">
         <div className="text-[10px] font-mono text-slate-400 uppercase">Exportaciones</div>
         <div className="font-mono font-bold text-sky-400 mt-0.5">{expLabel}</div>
       </div>
-      <div className="p-2 rounded-sm bg-[#090d14] border border-[#263142]">
+      <div className="p-2 rounded-sm bg-[#0b0508] border border-white/15">
         <div className="text-[10px] font-mono text-slate-400 uppercase">Empleo</div>
         <div className="font-mono font-bold text-emerald-300 mt-0.5">{empLabel}</div>
       </div>
-      <div className="p-2 rounded-sm bg-[#090d14] border border-[#263142]">
+      <div className="p-2 rounded-sm bg-[#0b0508] border border-white/15">
         <div className="text-[10px] font-mono text-slate-400 uppercase">Costo fiscal</div>
         <div className="font-mono font-bold text-rose-300 mt-0.5">{costLabel}</div>
       </div>
       <div className="p-2 rounded-lg bg-[#0b0e15] border border-slate-800/80">
         <div className="text-[10px] text-slate-500 uppercase">Conflictividad</div>
-        <div className="font-mono font-bold text-amber-300 mt-0.5">{conflictLabel}</div>
+        <div className="font-mono font-bold text-[#f472b6] mt-0.5">{conflictLabel}</div>
       </div>
     </div>
   );
@@ -189,7 +189,7 @@ function RigiSectorCard({
               {sector.branch}
             </span>
           </div>
-          <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-sm bg-[#090d14] border border-[#263142] text-slate-300 shrink-0">
+          <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-sm bg-[#0b0508] border border-white/15 text-slate-300 shrink-0">
             Piso: {sector.minProjectMillionUsd} M USD
           </span>
         </div>
@@ -251,7 +251,7 @@ function RigiHeaderOverview({
       </div>
       <div className="hoi-panel p-3.5 rounded-sm">
         <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Exportaciones proyectadas</div>
-        <div className="text-lg font-mono font-extrabold text-amber-400 mt-0.5">
+        <div className="text-lg font-mono font-extrabold text-[#EB3F7D] mt-0.5">
           +{totalExpMilM.toFixed(1).replace('.', ',')} mil M USD
         </div>
       </div>
@@ -293,8 +293,8 @@ function RigiSectorsTab({
             }}
             className={`px-3 py-1.5 rounded-sm text-xs font-mono font-bold transition border ${
               selectedBranch === b
-                ? 'bg-[#1d3250] border-[#b89342] text-amber-100'
-                : 'bg-[#090d14] text-slate-400 border-[#263142] hover:text-slate-100'
+                ? 'bg-[#EB3F7D]/20 border-[#EB3F7D] text-[#F5EFE6]'
+                : 'bg-[#0b0508] text-slate-400 border-white/15 hover:text-slate-100'
             }`}
           >
             {b}
@@ -413,14 +413,14 @@ function RigiNavigationHeader({
   const showApprove = canShowApproveAll(subTab, pendingCount, onApproveAll);
   const isSectores = subTab === 'SECTORES';
   const secClass = isSectores
-    ? 'bg-[#1d3250] border border-[#b89342] text-amber-100'
-    : 'bg-[#090d14] border border-[#263142] text-slate-400 hover:text-slate-100';
+    ? 'bg-[#EB3F7D]/20 border border-[#EB3F7D] text-[#F5EFE6]'
+    : 'bg-[#0b0508] border border-white/15 text-slate-400 hover:text-slate-100';
   const pendClass = !isSectores
-    ? 'bg-[#1d3250] border border-[#b89342] text-amber-100'
-    : 'bg-[#090d14] border border-[#263142] text-slate-400 hover:text-slate-100';
+    ? 'bg-[#EB3F7D]/20 border border-[#EB3F7D] text-[#F5EFE6]'
+    : 'bg-[#0b0508] border border-white/15 text-slate-400 hover:text-slate-100';
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#263142] pb-3">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/15 pb-3">
       <div className="flex gap-2">
         <button
           type="button"
@@ -468,7 +468,7 @@ export function RigiSectorsSection({
         eyebrow="Presupuesto · Régimen de Grandes Inversiones (RIGI)"
         title="RIGI (Ley 27.742)"
         description="Beneficios aduaneros, tributarios y libre disponibilidad de divisas a 30 años para proyectos estratégicos de más de 200 M USD."
-        icon={<Building2 className="w-4 h-4 text-amber-300" />}
+        icon={<Building2 className="w-4 h-4 text-[#f472b6]" />}
       />
 
       <RigiHeaderOverview

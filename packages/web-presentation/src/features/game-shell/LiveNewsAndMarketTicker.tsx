@@ -168,7 +168,7 @@ function MarketQuotesStrip({ govState }: { govState?: SimulationState }) {
         OFICIAL A3500: <strong className="text-white">${ofi}</strong>
       </span>
       <span className="text-slate-300">
-        DÓLAR CCL: <strong className="text-amber-300">${ccl}</strong>
+        DÓLAR CCL: <strong className="text-[#f472b6]">${ccl}</strong>
       </span>
       <span className="text-slate-300">
         EMBI+ JPM: <strong className="text-rose-300">{embi} pb</strong>
@@ -189,7 +189,7 @@ function MarketQuotesStrip({ govState }: { govState?: SimulationState }) {
 function resolveTickerBarTheme(redAlert: boolean, mode: 'TV' | 'MARKET') {
   if (mode === 'MARKET') {
     return {
-      barCls: 'bg-[#070b12]/95 border-t border-[#263142]',
+      barCls: 'bg-[#070b12]/95 border-t border-white/15',
       badgeCls: 'bg-emerald-900/80 text-emerald-200 border-emerald-600',
       badgeText: 'PIZARRA BCRA / BYMA'
     };
@@ -202,8 +202,8 @@ function resolveTickerBarTheme(redAlert: boolean, mode: 'TV' | 'MARKET') {
     };
   }
   return {
-    barCls: 'bg-[#090e17]/95 border-t border-[#8a6d33]/70',
-    badgeCls: 'bg-amber-500/20 text-amber-200 border-[#b89342]',
+    barCls: 'bg-[#090e17]/95 border-t border-[#EB3F7D]/55/70',
+    badgeCls: 'bg-amber-500/20 text-[#EFE9DA] border-[#EB3F7D]',
     badgeText: 'EN VIVO · EL TICKER DE LA ROSCA'
   };
 }
@@ -219,10 +219,12 @@ function resolveHeadlinesList(
 
 export function LiveNewsAndMarketTicker({
   govState,
-  campaignState
+  campaignState,
+  expanded = false
 }: {
   govState?: SimulationState;
   campaignState?: CampaignSimulationState;
+  expanded?: boolean;
 }) {
   const [mode, setMode] = useState<'TV' | 'MARKET'>('TV');
   const [idx, setIdx] = useState(0);
@@ -241,24 +243,25 @@ export function LiveNewsAndMarketTicker({
   const activeHeadline = headlines[idx % headlines.length] ?? headlines[0]!;
   const isTvMode = mode === 'TV';
   const activeChannel = resolveActiveTvChannel(idx, redAlert);
+  const headlineCls = expanded
+    ? 'text-xs font-mono font-bold text-slate-100 leading-relaxed tracking-wide'
+    : 'text-xs font-mono font-bold text-slate-100 truncate tracking-wide';
 
   return (
-    <footer className={`z-30 shrink-0 px-3 py-1.5 transition-colors ${theme.barCls}`}>
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+    <footer className={`z-30 shrink-0 px-3 py-2.5 transition-colors ${theme.barCls}`}>
+      <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 min-w-0 flex-1">
           <TickerSourceLogos isTvMode={isTvMode} channel={activeChannel} />
 
           <span
-            className={`px-2 py-0.5 rounded-sm border text-[10px] font-mono font-extrabold uppercase shrink-0 inline-flex items-center gap-1 ${theme.badgeCls}`}
+            className={`px-2 py-0.5 rounded border text-[10px] font-mono font-extrabold uppercase shrink-0 inline-flex items-center gap-1 ${theme.badgeCls}`}
           >
             <Radio className="w-3 h-3 animate-pulse" />
             {theme.badgeText}
           </span>
 
           {isTvMode ? (
-            <div className="text-xs font-mono font-bold text-slate-100 truncate tracking-wide">
-              {activeHeadline}
-            </div>
+            <div className={headlineCls}>{activeHeadline}</div>
           ) : (
             <MarketQuotesStrip govState={govState} />
           )}
@@ -270,9 +273,9 @@ export function LiveNewsAndMarketTicker({
             playUiSound('tab');
             setMode(isTvMode ? 'MARKET' : 'TV');
           }}
-          className="px-2.5 py-0.5 rounded-sm bg-[#090d14]/90 hover:bg-[#162234] border border-[#334155] text-[10px] font-mono font-bold text-amber-200 shrink-0 inline-flex items-center gap-1"
+          className="px-2.5 py-1 rounded bg-[#0b0508]/90 hover:bg-[#1a1016] border border-white/15 text-[10px] font-mono font-bold text-[#EB3F7D] shrink-0 inline-flex items-center gap-1"
         >
-          <Activity className="w-3 h-3 text-amber-400" />
+          <Activity className="w-3 h-3 text-[#EB3F7D]" />
           <span>{isTvMode ? 'Ver Pizarra Financiera' : 'Ver Zócalo TV'}</span>
         </button>
       </div>

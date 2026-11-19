@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { FileSignature, Landmark, PhoneCall, Tv } from 'lucide-react';
 import type { PolicyAction, SimulationState } from '@argentina-sim/domain';
 import type { InGameSidebarSection } from './GameSidebarLayout.js';
 import { playUiSound } from '@/lib/gameFeedback';
@@ -17,36 +16,41 @@ import {
   type DeskInteractiveId
 } from './presidentialDesk3dModels.js';
 
-// Despacho Presidencial 3D Interactivo en Casa Rosada ("El Sillon de Rivadavia"):
-// Escena Three.js con modelos 3D multicapa, texturas PBR de caoba/SIOPEL/diarios
-// y soporte de carga de activos .glb en public/models/.
+// Despacho Presidencial 3D Interactivo ("El Sillon de Rivadavia"):
+// Direccion de arte Casa Rosada (paredes rosadas, molduras crema, luz calida de velador,
+// ResizeObserver sin franjas negras y etiquetas 3D->2D proyectadas sobre cada objeto).
 
 interface DeskItemSpec {
   id: DeskInteractiveId;
+  shortTag: string;
   title: string;
-  subtitle: string;
+  anchorPos: [number, number, number];
 }
 
 const DESK_ITEMS: DeskItemSpec[] = [
   {
     id: 'CARPETA_DNU',
-    title: 'Carpeta de Decretos (DNU)',
-    subtitle: 'Despacho de Medidas y Leyes'
+    shortTag: 'DNU · Medidas',
+    title: 'Carpeta de Decretos',
+    anchorPos: [-1.35, 1.38, 0.35]
   },
   {
     id: 'TELEFONO_ROJO',
+    shortTag: 'Gobernadores',
     title: 'Teléfono Rojo Federal',
-    subtitle: 'Cumbre de Gobernadores y Escudo'
+    anchorPos: [-0.2, 1.52, -0.15]
   },
   {
     id: 'TERMINAL_BCRA',
-    title: 'Terminal SIOPEL / BCRA',
-    subtitle: 'Rueda Intradía del Dólar en Vivo'
+    shortTag: 'Mercados · MULC',
+    title: 'Monitor BCRA',
+    anchorPos: [1.25, 1.72, -0.18]
   },
   {
     id: 'SALA_PRENSA',
-    title: 'Atril y Sala de Prensa',
-    subtitle: 'Conferencia / Cadena Nacional'
+    shortTag: 'Prensa · Cadena',
+    title: 'Atril y Ventana',
+    anchorPos: [0.42, 1.65, 0.48]
   }
 ];
 
@@ -58,26 +62,55 @@ function createInteractiveDeskObjects(group: THREE.Group, isTense: boolean): voi
 }
 
 const DESK_LIGHTING_BY_TENSION = {
-  true: { bg: 0x14080c, winColor: 0x7f1d1d, winEmissive: 0xdc2626 },
-  false: { bg: 0x070b13, winColor: 0x0c243c, winEmissive: 0x0284c7 }
+  true: { bg: 0x1a080f, wall: 0x6b2038, winEmissive: 0xbe123c },
+  false: { bg: 0x12080d, wall: 0x5c2238, winEmissive: 0xeb3f7d }
 } as const;
 
 function buildPresidentialFlagsGroup(): THREE.Group {
   const group = new THREE.Group();
   const poleMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.85, roughness: 0.2 });
-  const celesteMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.55 });
+  const celesteMat = new THREE.MeshStandardMaterial({ color: 0x7dd3fc, roughness: 0.55 });
   const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.55 });
 
-  for (const fx of [-1.45, 1.45]) {
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 2.55, 10), poleMat);
-    pole.position.set(fx, 1.25, -1.55);
-    const drapeLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.13, 1.45, 10), celesteMat);
-    drapeLeft.position.set(fx - 0.05, 1.42, -1.52);
-    const drapeMid = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.1, 1.42, 10), whiteMat);
-    drapeMid.position.set(fx, 1.42, -1.49);
+  for (const fx of [-1.55, 1.55]) {
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 2.65, 10), poleMat);
+    pole.position.set(fx, 1.3, -1.65);
+    const drapeLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.13, 1.48, 10), celesteMat);
+    drapeLeft.position.set(fx - 0.05, 1.46, -1.62);
+    const drapeMid = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.1, 1.44, 10), whiteMat);
+    drapeMid.position.set(fx, 1.46, -1.59);
     group.add(pole, drapeLeft, drapeMid);
   }
   return group;
+}
+
+function buildCasaRosadaRoomArchitecture(wallHex: number, winEmissiveHex: number): THREE.Group {
+  const room = new THREE.Group();
+  const wallMat = new THREE.MeshStandardMaterial({ color: wallHex, roughness: 0.85, metalness: 0.04 });
+  const trimMat = new THREE.MeshStandardMaterial({ color: 0xefe9da, roughness: 0.6 });
+  const floorMat = new THREE.MeshStandardMaterial({ color: 0x1b0e13, roughness: 0.78 });
+  const glassMat = new THREE.MeshStandardMaterial({
+    color: 0x160a14,
+    emissive: winEmissiveHex,
+    emissiveIntensity: 0.18,
+    roughness: 0.25
+  });
+
+  const backWall = new THREE.Mesh(new THREE.PlaneGeometry(14, 6.2), wallMat);
+  backWall.position.set(0, 2.4, -2.55);
+  const molding = new THREE.Mesh(new THREE.BoxGeometry(14, 0.14, 0.08), trimMat);
+  molding.position.set(0, 1.15, -2.5);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(14, 8), floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
+
+  const winFrame = new THREE.Mesh(new THREE.BoxGeometry(2.8, 2.9, 0.1), trimMat);
+  winFrame.position.set(0, 2.65, -2.48);
+  const winPane = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 2.6), glassMat);
+  winPane.position.set(0, 2.65, -2.41);
+
+  room.add(backWall, molding, floor, winFrame, winPane);
+  return room;
 }
 
 function buildCasaRosadaDeskScene(container: HTMLDivElement, isTense: boolean) {
@@ -85,33 +118,29 @@ function buildCasaRosadaDeskScene(container: HTMLDivElement, isTense: boolean) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(palette.bg);
 
-  const w = container.clientWidth || 640;
-  const h = container.clientHeight || 235;
-  const camera = new THREE.PerspectiveCamera(36, w / h, 0.1, 100);
-  camera.position.set(0, 3.25, 4.55);
+  const w = container.clientWidth || 720;
+  const h = container.clientHeight || 330;
+  const camera = new THREE.PerspectiveCamera(35, w / h, 0.1, 100);
+  camera.position.set(0, 2.95, 4.35);
   camera.lookAt(0, 1.15, 0);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(w, h);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
   container.appendChild(renderer.domElement);
 
-  scene.add(new THREE.HemisphereLight(0xfef3c7, 0x0f172a, 1.05));
-  const deskLamp = new THREE.PointLight(0xfbbf24, 2.6, 15);
-  deskLamp.position.set(-1.5, 3.2, 1.4);
-  scene.add(deskLamp);
+  scene.add(new THREE.HemisphereLight(0xffe9f0, 0x1b0c12, 1.15));
+  const bankerLamp = new THREE.PointLight(0xffedd5, 3.2, 16);
+  bankerLamp.position.set(-1.3, 3.2, 1.5);
+  bankerLamp.castShadow = true;
+  scene.add(bankerLamp);
 
-  const windowGlow = new THREE.Mesh(
-    new THREE.PlaneGeometry(7.2, 3.2),
-    new THREE.MeshStandardMaterial({
-      color: palette.winColor,
-      emissive: palette.winEmissive,
-      emissiveIntensity: 0.35
-    })
-  );
-  windowGlow.position.set(0, 2.1, -2.2);
-  scene.add(windowGlow);
+  const pinkFill = new THREE.DirectionalLight(0xf9a8d4, 0.65);
+  pinkFill.position.set(2.4, 2.8, 2.0);
+  scene.add(pinkFill);
 
+  scene.add(buildCasaRosadaRoomArchitecture(palette.wall, palette.winEmissive));
   scene.add(buildPresidentialFlagsGroup());
   scene.add(buildSillonDeRivadaviaGroup());
   scene.add(buildMahoganyPresidentialDeskGroup());
@@ -150,6 +179,26 @@ function pickDeskObject(
   return findDeskIdFromObject(hits[0]?.object ?? null);
 }
 
+function projectDeskTagPositions(
+  camera: THREE.PerspectiveCamera,
+  container: HTMLDivElement,
+  tagRefs: Record<string, HTMLButtonElement | null>
+) {
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  if (w <= 0 || h <= 0) return;
+
+  for (const item of DESK_ITEMS) {
+    const el = tagRefs[item.id];
+    if (!el) continue;
+    const vec = new THREE.Vector3(...item.anchorPos);
+    vec.project(camera);
+    const px = (vec.x * 0.5 + 0.5) * w;
+    const py = (-vec.y * 0.5 + 0.5) * h;
+    el.style.transform = `translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0) translate(-50%, -100%)`;
+  }
+}
+
 export function PresidentialDesk3DScene({
   state,
   speakerName,
@@ -162,6 +211,7 @@ export function PresidentialDesk3DScene({
   onDispatch?: (action: PolicyAction) => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const tagRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [hoveredDeskId, setHoveredDeskId] = useState<DeskInteractiveId | null>(null);
   const [bcraOpen, setBcraOpen] = useState(false);
   const [summitOpen, setSummitOpen] = useState(false);
@@ -186,11 +236,22 @@ export function PresidentialDesk3DScene({
     const tick = () => {
       animId = requestAnimationFrame(tick);
       const t = performance.now() * 0.001;
-      camera.position.x = Math.sin(t * 0.45) * 0.42;
+      camera.position.x = Math.sin(t * 0.35) * 0.25;
       camera.lookAt(0, 1.15, 0);
       renderer.render(scene, camera);
+      projectDeskTagPositions(camera, container, tagRefs.current);
     };
     tick();
+
+    const resizeObs = new ResizeObserver(() => {
+      const nw = container.clientWidth;
+      const nh = container.clientHeight;
+      if (nw <= 0 || nh <= 0) return;
+      camera.aspect = nw / nh;
+      camera.updateProjectionMatrix();
+      renderer.setSize(nw, nh);
+    });
+    resizeObs.observe(container);
 
     const onMove = (e: PointerEvent) => {
       const id = pickDeskObject(e, renderer.domElement, camera, rootGroup);
@@ -207,6 +268,7 @@ export function PresidentialDesk3DScene({
 
     return () => {
       cancelAnimationFrame(animId);
+      resizeObs.disconnect();
       renderer.domElement.removeEventListener('pointermove', onMove);
       renderer.domElement.removeEventListener('pointerup', onClick);
       renderer.dispose();
@@ -215,48 +277,51 @@ export function PresidentialDesk3DScene({
   }, [isTense]);
 
   return (
-    <div className="hoi-panel rounded-sm p-4 space-y-3 border border-[#8a6d33]">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#263142] pb-2">
+    <div className="hoi-panel rounded-lg p-4 space-y-3 border border-[#EB3F7D]/45">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-widest text-amber-300 block">
-            BALCARCE 50 · SALA DE SITUACIÓN 3D INTERACTIVA
+          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#EB3F7D] block">
+            BALCARCE 50 · SALA DE SITUACIÓN 3D
           </span>
-          <h3 className="text-sm font-serif font-bold uppercase text-amber-100">
-            El Sillón de Rivadavia y Mesa de Decisiones en Vivo
+          <h3 className="font-display text-lg uppercase tracking-wide text-[#F5EFE6]">
+            El Sillón de Rivadavia
           </h3>
         </div>
-        <span className="px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#263142] text-[10px] font-mono text-sky-300">
-          Tocá los modelos 3D sobre el escritorio o usá los comandos rápidos
+        <span className="px-2.5 py-1 rounded bg-[#090407] border border-white/15 text-[10px] font-mono text-slate-300">
+          Tocá directamente el Teléfono, Monitor, Carpeta o Atril
         </span>
       </div>
 
-      <div className="relative rounded-sm overflow-hidden border border-[#263142] bg-[#05080d]">
-        <div ref={containerRef} className="w-full h-[215px]" />
-        {hoveredDeskId ? (
-          <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-sm bg-[#090d14]/95 border border-[#b89342] text-[11px] font-mono text-amber-200">
-            Modelo 3D activo: <strong>{hoveredDeskId}</strong> (Clic para abrir)
-          </div>
-        ) : null}
-      </div>
+      <div className="relative rounded-lg overflow-hidden border border-white/15 bg-[#12080d]">
+        <div ref={containerRef} className="w-full h-[300px] sm:h-[340px]" />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-        {DESK_ITEMS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => triggerActionRef.current(item.id)}
-            className="p-2.5 rounded-sm bg-[#090d14] hover:bg-[#141f31] border border-[#263142] hover:border-[#b89342] text-left transition space-y-0.5"
-          >
-            <div className="text-xs font-mono font-bold text-amber-200 flex items-center justify-between">
-              <span>{item.title}</span>
-              {item.id === 'CARPETA_DNU' ? <FileSignature className="w-3.5 h-3.5 text-sky-400" /> : null}
-              {item.id === 'TELEFONO_ROJO' ? <PhoneCall className="w-3.5 h-3.5 text-rose-400" /> : null}
-              {item.id === 'TERMINAL_BCRA' ? <Landmark className="w-3.5 h-3.5 text-emerald-400" /> : null}
-              {item.id === 'SALA_PRENSA' ? <Tv className="w-3.5 h-3.5 text-amber-400" /> : null}
-            </div>
-            <div className="text-[10px] font-mono text-slate-400">{item.subtitle}</div>
-          </button>
-        ))}
+        {DESK_ITEMS.map((item) => {
+          const isHovered = hoveredDeskId === item.id;
+          return (
+            <button
+              key={item.id}
+              ref={(el) => {
+                tagRefs.current[item.id] = el;
+              }}
+              type="button"
+              onMouseEnter={() => setHoveredDeskId(item.id)}
+              onMouseLeave={() => setHoveredDeskId(null)}
+              onClick={() => triggerActionRef.current(item.id)}
+              style={{ left: 0, top: 0 }}
+              className={`absolute z-10 px-2 py-1 border text-left transition-colors shadow-lg ${isHovered
+                  ? 'bg-[#EB3F7D] text-[#090407] border-[#f472b6]'
+                  : 'bg-[#090407]/88 text-[#F5EFE6] border-[#EB3F7D]/60 hover:bg-[#EB3F7D] hover:text-[#090407]'
+                }`}
+            >
+              <div className="text-[9px] font-mono font-extrabold uppercase tracking-wider leading-none">
+                {item.shortTag}
+              </div>
+              <div className="text-[10px] font-semibold leading-tight mt-0.5 opacity-90">
+                {item.title}
+              </div>
+            </button>
+          );
+        })}
       </div>
 
       <BcraIntradayMarketModal

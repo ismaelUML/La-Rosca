@@ -1,11 +1,22 @@
-import React from 'react';
-import type { GameSetupConfiguration, PolicyAction, SimulationState } from '@argentina-sim/domain';
+import React, { Suspense, lazy } from 'react';
+import type {
+  CampaignSimulationState,
+  GameSetupConfiguration,
+  PolicyAction,
+  SimulationState
+} from '@argentina-sim/domain';
 import { PartyEmblemSvg } from '../party-setup/PartyEmblemSvg.js';
 import { OfficialInstitutionLogo } from '../party-setup/OfficialLogoBadge.js';
 import type { InstitutionalLogoId } from '../party-setup/officialLogosCatalog.js';
 import type { InGameSidebarSection } from './GameSidebarLayout.js';
 import { GovernorCommandPanel, LegislatorCommandPanel } from './RoleMandateCommandPanels.js';
-import { PresidentialDesk3DScene } from './PresidentialDesk3DScene.js';
+import { DespachoCoyunturaPanel } from './DespachoCoyunturaPanel.js';
+import { LiveNewsAndMarketTicker } from './LiveNewsAndMarketTicker.js';
+import { formatArNumber } from '../../lib/formatters.js';
+
+const PresidentialDesk3DScene = lazy(() =>
+  import('./PresidentialDesk3DScene.js').then((m) => ({ default: m.PresidentialDesk3DScene }))
+);
 
 // Vistas de DESPACHO -> Despacho (resumen ejecutivo del jugador y accesos rapidos)
 // y DESPACHO -> Registro (bitacora historica mes a mes).
@@ -32,12 +43,14 @@ function RoleSpecificCommandSection({
 }) {
   if (setup.role === 'PRESIDENTE') {
     return (
-      <PresidentialDesk3DScene
-        state={state}
-        speakerName={setup.characterName}
-        onNavigate={onNavigate}
-        onDispatch={onDispatch}
-      />
+      <Suspense fallback={<div className="h-[340px] rounded-sm bg-[#0f060a] border border-white/10" />}>
+        <PresidentialDesk3DScene
+          state={state}
+          speakerName={setup.characterName}
+          onNavigate={onNavigate}
+          onDispatch={onDispatch}
+        />
+      </Suspense>
     );
   }
   if (!onDispatch) {
@@ -73,21 +86,22 @@ export function DespachoOverview({
 }: DespachoOverviewProps) {
   return (
     <div className="space-y-6">
-      <div className="rounded-sm bg-gradient-to-r from-[#111722] via-[#0e141f] to-[#15120d] border border-[#2c384b] border-l-2 border-l-[#c5a059] p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <PartyEmblemSvg config={setup.party.emblem} size={72} />
-          <div>
+      <div className="hoi-panel rounded-lg p-5 flex flex-col gap-4 border-l-2 border-l-[#EB3F7D]">
+        <div className="flex items-center gap-4 min-w-0">
+          <PartyEmblemSvg config={setup.party.emblem} size={60} />
+          <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <OfficialInstitutionLogo institution={ROLE_CREST[setup.role]} heightPx={24} />
-              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-sm bg-[#090d14] border border-[#2c384b] text-[10px] font-mono font-bold uppercase tracking-wider text-[#d4b26a]">
+              <OfficialInstitutionLogo institution={ROLE_CREST[setup.role]} heightPx={22} />
+              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-[#0b0508] border border-white/15 text-[11px] font-mono font-bold uppercase tracking-wider text-[#EB3F7D]">
                 {setup.party.sigla} · {setup.party.name} · {setup.party.ideology}
               </div>
             </div>
-            <h1 className="text-2xl md:text-3xl font-serif font-bold text-white mt-1">
+            <h1 className="font-display text-2xl md:text-3xl tracking-wide uppercase text-[#F5EFE6] mt-1 break-words">
               {setup.characterName}
             </h1>
-            <p className="text-xs font-mono text-slate-400 mt-0.5">
-              Cargo activo: <strong className="text-white">{setup.role}</strong> · Jurisdicción base: <strong className="text-sky-400">{setup.provinceId}</strong> · Mes #{state.turnMonth}
+            <p className="text-xs font-mono text-slate-300 mt-0.5">
+              Cargo activo: <strong className="text-white">{setup.role}</strong> · Jurisdicción base:{' '}
+              <strong className="text-[#EB3F7D]">{setup.provinceId}</strong> · Mes #{state.turnMonth}
             </p>
           </div>
         </div>
@@ -96,19 +110,21 @@ export function DespachoOverview({
           <button
             type="button"
             onClick={() => onNavigate('INDICADORES')}
-            className="px-4 py-2.5 rounded-sm bg-[#121926] hover:bg-[#192233] border border-[#2c384b] text-xs font-mono font-bold uppercase tracking-wider text-slate-200 transition"
+            className="px-4 py-2 rounded bg-[#140d11] hover:bg-[#1f1319] border border-white/15 text-xs font-mono font-bold uppercase tracking-wider text-slate-100 transition"
           >
             Ver Indicadores (24 series)
           </button>
           <button
             type="button"
             onClick={onAdvanceTurn}
-            className="px-5 py-2.5 rounded-sm bg-gradient-to-b from-[#d8b76c] to-[#9b7a38] hover:from-[#e6c87d] hover:to-[#b08c42] text-slate-950 border border-[#f3d893]/40 text-xs font-mono font-extrabold uppercase tracking-wider shadow transition"
+            className="hoi-btn-gold px-5 py-2 rounded text-xs font-mono font-extrabold uppercase tracking-wider shadow transition"
           >
             Cerrar Mes de Gestión →
           </button>
         </div>
       </div>
+
+      <DespachoCoyunturaPanel state={state} onDispatch={onDispatch} />
 
       <RoleSpecificCommandSection
         setup={setup}
@@ -118,64 +134,64 @@ export function DespachoOverview({
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-        <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
-          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+        <div className="hoi-panel rounded-lg p-4">
+          <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-400">
             Inflación Mensual (IPC)
           </div>
-          <div className="text-2xl font-mono font-extrabold text-orange-400 mt-1">
-            {state.inflation.realMonthlyIpcPct}%
+          <div className="text-2xl font-display tracking-wide text-[#F5EFE6] mt-1">
+            {formatArNumber(state.inflation.realMonthlyIpcPct, 1)} %
           </div>
-          <div className="text-[11px] font-mono text-slate-500 mt-1">
-            Interanual: {state.inflation.interannualIpcPct}%
+          <div className="text-[11px] font-mono text-slate-400 mt-1">
+            Interanual: {formatArNumber(state.inflation.interannualIpcPct, 1)} %
           </div>
         </div>
 
-        <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
-          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+        <div className="hoi-panel rounded-lg p-4">
+          <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-400">
             Dólar Oficial / CCL
           </div>
-          <div className="text-2xl font-mono font-extrabold text-sky-400 mt-1">
-            ${state.centralBank.officialDollarArs}
+          <div className="text-2xl font-display tracking-wide text-[#F5EFE6] mt-1">
+            $ {formatArNumber(state.centralBank.officialDollarArs, 0)}
           </div>
-          <div className="text-[11px] font-mono text-slate-500 mt-1">
-            CCL ${state.centralBank.cclDollarArs} · Brecha {state.centralBank.exchangeBrechaPct}%
+          <div className="text-[11px] font-mono text-slate-400 mt-1">
+            CCL $ {formatArNumber(state.centralBank.cclDollarArs, 0)} · Brecha {formatArNumber(state.centralBank.exchangeBrechaPct, 1)} %
           </div>
         </div>
 
-        <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
-          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+        <div className="hoi-panel rounded-lg p-4">
+          <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-400">
             Reservas Netas Líquidas
           </div>
-          <div className="text-2xl font-mono font-extrabold text-emerald-400 mt-1">
-            {state.centralBank.netLiquidReservesBillionUsd} B
+          <div className="text-2xl font-display tracking-wide text-[#EB3F7D] mt-1">
+            US$ {formatArNumber(state.centralBank.netLiquidReservesBillionUsd, 1)} B
           </div>
-          <div className="text-[11px] font-mono text-slate-500 mt-1">
-            Brutas: {state.centralBank.grossReservesBillionUsd} B USD
+          <div className="text-[11px] font-mono text-slate-400 mt-1">
+            Brutas: US$ {formatArNumber(state.centralBank.grossReservesBillionUsd, 1)} B
           </div>
         </div>
 
-        <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-4">
-          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-            Aprobación Presidencial
+        <div className="hoi-panel rounded-lg p-4">
+          <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-400">
+            Imagen Personal
           </div>
-          <div className="text-2xl font-mono font-extrabold text-purple-400 mt-1">
-            {state.publicOpinion.presidentialPersonalImagePct}%
+          <div className="text-2xl font-display tracking-wide text-[#EFE9DA] mt-1">
+            {formatArNumber(state.publicOpinion.presidentialPersonalImagePct, 1)} %
           </div>
-          <div className="text-[11px] font-mono text-slate-500 mt-1">
-            Aprobación gestión: {state.publicOpinion.managementApprovalPct}%
+          <div className="text-[11px] font-mono text-slate-400 mt-1">
+            Aprobación gestión: {formatArNumber(state.publicOpinion.managementApprovalPct, 1)} %
           </div>
         </div>
       </div>
 
-      <div className="rounded-sm bg-[#0c1119] border border-[#263142] p-5">
-        <h3 className="text-xs font-mono font-bold uppercase tracking-widest text-[#d4b26a] mb-3">
+      <div className="rounded-sm bg-[#11080d] border border-white/15 p-5">
+        <h3 className="text-xs font-mono font-bold uppercase tracking-widest text-[#EB3F7D] mb-3">
           Últimos Partes de Inteligencia de Estado
         </h3>
         <div className="space-y-2 text-xs font-mono">
           {historyLog.slice(0, 6).map((entry, idx) => (
             <div
               key={idx}
-              className="px-3.5 py-2.5 rounded-sm bg-[#080b11] border border-[#1d2636] text-slate-300"
+              className="px-3.5 py-2.5 rounded-sm bg-[#090407] border border-[#1d2636] text-slate-300"
             >
               {entry}
             </div>
@@ -188,29 +204,44 @@ export function DespachoOverview({
 
 interface RegistroHistoryViewProps {
   historyLog: string[];
+  govState?: SimulationState;
+  campaignState?: CampaignSimulationState;
 }
 
-export function RegistroHistoryView({ historyLog }: RegistroHistoryViewProps) {
+export function RegistroHistoryView({
+  historyLog,
+  govState,
+  campaignState
+}: RegistroHistoryViewProps) {
   return (
     <div className="space-y-5">
-      <div className="border-b border-[#263142] pb-4 flex items-center justify-between gap-4">
-        <div>
-          <div className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#d4b26a]">
-            DESPACHO · CRÓNICA OFICIAL
+      <div className="border-b border-white/15 pb-3.5 flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <div className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#EB3F7D]">
+            DIARIO NACIONAL Y BOLETÍN OFICIAL
           </div>
-          <h1 className="text-2xl md:text-3xl font-serif font-bold text-white mt-0.5">Registro</h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Bitácora cronológica de decretos, licitaciones del Tesoro, fallos de la Corte Suprema y cierres mensuales.
+          <h1 className="font-display text-2xl md:text-3xl tracking-wide uppercase text-[#F5EFE6] mt-0.5">
+            Diario y Registro Oficial
+          </h1>
+          <p className="text-xs text-slate-300 mt-1">
+            Cables en vivo, pizarra de mercados y bitácora cronológica de decretos, licitaciones, fallos y cierres mensuales.
           </p>
         </div>
         <OfficialInstitutionLogo institution="BOLETIN_OFICIAL" heightPx={36} />
       </div>
 
+      <div className="rounded-lg overflow-hidden border border-[#EB3F7D]/45 shadow-lg">
+        <LiveNewsAndMarketTicker govState={govState} campaignState={campaignState} expanded />
+      </div>
+
       <div className="space-y-2">
+        <div className="text-[11px] font-mono font-bold uppercase tracking-widest text-slate-400">
+          Registro Histórico ({historyLog.length} asientos)
+        </div>
         {historyLog.map((entry, idx) => (
           <div
             key={idx}
-            className="rounded-sm bg-[#0c1119] border border-[#263142] border-l-2 border-l-[#8a6d33] px-4 py-3 text-xs text-slate-200 font-mono"
+            className="rounded-lg bg-[#0f090d] border border-white/10 border-l-2 border-l-[#EB3F7D] px-4 py-3 text-xs text-slate-200 font-mono leading-relaxed"
           >
             {entry}
           </div>

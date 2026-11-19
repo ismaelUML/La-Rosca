@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Activity, DollarSign, Flame, Play, RotateCcw, ShieldAlert, TrendingUp, X } from 'lucide-react';
 import type { PolicyAction, SimulationState } from '@argentina-sim/domain';
 import { playUiSound } from '@/lib/gameFeedback';
+import { ViewportModalPortal } from '@/components/ui/ViewportModalPortal';
 import { OfficialInstitutionLogo } from '../party-setup/OfficialLogoBadge.js';
 
 // Simulador en tiempo real de la Rueda Intradia del BCRA / MULC (10:00 hs a 15:00 hs).
@@ -101,10 +102,10 @@ function IntradayCclSvgChart({
   const poly = buildPolylinePoints(history);
 
   return (
-    <div className="hoi-panel rounded-sm p-3.5 bg-[#070a10] border border-[#263142] space-y-2">
-      <div className="flex items-center justify-between text-[11px] font-mono border-b border-[#1e293b] pb-1.5">
-        <span className="text-amber-200 font-bold uppercase flex items-center gap-1.5">
-          <Activity className="w-3.5 h-3.5 text-amber-400" />
+    <div className="hoi-panel rounded-sm p-3.5 bg-[#090407] border border-white/15 space-y-2">
+      <div className="flex items-center justify-between text-[11px] font-mono border-b border-white/10 pb-1.5">
+        <span className="text-[#EFE9DA] font-bold uppercase flex items-center gap-1.5">
+          <Activity className="w-3.5 h-3.5 text-[#EB3F7D]" />
           Curva Intradía SIOPEL · Dólar CCL ($ ARS)
         </span>
         <span className={isUp ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold'}>
@@ -112,7 +113,7 @@ function IntradayCclSvgChart({
         </span>
       </div>
 
-      <svg viewBox="0 0 360 130" className="w-full h-36 bg-[#05080d] rounded-sm border border-[#1e293b]">
+      <svg viewBox="0 0 360 130" className="w-full h-36 bg-[#05080d] rounded-sm border border-white/10">
         <line x1="12" y1="35" x2="348" y2="35" stroke="#1e293b" strokeDasharray="3 3" />
         <line x1="12" y1="70" x2="348" y2="70" stroke="#1e293b" strokeDasharray="3 3" />
         <line x1="12" y1="105" x2="348" y2="105" stroke="#1e293b" strokeDasharray="3 3" />
@@ -147,32 +148,32 @@ function IntradayOrderBookPanel({
   const balSign = latest.bcraBalanceMusd >= 0 ? '+' : '';
 
   return (
-    <div className="hoi-panel rounded-sm p-3.5 bg-[#070a10] border border-[#263142] flex flex-col justify-between space-y-2.5">
-      <div className="flex items-center justify-between border-b border-[#1e293b] pb-1.5 text-[11px] font-mono">
-        <span className="text-amber-200 font-bold uppercase">Pizarra Mayorista BCRA / MAE</span>
+    <div className="hoi-panel rounded-sm p-3.5 bg-[#090407] border border-white/15 flex flex-col justify-between space-y-2.5">
+      <div className="flex items-center justify-between border-b border-white/10 pb-1.5 text-[11px] font-mono">
+        <span className="text-[#EFE9DA] font-bold uppercase">Pizarra Mayorista BCRA / MAE</span>
         <span className="text-sky-300 font-bold">{latest.timeLabel}</span>
       </div>
 
       <div className="grid grid-cols-2 gap-2 font-mono text-xs">
-        <div className="p-2.5 rounded-sm bg-[#0c1119] border border-[#1e293b]">
+        <div className="p-2.5 rounded-sm bg-[#11080d] border border-white/10">
           <span className="text-[10px] text-slate-400 block">DÓLAR OFICIAL A3500</span>
           <strong className="text-base text-slate-100">${officialArs.toFixed(0)}</strong>
         </div>
-        <div className="p-2.5 rounded-sm bg-[#0c1119] border border-[#1e293b]">
+        <div className="p-2.5 rounded-sm bg-[#11080d] border border-white/10">
           <span className="text-[10px] text-slate-400 block">DÓLAR CONTADO C/LIQ</span>
-          <strong className="text-base text-amber-300">${latest.cclArs}</strong>
+          <strong className="text-base text-[#f472b6]">${latest.cclArs}</strong>
         </div>
-        <div className="p-2.5 rounded-sm bg-[#0c1119] border border-[#1e293b]">
+        <div className="p-2.5 rounded-sm bg-[#11080d] border border-white/10">
           <span className="text-[10px] text-slate-400 block">BRECHA CAMBIARIA</span>
           <strong className="text-base text-rose-300">{brechaPct.toFixed(1)}%</strong>
         </div>
-        <div className="p-2.5 rounded-sm bg-[#0c1119] border border-[#1e293b]">
+        <div className="p-2.5 rounded-sm bg-[#11080d] border border-white/10">
           <span className="text-[10px] text-slate-400 block">RIESGO PAÍS EMBI+</span>
-          <strong className="text-base text-amber-200">{latest.embiPb} pb</strong>
+          <strong className="text-base text-[#EFE9DA]">{latest.embiPb} pb</strong>
         </div>
       </div>
 
-      <div className="p-2.5 rounded-sm bg-[#090d14] border border-[#263142] flex items-center justify-between text-xs font-mono">
+      <div className="p-2.5 rounded-sm bg-[#0b0508] border border-white/15 flex items-center justify-between text-xs font-mono">
         <span className="text-slate-400">Saldo BCRA hoy en el MULC:</span>
         <strong className={balCls}>
           {balSign}USD {latest.bcraBalanceMusd}M (Res. Netas: {netReservesB.toFixed(2)}B)
@@ -194,10 +195,10 @@ function EmergencyInterventionBar({
   onAgroBlend: () => void;
 }) {
   return (
-    <div className="hoi-panel rounded-sm p-3.5 bg-[#070a10] border border-[#8a6d33] space-y-2.5">
+    <div className="hoi-panel rounded-sm p-3.5 bg-[#090407] border border-[#EB3F7D]/55 space-y-2.5">
       <div className="flex items-center justify-between text-[11px] font-mono">
-        <span className="text-amber-300 font-bold uppercase flex items-center gap-1.5">
-          <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+        <span className="text-[#f472b6] font-bold uppercase flex items-center gap-1.5">
+          <ShieldAlert className="w-3.5 h-3.5 text-[#EB3F7D]" />
           Mesa de Intervención en Caliente (BCRA / Secretaría de Finanzas)
         </span>
         <span className="text-slate-400 text-[10px]">Ejecución inmediata sobre la rueda</span>
@@ -223,9 +224,9 @@ function EmergencyInterventionBar({
           onClick={onHikeRate}
           className="p-2.5 rounded-sm bg-amber-950/40 hover:bg-amber-900/50 border border-amber-700/70 text-left space-y-1 transition"
         >
-          <div className="text-xs font-mono font-bold text-amber-200 flex items-center justify-between">
+          <div className="text-xs font-mono font-bold text-[#EFE9DA] flex items-center justify-between">
             <span>2. Suba Tasa de Emergencia</span>
-            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <Flame className="w-3.5 h-3.5 text-[#EB3F7D]" />
           </div>
           <p className="text-[11px] text-slate-300">
             Sube +600 pb la tasa de referencia para absorber pesos y bajar el CCL (-$32 ARS).
@@ -248,7 +249,7 @@ function EmergencyInterventionBar({
       </div>
 
       {interventionsLog.length > 0 ? (
-        <div className="p-2 rounded-sm bg-[#0c1119] border border-[#1e293b] text-[11px] font-mono text-amber-200 space-y-0.5">
+        <div className="p-2 rounded-sm bg-[#11080d] border border-white/10 text-[11px] font-mono text-[#EFE9DA] space-y-0.5">
           {interventionsLog.slice(0, 3).map((msg, i) => (
             <div key={i}>▸ {msg}</div>
           ))}
@@ -312,16 +313,17 @@ export function BcraIntradayMarketModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm">
-      <div className="w-full max-w-4xl max-h-[92vh] overflow-y-auto hoi-panel rounded-sm p-4 sm:p-6 space-y-4 border border-[#8a6d33] shadow-2xl">
+    <ViewportModalPortal>
+      <div className="fixed inset-0 z-[90] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm overflow-y-auto">
+        <div className="w-full max-w-4xl max-h-[92vh] overflow-y-auto my-auto hoi-panel rounded-lg p-4 sm:p-6 space-y-4 border border-[#EB3F7D]/55 shadow-2xl">
         <div className="hoi-header-steel p-3.5 rounded-sm flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <OfficialInstitutionLogo institution="BCRA" heightPx={38} />
             <div className="min-w-0">
-              <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300 truncate">
+              <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#f472b6] truncate">
                 BANCO CENTRAL DE LA REPÚBLICA ARGENTINA · MESA DE OPERACIONES CAMBIARIAS
               </div>
-              <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5 truncate">
+              <h3 className="text-lg sm:text-xl font-serif font-extrabold uppercase tracking-wide text-[#F5EFE6] mt-0.5 truncate">
                 Rueda Intradía del MULC en Tiempo Real (10:00 a 15:00 hs)
               </h3>
             </div>
@@ -330,7 +332,7 @@ export function BcraIntradayMarketModal({
             <button
               type="button"
               onClick={() => setRunning((r) => !r)}
-              className="px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#b89342] text-[10px] font-mono font-bold uppercase text-amber-200 inline-flex items-center gap-1"
+              className="px-2.5 py-1 rounded-sm bg-[#0b0508] border border-[#EB3F7D] text-[10px] font-mono font-bold uppercase text-[#EFE9DA] inline-flex items-center gap-1"
             >
               <Play className="w-3 h-3" />
               {running ? 'Pausar Rueda' : 'Reanudar'}
@@ -341,7 +343,7 @@ export function BcraIntradayMarketModal({
                 setHistory([buildInitialPoint(state)]);
                 setRunning(true);
               }}
-              className="px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#263142] text-[10px] font-mono font-bold uppercase text-slate-300 inline-flex items-center gap-1"
+              className="px-2.5 py-1 rounded-sm bg-[#0b0508] border border-white/15 text-[10px] font-mono font-bold uppercase text-slate-300 inline-flex items-center gap-1"
             >
               <RotateCcw className="w-3 h-3" />
               Reiniciar
@@ -352,7 +354,7 @@ export function BcraIntradayMarketModal({
           </div>
         </div>
 
-        <div className="px-3 py-2 rounded-sm bg-[#090d14] border border-[#263142] text-xs font-mono text-amber-200 flex items-center justify-between">
+        <div className="px-3 py-2 rounded-sm bg-[#0b0508] border border-white/15 text-xs font-mono text-[#EFE9DA] flex items-center justify-between">
           <span>TELETIPO CITY PORTEÑA: {CITY_FLASH_MESSAGES[flashIndex]}</span>
           <span className="text-sky-300 shrink-0 ml-2">{latest.timeLabel}</span>
         </div>
@@ -382,7 +384,8 @@ export function BcraIntradayMarketModal({
             applyShockToLatest(-26, -35, 140, 'Liquidación especial CIARA-CEC inyectó USD 140M al MULC.');
           }}
         />
+        </div>
       </div>
-    </div>
+    </ViewportModalPortal>
   );
 }

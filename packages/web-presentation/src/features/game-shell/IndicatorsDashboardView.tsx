@@ -57,7 +57,7 @@ function SaveStatusBadge({
     );
   }
   return (
-    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-[#090d14] border border-emerald-800/60 text-[11px] font-mono text-emerald-300">
+    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-[#0b0508] border border-emerald-800/60 text-[11px] font-mono text-emerald-300">
       <span className="w-2 h-2 rounded-sm bg-emerald-400" />
       <span>Partida guardada en este dispositivo</span>
     </div>
@@ -79,13 +79,13 @@ function ExecutiveKpiStrip({ state }: { state: SimulationState }) {
       label: 'IPC MENSUAL',
       value: `${state.inflation.realMonthlyIpcPct.toFixed(1)}%`,
       sub: `Interanual ${state.inflation.interannualIpcPct.toFixed(0)}%`,
-      cls: pickKpiTone(state.inflation.realMonthlyIpcPct <= 3.0, 'text-amber-300')
+      cls: pickKpiTone(state.inflation.realMonthlyIpcPct <= 3.0, 'text-[#f472b6]')
     },
     {
       label: 'PBI ANUAL',
       value: formatSignedPct(state.gdpGrowthAnnualPct),
       sub: `${state.gdpNominalBillionUsd} mil M USD`,
-      cls: pickKpiTone(state.gdpGrowthAnnualPct >= 2.0, 'text-amber-300')
+      cls: pickKpiTone(state.gdpGrowthAnnualPct >= 2.0, 'text-[#f472b6]')
     },
     {
       label: 'POBREZA (CBT)',
@@ -103,7 +103,7 @@ function ExecutiveKpiStrip({ state }: { state: SimulationState }) {
       label: 'RIESGO PAÍS',
       value: `${state.countryRiskEmbiPb} pb`,
       sub: `Brecha CCL ${state.centralBank.exchangeBrechaPct.toFixed(0)}%`,
-      cls: pickKpiTone(state.countryRiskEmbiPb <= 750, 'text-amber-300')
+      cls: pickKpiTone(state.countryRiskEmbiPb <= 750, 'text-[#f472b6]')
     },
     {
       label: 'RESULTADO PRIMARIO',
@@ -116,7 +116,7 @@ function ExecutiveKpiStrip({ state }: { state: SimulationState }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
       {kpis.map((k) => (
-        <div key={k.label} className="hoi-panel rounded-sm p-3 bg-[#090d14]">
+        <div key={k.label} className="hoi-panel rounded-sm p-3 bg-[#0b0508]">
           <div className="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400">
             {k.label}
           </div>
@@ -131,34 +131,34 @@ function ExecutiveKpiStrip({ state }: { state: SimulationState }) {
 function InflationBreakdownPanel({ state }: { state: SimulationState }) {
   return (
     <div className="hoi-panel rounded-sm p-5 space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#263142] pb-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 pb-2.5">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-widest text-amber-300 block">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-[#f472b6] block">
             DESCOMPOSICIÓN ECONOMÉTRICA DEL IPC
           </span>
-          <h3 className="text-sm font-serif font-bold uppercase tracking-wide text-amber-100">
+          <h3 className="text-sm font-serif font-bold uppercase tracking-wide text-[#F5EFE6]">
             Desglose de Inflación (Mes #{state.turnMonth})
           </h3>
         </div>
-        <span className="px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#8a6d33]/80 text-xs font-mono text-amber-200">
+        <span className="px-2.5 py-1 rounded-sm bg-[#0b0508] border border-[#EB3F7D]/55/80 text-xs font-mono text-[#EFE9DA]">
           Credibilidad INDEC: {state.structural.indecCredibilityIndex}/100 · Ancla: {state.structural.anchorCredibilityIndex}/100
         </span>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs font-mono">
-        <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142]">
+        <div className="p-3 rounded-sm bg-[#0b0508] border border-white/15">
           <div className="text-[10px] text-slate-400 uppercase">Inercia REM</div>
-          <div className="font-bold text-amber-200 text-sm mt-1">+{state.inflation.inertiaComponentPp} pp</div>
+          <div className="font-bold text-[#EFE9DA] text-sm mt-1">+{state.inflation.inertiaComponentPp} pp</div>
         </div>
-        <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142]">
+        <div className="p-3 rounded-sm bg-[#0b0508] border border-white/15">
           <div className="text-[10px] text-slate-400 uppercase">Pass-through FX</div>
           <div className="font-bold text-sky-300 text-sm mt-1">+{state.inflation.passThroughComponentPp} pp</div>
         </div>
-        <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142]">
+        <div className="p-3 rounded-sm bg-[#0b0508] border border-white/15">
           <div className="text-[10px] text-slate-400 uppercase">Emisión + PUTs</div>
           <div className="font-bold text-rose-300 text-sm mt-1">+{state.inflation.monetaryDropComponentPp} pp</div>
         </div>
-        <div className="p-3 rounded-sm bg-[#090d14] border border-[#263142]">
+        <div className="p-3 rounded-sm bg-[#0b0508] border border-white/15">
           <div className="text-[10px] text-slate-400 uppercase">Tarifazo CAMMESA</div>
           <div className="font-bold text-emerald-300 text-sm mt-1">+{state.inflation.tarifazoComponentPp} pp</div>
         </div>
@@ -210,14 +210,14 @@ export function IndicatorsDashboardView({
     <div className="space-y-5 rosca-panel-enter">
       <div className="hoi-panel hoi-header-steel rounded-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-sm bg-[#090d14] border border-[#8a6d33] flex items-center justify-center shrink-0">
-            <BarChart3 className="w-5 h-5 text-amber-300" />
+          <div className="w-10 h-10 rounded-sm bg-[#0b0508] border border-[#EB3F7D]/55 flex items-center justify-center shrink-0">
+            <BarChart3 className="w-5 h-5 text-[#f472b6]" />
           </div>
           <div>
-            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300">
+            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#f472b6]">
               SISTEMA ESTADÍSTICO NACIONAL · INDEC / BCRA / MECON
             </div>
-            <h1 className="text-xl md:text-2xl font-serif font-extrabold uppercase tracking-wide text-amber-100 mt-0.5">
+            <h1 className="text-xl md:text-2xl font-serif font-extrabold uppercase tracking-wide text-[#F5EFE6] mt-0.5">
               Indicadores del País ({allCards.length} series activas)
             </h1>
           </div>
@@ -248,7 +248,7 @@ export function IndicatorsDashboardView({
 
       <div className="hoi-panel rounded-sm p-3.5 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-200">
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#EFE9DA]">
             Secciones Estadísticas ({visibleCards.length} indicadores en vista)
           </span>
           <label className="relative flex items-center">
@@ -258,7 +258,7 @@ export function IndicatorsDashboardView({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar indicador (ej: Vaca Muerta, Pobreza, CCL)..."
-              className="pl-8 pr-3 py-1.5 w-64 rounded-sm bg-[#090d14] border border-[#263142] focus:border-[#b89342] focus:outline-none text-xs font-mono text-amber-100 placeholder:text-slate-500"
+              className="pl-8 pr-3 py-1.5 w-64 rounded-sm bg-[#0b0508] border border-white/15 focus:border-[#EB3F7D] focus:outline-none text-xs font-mono text-[#F5EFE6] placeholder:text-slate-500"
             />
           </label>
         </div>
@@ -271,8 +271,8 @@ export function IndicatorsDashboardView({
                 ? allCards.length
                 : allCards.filter((c) => c.category === tab.id).length;
             const cls = isActive
-              ? 'bg-[#1d3250] text-amber-100 border-[#b89342]'
-              : 'bg-[#090d14] text-slate-300 border-[#263142] hover:border-[#8a6d33]';
+              ? 'bg-[#EB3F7D]/20 text-[#F5EFE6] border-[#EB3F7D]'
+              : 'bg-[#0b0508] text-slate-300 border-white/15 hover:border-[#EB3F7D]/55';
 
             return (
               <button

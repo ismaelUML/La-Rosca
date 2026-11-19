@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import type {
   EconomicLeverItem,
   PolicyAction,
+  PoliticalCapitalState,
   SectorMeasureCard,
   SimulationState
 } from '@argentina-sim/domain';
+import { DEFAULT_POLITICAL_CAPITAL, previewNextMonthImpact } from '@argentina-sim/domain';
+import { formatArNumber, formatArSigned } from '../../lib/formatters.js';
 import { SECTOR_CATEGORIES_SUMMARY } from '@argentina-sim/infrastructure';
 import { Check, Play, ScrollText, Search, Sliders } from 'lucide-react';
 import { SectionPageHeader } from '@/components/ui/SectionPageHeader';
@@ -107,7 +110,7 @@ function TnaStrip({ state, onDispatch }: { state: SimulationState; onDispatch: (
   return (
     <ActionStripCard
       icon="TNA"
-      iconTileClass="bg-[#231b10] text-amber-300"
+      iconTileClass="bg-[#231b10] text-[#f472b6]"
       urgentLabel={urgentLabel}
       urgentClass="bg-rose-700 text-white"
       title={`Tasa de política monetaria (${tna}% anual)`}
@@ -180,7 +183,7 @@ function FineTuningSection({
     <div className="hoi-panel rounded-sm overflow-hidden">
       <div className="hoi-header-crimson px-5 py-3 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 className="text-sm font-bold uppercase tracking-wider text-amber-100">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-[#F5EFE6]">
             Mesa de Dinero (BCRA) y Tarifas (Energía)
           </h3>
           <p className="text-[11px] font-mono text-rose-100/75">
@@ -204,8 +207,8 @@ function FineTuningSection({
         <TnaStrip state={state} onDispatch={onDispatch} />
         <TariffStrip state={state} onDispatch={onDispatch} />
 
-        <div className="rounded-sm bg-[#0b1018] border border-[#263142] px-3.5 py-2.5 text-xs text-slate-300">
-          <span className="font-mono font-bold uppercase text-amber-400 mr-1.5">ALERTA:</span>
+        <div className="rounded-sm bg-[#0e070b] border border-white/15 px-3.5 py-2.5 text-xs text-slate-300">
+          <span className="font-mono font-bold uppercase text-[#EB3F7D] mr-1.5">ALERTA:</span>
           {buildFineTuningAlert(state)}
         </div>
       </div>
@@ -216,6 +219,66 @@ function FineTuningSection({
         onDispatch={onDispatch}
         onClose={() => setBcraOpen(false)}
       />
+    </div>
+  );
+}
+
+function MacroPreviewPill({
+  label,
+  value,
+  delta,
+  good
+}: {
+  label: string;
+  value: string;
+  delta: string;
+  good: boolean;
+}) {
+  const tone = good ? 'text-emerald-300' : 'text-rose-400';
+  return (
+    <div className="bg-[#0b0508] border border-white/10 px-3 py-2 rounded-sm">
+      <div className="text-[10px] font-mono uppercase text-slate-400">{label}</div>
+      <div className="flex items-baseline gap-2 mt-0.5">
+        <span className="font-display text-lg text-[#F5EFE6]">{value}</span>
+        <span className={`text-[11px] font-mono font-bold ${tone}`}>{delta}</span>
+      </div>
+    </div>
+  );
+}
+
+function MacroNextMonthPreviewBar({ state }: { state: SimulationState }) {
+  const preview = useMemo(() => previewNextMonthImpact(state), [state]);
+  return (
+    <div className="hoi-panel rounded-sm p-4 border-l-2 border-l-[#EB3F7D] space-y-2.5">
+      <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#EB3F7D]">
+        PROYECCIÓN EN VIVO SI CERRÁS EL MES ASÍ (SIMULADOR EN MEMORIA)
+      </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+        <MacroPreviewPill
+          label="IPC Mensual est."
+          value={`${formatArNumber(preview.nextIpcPct, 1)} %`}
+          delta={`${formatArSigned(preview.ipcDeltaPp, 1)} pp`}
+          good={preview.ipcDeltaPp <= 0}
+        />
+        <MacroPreviewPill
+          label="Reservas Netas est."
+          value={`US$ ${formatArNumber(preview.nextNetReservesUsdB, 1)} MM`}
+          delta={`${formatArSigned(preview.reservesDeltaUsdB, 1)} MM`}
+          good={preview.reservesDeltaUsdB >= 0}
+        />
+        <MacroPreviewPill
+          label="Riesgo País est."
+          value={`${preview.nextRiskPb} pb`}
+          delta={`${preview.riskDeltaPb >= 0 ? '+' : ''}${preview.riskDeltaPb} pb`}
+          good={preview.riskDeltaPb <= 0}
+        />
+        <MacroPreviewPill
+          label="Aprobación est."
+          value={`${formatArNumber(preview.nextApprovalPct, 1)} %`}
+          delta={`${formatArSigned(preview.approvalDeltaPp, 1)} pp`}
+          good={preview.approvalDeltaPp >= 0}
+        />
+      </div>
     </div>
   );
 }
@@ -249,6 +312,8 @@ export function EconomicPolicyView({
         }
       />
 
+      <MacroNextMonthPreviewBar state={state} />
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {levers.map((lever) => {
           const labelIdx = lever.level + 2;
@@ -262,7 +327,7 @@ export function EconomicPolicyView({
                   <div className="text-sm font-bold text-slate-100">{lever.title}</div>
                   <div className="text-xs text-slate-400 mt-0.5">{lever.description}</div>
                 </div>
-                <span className="px-2.5 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#090d14] border border-[#8a6d33] text-amber-300 shrink-0">
+                <span className="px-2.5 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#0b0508] border border-[#EB3F7D]/55 text-[#f472b6] shrink-0">
                   {lever.levelLabels[labelIdx]} ({formatLeverNumber(lever.level)})
                 </span>
               </div>
@@ -280,8 +345,8 @@ export function EconomicPolicyView({
                       }}
                       className={`py-1.5 rounded-sm text-xs font-mono font-bold transition border ${
                         isSelected
-                          ? 'bg-[#b89342] text-[#100e09] border-[#c9a24d] shadow'
-                          : 'bg-[#090d14] text-slate-400 border-[#263142] hover:text-white hover:border-[#3c4d66]'
+                          ? 'bg-[#EB3F7D] text-[#090407] border-[#EB3F7D] shadow'
+                          : 'bg-[#0b0508] text-slate-400 border-white/15 hover:text-white hover:border-[#EB3F7D]/55'
                       }`}
                     >
                       {formatLeverNumber(lv)}
@@ -301,6 +366,7 @@ export function EconomicPolicyView({
 
 interface SectorMeasuresViewProps {
   measures: SectorMeasureCard[];
+  politicalCapital?: PoliticalCapitalState;
   onToggleMeasure: (id: string) => void;
 }
 
@@ -316,8 +382,8 @@ function SectorCategoryItem({
   onSelect: () => void;
 }) {
   const borderClass = isSelected
-    ? 'border-[#c9a24d] bg-[#162233]'
-    : 'border-[#263142] bg-[#0e131c] hover:border-[#3c4d66]';
+    ? 'border-[#EB3F7D] bg-[#1c0e16]'
+    : 'border-white/15 bg-[#130a0f] hover:border-[#EB3F7D]/55';
 
   return (
     <button
@@ -330,7 +396,7 @@ function SectorCategoryItem({
     >
       <div>
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400">{sec.id}</span>
+          <span className="text-[10px] font-mono uppercase tracking-wider text-[#EB3F7D]">{sec.id}</span>
           {activeCount > 0 ? (
             <span className="px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold bg-[#0f291e] border border-emerald-700/70 text-emerald-300">
               {activeCount} VIGENTES
@@ -393,64 +459,101 @@ function MeasureEffectsList({ m }: { m: SectorMeasureCard }) {
   );
 }
 
-function MeasureMetadataTags({
-  durationType,
-  frequencyLabel,
-  ideologyTag
-}: {
-  durationType: string;
-  frequencyLabel?: string;
-  ideologyTag?: string;
-}) {
+function resolveActiveTemporalChip(m: SectorMeasureCard): { text: string; tone: string } | null {
+  if (!m.active || m.durationType !== 'TEMPORAL') return null;
+  const left = m.remainingMonths ?? 6;
+  return {
+    text: `VENCE EN ${left} M.`,
+    tone: 'bg-[#EB3F7D]/20 border-[#EB3F7D]/60 text-[#EFE9DA]'
+  };
+}
+
+function resolveLifecycleChipData(m: SectorMeasureCard): { text: string; tone: string } | null {
+  const activeChip = resolveActiveTemporalChip(m);
+  if (activeChip) return activeChip;
+  const cd = m.cooldownRemainingMonths ?? 0;
+  if (m.active || cd <= 0) return null;
+  return {
+    text: `ENFRIAMIENTO ${cd} M.`,
+    tone: 'bg-rose-950/70 border-rose-700/70 text-rose-300'
+  };
+}
+
+function MeasureLifecycleChip({ m }: { m: SectorMeasureCard }) {
+  const data = resolveLifecycleChipData(m);
+  if (!data) return null;
+  return (
+    <span className={`px-2 py-0.5 rounded-sm border font-mono ${data.tone}`}>
+      {data.text}
+    </span>
+  );
+}
+
+function MeasureMetadataTags({ m }: { m: SectorMeasureCard }) {
   return (
     <div className="flex flex-wrap items-center gap-2 pt-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-      <span>{durationType}</span>
-      {frequencyLabel ? <span>· {frequencyLabel}</span> : null}
-      {ideologyTag ? <span>· {ideologyTag}</span> : null}
+      <span>{m.durationType}</span>
+      {m.frequencyLabel ? <span>· {m.frequencyLabel}</span> : null}
+      {m.ideologyTag ? <span>· {m.ideologyTag}</span> : null}
+      <MeasureLifecycleChip m={m} />
     </div>
   );
 }
 
+function resolveMeasureButtonLabel(active: boolean, cooldown: number, hasCapital: boolean): string {
+  if (active) return 'Medida Vigente (Derogar)';
+  if (cooldown > 0) return `En enfriamiento (${cooldown} m.)`;
+  if (!hasCapital) return 'Sin capital político este mes';
+  return 'Adoptar Medida (1 dec.)';
+}
+
+function resolveMeasureButtonStyle(active: boolean, blocked: boolean): string {
+  if (active) return 'bg-[#0f291e] border border-emerald-700/70 text-emerald-300 hover:bg-[#153829]';
+  if (blocked) return 'bg-[#12090d] border border-white/10 text-slate-500 cursor-not-allowed';
+  return 'hoi-btn-gold';
+}
+
 function MeasureActionButton({
   active,
+  cooldown,
+  hasCapital,
   onToggle
 }: {
   active: boolean;
+  cooldown: number;
+  hasCapital: boolean;
   onToggle: () => void;
 }) {
-  const btnClass = active
-    ? 'bg-[#0f291e] border border-emerald-700/70 text-emerald-300 hover:bg-[#153829]'
-    : 'hoi-btn-gold';
+  const blocked = !active && (cooldown > 0 || !hasCapital);
+  const btnClass = resolveMeasureButtonStyle(active, blocked);
 
   return (
     <button
       type="button"
+      disabled={blocked}
       onClick={() => {
         playUiSound('select');
         onToggle();
       }}
       className={`w-full py-2 rounded-sm text-xs font-bold uppercase tracking-wider inline-flex items-center justify-center gap-1.5 transition ${btnClass}`}
     >
-      {active ? (
-        <>
-          <Check className="w-3.5 h-3.5" />
-          <span>Medida Vigente (Derogar)</span>
-        </>
-      ) : (
-        <span>Adoptar Medida</span>
-      )}
+      {active ? <Check className="w-3.5 h-3.5" /> : null}
+      <span>{resolveMeasureButtonLabel(active, cooldown, hasCapital)}</span>
     </button>
   );
 }
 
 function MeasureItemCard({
   m,
+  hasCapital,
   onToggle
 }: {
   m: SectorMeasureCard;
+  hasCapital: boolean;
   onToggle: () => void;
 }) {
-  const accentBorder = m.active ? 'border-l-emerald-500' : 'border-l-[#8a6d33]';
+  const accentBorder = m.active ? 'border-l-emerald-500' : 'border-l-[#EB3F7D]';
+  const cooldown = m.cooldownRemainingMonths ?? 0;
 
   return (
     <div
@@ -465,14 +568,15 @@ function MeasureItemCard({
         </div>
         <MeasureEffectsList m={m} />
 
-        <MeasureMetadataTags
-          durationType={m.durationType}
-          frequencyLabel={m.frequencyLabel}
-          ideologyTag={m.ideologyTag}
-        />
+        <MeasureMetadataTags m={m} />
       </div>
 
-      <MeasureActionButton active={m.active} onToggle={onToggle} />
+      <MeasureActionButton
+        active={m.active}
+        cooldown={cooldown}
+        hasCapital={hasCapital}
+        onToggle={onToggle}
+      />
     </div>
   );
 }
@@ -488,24 +592,23 @@ function matchesMeasureFilter(measure: SectorMeasureCard, sector: string, query:
   return sectorOk && matchesMeasureQuery(measure, query);
 }
 
-export function SectorMeasuresView({ measures, onToggleMeasure }: SectorMeasuresViewProps) {
+export function SectorMeasuresView({
+  measures,
+  politicalCapital,
+  onToggleMeasure
+}: SectorMeasuresViewProps) {
   const [filterMode, setFilterMode] = useState<'TEMPORAL' | 'PERMANENTE'>('TEMPORAL');
   const [selectedSector, setSelectedSector] = useState<string>('PRECIOS');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  const cap = politicalCapital ?? DEFAULT_POLITICAL_CAPITAL;
+  const hasCapital = cap.remaining > 0;
   const sectorMeasures = measures.filter((m) => matchesMeasureFilter(m, selectedSector, searchQuery));
 
   const tempCount = sectorMeasures.filter((m) => m.durationType === 'TEMPORAL').length;
   const permCount = sectorMeasures.filter((m) => m.durationType === 'PERMANENTE').length;
 
   const visibleMeasures = sectorMeasures.filter((m) => m.durationType === filterMode);
-
-  const handleApproveAllInSector = () => {
-    const toActivate = visibleMeasures.filter((m) => !m.active);
-    for (const m of toActivate) {
-      onToggleMeasure(m.id);
-    }
-  };
 
   const handleClearActiveInSector = () => {
     const toDeactivate = visibleMeasures.filter((m) => m.active);
@@ -524,7 +627,7 @@ export function SectorMeasuresView({ measures, onToggleMeasure }: SectorMeasures
       <SectionPageHeader
         eyebrow="ECONOMÍA · DECRETOS Y RESOLUCIONES"
         title="Medidas"
-        description="Elegí un sector para implementar medidas concretas temporales o estructurales con impacto proyectado en IPC, actividad y aprobación."
+        description="Elegí un sector para firmar decretos temporales (vencen a los 6 meses con rebote y enfriamiento) o reformas permanentes. Cada firma consume 1 punto de capital político mensual."
         icon={<ScrollText className="w-3.5 h-3.5" />}
       />
 
@@ -546,12 +649,12 @@ export function SectorMeasuresView({ measures, onToggleMeasure }: SectorMeasures
 
       <div className="space-y-3 pt-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="inline-flex p-1 rounded-sm bg-[#090d14] border border-[#263142]">
+          <div className="inline-flex p-1 rounded-sm bg-[#0b0508] border border-white/15">
             <button
               type="button"
               onClick={() => setFilterMode('TEMPORAL')}
               className={`px-3.5 py-1.5 rounded-sm text-xs font-bold transition ${
-                filterMode === 'TEMPORAL' ? 'bg-[#1d3250] text-amber-200 border border-[#b89342]' : 'text-slate-300'
+                filterMode === 'TEMPORAL' ? 'bg-[#EB3F7D]/20 text-[#EFE9DA] border border-[#EB3F7D]' : 'text-slate-300'
               }`}
             >
               Temporales ({tempCount})
@@ -560,7 +663,7 @@ export function SectorMeasuresView({ measures, onToggleMeasure }: SectorMeasures
               type="button"
               onClick={() => setFilterMode('PERMANENTE')}
               className={`px-3.5 py-1.5 rounded-sm text-xs font-bold transition ${
-                filterMode === 'PERMANENTE' ? 'bg-[#1d3250] text-amber-200 border border-[#b89342]' : 'text-slate-300'
+                filterMode === 'PERMANENTE' ? 'bg-[#EB3F7D]/20 text-[#EFE9DA] border border-[#EB3F7D]' : 'text-slate-300'
               }`}
             >
               Permanentes ({permCount})
@@ -568,6 +671,9 @@ export function SectorMeasuresView({ measures, onToggleMeasure }: SectorMeasures
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <span className="px-2.5 py-1.5 rounded-sm bg-[#160a10] border border-[#EB3F7D]/60 text-xs font-mono font-bold text-[#EFE9DA]">
+              Capital: <strong className="text-[#EB3F7D]">{cap.remaining}/{cap.maxPerMonth}</strong> dec.
+            </span>
             <label className="relative flex items-center">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" />
               <input
@@ -575,28 +681,21 @@ export function SectorMeasuresView({ measures, onToggleMeasure }: SectorMeasures
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={`Buscar entre ${measures.length} medidas...`}
-                className="pl-8 pr-3 py-1.5 w-56 rounded-sm bg-[#090d14] border border-[#263142] focus:border-[#b89342] focus:outline-none text-xs text-slate-200 placeholder:text-slate-500 font-mono"
+                className="pl-8 pr-3 py-1.5 w-52 rounded-sm bg-[#0b0508] border border-white/15 focus:border-[#EB3F7D] focus:outline-none text-xs text-slate-200 placeholder:text-slate-500 font-mono"
               />
             </label>
             <span className="text-xs font-mono text-slate-400 mr-1">
               {activeMeasureCount} activas · Costo{' '}
               <strong className={activeFiscalSum > 0 ? 'text-rose-300' : 'text-emerald-300'}>
-                {activeFiscalSum.toFixed(2)}% PBI
+                {activeFiscalSum.toFixed(2).replace('.', ',')} % PBI
               </strong>
             </span>
             <button
               type="button"
               onClick={handleClearActiveInSector}
-              className="px-3 py-1.5 rounded-sm bg-[#0b1018] hover:bg-[#162233] border border-[#263142] text-xs font-bold text-slate-300 transition"
+              className="px-3 py-1.5 rounded-sm bg-[#0e070b] hover:bg-[#1c0e16] border border-white/15 text-xs font-bold text-slate-300 transition"
             >
               Derogar sector
-            </button>
-            <button
-              type="button"
-              onClick={handleApproveAllInSector}
-              className="hoi-btn-gold px-3 py-1.5 rounded-sm text-xs font-extrabold uppercase tracking-wider transition"
-            >
-              Aprobar sector
             </button>
           </div>
         </div>
@@ -606,6 +705,7 @@ export function SectorMeasuresView({ measures, onToggleMeasure }: SectorMeasures
             <MeasureItemCard
               key={m.id}
               m={m}
+              hasCapital={hasCapital}
               onToggle={() => onToggleMeasure(m.id)}
             />
           ))}

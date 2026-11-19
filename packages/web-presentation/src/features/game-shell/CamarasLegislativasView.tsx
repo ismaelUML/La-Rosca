@@ -63,9 +63,9 @@ const INITIAL_CONGRESS_FORCES: PartySeatShare[] = [
     shortLabel: 'PU/PF',
     deputiesSeats: 16,
     senateSeats: 6,
-    color: '#2563eb',
-    colorName: 'Azul',
-    badgeBg: 'bg-blue-600 text-white',
+    color: '#1d4ed8',
+    colorName: 'Azul oscuro',
+    badgeBg: 'bg-blue-700 text-white',
     relation: 55
   },
   {
@@ -85,9 +85,9 @@ const INITIAL_CONGRESS_FORCES: PartySeatShare[] = [
     shortLabel: 'FP/UxP',
     deputiesSeats: 99,
     senateSeats: 33,
-    color: '#38bdf8',
+    color: '#7dd3fc',
     colorName: 'Celeste',
-    badgeBg: 'bg-sky-500 text-slate-950',
+    badgeBg: 'bg-sky-300 text-slate-950',
     relation: 0
   },
   {
@@ -210,7 +210,7 @@ function HemicycleCard({
 }) {
   return (
     <div className="hoi-panel rounded-sm p-5 flex flex-col justify-between gap-4">
-      <div className="flex items-center justify-between border-b border-[#263142] pb-3 gap-2">
+      <div className="flex items-center justify-between border-b border-white/15 pb-3 gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
           <OfficialInstitutionLogo
             institution={title.includes('Diputados') ? 'DIPUTADOS' : 'SENADO'}
@@ -218,7 +218,7 @@ function HemicycleCard({
           />
           <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-white truncate">{title}</h3>
         </div>
-        <span className="font-mono text-xs px-2.5 py-0.5 rounded-sm bg-[#090d14] border border-[#263142] text-amber-300 shrink-0">
+        <span className="font-mono text-xs px-2.5 py-0.5 rounded-sm bg-[#0b0508] border border-white/15 text-[#f472b6] shrink-0">
           Quórum: {quorumNeeded}
         </span>
       </div>
@@ -244,14 +244,14 @@ function HemicycleCard({
         </svg>
       </div>
 
-      <div className="flex flex-wrap justify-center gap-2 pt-2 border-t border-[#263142]">
+      <div className="flex flex-wrap justify-center gap-2 pt-2 border-t border-white/15">
         {legendList.map((f) => {
           const seats = title.includes('Diputados') ? f.deputiesSeats : f.senateSeats;
           if (seats === 0) return null;
           return (
             <div
               key={f.id}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-[#090d14] border border-[#263142] text-xs"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-[#0b0508] border border-white/15 text-xs"
             >
               <span className={`px-1.5 py-0.2 rounded-sm text-[10px] font-extrabold ${f.badgeBg}`}>
                 {f.shortLabel}
@@ -274,7 +274,7 @@ function resolveRelationLabel(relation: number): { label: string; badgeClass: st
     return { label: 'Diálogo abierto', badgeClass: 'bg-blue-950/80 text-blue-300 border-blue-800' };
   }
   if (relation >= 40) {
-    return { label: 'Negociación puntual', badgeClass: 'bg-amber-950/80 text-amber-300 border-amber-800' };
+    return { label: 'Negociación puntual', badgeClass: 'bg-amber-950/80 text-[#f472b6] border-amber-800' };
   }
   if (relation >= 20) {
     return { label: 'Oposición moderada', badgeClass: 'bg-orange-950/80 text-orange-300 border-orange-800' };
@@ -315,8 +315,8 @@ function CongressTopMetrics({ forces }: { forces: PartySeatShare[] }) {
         <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
           Gobernabilidad
         </div>
-        <div className="text-3xl font-mono font-extrabold text-amber-300 mt-2">{govPct} %</div>
-        <div className="w-full bg-[#090d14] h-2 rounded-sm overflow-hidden border border-[#263142] mt-2">
+        <div className="text-3xl font-mono font-extrabold text-[#f472b6] mt-2">{govPct} %</div>
+        <div className="w-full bg-[#0b0508] h-2 rounded-sm overflow-hidden border border-white/15 mt-2">
           <div className="bg-amber-500 h-full" style={{ width: `${govPct}%` }} />
         </div>
         <div className="text-[11px] text-slate-400 mt-1">{statusNote}</div>
@@ -327,8 +327,8 @@ function CongressTopMetrics({ forces }: { forces: PartySeatShare[] }) {
           Capacidad de negociación
         </div>
         <div className="text-3xl font-mono font-extrabold text-sky-300 mt-2">{negPct}</div>
-        <div className="w-full bg-[#090d14] h-2 rounded-sm overflow-hidden border border-[#263142] mt-2">
-          <div className="bg-[#b89342] h-full" style={{ width: `${negPct}%` }} />
+        <div className="w-full bg-[#0b0508] h-2 rounded-sm overflow-hidden border border-white/15 mt-2">
+          <div className="bg-[#EB3F7D] h-full" style={{ width: `${negPct}%` }} />
         </div>
         <div className="text-[11px] text-slate-400 mt-1">Base parlamentaria inicial tras la elección</div>
       </div>
@@ -385,11 +385,11 @@ function CongressSubTabHeader({
 }) {
   const tabCls = (t: CongressSubTab) =>
     subTab === t
-      ? 'bg-[#17253b] text-amber-100 border-b-2 border-[#b89342]'
+      ? 'bg-[#17253b] text-[#F5EFE6] border-b-2 border-[#EB3F7D]'
       : 'text-slate-400 hover:text-slate-200 border-b-2 border-transparent';
 
   return (
-    <div className="flex flex-wrap gap-1 border-b border-[#263142] pb-1">
+    <div className="flex flex-wrap gap-1 border-b border-white/15 pb-1">
       <button
         type="button"
         onClick={() => {
@@ -427,7 +427,7 @@ function CongressSubTabHeader({
 function CongressForcesTable({ forces }: { forces: PartySeatShare[] }) {
   return (
     <div className="hoi-panel rounded-sm overflow-hidden">
-      <div className="p-4 md:p-5 border-b border-[#263142]">
+      <div className="p-4 md:p-5 border-b border-white/15">
         <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-white leading-tight">
           Relación con cada fuerza
         </h3>
@@ -438,7 +438,7 @@ function CongressForcesTable({ forces }: { forces: PartySeatShare[] }) {
 
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
-          <thead className="bg-[#090d14] border-b border-[#263142] text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+          <thead className="bg-[#0b0508] border-b border-white/15 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
             <tr>
               <th className="py-3 px-4">FUERZA</th>
               <th className="py-3 px-4 text-center">CÁMARA DE DIPUTADOS</th>

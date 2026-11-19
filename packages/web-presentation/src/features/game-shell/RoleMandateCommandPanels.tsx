@@ -92,7 +92,7 @@ function KpiStatBox({
   accentClass: string;
 }) {
   return (
-    <div className="rounded-sm bg-[#090d14] border border-[#243044] p-3.5">
+    <div className="rounded-sm bg-[#0b0508] border border-[#243044] p-3.5">
       <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
         {label}
       </div>
@@ -116,13 +116,13 @@ function RoleActionButtonsGrid({
           key={item.id}
           type="button"
           onClick={() => onExecute(item.id)}
-          className={`text-left rounded-sm bg-[#090d14] hover:bg-[#121926] border p-3.5 transition group ${item.toneClass}`}
+          className={`text-left rounded-sm bg-[#0b0508] hover:bg-[#170c12] border p-3.5 transition group ${item.toneClass}`}
         >
           <div className="flex items-start justify-between gap-2">
-            <span className="text-xs font-extrabold text-white group-hover:text-amber-200">
+            <span className="text-xs font-extrabold text-white group-hover:text-[#EFE9DA]">
               {item.title}
             </span>
-            <span className="px-2 py-0.5 rounded-sm bg-[#06080d] border border-[#2c384b] text-[10px] font-mono font-bold text-[#d4b26a] shrink-0">
+            <span className="px-2 py-0.5 rounded-sm bg-[#06080d] border border-white/15 text-[10px] font-mono font-bold text-[#EB3F7D] shrink-0">
               {item.effectBadge}
             </span>
           </div>
@@ -146,10 +146,10 @@ export function GovernorCommandPanel({
   const prov = state.provinces.find((p) => p.id === gov.provinceId) ?? state.provinces[0]!;
 
   return (
-    <div className="rounded-sm bg-[#0c1119] border border-[#263142] border-t-2 border-t-[#8a6d33] p-5 space-y-5">
+    <div className="rounded-sm bg-[#11080d] border border-white/15 border-t-2 border-t-[#8a6d33] p-5 space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#243044] pb-3.5">
         <div>
-          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#d4b26a]">
+          <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#EB3F7D]">
             CASA DE GOBIERNO PROVINCIAL · {prov.name.toUpperCase()} ({prov.region})
           </div>
           <h2 className="text-lg font-serif font-bold text-white mt-0.5">
@@ -182,7 +182,7 @@ export function GovernorCommandPanel({
           label="Tesoro Provincial"
           value={`$${gov.provincialTreasuryArsBillion}B`}
           subtext={prov.quasiCurrencyIssued ? 'Cuasimoneda en circulación' : 'Moneda nacional (ARS)'}
-          accentClass="text-amber-300"
+          accentClass="text-[#f472b6]"
         />
         <KpiStatBox
           label="Ingresos Brutos (IIBB)"
@@ -290,7 +290,7 @@ export function LegislatorCommandPanel({
   const actions = buildLegislatorActions(isSenate, leg.provinceId);
 
   return (
-    <div className="rounded-sm bg-[#0c1119] border border-[#263142] border-t-2 border-t-[#8a6d33] p-5 space-y-5">
+    <div className="rounded-sm bg-[#11080d] border border-white/15 border-t-2 border-t-[#8a6d33] p-5 space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#243044] pb-3.5">
         <div>
           <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-sky-400">
@@ -309,7 +309,7 @@ export function LegislatorCommandPanel({
         <button
           type="button"
           onClick={() => onNavigate('CAMARAS')}
-          className="px-3.5 py-2 rounded-sm bg-gradient-to-b from-[#d8b76c] to-[#9b7a38] hover:from-[#e6c87d] hover:to-[#b08c42] border border-[#f3d893]/40 text-xs font-mono font-extrabold uppercase tracking-wider text-slate-950 transition"
+          className="px-3.5 py-2 rounded-sm bg-[#EB3F7D] hover:bg-[#f45b93] border border-[#f472b6]/60 text-xs font-mono font-extrabold uppercase tracking-wider text-slate-950 transition"
         >
           Ir al Hemiciclo y Votar Leyes →
         </button>
@@ -320,7 +320,7 @@ export function LegislatorCommandPanel({
           label="Peso Parlamentario"
           value={`${leg.parliamentaryCloutIndex}/100`}
           subtext="Capacidad de poroteo en el recinto"
-          accentClass="text-amber-300"
+          accentClass="text-[#f472b6]"
         />
         <KpiStatBox
           label="Impacto en Recinto"
